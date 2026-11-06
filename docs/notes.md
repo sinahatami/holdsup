@@ -196,3 +196,40 @@ Choices:
 - Image size is now ~750 MB (onnxruntime, numpy, model).
 
 Result: `make catalog` loads all entries (0 in `packages/catalog` today; 6 from the test catalog via `python -m holdsup.catalog.load tests/fixtures/catalog`) on Postgres 17 + pgvector. Every alias (18) and 4 unseen paraphrases find their indicator in the top 3 with the real model (all rank 1). Live `GET /v1/indicators?q=jobless rate for young people` returns `youth_unemployment_rate` first (0.84). 183 tests + 3 DB tests green.
+
+## Provider smoke fix (2026-11-06)
+
+Symptom: `make smoke-providers` showed every provider `rejected` and Mistral `rate_limited`, with no reason.
+
+Changes:
+- Errors now carry the HTTP status and the provider's own message (`HTTP 404: The model ... does not exist`), parsed from each provider's error shape; 429s add the non-secret `x-ratelimit-*` / `retry-after` headers, and OpenRouter's upstream provider and raw error. Everything passes through `holdsup/router/redact.py`, which removes the values of every `*_API_KEY`/`*_TOKEN` env var and key-shaped strings (gsk_, sk-, sk-or-v1-, AIza, Bearer) before text reaches logs or output (tested with a key echoed in an error body).
+- `make smoke-providers` prints a `Failures:` section with the full redacted errors, and takes `ARGS="--only <provider> --model <id>"` to try a model without editing the YAML.
+- `make list-models` calls `GET {base_url}/models` per provider (through `OpenAICompatibleClient.list_models`, metadata only) and marks each configured model `ok`/`MISSING`; for OpenRouter it shows `:free` models with tools/JSON support.
+- Confirmed the client uses `chat.completions.create` on each provider's OpenAI-compatible base URL. A test posts through every provider in `providers.yaml` and asserts the request goes to `<base_url>/chat/completions`, never `/responses`.
+- `min_interval_s` per provider (Mistral 1.5 s): the router waits out pacing gaps of up to 2 s (including before the schema-repair retry) instead of skipping the provider.
+- A 429 whose `x-ratelimit-limit-*` header is 0 means "model not on this plan": treated as exhausted until the daily reset, not retried every 60 s.
+
+Findings (root causes):
+| Provider | Configured | Error | Cause | Now |
+| --- | --- | --- | --- | --- |
+| Groq | llama-3.3-70b-versatile, llama-3.1-8b-instant | 404 does not exist | Groq dropped Llama 3.x; `/models` lists gpt-oss-120b/20b, qwen3.8-27b | openai/gpt-oss-120b, openai/gpt-oss-20b |
+| Mistral | mistral-small-latest | 429, `x-ratelimit-limit-req-minute=0` on the first call | small and medium are not in this workspace's Experiment plan; not pacing | ministral-14b-2512, 1.5 s apart |
+| OpenRouter | meta-llama/llama-3.3-70b-instruct:free | 404 "unavailable for free" | free variant retired; google/gemma-4 `:free` then 429 throttled upstream (Google AI Studio) | nvidia/nemotron-3.5-super-vl:free |
+| Gemini | gemini-2.5-flash | 404 "no longer available to new users" (though `/models` still lists it) | retired for new keys; gemini-3.8-flash and gemini-flash-latest gave 503 "high demand" / 30–60 s timeouts | gemini-3.5-flash, timeout 60 s |
+
+Lesson: `/models` is necessary but not sufficient (Gemini lists models it then refuses); the smoke call is the real check.
+
+Smoke result after the fix (`make smoke-providers`, exit 0):
+```
+| provider                 | model                             | use     | key | json_schema | tools | max_ms | note |
+|--------------------------|-----------------------------------|---------|-----|-------------|-------|--------|------|
+| groq-gpt-oss-120b        | openai/gpt-oss-120b               | live    | yes | ok          | ok    | 503    |      |
+| groq-gpt-oss-20b         | openai/gpt-oss-20b                | live    | yes | ok          | ok    | 333    |      |
+| mistral-ministral-14b    | ministral-14b-2512                | live    | yes | ok          | ok    | 411    |      |
+| openrouter-nemotron-free | nvidia/nemotron-3.5-super-vl:free | live    | yes | ok          | ok    | 3394   |      |
+| gemini-flash             | gemini-3.5-flash                  | offline | yes | ok          | ok    | 2564   |      |
+```
+
+Still to do (human): read the real Groq limits for gpt-oss-120b/20b and Gemini 3.5 Flash from the consoles and update `limits` in `providers.yaml`; activate a plan that includes mistral-small if it is wanted later.
+
+Secrets incident found during this work: real API keys (and, in the last commit, the Neon `DATABASE_URL` with password) had been written into the tracked `.env.example`, and four local commits (P1.4, P1.7–P1.9) included them because they were made with `git add -A`. None of those commits had been pushed (`origin` only has P1.1–P1.3, which are clean). Fixed by blanking `.env.example`, rewriting the unpushed commits on `work/p1-p1.4` to scrub it, and adding a lefthook pre-commit check (`scripts/check-env-example.sh`) that blocks filled-in keys/tokens/secrets or a non-local `DATABASE_URL` in `.env.example`. The Neon password was also displayed once in the agent session output, so it should be reset.

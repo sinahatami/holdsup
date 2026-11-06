@@ -15,6 +15,11 @@ class RateLimited(ProviderError):
     daily: bool = False
     message: str = ""
 
+    def __str__(self) -> str:
+        kind = " daily quota" if self.daily else ""
+        wait = f", retry-after {self.retry_after_s:g}s" if self.retry_after_s is not None else ""
+        return f"HTTP 429{kind}{wait}: {self.message}"
+
 
 class ProviderTimeout(ProviderError):
     """The call exceeded the provider's timeout."""
@@ -39,6 +44,7 @@ class RouterError(Exception):
     step: str
     attempts: list[str] = field(default_factory=list)
     retry_after_s: float | None = None
+    details: list[str] = field(default_factory=list)  # "provider outcome: HTTP status: message"
 
     def __str__(self) -> str:
         wait = f"; retry in ~{self.retry_after_s:.0f}s" if self.retry_after_s is not None else ""

@@ -56,3 +56,5 @@ node_modules/
 
 # embedding model cache
 .cache/
+
+/docs
