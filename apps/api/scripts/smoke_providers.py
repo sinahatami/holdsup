@@ -5,10 +5,11 @@ Each provider gets two calls: a JSON-schema answer and a forced tool call. Exit 
 any provider with a key fails a check.
 """
 
+import argparse
 import asyncio
 import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolUnionParam
 from pydantic import BaseModel
@@ -60,6 +61,7 @@ class Row:
     tools: str = "-"
     latency_ms: str = "-"
     note: str = ""
+    failures: list[str] = field(default_factory=list)  # full, redacted provider errors
 
     @property
     def failed(self) -> bool:
@@ -92,7 +94,8 @@ async def check_provider(
         latencies.append(answer.latency_ms)
     except RouterError as exc:
         row.json_schema = "FAIL"
-        notes.append(f"schema: {exc.attempts}")
+        notes.append(f"schema: {_short(exc)}")
+        row.failures.extend(f"schema: {d}" for d in exc.details or exc.attempts)
 
     if Capability.TOOLS not in provider.capabilities:
         row.tools = "n/a"
@@ -109,12 +112,28 @@ async def check_provider(
             latencies.append(called.latency_ms)
         except RouterError as exc:
             row.tools = "FAIL"
-            notes.append(f"tools: {exc.attempts}")
+            notes.append(f"tools: {_short(exc)}")
+            row.failures.extend(f"tools: {d}" for d in exc.details or exc.attempts)
 
     if latencies:
         row.latency_ms = f"{max(latencies):.0f}"
     row.note = "; ".join(notes)
     return row
+
+
+def _short(exc: RouterError) -> str:
+    """First failure, e.g. "rejected HTTP 404" (full text goes in the Failures section)."""
+    if not exc.details:
+        return ", ".join(exc.attempts) or "no attempt made"
+    _, _, rest = exc.details[0].partition(" ")
+    outcome, _, detail = rest.partition(": ")
+    status = detail.split(":", 1)[0] if detail.startswith("HTTP") else ""
+    return f"{outcome} {status}".strip()
+
+
+def format_failures(rows: list[Row]) -> str:
+    lines = [f"- {r.provider}: {f}" for r in rows for f in r.failures]
+    return "\n".join(["", "Failures:", *lines]) if lines else ""
 
 
 def _has_query(arguments: str) -> bool:
@@ -153,12 +172,31 @@ async def run(config: RouterConfig, client: SupportsChat) -> list[Row]:
     return [await check_provider(config, p, client) for p in config.providers]
 
 
-def main() -> int:
-    config = load_router_config()
+def select(config: RouterConfig, only: list[str], model: str | None) -> RouterConfig:
+    """Restrict to `only` providers; `model` overrides the model id of a single provider."""
+    providers = [p for p in config.providers if not only or p.name in only]
+    missing = set(only) - {p.name for p in providers}
+    if missing:
+        raise SystemExit(f"unknown provider(s): {sorted(missing)}")
+    if model is not None:
+        if len(providers) != 1:
+            raise SystemExit("--model needs exactly one --only provider")
+        providers = [providers[0].model_copy(update={"model": model})]
+    return RouterConfig(providers=tuple(providers), steps={STEP: tuple(p.name for p in providers)})
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="make smoke-providers ARGS=...")
+    parser.add_argument("--only", action="append", default=[], help="provider name (repeatable)")
+    parser.add_argument("--model", help="try another model id for the single --only provider")
+    args = parser.parse_args(argv)
+    config = select(load_router_config(), args.only, args.model)
     rows = asyncio.run(run(config, OpenAICompatibleClient()))
     print(format_table(rows))
+    if failures := format_failures(rows):
+        print(failures)
     return 1 if any(r.failed for r in rows) else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

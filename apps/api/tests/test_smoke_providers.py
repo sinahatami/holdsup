@@ -2,7 +2,8 @@
 
 import json
 
-from scripts.smoke_providers import format_table, run
+import pytest
+from scripts.smoke_providers import Row, format_failures, format_table, run, select
 
 from holdsup.router.client import ChatResponse, ToolCall
 from holdsup.router.errors import ProviderRejected
@@ -61,3 +62,34 @@ async def test_smoke_rows_and_table() -> None:
     tool_request = client.calls[1][1]
     assert tool_request.tool_choice == "required"
     assert tool_request.tools is not None
+
+
+def test_failures_section_and_short_note() -> None:
+
+    row = Row("p", "m", "live", True, failures=["schema: p rejected: HTTP 404: gone"])
+    assert format_failures([row]) == "\nFailures:\n- p: schema: p rejected: HTTP 404: gone"
+    assert format_failures([Row("q", "m", "live", False)]) == ""
+
+
+async def test_failure_note_shows_status() -> None:
+    cfg = config(provider("gone"))
+    client = FakeClient()
+    client.script("gone", [ProviderRejected("HTTP 404: no such model")] * 2)
+    [row] = await run(cfg, client)
+    assert row.note == "schema: rejected HTTP 404; tools: rejected HTTP 404"
+    assert row.failures == [
+        "schema: gone rejected: HTTP 404: no such model",
+        "tools: gone rejected: HTTP 404: no such model",
+    ]
+
+
+def test_select_only_and_model_override() -> None:
+
+    cfg = config(provider("a"), provider("b"))
+    only_b = select(cfg, ["b"], "other-model")
+    assert [(p.name, p.model) for p in only_b.providers] == [("b", "other-model")]
+    assert len(select(cfg, [], None).providers) == 2
+    with pytest.raises(SystemExit, match="unknown"):
+        select(cfg, ["zzz"], None)
+    with pytest.raises(SystemExit, match="exactly one"):
+        select(cfg, [], "m")

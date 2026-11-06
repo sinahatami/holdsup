@@ -394,3 +394,54 @@ def test_config_rejects_unknown_and_duplicate_providers() -> None:
         config(provider("a"), provider("a"))
     with pytest.raises(KeyError):
         config(provider("a")).provider("ghost")
+
+
+# --- pacing (min_interval_s) ------------------------------------------------------------------
+
+
+def paced_router(interval: float) -> tuple[Router, FakeClient, FakeClock, list[float]]:
+    p = provider("a")
+    p["min_interval_s"] = interval
+    client, clock = FakeClient(), FakeClock()
+    slept: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        slept.append(seconds)
+        clock.advance(seconds)
+
+    return Router(config(p, provider("b")), client, clock=clock, sleep=sleep), client, clock, slept
+
+
+async def test_short_pacing_gap_is_waited_out_not_skipped() -> None:
+    router, client, clock, slept = paced_router(1.5)
+    await router.complete("extract", MSG, use=Use.LIVE)
+    clock.advance(0.5)
+    await router.complete("extract", MSG, use=Use.LIVE)
+    assert client.called() == ["a", "a"]
+    assert slept == [pytest.approx(1.0)]
+
+
+async def test_pacing_applies_to_the_schema_repair_retry() -> None:
+    router, client, _, slept = paced_router(1.5)
+    client.script("a", [ChatResponse(content="nope"), ChatResponse(content='{"ok": true}')])
+    result = await router.complete("extract", MSG, use=Use.LIVE, schema=Verdict)
+    assert result.provider == "a"
+    assert slept == [pytest.approx(1.5)]
+
+
+async def test_long_pacing_gap_falls_through_to_next_provider() -> None:
+    router, _, _, slept = paced_router(30)
+    await router.complete("extract", MSG, use=Use.LIVE)
+    assert (await router.complete("extract", MSG, use=Use.LIVE)).provider == "b"
+    assert slept == []
+
+
+async def test_router_error_carries_attempt_details() -> None:
+    router, client, _ = make(provider("a"))
+    client.script("a", [ProviderRejected("HTTP 404: model gone")])
+    with pytest.raises(RouterError) as info:
+        await router.complete("extract", MSG, use=Use.LIVE)
+    assert info.value.details == ["a rejected: HTTP 404: model gone"]
+    assert str(RateLimited(retry_after_s=3, daily=True, message="m")) == (
+        "HTTP 429 daily quota, retry-after 3s: m"
+    )

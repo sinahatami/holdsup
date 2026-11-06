@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers embed-model catalog catalog-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers list-models embed-model catalog catalog-check
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -65,7 +65,10 @@ docker-api: ## Build and run the API image on localhost:7860
 	docker run --rm -p 7860:7860 --env-file $(if $(wildcard .env),.env,/dev/null) holdsup-api:dev
 
 smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
-	cd $(API_DIR) && uv run python -m scripts.smoke_providers
+	cd $(API_DIR) && uv run python -m scripts.smoke_providers $(ARGS)
+
+list-models: ## List model ids each provider serves to your keys (needs keys; not CI)
+	cd $(API_DIR) && uv run python -m scripts.list_models $(ARGS)
 
 embed-model: ## Download the embedding model into .cache/fastembed (needed by tests and catalog)
 	cd $(API_DIR) && uv run python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('$(FASTEMBED_CACHE_PATH)')"

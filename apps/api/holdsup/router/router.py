@@ -1,9 +1,10 @@
 """Pick a provider per call, track budgets, fail over on limits, errors, and bad output."""
 
+import asyncio
 import json
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from typing import overload
 
@@ -33,6 +34,7 @@ from holdsup.router.errors import (
 log = logging.getLogger("holdsup.router")
 
 DEFAULT_COOLDOWN_S = 60.0
+MAX_PACING_WAIT_S = 2.0  # wait out min_interval_s gaps up to this long instead of skipping
 SCHEMA_RETRIES = 1
 
 
@@ -65,10 +67,13 @@ class Router:
         usage_store: UsageStore | None = None,
         clock: Clock | None = None,
         breaker: CircuitBreaker | None = None,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
         self.config = config
         self._client = client
         self._clock = clock or SystemClock()
+        self._sleep = sleep
+        self._last_call: dict[str, float] = {}
         self.budgets = Budgets(usage_store or InMemoryUsageStore())
         self.breaker = breaker or CircuitBreaker()
         self._cooldown_until: dict[str, float] = {}
@@ -91,9 +96,25 @@ class Router:
             caps.add(Capability.JSON_OBJECT)  # schema mode implies JSON output
         return needs <= caps
 
+    def _pacing_s(self, provider: ProviderConfig, now: float) -> float:
+        """Seconds until `min_interval_s` since the last call to this provider has passed."""
+        last = self._last_call.get(provider.name)
+        return 0.0 if last is None else max(0.0, last + provider.min_interval_s - now)
+
+    async def _ready(self, provider: ProviderConfig) -> float:
+        """Wait out a short pacing gap; return 0 if callable now, else seconds to wait."""
+        now = self._clock.now()
+        wait = await self._wait_s(provider, now)
+        pacing = self._pacing_s(provider, now)
+        if wait > 0 and wait <= pacing <= MAX_PACING_WAIT_S:
+            await self._sleep(pacing)
+            return await self._wait_s(provider, self._clock.now())
+        return wait
+
     async def _wait_s(self, provider: ProviderConfig, now: float) -> float:
         """0 if the provider can be called now, else seconds until it might be."""
         waits = [
+            self._pacing_s(provider, now),
             self._cooldown_until.get(provider.name, 0.0) - now,
             self._exhausted_until.get(provider.name, 0.0) - now,
             self.breaker.wait_s(provider.name, now),
@@ -153,7 +174,7 @@ class Router:
         attempts: list[Attempt] = []
         waits: list[float] = []
         for provider in self.candidates(step, use, self._needs(schema, tools)):
-            wait = await self._wait_s(provider, self._clock.now())
+            wait = await self._ready(provider)
             if wait > 0:
                 waits.append(wait)
                 continue
@@ -167,6 +188,7 @@ class Router:
             step=step,
             attempts=[f"{a.provider}:{a.outcome}" for a in attempts],
             retry_after_s=min((w for w in waits if w > 0), default=None),
+            details=[f"{a.provider} {a.outcome}: {a.detail}" for a in attempts if a.detail],
         )
 
     async def _try_provider[T: BaseModel](
@@ -184,7 +206,7 @@ class Router:
             convo.insert(0, _schema_instruction(schema))
 
         for schema_try in range(SCHEMA_RETRIES + 1):
-            if schema_try > 0 and await self._wait_s(provider, self._clock.now()) > 0:
+            if schema_try > 0 and await self._ready(provider) > 0:
                 return None
             request = ChatRequest(
                 messages=convo,
@@ -193,6 +215,7 @@ class Router:
                 tool_choice=tool_choice,
             )
             started = time.perf_counter()
+            self._last_call[provider.name] = self._clock.now()
             await self.budgets.record(provider, self._clock.now())
             try:
                 response = await self._client.complete(provider, request)

@@ -40,6 +40,8 @@ class ProviderConfig(BaseModel):
     limits: Limits
     allowed_use: Use
     timeout_s: float = Field(default=30.0, gt=0)
+    # Minimum gap between calls (e.g. Mistral's ~1 request/second); 0 = no pacing.
+    min_interval_s: float = Field(default=0.0, ge=0)
 
     def serves(self, use: Use) -> bool:
         """Live providers may also run offline jobs; offline providers never serve live traffic."""
