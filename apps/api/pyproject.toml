@@ -4,20 +4,9 @@ version = "0.0.0"
 description = "HoldsUp API: a statistical claim auditor."
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "alembic>=1.20.1",
-    "asyncpg>=0.32.0",
     "fastapi",
-    "fastembed>=0.9.1",
-    "httpx>=0.28.1",
-    "httpx2>=2.16.0",
-    "numpy>=2.5.4",
-    "openai>=3.46.0",
-    "pgvector>=0.5.1",
     "pydantic",
     "pydantic-settings",
-    "pyyaml>=6.0.3",
-    "sqlalchemy[asyncio]>=2.1.8",
-    "tenacity>=9.2.1",
     "uvicorn[standard]",
 ]
 
