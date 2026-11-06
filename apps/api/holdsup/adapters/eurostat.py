@@ -4,38 +4,23 @@ https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query
 """
 
 import json
-from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
 import httpx
-from tenacity import (
-    AsyncRetrying,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 from tenacity.wait import WaitBaseT
 
 from holdsup.adapters.base import (
     FetchedSeries,
+    Filters,
     SourceFormatError,
     SourceNotFound,
-    SourceUnavailable,
     sha256_hex,
 )
+from holdsup.adapters.http import DEFAULT_WAIT, get_with_retries
 from holdsup.adapters.jsonstat import observations, parse_cube
 
 SOURCE = "eurostat"
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
-TIMEOUT_S = 30.0
-ATTEMPTS = 3
-DEFAULT_WAIT = wait_exponential(multiplier=0.5, max=4)
-
-Filters = Mapping[str, str | Sequence[str]]
-
-
-class _Transient(Exception):
-    pass
 
 
 def build_params(filters: Filters) -> dict[str, list[str]]:
@@ -56,6 +41,8 @@ def _error_label(body: bytes) -> str:
 
 
 class EurostatAdapter:
+    source = SOURCE
+
     def __init__(
         self,
         client: httpx.AsyncClient,
@@ -66,30 +53,14 @@ class EurostatAdapter:
         self._base_url = base_url.rstrip("/")
         self._retry_wait = retry_wait
 
-    async def _get(self, url: str, params: dict[str, list[str]]) -> httpx.Response:
-        try:
-            async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(ATTEMPTS),
-                wait=self._retry_wait,
-                retry=retry_if_exception_type(_Transient),
-                reraise=True,
-            ):
-                with attempt:
-                    try:
-                        response = await self._client.get(url, params=params, timeout=TIMEOUT_S)
-                    except httpx.TransportError as exc:
-                        raise _Transient(str(exc)) from exc
-                    if response.status_code >= 500 or response.status_code == 429:
-                        raise _Transient(f"HTTP {response.status_code}")
-                    return response
-        except _Transient as exc:
-            raise SourceUnavailable(f"eurostat: {exc}") from exc
-        raise AssertionError("unreachable")  # pragma: no cover
-
     async def fetch_series(self, dataset: str, filters: Filters) -> FetchedSeries:
-        url = f"{self._base_url}/{dataset}"
-        params = build_params(filters)
-        response = await self._get(url, params)
+        response = await get_with_retries(
+            self._client,
+            f"{self._base_url}/{dataset}",
+            source=SOURCE,
+            params=build_params(filters),
+            retry_wait=self._retry_wait,
+        )
         if response.status_code in (400, 404):
             raise SourceNotFound(f"eurostat {dataset}: {_error_label(response.content)}")
         if response.status_code != 200:
@@ -110,4 +81,5 @@ class EurostatAdapter:
             dimension_labels=cube.labels,
             status_labels=cube.status_labels,
             updated=cube.updated,
+            citation=f"Eurostat ({dataset})",
         )

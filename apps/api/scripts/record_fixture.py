@@ -12,6 +12,8 @@ import httpx
 
 FIXTURE_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
 EUROSTAT = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
+WORLDBANK = "https://api.worldbank.org/v2"
+OWID = "https://ourworldindata.org/grapher"
 
 # name -> URL. Keep queries small: fixtures are committed.
 FIXTURES: dict[str, str] = {
@@ -32,6 +34,40 @@ FIXTURES: dict[str, str] = {
     ),
     # Error body for an unknown dataset (HTTP 404).
     "eurostat/error_not_found.json": f"{EUROSTAT}/no_such_dataset?format=JSON&lang=EN",
+    # World Bank: two countries, annual, all values present.
+    "worldbank/youth_unemployment_it_de.json": (
+        f"{WORLDBANK}/country/IT;DE/indicator/SL.UEM.1524.ZS?format=json&per_page=1000&date=2010:2025"
+    ),
+    # World Bank: Gini index for Italy has gaps (null values).
+    "worldbank/gini_it_gaps.json": (
+        f"{WORLDBANK}/country/IT/indicator/SI.POV.GINI?format=json&per_page=1000&date=2000:2024"
+    ),
+    # World Bank error block: HTTP 200 with a "message" array for a bad indicator code.
+    "worldbank/error_invalid_indicator.json": (
+        f"{WORLDBANK}/country/IT/indicator/NOT.A.CODE?format=json&per_page=1000"
+    ),
+    # World Bank: unknown country -> HTTP 200, total 0, data null.
+    "worldbank/empty_unknown_country.json": (
+        f"{WORLDBANK}/country/XX/indicator/SL.UEM.1524.ZS?format=json&per_page=1000"
+    ),
+    # OWID chart CSV (filtered to two countries) and its metadata.
+    "owid/co2_per_capita_it_de.csv": (
+        f"{OWID}/co2-emissions-per-capita.csv?v=1&csvType=filtered&useColumnShortNames=true"
+        "&country=ITA~DEU&time=2015..2023"
+    ),
+    "owid/co2_per_capita.metadata.json": (
+        f"{OWID}/co2-emissions-per-capita.metadata.json?v=1&csvType=filtered&useColumnShortNames=true"
+    ),
+    # OWID entity without ISO code (price benchmark), so geo falls back to the entity name.
+    "owid/natural_gas_prices.csv": (
+        f"{OWID}/natural-gas-prices.csv?v=1&csvType=filtered&useColumnShortNames=true"
+    ),
+    # OWID unknown chart (HTTP 404).
+    "owid/error_not_found.csv": (
+        f"{OWID}/no-such-chart-holdsup.csv?v=1&csvType=filtered&useColumnShortNames=true"
+    ),
+    # NOTE: owid/error_403_not_redistributable.txt is hand-written (no public chart that
+    # returns 403 was found on 2026-11-06); it is not in this manifest.
 }
 
 

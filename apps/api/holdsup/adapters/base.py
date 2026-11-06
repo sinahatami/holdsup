@@ -1,8 +1,13 @@
 """Types shared by every data-source adapter."""
 
 import hashlib
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Protocol
+
+# Query filters: a list value means several values for that key (e.g. several countries).
+type Filters = Mapping[str, str | Sequence[str]]
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,8 @@ class FetchedSeries:
     dimension_labels: dict[str, dict[str, str]] = field(default_factory=dict)
     status_labels: dict[str, str] = field(default_factory=dict)
     updated: str | None = None
+    unit: str | None = None
+    citation: str | None = None
 
 
 class AdapterError(Exception):
@@ -48,5 +55,19 @@ class SourceFormatError(AdapterError):
     """The response did not have the documented shape."""
 
 
-def sha256_hex(raw: bytes) -> str:
-    return hashlib.sha256(raw).hexdigest()
+class SourceNotRedistributable(AdapterError):
+    """The source refuses to share this data (e.g. OWID HTTP 403); never retry or cache it."""
+
+
+def sha256_hex(*parts: bytes) -> str:
+    """Hash of the raw response body (or of several page bodies, in order)."""
+    h = hashlib.sha256()
+    for part in parts:
+        h.update(part)
+    return h.hexdigest()
+
+
+class SeriesAdapter(Protocol):
+    source: str
+
+    async def fetch_series(self, dataset: str, filters: Filters) -> FetchedSeries: ...
