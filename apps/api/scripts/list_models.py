@@ -50,7 +50,7 @@ async def run(show_all: bool) -> int:
             continue
         seen.add(key)
         configured = sorted(p.model for p in config.providers if (p.base_url, p.api_key_env) == key)
-        print(f"\n## {provider.base_url}  ({provider.api_key_env})")
+        print(f"\n## {provider.base_url}")
         if not client.has_key(provider):
             print("   key not set")
             continue
