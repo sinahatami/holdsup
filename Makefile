@@ -9,7 +9,7 @@ export
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -59,3 +59,6 @@ db-migrate: ## alembic upgrade head (uses DATABASE_URL)
 docker-api: ## Build and run the API image on localhost:7860
 	docker build -f $(API_DIR)/Dockerfile -t holdsup-api:dev .
 	docker run --rm -p 7860:7860 --env-file $(if $(wildcard .env),.env,/dev/null) holdsup-api:dev
+
+smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
+	cd $(API_DIR) && uv run python -m scripts.smoke_providers
