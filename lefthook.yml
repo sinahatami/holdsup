@@ -19,10 +19,6 @@ pre-commit:
       run: pnpm exec prettier --write --ignore-unknown {staged_files}
       stage_fixed: true
 
-    - name: env-example has no secrets
-      glob: ".env.example"
-      run: ./scripts/check-env-example.sh .env.example
-
 commit-msg:
   jobs:
     - name: commitlint

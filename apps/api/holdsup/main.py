@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from holdsup.config import get_settings
-from holdsup.routes import indicators
 
 
 class HealthResponse(BaseModel):
@@ -32,7 +31,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(v1)
-    app.include_router(indicators.router, prefix="/v1")
     return app
 
 
