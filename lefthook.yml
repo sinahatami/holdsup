@@ -1,0 +1,34 @@
+# Git hooks for both languages (see docs/decisions.md D010).
+# Installed by `make setup` (runs `lefthook install`).
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: ruff
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files} && uv run ruff format {staged_files}
+      stage_fixed: true
+
+    - name: eslint
+      root: "apps/web/"
+      glob: "*.{ts,tsx,js,mjs,cjs}"
+      run: pnpm exec eslint --max-warnings=0 {staged_files}
+
+    - name: prettier
+      glob: "*.{ts,tsx,js,mjs,cjs,json,css,yml,yaml}"
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: mypy
+      run: uv run mypy apps/api
+
+    - name: unit tests
+      run: make test
