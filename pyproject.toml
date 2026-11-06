@@ -17,6 +17,7 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "ruff",
+    "types-pyyaml>=6.0.12.20261103",
 ]
 
 [tool.ruff]
