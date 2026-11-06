@@ -38,3 +38,17 @@ Choices:
 - `lefthook` is allowed to run its postinstall in `pnpm-workspace.yaml` (`allowBuilds`).
 
 Result: `git commit -m "updated some stuff"` is rejected by commitlint (2 problems: subject-empty, type-empty); conventional messages pass. Lint and tests green.
+
+## P1.3 CI
+
+Plan: `.github/workflows/ci.yml` (quality job = `make lint`; unit-tests job = `make test` with pytest-cov XML + Vitest v8 coverage, uploaded as an artifact), `gitleaks.yml` (PRs, main, weekly), `codeql.yml` (python, javascript-typescript, actions; PRs, main, weekly). Actions pinned to current majors (checkout v7, setup-node v7, setup-uv v7, pnpm/action-setup v6, codeql-action v4, gitleaks-action v3, upload-artifact v7); Renovate keeps them current.
+
+Choices:
+- `make test` now enforces backend coverage ≥ 85% (`--cov-fail-under=85`) and runs Vitest with `--coverage` (new dev dep `@vitest/coverage-v8`, D013).
+- gitleaks-action is free for personal accounts; an organisation would need a `GITLEAKS_LICENSE` secret.
+
+Branch protection (human, GitHub → Settings → Branches → Add rule for `main`):
+1. Require a pull request before merging (0 approvals is fine for a solo repo); allow squash merging only (Settings → General → Pull Requests) and use the PR title as the commit message.
+2. Require status checks to pass, and require branches to be up to date. Required checks: `Quality (ruff, mypy, eslint, tsc, prettier)`, `Unit tests with coverage`, `gitleaks`, `CodeQL (python)`, `CodeQL (javascript-typescript)`, `CodeQL (actions)`. They appear in the picker after the first CI run.
+3. Block force pushes and deletions; include administrators.
+4. Settings → Code security: enable CodeQL alerts view, secret scanning, and push protection.
