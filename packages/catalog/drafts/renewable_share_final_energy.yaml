@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c017 c019
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 2004..2025
+# Note: This is the EU target metric (c017). It differs from the share of primary energy (c019).
+id: renewable_share_final_energy
+source: eurostat
+source_code: "nrg_ind_ren"
+name: "Renewable share of gross final energy consumption"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Share of renewable energy in gross final energy consumption as defined by the EU Renewable Energy Directive, the basis of the 2020 and 2030 national targets."
+unit: "% of gross final energy consumption"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 2004
+last_year: null # still updated
+related: [renewable_share_primary_energy]
+filters: { nrg_bal: "REN", unit: "PC" }

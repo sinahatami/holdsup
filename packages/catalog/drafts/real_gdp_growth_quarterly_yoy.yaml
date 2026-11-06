@@ -1,0 +1,17 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c011
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: DE 1992-Q1..2026-Q3, FR 1981-Q1..2026-Q3, IT 1997-Q1..2026-Q3
+id: real_gdp_growth_quarterly_yoy
+source: eurostat
+source_code: "namq_10_gdp"
+name: "Real GDP growth, year on year (quarterly)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Percentage change of real GDP (chain-linked volumes, seasonally and calendar adjusted) on the same quarter of the previous year."
+unit: "% change on same quarter of previous year"
+frequency: quarterly
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1981
+last_year: null # still updated
+related: [real_gdp_growth_quarterly_qoq, real_gdp_growth]
+filters: { na_item: "B1GQ", unit: "CLV_PCH_SM", s_adj: "SCA" }

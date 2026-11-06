@@ -1,0 +1,17 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c026 c027
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: CHN 1907..2024, DEU 1792..2024, USA 1800..2024
+id: co2_emissions_annual
+source: owid
+source_code: "annual-co2-emissions-per-country"
+name: "Annual CO2 emissions"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Annual carbon dioxide emissions from fossil fuels and industry, excluding land-use change."
+unit: "tonnes"
+frequency: annual
+geo_coverage: ["All countries", "OWID_WRL"]
+first_year: 1792
+last_year: null # still updated
+related: [co2_per_capita, co2_share_of_global, greenhouse_gas_emissions]
+filters: { column: "emissions_total" }

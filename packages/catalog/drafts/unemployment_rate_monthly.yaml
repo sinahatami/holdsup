@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c003 c020
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1983-01..2026-09, UK 1983-01..2020-09
+# Note: UK data stop at 2020-09 (Brexit), so post-2020 UK claims (c020) cannot be checked here.
+id: unemployment_rate_monthly
+source: eurostat
+source_code: "une_rt_m"
+name: "Unemployment rate (monthly)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Unemployed people aged 15 to 74 as a percentage of the labour force aged 15 to 74, monthly, seasonally adjusted (ILO definition)."
+unit: "% of labour force aged 15-74"
+frequency: monthly
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1983
+last_year: null # still updated
+related: [youth_unemployment_rate_monthly, unemployment_rate_ilo]
+filters: { age: "TOTAL", sex: "T", unit: "PC_ACT", s_adj: "SA" }

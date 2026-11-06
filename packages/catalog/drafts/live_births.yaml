@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c015
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1960..2025
+# Note: Eurostat starts in 1960; 'since unification' (1861, c015) predates the series.
+id: live_births
+source: eurostat
+source_code: "demo_gind"
+name: "Live births"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Total number of live births during the calendar year."
+unit: "births"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated
+related: [crude_birth_rate, total_fertility_rate]
+filters: { indic_de: "LBIRTH" }

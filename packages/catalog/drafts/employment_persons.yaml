@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c005
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 2009..2025
+# Note: Only ages 15-64 and only from 2009 for Italy; ISTAT's 'people in work' headline (c005) counts ages 15-89, so expect a definition mismatch.
+id: employment_persons
+source: eurostat
+source_code: "lfsi_emp_a"
+name: "Employed people"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Number of employed people aged 15 to 64 from the Labour Force Survey (resident population concept), annual average."
+unit: "thousand persons"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 2009
+last_year: null # still updated
+related: []
+filters: { indic_em: "EMP_LFS", age: "Y15-64", sex: "T", unit: "THS_PER" }

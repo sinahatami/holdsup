@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c023
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: CA 1961..2025, DE 1961..2025, FR 1961..2025, GB 1961..2025, IT 1961..2025, JP 1961..2025, US 1961..2025
+# Note: Covers all G7 countries, including the US, Canada and Japan that Eurostat does not.
+id: real_gdp_growth_world
+source: worldbank
+source_code: "NY.GDP.MKTP.KD.ZG"
+name: "Real GDP growth (World Bank)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Annual percentage growth of GDP at market prices in constant local currency."
+unit: "% change on previous year"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1961
+last_year: null # still updated
+related: [real_gdp_growth]
+filters: {}

@@ -1,0 +1,17 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c024
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: USA 1800..2024
+id: co2_per_capita
+source: owid
+source_code: "co2-emissions-per-capita"
+name: "CO2 emissions per capita"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Carbon dioxide emissions from fossil fuels and industry, excluding land-use change, in tonnes per person per year."
+unit: "tonnes per person"
+frequency: annual
+geo_coverage: ["All countries", "OWID_WRL"]
+first_year: 1800
+last_year: null # still updated
+related: [co2_emissions_annual, co2_share_of_global]
+filters: { column: "emissions_total_per_capita" }

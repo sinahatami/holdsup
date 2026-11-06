@@ -1,0 +1,17 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c006 c009
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 2000-Q1..2026-Q2
+id: government_debt_pct_gdp_quarterly
+source: eurostat
+source_code: "gov_10q_ggdebt"
+name: "Government debt to GDP (quarterly)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "General government consolidated gross debt (Maastricht definition) at the end of the quarter, as a percentage of GDP."
+unit: "% of GDP"
+frequency: quarterly
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 2000
+last_year: null # still updated
+related: [government_debt_pct_gdp, government_debt_eur]
+filters: { na_item: "GD", sector: "S13", unit: "PC_GDP" }
