@@ -12,6 +12,7 @@ members = ["apps/api"]
 [dependency-groups]
 dev = [
     "httpx",
+    "hypothesis>=6.170.15",
     "mypy",
     "pytest",
     "pytest-asyncio",
