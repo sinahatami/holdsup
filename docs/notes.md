@@ -52,3 +52,5 @@ Branch protection (human, GitHub → Settings → Branches → Add rule for `mai
 2. Require status checks to pass, and require branches to be up to date. Required checks: `Quality (ruff, mypy, eslint, tsc, prettier)`, `Unit tests with coverage`, `gitleaks`, `CodeQL (python)`, `CodeQL (javascript-typescript)`, `CodeQL (actions)`. They appear in the picker after the first CI run.
 3. Block force pushes and deletions; include administrators.
 4. Settings → Code security: enable CodeQL alerts view, secret scanning, and push protection.
+
+Status: workflows committed and the branch is pushed; P1.3 is NOT ticked. Its "Done when" (a PR runs all jobs green) needs a pull request, and `gh` is not installed here. Waiting for the human to open the PR and report the CI result.
