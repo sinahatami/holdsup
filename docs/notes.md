@@ -150,3 +150,19 @@ Output format (one row per provider; exit code 1 if any provider *with a key* ha
 What to do with the result (human): fix model ids in `providers.yaml` for `rejected`/404 rows; drop `json_schema` or `tools` from a provider's `capabilities` if that check fails; paste the table into this file with the date.
 
 Result: the script runs without keys (all rows "not set", exit 0); its logic is unit-tested with fake providers.
+
+## P1.7 Eurostat adapter
+
+Plan: `holdsup/adapters/base.py` (Observation, FetchedSeries, typed errors), `jsonstat.py` (pure JSON-stat 2.0 decoder), `eurostat.py` (`EurostatAdapter.fetch_series(dataset, filters)` over httpx with tenacity retries), `scripts/record_fixture.py` (fixture manifest + recorder), fixtures in `tests/fixtures/eurostat/`.
+
+Choices:
+- `fetch_series` returns `FetchedSeries` (observations + `raw_sha256`, URL, retrieval time, labels, `updated`) instead of a bare `list[Observation]`, so the receipt and `series_cache` (P1.8) get the hash and citation from the same call. `.observations` is the list the task names.
+- The decoder emits one Observation per cell, including missing ones (`value=None`), in cube order; `include_missing=False` drops them. Missing-but-flagged cells keep their status (e.g. `c` confidential).
+- Every non-geo/time dimension is kept on `Observation.dims` (freq, unit, sex, age, s_adj, …) so callers can check they got the series they asked for.
+- Handles both JSON-stat forms: category `index` as array or object (positions authoritative, not key order), `value`/`status` dense or sparse; a string `status` applies to all cells. NaN/inf become missing.
+- HTTP: 400/404 → `SourceNotFound` (with Eurostat's error label); 5xx, 429, transport errors → 3 attempts with exponential backoff, then `SourceUnavailable`; a cube with no values at all → `SourceNotFound`.
+- Fixtures are stored byte-for-byte (Prettier ignores `apps/api/tests/fixtures/`) so hashes are stable. `make`-free re-record: `cd apps/api && uv run python -m scripts.record_fixture [name]`.
+- Ordering is checked against ground truth from separate single-geo queries (where the flat index is just the time position), not by re-deriving the index in the test. `flat_index` also has a hypothesis bijection property test.
+- Not handled yet: Eurostat's asynchronous responses for very large extractions (the catalog uses small, filtered queries).
+
+Result: 38 adapter tests (decoder ordering incl. out-of-order object index, missing values, status flags, 15 malformed-input cases; three recorded datasets: monthly multi-geo with a no-data month, annual with b/d flags, annual GDP with a missing LI value and p/e flags; HTTP 404/400/5xx/429/transport retry paths). Backend coverage 97%.
