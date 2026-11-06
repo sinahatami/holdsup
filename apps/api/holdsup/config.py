@@ -1,9 +1,12 @@
 """Application settings, read from environment variables (never hard-coded secrets)."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -12,6 +15,9 @@ class Settings(BaseSettings):
     app_env: str = "development"
     web_origin: str = "http://localhost:3000"
     database_url: SecretStr | None = None
+    catalog_dir: Path = REPO_ROOT / "packages" / "catalog"
+    # Where fastembed keeps the embedding model; None = fastembed's default temp dir.
+    fastembed_cache_path: str | None = None
 
 
 @lru_cache

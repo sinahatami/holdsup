@@ -6,10 +6,14 @@ SHELL := /bin/bash
 -include .env
 export
 
+# Embedding model cache, shared by tests, `make catalog`, and the API in dev.
+FASTEMBED_CACHE_PATH ?= $(CURDIR)/.cache/fastembed
+export FASTEMBED_CACHE_PATH
+
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers embed-model catalog catalog-check
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -62,3 +66,12 @@ docker-api: ## Build and run the API image on localhost:7860
 
 smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.smoke_providers
+
+embed-model: ## Download the embedding model into .cache/fastembed (needed by tests and catalog)
+	cd $(API_DIR) && uv run python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('$(FASTEMBED_CACHE_PATH)')"
+
+catalog-check: ## Validate packages/catalog without touching the database
+	cd $(API_DIR) && uv run python -m holdsup.catalog.load --check
+
+catalog: ## Validate packages/catalog, embed it, and load it into Postgres (needs DATABASE_URL)
+	cd $(API_DIR) && uv run python -m holdsup.catalog.load

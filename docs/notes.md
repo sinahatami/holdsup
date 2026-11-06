@@ -180,3 +180,19 @@ Choices:
 - The cache stores successful fetches only; errors are not cached.
 
 Result: 139 backend tests with Postgres (137 + 2 DB-backed, skipped without `TEST_DATABASE_URL`): World Bank normal/gaps/error block/empty/pagination/malformed, OWID CSV + metadata/no-ISO entities/403/404/multi-column/malformed, cache hit avoids the adapter, 24 h expiry, upsert on Postgres. Backend coverage 96%.
+
+## P1.9 Catalog
+
+Plan: `holdsup/catalog/` = `schema.py` (Pydantic `IndicatorSpec`, `load_catalog` reporting every problem at once), `embed.py` (fastembed `BAAI/bge-small-en-v1.5`, normalized 384-d vectors), `index.py` (pgvector `SqlIndex` + `InMemoryIndex`), `load.py` (`make catalog` / `make catalog-check`); `indicators` table with an HNSW cosine index (migration `0004`); `GET /v1/indicators?q=&limit=` (default 8, max 20).
+
+Choices:
+- Added a `filters` field to the entry schema (fixed adapter query dimensions such as Eurostat `sex`/`age`/`unit`); the spec's field list has no place for them and the pivot test needs to fetch the exact series. Documented in `packages/catalog/README.md`.
+- The validator enforces the spec's "3–5 aliases"; also: id = file name, related ids exist, no duplicate aliases, no two entries for the same source series + filters.
+- `make catalog` syncs the table to the YAML (deletes removed entries) and stamps `catalog_version` from `packages/catalog/VERSION`.
+- Embedding model: tests never download it. `make embed-model` puts it in `.cache/fastembed` (gitignored; the Makefile exports `FASTEMBED_CACHE_PATH`), CI downloads it in a cached setup step before `make test`, and the Docker image bakes it in at `/opt/fastembed` (checked: embeds with `--network none`). Without the model, the real-model search tests skip.
+- Embedding runs in a worker thread (`asyncio.to_thread`) so search doesn't block the event loop.
+- No query prefix for bge queries: aliases and paraphrases already rank first on the test catalog.
+- Tests use a 6-entry test catalog in `apps/api/tests/fixtures/catalog/` (not the real catalog). The real `packages/catalog` is empty until P1.10 and must always validate (tested).
+- Image size is now ~750 MB (onnxruntime, numpy, model).
+
+Result: `make catalog` loads all entries (0 in `packages/catalog` today; 6 from the test catalog via `python -m holdsup.catalog.load tests/fixtures/catalog`) on Postgres 17 + pgvector. Every alias (18) and 4 unseen paraphrases find their indicator in the top 3 with the real model (all rank 1). Live `GET /v1/indicators?q=jobless rate for young people` returns `youth_unemployment_rate` first (0.84). 183 tests + 3 DB tests green.
