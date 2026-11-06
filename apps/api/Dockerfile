@@ -22,13 +22,20 @@ COPY apps/api apps/api
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package holdsup --no-editable
 
+# Bake the embedding model into the image so the API never downloads it at request time.
+FROM build AS model
+ENV FASTEMBED_CACHE_PATH=/opt/fastembed
+RUN /opt/venv/bin/python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('/opt/fastembed')"
+
 FROM python:3.13-slim AS runtime
 # Hugging Face Spaces runs containers as uid 1000.
 RUN useradd --create-home --uid 1000 app
 COPY --from=build /opt/venv /opt/venv
+COPY --from=model --chown=app:app /opt/fastembed /opt/fastembed
 COPY --chown=app:app apps/api/alembic.ini /app/alembic.ini
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
+    FASTEMBED_CACHE_PATH=/opt/fastembed \
     PORT=7860
 WORKDIR /app
 USER app
