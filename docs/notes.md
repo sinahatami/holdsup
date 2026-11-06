@@ -53,7 +53,7 @@ Branch protection (human, GitHub → Settings → Branches → Add rule for `mai
 3. Block force pushes and deletions; include administrators.
 4. Settings → Code security: enable CodeQL alerts view, secret scanning, and push protection.
 
-Status: workflows committed and the branch is pushed; P1.3 is NOT ticked. Its "Done when" (a PR runs all jobs green) needs a pull request, and `gh` is not installed here. Waiting for the human to open the PR and report the CI result.
+Result: PR #2 (`work/p1-p1.4`) ran all jobs green (confirmed by the human). PR #3 reverted that merge for unrelated reasons, so P1.4 onward must reach `main` through a new PR.
 
 ## P1.4 Deploy skeletons
 
@@ -196,6 +196,22 @@ Choices:
 - Image size is now ~750 MB (onnxruntime, numpy, model).
 
 Result: `make catalog` loads all entries (0 in `packages/catalog` today; 6 from the test catalog via `python -m holdsup.catalog.load tests/fixtures/catalog`) on Postgres 17 + pgvector. Every alias (18) and 4 unseen paraphrases find their indicator in the top 3 with the real model (all rank 1). Live `GET /v1/indicators?q=jobless rate for young people` returns `youth_unemployment_rate` first (0.84). 183 tests + 3 DB tests green.
+
+## P1.11 Pivot test script
+
+Plan: `holdsup/ops/change.py` (first safe op: absolute, percent, percentage points, ratio), `apps/api/scripts/pivot_test.py`, `make pivot-test`. Per claim: extract (router step `extract`) → vector top 8 (in-memory index over the catalog, fastembed) → model pick (router step `match`) → fetch via `CachedFetcher` (in-memory cache) → `change`. Output: `eval/reports/pivot_test.csv`.
+
+Choices:
+- Built before P0.4 (seed claims) and P1.10 (catalog) at the human's request. It is tested with fakes and the 6-entry test catalog. The real run is `make pivot-test` once `eval/seed_claims.csv` and `packages/catalog/indicators/` exist. P1.11 stays unticked until then.
+- Extraction and match schemas are crude and live in the script; P2.1 and P2.2 build the real `ClaimSpec` and matcher in `holdsup/pipeline/`. No tools in the match call yet.
+- No match = the model answers null, an id outside the top 8, or `low` confidence. The model's reason and confidence are still written.
+- Geo: the model gives ISO2 and ISO3 codes; `geo_filter` maps them per source (Eurostat GR→EL, GB→UK, EU→EU27_2020; World Bank EU→EUU; OWID ISO3). Proper geo lookup (`list_geos`) comes in P2.2.
+- Points: start = first non-missing value in the start year, end = last non-missing value in the end year, or the latest value when the claim says "now"/"since" or gives no end year. More than one series left after the catalog filters → "ambiguous series" (fix the entry's `filters`).
+- `change_kind` comes from the claim (default percent). The computed value is not judged against the claim; that is P2.4.
+- `--use live` by default so the test measures the providers that serve users; `--use offline` adds Gemini. Relative paths resolve from the repo root. Per-claim errors go in the `error` column with their stage; the run never stops on one claim.
+- Output column `correct_match` is left empty for the human (P1.12).
+
+Result: 22 script tests + 11 `ops/` tests (100% coverage on `ops/`, incl. hypothesis round-trips); backend coverage 95%. Live check against the test catalog with 5 sample claims: 4 matched at rank 1 and computed across Eurostat, World Bank and OWID; the out-of-catalog claim ("number of dentists") was correctly not matched.
 
 ## Provider smoke fix (2026-11-06)
 
