@@ -39,10 +39,10 @@ lint-web:
 test: test-py test-web ## pytest with coverage, vitest
 
 test-py:
-	cd $(API_DIR) && uv run pytest --cov=holdsup --cov-report=term-missing
+	cd $(API_DIR) && uv run pytest --cov=holdsup --cov-report=term-missing --cov-report=xml --cov-fail-under=85
 
 test-web:
-	pnpm --filter @holdsup/web test
+	pnpm --filter @holdsup/web test --coverage
 
 format: ## Auto-format Python and web code
 	uv run ruff format .
