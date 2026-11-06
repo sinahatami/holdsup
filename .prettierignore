@@ -7,4 +7,3 @@ next-env.d.ts
 coverage/
 docs/
 *.md
-apps/api/tests/fixtures/

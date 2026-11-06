@@ -53,8 +53,3 @@ htmlcov/
 
 # js (workspace packages)
 node_modules/
-
-# embedding model cache
-.cache/
-
-/docs
