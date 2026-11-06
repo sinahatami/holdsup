@@ -1,0 +1,16 @@
+id: youth_unemployment_rate
+source: eurostat
+source_code: une_rt_a
+name: Youth unemployment rate
+aliases:
+  - youth unemployment
+  - jobless rate for young people
+  - unemployment among under-25s
+definition: Unemployed people aged 15 to 24 as a percentage of the labour force of the same age, annual average.
+unit: "% of labour force aged 15-24"
+frequency: annual
+geo_coverage: [EU27_2020, IT, DE, FR, ES]
+first_year: 2009
+last_year: null
+related: [unemployment_rate]
+filters: { sex: T, age: Y15-24, unit: PC_ACT }

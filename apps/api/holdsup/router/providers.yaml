@@ -1,0 +1,94 @@
+# Model providers for the router. One entry per provider + model.
+# Limits are the published free-tier limits (docs/spec.md "Model router", checked 2026-11-06).
+# The human records what each console actually shows in docs/notes.md (P0.1); update here to match.
+# Model ids: list what each key can use with `make list-models`; confirm with `make smoke-providers`.
+# Last confirmed: 2026-11-06 (see docs/notes.md "Provider smoke fix").
+#
+# allowed_use: live    → may serve user requests (and offline jobs)
+#              offline → eval/ and ml/ only. Gemini MUST stay offline (docs/decisions.md D003).
+
+providers:
+  - name: groq-gpt-oss-120b
+    base_url: https://api.groq.com/openai/v1
+    model: openai/gpt-oss-120b
+    api_key_env: GROQ_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 131072
+    # Confirm in the Groq console (Settings > Limits); conservative until recorded.
+    limits: { requests_per_minute: 30, requests_per_day: 1000 }
+    allowed_use: live
+
+  - name: groq-gpt-oss-20b
+    base_url: https://api.groq.com/openai/v1
+    model: openai/gpt-oss-20b
+    api_key_env: GROQ_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 131072
+    limits: { requests_per_minute: 30, requests_per_day: 1000 }
+    allowed_use: live
+
+  - name: mistral-ministral-14b
+    base_url: https://api.mistral.ai/v1
+    model: ministral-14b-2512
+    api_key_env: MISTRAL_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 131072
+    # Experiment plan: mistral-small/medium answer 429 with x-ratelimit-limit-req-minute=0
+    # (not on this plan); ministral-8b/14b work. About 1 request per second, so pace calls.
+    min_interval_s: 1.5
+    limits: { requests_per_minute: 40 }
+    allowed_use: live
+
+  - name: openrouter-nemotron-free
+    base_url: https://openrouter.ai/api/v1
+    model: nvidia/nemotron-3.5-super-vl:free
+    api_key_env: OPENROUTER_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 1000000
+    # :free models rotate and Google-hosted ones (gemma-4) are often throttled upstream.
+    limits: { requests_per_minute: 20, requests_per_day: 50 }
+    allowed_use: live
+
+  - name: gemini-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    # gemini-3.8-flash and gemini-flash-latest: HTTP 503 "high demand" on 2026-11-06.
+    model: gemini-3.5-flash
+    api_key_env: GEMINI_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 1048576
+    # Per-project limits are shown in AI Studio; conservative placeholders until recorded.
+    limits: { requests_per_minute: 10, requests_per_day: 250 }
+    timeout_s: 60
+    allowed_use: offline
+
+# Preference per pipeline step, first choice first. The router skips providers that are not
+# allowed for the call's use, lack a needed capability, or are cooling down / out of budget.
+steps:
+  extract:
+    - groq-gpt-oss-20b
+    - mistral-ministral-14b
+    - groq-gpt-oss-120b
+    - openrouter-nemotron-free
+    - gemini-flash
+  match:
+    - groq-gpt-oss-120b
+    - mistral-ministral-14b
+    - openrouter-nemotron-free
+    - gemini-flash
+  plan:
+    - groq-gpt-oss-120b
+    - mistral-ministral-14b
+    - openrouter-nemotron-free
+    - gemini-flash
+  explain:
+    - groq-gpt-oss-20b
+    - mistral-ministral-14b
+    - groq-gpt-oss-120b
+    - openrouter-nemotron-free
+    - gemini-flash
+  smoke:
+    - groq-gpt-oss-120b
+    - groq-gpt-oss-20b
+    - mistral-ministral-14b
+    - openrouter-nemotron-free
+    - gemini-flash
