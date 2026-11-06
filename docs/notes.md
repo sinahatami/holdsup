@@ -126,3 +126,27 @@ Choices:
 - `SqlUsageStore` has an integration test that runs only with `TEST_DATABASE_URL` set. Run here against `pgvector/pgvector:pg17`: passed.
 
 Result: 55 router tests (fault injection: 429 with and without Retry-After, daily-limit 429, 90% daily and minute budgets, timeout, 5xx, connection error, other 4xx, malformed JSON body, invalid JSON output, schema-invalid output, breaker open/half-open/close, exhaustion → `RouterError`, Gemini never selected for `live` including on the shipped `providers.yaml`). Backend coverage 95%.
+
+## P1.6 Provider smoke script
+
+Plan: `apps/api/scripts/smoke_providers.py`, run with `make smoke-providers` (loads `.env`). For each provider in `providers.yaml` it builds a one-provider router (so calls still go through the router) with `use=offline` (so Gemini is checked too) and makes two calls:
+1. **json_schema**: "capital of Italy" with a `{country, capital}` Pydantic schema; `ok` only if it parses and the capital is Rome.
+2. **tools**: a forced (`tool_choice="required"`) `search_catalog(query: string)` call; `ok` only if the call comes back with a string `query` argument. `n/a` if the provider is not configured with the `tools` capability.
+
+Output format (one row per provider; exit code 1 if any provider *with a key* has a `FAIL`):
+
+```
+| provider           | model                   | use  | key | json_schema | tools | max_ms | note                          |
+|--------------------|-------------------------|------|-----|-------------|-------|--------|-------------------------------|
+| groq-llama-3.3-70b | llama-3.3-70b-versatile | live | yes | ok          | ok    | 640    |                               |
+| mistral-small      | mistral-small-latest    | live | yes | ok          | FAIL  | 910    | tools: ['mistral-small:rejected'] |
+| gemini-flash       | gemini-2.5-flash        | offline | no | -        | -     | -      | GEMINI_API_KEY not set        |
+```
+
+- `key`: whether the provider's env var is set. Rows without a key are skipped, not failed.
+- `max_ms`: slowest of the two calls.
+- `note`: why a check failed (router attempt outcomes such as `rate_limited`, `rejected`, `malformed`), an unexpected answer, or "needed a repair retry" when the JSON was only valid after the router's schema-repair retry (worth knowing per provider).
+
+What to do with the result (human): fix model ids in `providers.yaml` for `rejected`/404 rows; drop `json_schema` or `tools` from a provider's `capabilities` if that check fails; paste the table into this file with the date.
+
+Result: the script runs without keys (all rows "not set", exit 0); its logic is unit-tested with fake providers.
