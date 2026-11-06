@@ -54,3 +54,49 @@ Branch protection (human, GitHub → Settings → Branches → Add rule for `mai
 4. Settings → Code security: enable CodeQL alerts view, secret scanning, and push protection.
 
 Status: workflows committed and the branch is pushed; P1.3 is NOT ticked. Its "Done when" (a PR runs all jobs green) needs a pull request, and `gh` is not installed here. Waiting for the human to open the PR and report the CI result.
+
+## P1.4 Deploy skeletons
+
+Plan: `apps/api/Dockerfile` (python:3.13-slim, uv, port 7860, uid 1000), `.dockerignore`, `apps/web/vercel.json`, `DATABASE_URL` → async SQLAlchemy engine (`holdsup/db/`), Alembic (async template) with migration `0001` enabling `vector`, keep-alive workflow, `make db-migrate`, `make docker-api`.
+
+Choices:
+- The Docker build context is the repo root (`docker build -f apps/api/Dockerfile .`), because `uv.lock` is a workspace lock at the root. Only the `holdsup` package and its non-dev deps go into the image (~300 MB).
+- `alembic.ini` uses `script_location = holdsup.db:migrations` so migrations run both from the source tree and from the installed package in the image.
+- `holdsup/db/url.py` converts Neon's `postgres://…?sslmode=require&channel_binding=require` to `postgresql+asyncpg://…?ssl=require` (asyncpg rejects `sslmode` and `channel_binding`).
+- `DATABASE_URL` is a `SecretStr`; it never appears in reprs or logs.
+- Migrations are tested offline (`--sql`), so tests stay hermetic. Checked once by hand against `pgvector/pgvector:pg17` in Docker: upgrade created `vector 0.8.7`, downgrade removed it.
+- The Makefile now loads the root `.env` (if present) into every recipe.
+- Keep-alive pings `$API_BASE_URL/v1/health` every 12 hours (Spaces sleeps after ~48 h idle) and skips quietly while the variable is unset.
+- Fix from P1.3: ESLint ignored `apps/web/coverage/`, so `make lint` no longer fails after `make test`.
+
+Deployment steps (human):
+
+Neon (database)
+1. Create a project (Postgres default version, region near the Space, e.g. AWS eu-central-1). Copy the pooled connection string.
+2. Locally: put it in `.env` as `DATABASE_URL`, then `make db-migrate`. Expect `Running upgrade -> 0001`.
+
+Hugging Face Spaces (API)
+1. Create a Space: SDK **Docker**, blank template, free CPU hardware.
+2. Space Settings → Variables and secrets: add secret `DATABASE_URL`, and variable `WEB_ORIGIN` = the Vercel URL (e.g. `https://holdsup.vercel.app`). Provider keys come later (P1.5).
+3. Spaces build from a `Dockerfile` at the Space repo root, and this image needs the root `uv.lock`, so a subtree push of `apps/api` won't work. Instead, clone the Space repo locally and copy in `pyproject.toml`, `uv.lock`, `apps/api/`, and `apps/api/Dockerfile` as `Dockerfile` at its root, plus a `README.md` with Space front matter:
+   ```
+   ---
+   title: HoldsUp API
+   sdk: docker
+   app_port: 7860
+   ---
+   ```
+   Commit and push to the Space. (A GitHub Action that does this on release can come later.)
+4. When the build finishes, open `https://<user>-<space>.hf.space/v1/health` → `{"status":"ok"}`.
+
+Vercel (web)
+1. New Project → import the GitHub repo → Root Directory `apps/web` (keep "Include files outside the root directory" on, for the pnpm workspace). Framework is detected as Next.js; `vercel.json` sets the install and build commands.
+2. Environment variable `HOLDSUP_API_URL` = the Space URL (used from P2.7 on).
+3. Production branch `main`.
+
+GitHub
+1. Settings → Secrets and variables → Actions → **Variables**: `API_BASE_URL` = the Space URL (no trailing slash). Run "Keep-alive" once via workflow_dispatch to check.
+
+Local check: `make docker-api` then `curl localhost:7860/v1/health`.
+
+Result: image builds and runs locally (health `{"status":"ok"}`, Docker health check `healthy`, runs as uid 1000, `alembic upgrade head --sql` works inside it). 12 pytest tests (93% coverage), lint green.

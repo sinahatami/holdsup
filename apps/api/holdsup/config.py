@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     web_origin: str = "http://localhost:3000"
+    database_url: SecretStr | None = None
 
 
 @lru_cache
