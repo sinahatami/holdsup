@@ -3,6 +3,7 @@
 from enum import StrEnum
 from pathlib import Path
 from typing import Self
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt, model_validator
@@ -61,7 +62,9 @@ class RouterConfig(BaseModel):
             raise ValueError("provider names must be unique")
         for p in self.providers:
             # D003: Gemini's free tier must never serve live users.
-            is_gemini = "gemini" in p.name.lower() or "googleapis.com" in p.base_url
+            host = (urlparse(p.base_url).hostname or "").lower()
+            is_googleapis_host = host == "googleapis.com" or host.endswith(".googleapis.com")
+            is_gemini = "gemini" in p.name.lower() or is_googleapis_host
             if is_gemini and p.allowed_use is not Use.OFFLINE:
                 raise ValueError(f"{p.name}: Gemini providers must be allowed_use: offline")
         for step, prefs in self.steps.items():
