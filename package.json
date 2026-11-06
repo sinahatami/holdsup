@@ -1,0 +1,17 @@
+{
+  "name": "holdsup",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=26 <27",
+    "pnpm": ">=12"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

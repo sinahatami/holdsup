@@ -38,3 +38,18 @@ next-env.d.ts
 /docs/CLAUDE.md
 /docs/decisions.md
 /docs/tasks.md
+/docs/spec.md
+
+# python
+.venv/
+__pycache__/
+*.py[cod]
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# js (workspace packages)
+node_modules/
