@@ -9,18 +9,25 @@ OpenRouter's list is long: by default only `:free` models are shown, with whethe
 import argparse
 import asyncio
 import sys
+from urllib.parse import urlparse
 
 from holdsup.router.client import ModelInfo, OpenAICompatibleClient
 from holdsup.router.config import ProviderConfig, load_router_config
 from holdsup.router.errors import ProviderError
 
 
+def _on_domain(url: str, domain: str) -> bool:
+    """True if the URL's host is `domain` or a subdomain of it (not just a substring)."""
+    host = (urlparse(url).hostname or "").lower()
+    return host == domain or host.endswith(f".{domain}")
+
+
 def _visible(provider: ProviderConfig, model: ModelInfo, show_all: bool) -> bool:
     if show_all:
         return True
-    if "openrouter.ai" in provider.base_url:
+    if _on_domain(provider.base_url, "openrouter.ai"):
         return model.id.endswith(":free")
-    if "googleapis.com" in provider.base_url:
+    if _on_domain(provider.base_url, "googleapis.com"):
         return "gemini" in model.id and "embedding" not in model.id
     return True
 
