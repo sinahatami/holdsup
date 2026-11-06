@@ -166,3 +166,17 @@ Choices:
 - Not handled yet: Eurostat's asynchronous responses for very large extractions (the catalog uses small, filtered queries).
 
 Result: 38 adapter tests (decoder ordering incl. out-of-order object index, missing values, status flags, 15 malformed-input cases; three recorded datasets: monthly multi-geo with a no-data month, annual with b/d flags, annual GDP with a missing LI value and p/e flags; HTTP 404/400/5xx/429/transport retry paths). Backend coverage 97%.
+
+## P1.8 World Bank and OWID adapters, series_cache
+
+Plan: `adapters/http.py` (shared GET + tenacity retries, moved out of Eurostat), `worldbank.py`, `owid.py`, `cache.py` (`CachedFetcher` + in-memory and Postgres stores), migration `0003` (`series_cache`), fixtures recorded via `scripts/record_fixture.py`.
+
+Choices:
+- One adapter shape for all sources: `fetch_series(dataset, filters) -> FetchedSeries` (`SeriesAdapter` protocol). Filters per source: Eurostat = its dimension codes (`geo`, `unit`, …); World Bank = `country` (ISO2/ISO3, one or many), `date` ("2010:2025"); OWID = `country` (ISO3), `time` ("2015..2023"), `column` (only when a chart has several value columns).
+- World Bank: the HTTP-200 error block (`[{"message": [...]}]`) → `SourceNotFound` with key, value and id; an unknown country (HTTP 200, `total: 0`, data `null`) → `SourceNotFound` "no values". Pages are followed (max 20) and `raw_sha256` hashes all page bodies in order. `Observation.geo` is the ISO2 id (matches Eurostat); ISO3 is in `dims["iso3"]`.
+- OWID: 403 → `SourceNotRedistributable` (not retried; the caller should mark it can't-check, never cache it). 404 → `SourceNotFound`. `geo` is the ISO3 code, or the entity name when the row has no code (e.g. "US Henry Hub"). Unit, title and citation come from `<chart>.metadata.json`; only the CSV is hashed (metadata contains a changing `dateDownloaded`).
+- **The OWID 403 fixture is hand-written** (`tests/fixtures/owid/error_403_not_redistributable.txt`): about 20 likely charts all returned 200 or 404 on 2026-11-06. The adapter keys only on the status code, so the body text doesn't matter. Replace it with a real recording if a 403 chart turns up.
+- Cache key = (source, code, sha256 of canonical filters); filter order and list order don't matter. Entries younger than 24 hours are returned without calling the adapter; older ones are refetched and upserted. Rows and metadata are JSONB, so a cached `FetchedSeries` round-trips exactly.
+- The cache stores successful fetches only; errors are not cached.
+
+Result: 139 backend tests with Postgres (137 + 2 DB-backed, skipped without `TEST_DATABASE_URL`): World Bank normal/gaps/error block/empty/pagination/malformed, OWID CSV + metadata/no-ISO entities/403/404/multi-column/malformed, cache hit avoids the adapter, 24 h expiry, upsert on Postgres. Backend coverage 96%.

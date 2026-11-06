@@ -17,7 +17,7 @@ def _config(buffer: io.StringIO) -> Config:
 
 def test_single_head() -> None:
     script = ScriptDirectory.from_config(_config(io.StringIO()))
-    assert script.get_heads() == ["0002"]
+    assert script.get_heads() == ["0003"]
 
 
 def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -27,6 +27,7 @@ def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
     sql = buffer.getvalue()
     assert "CREATE EXTENSION IF NOT EXISTS vector" in sql
     assert "CREATE TABLE provider_usage" in sql
+    assert "CREATE TABLE series_cache" in sql
 
 
 def test_downgrade_drops_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
