@@ -10,9 +10,10 @@ WEB_DIR := apps/web
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
 
-setup: ## Install Python (uv) and JS (pnpm) dependencies
+setup: ## Install Python (uv) and JS (pnpm) deps, install lefthook hooks
 	uv sync --all-packages --locked
 	pnpm install --frozen-lockfile
+	pnpm exec lefthook install
 
 dev: ## Run the API (localhost:8000) and web (localhost:3000) together
 	@$(MAKE) -j2 --no-print-directory dev-api dev-web
