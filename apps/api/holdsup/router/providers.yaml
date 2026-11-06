@@ -1,0 +1,87 @@
+# Model providers for the router. One entry per provider + model.
+# Limits are the published free-tier limits (docs/spec.md "Model router", checked 2026-11-06).
+# The human records what each console actually shows in docs/notes.md (P0.1); update here to match.
+# Model ids must be confirmed by apps/api/scripts/smoke_providers.py (P1.6).
+#
+# allowed_use: live    → may serve user requests (and offline jobs)
+#              offline → eval/ and ml/ only. Gemini MUST stay offline (docs/decisions.md D003).
+
+providers:
+  - name: groq-llama-3.3-70b
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.3-70b-versatile
+    api_key_env: GROQ_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 131072
+    limits: { requests_per_minute: 30, requests_per_day: 1000 }
+    allowed_use: live
+
+  - name: groq-llama-3.1-8b
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.1-8b-instant
+    api_key_env: GROQ_API_KEY
+    capabilities: [json_object, tools]
+    context_window: 131072
+    limits: { requests_per_minute: 30, requests_per_day: 14400 }
+    allowed_use: live
+
+  - name: mistral-small
+    base_url: https://api.mistral.ai/v1
+    model: mistral-small-latest
+    api_key_env: MISTRAL_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 131072
+    # Experiment plan: about 1 request per second; monthly token cap, no published daily request cap.
+    limits: { requests_per_minute: 60 }
+    allowed_use: live
+
+  - name: openrouter-llama-3.3-70b-free
+    base_url: https://openrouter.ai/api/v1
+    model: meta-llama/llama-3.3-70b-instruct:free
+    api_key_env: OPENROUTER_API_KEY
+    capabilities: [json_object, tools]
+    context_window: 65536
+    limits: { requests_per_minute: 20, requests_per_day: 50 }
+    allowed_use: live
+
+  - name: gemini-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    model: gemini-2.5-flash
+    api_key_env: GEMINI_API_KEY
+    capabilities: [json_object, json_schema, tools]
+    context_window: 1048576
+    # Per-project limits are shown in AI Studio; conservative placeholders until recorded.
+    limits: { requests_per_minute: 10, requests_per_day: 250 }
+    allowed_use: offline
+
+# Preference per pipeline step, first choice first. The router skips providers that are not
+# allowed for the call's use, lack a needed capability, or are cooling down / out of budget.
+steps:
+  extract:
+    - groq-llama-3.1-8b
+    - mistral-small
+    - groq-llama-3.3-70b
+    - openrouter-llama-3.3-70b-free
+    - gemini-flash
+  match:
+    - groq-llama-3.3-70b
+    - mistral-small
+    - openrouter-llama-3.3-70b-free
+    - gemini-flash
+  plan:
+    - groq-llama-3.3-70b
+    - mistral-small
+    - openrouter-llama-3.3-70b-free
+    - gemini-flash
+  explain:
+    - groq-llama-3.1-8b
+    - mistral-small
+    - groq-llama-3.3-70b
+    - openrouter-llama-3.3-70b-free
+    - gemini-flash
+  smoke:
+    - groq-llama-3.3-70b
+    - groq-llama-3.1-8b
+    - mistral-small
+    - openrouter-llama-3.3-70b-free
+    - gemini-flash

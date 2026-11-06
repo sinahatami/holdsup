@@ -100,3 +100,29 @@ GitHub
 Local check: `make docker-api` then `curl localhost:7860/v1/health`.
 
 Result: image builds and runs locally (health `{"status":"ok"}`, Docker health check `healthy`, runs as uid 1000, `alembic upgrade head --sql` works inside it). 12 pytest tests (93% coverage), lint green.
+
+## P1.5 Model router
+
+Plan: `holdsup/router/` = `providers.yaml` + `config.py` (Pydantic, validated), `client.py` (openai SDK, SDK retries off, HTTP errors → typed errors), `budgets.py` (per-minute in-memory window, per-day `provider_usage` table, 90% caps), `breaker.py` (3 consecutive failures → 60 s open, then half-open), `router.py` (filter → order → call → fail over), `errors.py` (`RouterError` for callers). Migration `0002` adds `provider_usage`.
+
+How a call is routed (`Router.complete(step, messages, use=Use.LIVE|OFFLINE, schema=Model, tools=...)`):
+1. Candidates = the step's preference list, filtered by `allowed_use` (offline providers never serve `live`), capabilities (schema → `json_object`/`json_schema`; tools → `tools`), and API key present.
+2. Skip any provider that is cooling down (429), exhausted for the day, has an open breaker, or is at 90% of its per-minute or per-day limit.
+3. Count the request (minute window + `provider_usage`) before calling; add tokens after success.
+4. 429 → cool down for `Retry-After` (`retry-after-ms`, seconds, or HTTP date), or 60 s without one. A 429 whose message mentions a daily quota (`per day`, `RPD`, `TPD`, `free-models-per-day`, …) → exhausted until 00:00 UTC.
+5. Timeout, 5xx, connection errors, other 4xx → breaker failure; next provider.
+6. Invalid JSON or schema-invalid → one retry on the same provider with the validation error appended; then next provider.
+7. Nothing left → `RouterError(step, attempts, retry_after_s)`, where `retry_after_s` is the soonest any candidate frees up (for the "at capacity, back in N minutes" message).
+
+Choices:
+- Each provider entry is a provider + model (Groq's limits are per model).
+- Model ids in `providers.yaml` are best guesses until P1.6's smoke script confirms them; `gemini-2.5-flash` and the OpenRouter `:free` model especially. Mistral has no published daily request cap, so only `requests_per_minute: 60` is set.
+- Gemini is protected twice: `allowed_use: offline` filtering, and a config validator that rejects any Gemini entry (by name or `googleapis.com` URL) marked `live`.
+- Daily quotas are assumed to reset at 00:00 UTC for every provider; adjust per provider if the consoles say otherwise.
+- `json_object` providers get the JSON Schema in a system message; `json_schema` providers get it as `response_format`.
+- Router state (cool-downs, breakers, minute windows) is per process, in memory; only daily counts are durable.
+- Logging uses stdlib `logging` for now; structlog arrives with request IDs in P2.6.
+- `openai` 3.x uses `httpx2`; client tests use `httpx2.MockTransport` (D014).
+- `SqlUsageStore` has an integration test that runs only with `TEST_DATABASE_URL` set. Run here against `pgvector/pgvector:pg17`: passed.
+
+Result: 55 router tests (fault injection: 429 with and without Retry-After, daily-limit 429, 90% daily and minute budgets, timeout, 5xx, connection error, other 4xx, malformed JSON body, invalid JSON output, schema-invalid output, breaker open/half-open/close, exhaustion → `RouterError`, Gemini never selected for `live` including on the shipped `providers.yaml`). Backend coverage 95%.

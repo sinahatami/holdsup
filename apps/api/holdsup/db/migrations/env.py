@@ -8,6 +8,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from holdsup.db import models  # noqa: F401  # registers models on Base.metadata
 from holdsup.db.base import Base
 from holdsup.db.session import database_url
 from holdsup.db.url import to_async_url

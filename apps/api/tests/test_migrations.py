@@ -17,14 +17,16 @@ def _config(buffer: io.StringIO) -> Config:
 
 def test_single_head() -> None:
     script = ScriptDirectory.from_config(_config(io.StringIO()))
-    assert script.get_heads() == ["0001"]
+    assert script.get_heads() == ["0002"]
 
 
 def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "postgres://u:p@db.example/holdsup?sslmode=require")
     buffer = io.StringIO()
     command.upgrade(_config(buffer), "head", sql=True)
-    assert "CREATE EXTENSION IF NOT EXISTS vector" in buffer.getvalue()
+    sql = buffer.getvalue()
+    assert "CREATE EXTENSION IF NOT EXISTS vector" in sql
+    assert "CREATE TABLE provider_usage" in sql
 
 
 def test_downgrade_drops_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
