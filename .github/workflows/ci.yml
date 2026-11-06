@@ -50,6 +50,13 @@ jobs:
         run: |
           uv sync --all-packages --locked
           pnpm install --frozen-lockfile
+      - name: Cache embedding model
+        uses: actions/cache@v6
+        with:
+          path: .cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+      - name: Download embedding model (setup step; tests themselves stay offline)
+        run: make embed-model
       - name: Run tests
         run: make test
       - name: Upload coverage reports

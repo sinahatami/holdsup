@@ -1,0 +1,15 @@
+id: unemployment_rate
+source: eurostat
+source_code: une_rt_a
+name: Unemployment rate
+aliases:
+  - jobless rate
+  - unemployment
+  - share of the workforce out of work
+definition: Unemployed people aged 15 to 74 as a percentage of the labour force, annual average.
+unit: "% of labour force aged 15-74"
+frequency: annual
+geo_coverage: [EU27_2020, IT, DE, FR, ES]
+first_year: 2009
+related: [youth_unemployment_rate]
+filters: { sex: T, age: Y15-74, unit: PC_ACT }

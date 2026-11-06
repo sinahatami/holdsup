@@ -1,0 +1,13 @@
+id: gdp_per_capita
+source: worldbank
+source_code: NY.GDP.PCAP.CD
+name: GDP per capita (current US$)
+aliases:
+  - income per person
+  - economic output per head
+  - average national income per resident
+definition: Gross domestic product divided by midyear population, in current US dollars.
+unit: current US$
+frequency: annual
+geo_coverage: [WLD]
+first_year: 1960
