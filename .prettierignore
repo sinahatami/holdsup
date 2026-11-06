@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+uv.lock
+.venv/
+node_modules/
+.next/
+next-env.d.ts
+coverage/
+docs/
+*.md
