@@ -1,0 +1,13 @@
+# Curated claims for the home-page gallery (P2.8), one per line. Edit freely, then `make seed-gallery`.
+# Drawn from eval/seed_claims.csv: claims whose indicator matched correctly in the pivot test and
+# whose assertion type the checker supports today. A mix of outcomes is the point.
+Renzi, 2018: Since I took office, youth unemployment has fallen 12 points, from 44% to 32%.
+Letta, 2013: Italy's youth unemployment has reached 37% and has been rising for years.
+In 2011 Italy's youth unemployment was 29%; today it is 43.3%.
+Renzi, 2013: Italy's public debt is 133% of GDP.
+Grillo: At the end of 2013 Italy's debt-to-GDP ratio hit 132.6%, up from 127% in 2012.
+In 2024 Italy's fertility rate fell to 1.18 children per woman.
+Renzi, December 2015: Italy's greenhouse gas emissions are down 23% compared with 1990.
+Chloe Smith: Unemployment rose to 30% under the last Labour government.
+EPA, 2017: US per capita carbon dioxide emissions fell more than 18% between 2000 and 2014.
+Facebook post, 2013: Unemployment in South Africa has increased by 60% in the past 19 years.
