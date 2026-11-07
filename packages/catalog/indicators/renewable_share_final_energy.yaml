@@ -7,7 +7,12 @@ id: renewable_share_final_energy
 source: eurostat
 source_code: "nrg_ind_ren"
 name: "Renewable share of gross final energy consumption"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "share of renewables in energy consumption (EU target measure)"
+  - "renewable energy share"
+  - "percentage of energy from renewables (final consumption)"
+  - "green energy share under the EU renewables directive"
+  - "renewables share toward the 2030 target"
 definition: "Share of renewable energy in gross final energy consumption as defined by the EU Renewable Energy Directive, the basis of the 2020 and 2030 national targets."
 unit: "% of gross final energy consumption"
 frequency: annual

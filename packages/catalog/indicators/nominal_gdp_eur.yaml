@@ -7,7 +7,12 @@ id: nominal_gdp_eur
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Nominal GDP (current prices)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "GDP in euros (not adjusted for inflation)"
+  - "size of the economy in current prices"
+  - "nominal GDP"
+  - "economic output at current prices"
+  - "GDP in current euros"
 definition: "Gross domestic product at market prices in current prices, in million euro; not adjusted for inflation."
 unit: "million euro (current prices)"
 frequency: annual

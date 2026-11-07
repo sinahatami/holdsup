@@ -6,7 +6,12 @@ id: government_debt_pct_gdp
 source: eurostat
 source_code: "gov_10dd_edpt1"
 name: "Government debt to GDP"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "debt-to-GDP ratio"
+  - "public debt as a share of GDP"
+  - "national debt as percent of GDP"
+  - "Maastricht debt ratio"
+  - "government debt ratio at end of year"
 definition: "General government consolidated gross debt (Maastricht definition) at the end of the year, as a percentage of GDP."
 unit: "% of GDP"
 frequency: annual

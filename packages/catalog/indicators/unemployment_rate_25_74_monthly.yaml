@@ -7,7 +7,11 @@ id: unemployment_rate_25_74_monthly
 source: eurostat
 source_code: "une_rt_m"
 name: "Unemployment rate, ages 25-74 (monthly)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "adult unemployment rate (25-74)"
+  - "unemployment excluding young people"
+  - "jobless rate for over-25s"
+  - "monthly unemployment among adults aged 25 to 74"
 definition: "Unemployed people aged 25 to 74 as a percentage of the labour force aged 25 to 74, monthly, seasonally adjusted (ILO definition); excludes young people."
 unit: "% of labour force aged 25-74"
 frequency: monthly

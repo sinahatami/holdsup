@@ -6,7 +6,12 @@ id: youth_unemployment_rate_monthly
 source: eurostat
 source_code: "une_rt_m"
 name: "Youth unemployment rate (monthly)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "youth unemployment"
+  - "jobless rate for under-25s"
+  - "unemployment among young people under 25"
+  - "monthly youth jobless rate"
+  - "young people out of work"
 definition: "Unemployed people aged under 25 as a percentage of the labour force of the same age, monthly, seasonally adjusted (ILO definition)."
 unit: "% of labour force aged under 25"
 frequency: monthly

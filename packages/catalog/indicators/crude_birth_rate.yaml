@@ -6,7 +6,11 @@ id: crude_birth_rate
 source: eurostat
 source_code: "demo_gind"
 name: "Crude birth rate"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "birth rate"
+  - "births per 1,000 people"
+  - "birth rate per thousand inhabitants"
+  - "number of babies born per 1,000 population"
 definition: "Live births during the year per 1,000 people of the average population."
 unit: "births per 1,000 people"
 frequency: annual

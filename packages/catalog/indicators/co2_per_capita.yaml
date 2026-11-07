@@ -6,7 +6,11 @@ id: co2_per_capita
 source: owid
 source_code: "co2-emissions-per-capita"
 name: "CO2 emissions per capita"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "carbon footprint per person"
+  - "CO2 emissions per person"
+  - "tonnes of CO2 per head"
+  - "per-person carbon emissions"
 definition: "Carbon dioxide emissions from fossil fuels and industry, excluding land-use change, in tonnes per person per year."
 unit: "tonnes per person"
 frequency: annual

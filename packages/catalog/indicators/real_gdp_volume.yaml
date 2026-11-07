@@ -6,7 +6,11 @@ id: real_gdp_volume
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Real GDP (volume)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "inflation-adjusted GDP"
+  - "size of the economy in real terms"
+  - "GDP at constant prices"
+  - "real output level (chain-linked euros)"
 definition: "Gross domestic product at market prices in chain-linked volumes with reference year 2020, used to compare real growth between two years."
 unit: "million euro, chain-linked volumes (2020)"
 frequency: annual

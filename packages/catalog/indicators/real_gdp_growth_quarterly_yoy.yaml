@@ -6,7 +6,11 @@ id: real_gdp_growth_quarterly_yoy
 source: eurostat
 source_code: "namq_10_gdp"
 name: "Real GDP growth, year on year (quarterly)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "annual GDP growth in a quarter (vs same quarter last year)"
+  - "year-on-year quarterly GDP growth"
+  - "GDP growth compared with the same quarter a year earlier"
+  - "y/y GDP growth"
 definition: "Percentage change of real GDP (chain-linked volumes, seasonally and calendar adjusted) on the same quarter of the previous year."
 unit: "% change on same quarter of previous year"
 frequency: quarterly

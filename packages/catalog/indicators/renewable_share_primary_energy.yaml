@@ -9,7 +9,11 @@ id: renewable_share_primary_energy
 source: owid
 source_code: "energy-mix"
 name: "Renewable share of primary energy"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "share of primary energy from renewables"
+  - "percentage of energy from renewable sources (primary energy basis)"
+  - "green energy share of total energy use (primary)"
+  - "renewables in the energy mix (primary energy)"
 definition: "Share of primary energy that comes from renewable sources, from the Energy Institute Statistical Review of World Energy."
 unit: "% of primary energy"
 frequency: annual

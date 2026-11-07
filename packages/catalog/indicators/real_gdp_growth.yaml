@@ -6,7 +6,12 @@ id: real_gdp_growth
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Real GDP growth"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "economic growth"
+  - "annual GDP growth"
+  - "growth rate of the economy (inflation-adjusted)"
+  - "how much the economy grew last year"
+  - "real growth rate"
 definition: "Percentage change of real GDP (chain-linked volumes) on the previous year."
 unit: "% change on previous year"
 frequency: annual

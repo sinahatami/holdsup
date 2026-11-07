@@ -6,7 +6,12 @@ id: government_debt_eur
 source: eurostat
 source_code: "gov_10dd_edpt1"
 name: "Government debt (euro)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "public debt in euros"
+  - "national debt (million euro)"
+  - "total government debt in euros"
+  - "how much the government owes in euros"
+  - "state debt level in euros"
 definition: "General government consolidated gross debt (Maastricht definition) at the end of the year, in million euro at current prices."
 unit: "million euro (current prices)"
 frequency: annual

@@ -7,7 +7,12 @@ id: live_births
 source: eurostat
 source_code: "demo_gind"
 name: "Live births"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "number of births"
+  - "babies born per year"
+  - "how many children are born"
+  - "annual births (total count)"
+  - "number of newborns"
 definition: "Total number of live births during the calendar year."
 unit: "births"
 frequency: annual

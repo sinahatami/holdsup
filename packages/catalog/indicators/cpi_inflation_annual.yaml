@@ -7,7 +7,12 @@ id: cpi_inflation_annual
 source: worldbank
 source_code: "FP.CPI.TOTL.ZG"
 name: "Consumer price inflation (annual, national CPI)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "inflation rate (annual average, national CPI)"
+  - "CPI inflation"
+  - "consumer price index inflation"
+  - "yearly rise in the cost of living"
+  - "annual average price increase"
 definition: "Annual percentage change in the national consumer price index (annual average), from the IMF International Financial Statistics."
 unit: "% change on previous year"
 frequency: annual

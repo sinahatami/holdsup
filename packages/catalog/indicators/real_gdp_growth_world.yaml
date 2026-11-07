@@ -7,7 +7,12 @@ id: real_gdp_growth_world
 source: worldbank
 source_code: "NY.GDP.MKTP.KD.ZG"
 name: "Real GDP growth (World Bank)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "GDP growth rate (World Bank)"
+  - "annual economic growth worldwide"
+  - "GDP growth in constant local currency"
+  - "real economic growth across countries"
+  - "growth of the economy (annual %, constant prices)"
 definition: "Annual percentage growth of GDP at market prices in constant local currency."
 unit: "% change on previous year"
 frequency: annual

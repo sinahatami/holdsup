@@ -6,7 +6,12 @@ id: real_gdp_per_capita
 source: eurostat
 source_code: "nama_10_pc"
 name: "Real GDP per capita"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "GDP per person (inflation-adjusted)"
+  - "real income per head"
+  - "output per person in constant prices"
+  - "living standards measured by GDP per head"
+  - "real GDP per head"
 definition: "Gross domestic product at market prices in chain-linked volumes (reference year 2020) divided by the population, in euro per person."
 unit: "euro per person, chain-linked volumes (2020)"
 frequency: annual

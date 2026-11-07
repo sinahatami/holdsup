@@ -6,7 +6,12 @@ id: life_expectancy
 source: worldbank
 source_code: "SP.DYN.LE00.IN"
 name: "Life expectancy at birth"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "life expectancy"
+  - "how long people live"
+  - "average lifespan"
+  - "expected years of life for a newborn"
+  - "longevity"
 definition: "Number of years a newborn would live if mortality patterns at the time of birth stayed the same, both sexes."
 unit: "years"
 frequency: annual

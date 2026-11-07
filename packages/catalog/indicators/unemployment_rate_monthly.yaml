@@ -7,7 +7,12 @@ id: unemployment_rate_monthly
 source: eurostat
 source_code: "une_rt_m"
 name: "Unemployment rate (monthly)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "unemployment rate"
+  - "jobless rate"
+  - "monthly unemployment figure (15-74)"
+  - "share of people out of work"
+  - "headline unemployment rate"
 definition: "Unemployed people aged 15 to 74 as a percentage of the labour force aged 15 to 74, monthly, seasonally adjusted (ILO definition)."
 unit: "% of labour force aged 15-74"
 frequency: monthly

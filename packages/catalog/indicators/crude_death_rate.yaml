@@ -7,7 +7,11 @@ id: crude_death_rate
 source: eurostat
 source_code: "demo_gind"
 name: "Crude death rate"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "death rate"
+  - "deaths per 1,000 people"
+  - "deaths per thousand inhabitants"
+  - "mortality rate per 1,000 population"
 definition: "Deaths during the year per 1,000 people of the average population."
 unit: "deaths per 1,000 people"
 frequency: annual

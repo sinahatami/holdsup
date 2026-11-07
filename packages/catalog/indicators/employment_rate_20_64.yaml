@@ -7,7 +7,12 @@ id: employment_rate_20_64
 source: eurostat
 source_code: "lfsi_emp_a"
 name: "Employment rate, ages 20-64"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "employment rate"
+  - "share of 20-64 year olds in work"
+  - "percentage of working-age people with a job (20-64)"
+  - "EU 2030 employment target rate"
+  - "jobs rate for 20- to 64-year-olds"
 definition: "Employed people aged 20 to 64 as a percentage of the total population of the same age, Labour Force Survey, annual average; the EU 2030 target metric."
 unit: "% of population aged 20-64"
 frequency: annual

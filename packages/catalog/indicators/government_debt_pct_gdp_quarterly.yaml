@@ -6,7 +6,11 @@ id: government_debt_pct_gdp_quarterly
 source: eurostat
 source_code: "gov_10q_ggdebt"
 name: "Government debt to GDP (quarterly)"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "quarterly debt-to-GDP ratio"
+  - "public debt as % of GDP at end of quarter"
+  - "quarterly national debt ratio"
+  - "latest quarterly government debt ratio"
 definition: "General government consolidated gross debt (Maastricht definition) at the end of the quarter, as a percentage of GDP."
 unit: "% of GDP"
 frequency: quarterly

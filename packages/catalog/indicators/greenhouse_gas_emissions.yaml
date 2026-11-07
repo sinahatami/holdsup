@@ -6,7 +6,12 @@ id: greenhouse_gas_emissions
 source: eurostat
 source_code: "env_air_gge"
 name: "Greenhouse gas emissions"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "total greenhouse gas emissions (CO2 equivalent)"
+  - "GHG emissions"
+  - "climate-warming emissions including methane"
+  - "carbon equivalent emissions"
+  - "emissions of all greenhouse gases"
 definition: "Total greenhouse gas emissions (CO2, methane, nitrous oxide and fluorinated gases in CO2 equivalent) excluding land use, land-use change and forestry, from national inventories."
 unit: "million tonnes CO2 equivalent"
 frequency: annual

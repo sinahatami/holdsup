@@ -7,7 +7,11 @@ id: employment_persons
 source: eurostat
 source_code: "lfsi_emp_a"
 name: "Employed people"
-aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+aliases:
+  - "number of people in work"
+  - "how many people have jobs"
+  - "total employment (number of workers aged 15-64)"
+  - "number of people employed aged 15-64"
 definition: "Number of employed people aged 15 to 64 from the Labour Force Survey (resident population concept), annual average."
 unit: "thousand persons"
 frequency: annual
