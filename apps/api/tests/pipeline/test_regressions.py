@@ -517,6 +517,46 @@ async def test_c029_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date
     assert inputs(c.operations[0]) == [("1994", 23.07), ("2012", 24.73)]
 
 
+async def test_c018_a_place_written_as_a_name_is_read_as_its_code() -> None:
+    # What the extractor wrote live: "Italy", which dropped the claim for naming no place.
+    script = [
+        extraction(model_claim(C018[23:], "greenhouse gas emissions", "1990", "latest",
+                               geo="Italy", type="percent", value=23, direction="down"),
+                   speaker="Renzi"),
+        match("greenhouse_gas_emissions"),
+        plan({"op": "change", "geo": "IT", "start": "1990", "end": "latest", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C018, script)
+    [c] = out.claims
+    assert c.claim.geo == "IT" and "geo 'Italy' read as IT" in c.claim.notes
+    assert inputs(c.operations[0]) == [("1990", 520.63), ("2013", 450.51)]
+    assert c.verdict.label is Label.NOT_SUPPORTED and not c.retryable
+
+
+async def test_c007_two_values_for_a_change_claim_become_one_change() -> None:
+    # What the planner wrote live for a "from X to Y" change: one value_at per end.
+    script = [
+        extraction(model_claim("Italy's debt-to-GDP ratio ... hit 132.6%, up from 127% in 2012",
+                               "debt-to-GDP ratio", "2012", "2013", type="percentage_points",
+                               value=5.6, direction="up", start_value=127, end_value=132.6),
+                   speaker="Grillo"),
+        match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        plan({"op": "value_at", "geo": "IT", "period": "2012"},
+             {"op": "value_at", "geo": "IT", "period": "2013"}, answer=[0, 1]),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C007, script)
+    [c] = out.claims
+    assert not c.retryable and c.verdict.label is not Label.CANT_CHECK
+    assert [(o.op, o.args["start"], o.args["end"]) for o in c.operations] == [
+        ("change", "2012", "2013")
+    ]
+    assert c.answer == [0]
+    assert inputs(c.operations[0]) == [("2012", 126.1), ("2013", 132.0)]
+    assert any("two value_at (2012, 2013) → one change" in n for n in c.notes)
+
+
 def test_the_smoke_set_names_real_indicators_and_labels() -> None:
     lines = (REPO_ROOT / "eval" / "smoke_claims.jsonl").read_text(encoding="utf-8").splitlines()
     cases = [json.loads(line) for line in lines if line.strip()]

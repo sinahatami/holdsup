@@ -28,6 +28,7 @@ from holdsup.pipeline.claim import (
     Operator,
 )
 from holdsup.pipeline.terms import OfficeTerms, find_holders, pick_term
+from holdsup.places import is_name, place_code
 from holdsup.router import Attempt, Router, Use
 
 # --- what the model returns ------------------------------------------------------------------
@@ -176,17 +177,6 @@ WORD_NUMBERS = {
         )
     },
 }
-GEO_GROUPS = frozenset({"EU", "EA", "WORLD", "G7", "G20", "OECD"})
-GEO_ALIASES = {
-    "UK": "GB",
-    "EL": "GR",
-    "EU27": "EU",
-    "EU27_2020": "EU",
-    "EZ": "EA",
-    "EA20": "EA",
-    "EUROZONE": "EA",
-    "WLD": "WORLD",
-}
 
 
 def _readings(text: str) -> list[set[float]]:
@@ -263,11 +253,9 @@ def _norm_text(text: str) -> str:
 
 
 def normalize_geo(code: str | None) -> str | None:
-    if code is None:
-        return None
-    code = code.strip().upper()
-    code = GEO_ALIASES.get(code, code)
-    return code if re.fullmatch(r"[A-Z]{2}", code) or code in GEO_GROUPS else None
+    """The claim code for what the model wrote: a code, a country name, a demonym ("Italian")
+    or a short form ("the UK", "America"); None when the place is unknown."""
+    return place_code(code)
 
 
 def normalize_period(period: str | None, *, allow_latest: bool = False) -> str | None:
@@ -443,14 +431,18 @@ def resolve(
 
     geo = normalize_geo(claim.geo)
     if claim.geo is not None and geo is None:
-        notes.append(f"geo {claim.geo!r} is not a known code; dropped")
+        notes.append(f"geo {claim.geo!r} is not a known place; dropped")
+    elif claim.geo is not None and is_name(claim.geo):
+        notes.append(f"geo {claim.geo!r} read as {geo}")
     geo_basis = None if geo is None else (Basis.STATED if claim.geo_named else Basis.INFERRED)
     peers = []
     for raw in claim.peers:
         if (code := normalize_geo(raw)) is None:
-            notes.append(f"peer {raw!r} is not a known code; dropped")
+            notes.append(f"peer {raw!r} is not a known place; dropped")
         elif code not in peers:
             peers.append(code)
+            if is_name(raw):
+                notes.append(f"peer {raw!r} read as {code}")
 
     start = normalize_period(claim.start)
     if claim.start is not None and start is None:
