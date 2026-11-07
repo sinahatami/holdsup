@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from holdsup.pipeline.claim import Assertion, AssertionType, Basis, Direction
+from holdsup.pipeline.claim import Assertion, AssertionType, Basis, Direction, Operator
 from holdsup.pipeline.extract import (
     EXTRACT_SYSTEM,
     Lookback,
@@ -20,6 +20,7 @@ from holdsup.pipeline.extract import (
     normalize_geo,
     normalize_period,
     numbers_in,
+    operator_in,
     parse_said_on,
     resolve,
     times_written,
@@ -494,3 +495,68 @@ def test_from_to_levels_are_still_a_change() -> None:
 def test_prompt_keeps_each_level_with_its_own_value() -> None:
     assert "A level's number goes in assertion.value" in EXTRACT_SYSTEM
     assert "two level claims, each with its own value and period" in EXTRACT_SYSTEM
+
+
+@pytest.mark.parametrize(
+    ("quote", "value", "operator"),
+    [
+        ("emissions fell more than 18% since 2000", 18, Operator.MORE_THAN),
+        ("debt is over 2,000 billion", 2000, Operator.MORE_THAN),
+        ("inflation stayed below 2%", 2, Operator.LESS_THAN),
+        ("at least 1.5 million jobs", 1.5, Operator.AT_LEAST),
+        ("no more than 3% of GDP", 3, Operator.AT_MOST),
+        ("up to 40 points", 40, Operator.AT_MOST),
+        ("people under 25: 20% are jobless", 20, None),  # the bound is on another number
+        ("it fell 18%", 18, None),
+    ],
+)
+def test_operator_in(quote: str, value: float, operator: Operator | None) -> None:
+    assert operator_in(quote, value) is operator
+
+
+def test_the_model_s_operator_is_kept() -> None:
+    assertion = Assertion(type=AssertionType.PERCENT, value=18, direction=Direction.DOWN,
+                          unit="%", start_value=None, end_value=None,
+                          operator=Operator.AT_LEAST)  # fmt: skip
+    text = "fell more than 18%"
+    spec = resolve(model_claim(assertion=assertion, quote=text), text=text, speaker=None,
+                   said=SAID_2018)  # fmt: skip
+    assert spec.assertion.operator is Operator.AT_LEAST and spec.notes == []
+
+
+@pytest.mark.parametrize(
+    ("type", "quote", "start", "end"),
+    [
+        (AssertionType.TREND, "has been rising for years", "2013", "latest"),
+        (AssertionType.TREND, "life expectancy is falling", "2013", "latest"),
+        (AssertionType.PERCENT, "prices recently rose 10%", "2013", "latest"),
+        (AssertionType.PERCENT, "prices rose 10%", None, None),  # no window words
+        (AssertionType.LEVEL, "it has recently reached 10%", None, None),  # a level needs none
+    ],
+)
+def test_vague_windows_are_the_five_years_before_the_claim_date(
+    type: AssertionType, quote: str, start: str | None, end: str | None
+) -> None:
+    value = None if type is AssertionType.TREND else 10
+    assertion = Assertion(type=type, value=value, direction=Direction.UP, unit="%",
+                          start_value=None, end_value=None)  # fmt: skip
+    spec = resolve(model_claim(assertion=assertion, quote=quote), text=quote, speaker=None,
+                   said=SAID_2018)  # fmt: skip
+    assert (spec.start, spec.end) == (start, end)
+    if start is not None:
+        assert (spec.start_basis, spec.end_basis) == (Basis.ASSUMED, Basis.ASSUMED)
+        assert spec.notes[-1].endswith("5 years before the claim date (2018): from 2013")
+
+
+def test_a_stated_start_is_never_replaced_by_an_assumed_one() -> None:
+    assertion = Assertion(type=AssertionType.TREND, value=None, direction=Direction.UP,
+                          unit=None, start_value=None, end_value=None)  # fmt: skip
+    spec = resolve(model_claim(assertion=assertion, quote="rising for years since 2010",
+                               start="2010", end="2018"),
+                   text="rising for years since 2010", speaker=None, said=SAID_2018)  # fmt: skip
+    assert (spec.start, spec.start_basis) == ("2010", Basis.STATED)
+
+
+def test_prompt_names_operators_and_the_up_from_shape() -> None:
+    assert "assertion.operator: more_than" in EXTRACT_SYSTEM
+    assert "is one change claim" in EXTRACT_SYSTEM

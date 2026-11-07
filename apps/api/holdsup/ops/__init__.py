@@ -12,7 +12,14 @@ from holdsup.ops.aggregate import (
     year_window,
 )
 from holdsup.ops.change import ChangeKind, change_between, compound_rate
-from holdsup.ops.periods import LATEST, Frequency, Period, parse_period, years_between
+from holdsup.ops.periods import (
+    LATEST,
+    Frequency,
+    Period,
+    parse_period,
+    published_by,
+    years_between,
+)
 from holdsup.ops.record import DataPoint, Flag, FlagCode, OpError, OpRecord
 from holdsup.ops.series import Series
 from holdsup.ops.transforms import deflate, per_capita
@@ -46,6 +53,7 @@ __all__ = [
     "linear_fit",
     "parse_period",
     "per_capita",
+    "published_by",
     "rank",
     "trend",
     "unit_scale",

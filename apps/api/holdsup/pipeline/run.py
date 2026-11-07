@@ -15,7 +15,7 @@ Failures:
 import time
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from importlib.metadata import version
 from typing import Literal, Protocol
@@ -34,7 +34,7 @@ from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
-from holdsup.pipeline.extract import extract_claims
+from holdsup.pipeline.extract import extract_claims, parse_said_on
 from holdsup.pipeline.match import CatalogSearch, Matcher
 from holdsup.pipeline.plan import PlanContext, SeriesInfo, execute_plan, plan_analysis
 from holdsup.pipeline.terms import OfficeTerms
@@ -239,6 +239,13 @@ class Pipeline:
     terms: OfficeTerms | None = None
     today: Callable[[], date] | None = None
 
+    def _as_of(self, claim: ClaimSpec) -> date | None:
+        """The day a dated claim is checked as of: the last day it can have been said."""
+        if claim.said_on is None:
+            return None
+        today = self.today() if self.today else datetime.now(UTC).date()
+        return parse_said_on(claim.said_on, today).by
+
     def versions(self) -> dict[str, object]:
         """What a stored result must match to be reused (the ledger): the catalog and the
         tolerances its verdicts came from."""
@@ -321,7 +328,7 @@ class Pipeline:
 
         # Plan.
         await trace.start(Step.PLAN, i)
-        ctx = PlanContext(claim=claim, main=info)
+        ctx = PlanContext(claim=claim, main=info, as_of=self._as_of(claim))
         planned = await plan_analysis(self.router, ctx, use=self.use)
         plan_models = self._uses(Step.PLAN, planned.providers)
         out.models += plan_models

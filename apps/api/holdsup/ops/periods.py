@@ -2,6 +2,7 @@
 
 import re
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum
 
 from holdsup.ops.record import OpError
@@ -70,3 +71,18 @@ def years_between(start: Period, end: Period) -> float:
 def same_frequency(a: Period, b: Period) -> None:
     if a.frequency is not b.frequency:
         raise OpError(f"period {a} is {a.frequency} but {b} is {b.frequency}")
+
+
+def published_by(frequency: Frequency, as_of: date, lag_months: int) -> Period:
+    """The last period of `frequency` out by `as_of`, if a period is published `lag_months`
+    after it ends: 2018-12-31 with a 1-month lag gives 2018-11 (monthly), 2017 (annual)."""
+    if lag_months < 0:
+        raise OpError("a publication lag cannot be negative")
+    # The last month whose data could be out: the period must end by then.
+    month = as_of.year * 12 + as_of.month - 1 - lag_months
+    year, month0 = divmod(month, 12)
+    months_per = 12 // frequency.per_year
+    sub = (month0 + 1) // months_per  # periods of this frequency complete by that month
+    if sub == 0:
+        return Period(year - 1, frequency.per_year, frequency)
+    return Period(year, sub, frequency)

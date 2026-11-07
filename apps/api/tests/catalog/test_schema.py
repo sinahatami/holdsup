@@ -129,3 +129,12 @@ def test_annual_value_is_only_for_monthly_or_quarterly_series() -> None:
     monthly = IndicatorSpec.model_validate({**VALID, "frequency": "monthly", "annual_value": "end"})
     assert monthly.annual_value is not None and monthly.annual_value.value == "end"
     assert IndicatorSpec.model_validate({**VALID, "frequency": "quarterly"}).annual_value is None
+
+
+def test_release_lag_defaults_by_frequency() -> None:
+    assert IndicatorSpec.model_validate(VALID).lag_months == 12
+    monthly = IndicatorSpec.model_validate({**VALID, "frequency": "monthly"})
+    assert monthly.lag_months == 1
+    assert IndicatorSpec.model_validate({**VALID, "release_lag_months": 18}).lag_months == 18
+    with pytest.raises(ValidationError):
+        IndicatorSpec.model_validate({**VALID, "release_lag_months": -1})

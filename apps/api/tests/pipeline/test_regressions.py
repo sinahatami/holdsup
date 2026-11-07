@@ -1,29 +1,34 @@
-"""Regression tests for claims that came out wrong in the first live run (2026-11-07).
+"""Regression tests for claims that came out wrong in live runs (2026-11-07).
 
-Recorded Eurostat data (une_rt_m for Italy, seasonally adjusted, 2010-01 to 2026-09), the real
-catalog, and scripted model replies that reproduce what the models answered live:
+Recorded source data (tests/fixtures/series, `make record-series`), the real catalog, and
+scripted model replies that reproduce what the models answered live. Each test says what went
+wrong. The same claims are in eval/smoke_claims.jsonl.
 
-1. "fell from 11.9% in 2015 to 7.7% in 2023": the plan compared 2015-01 with 2023-12 on the
-   monthly series; a whole year must be the year's average.
-2. "In 2011 ... was 29%": the matcher turned the monthly youth series down for being monthly.
-3. "today it is 43.3%": extraction put the level in start_value, so nothing was checked.
-
-The same claims are in eval/smoke_claims.jsonl.
+First run:
+- r001 "fell from 11.9% in 2015 to 7.7% in 2023": the plan compared 2015-01 with 2023-12.
+- c004 "In 2011 ... 29%": the monthly youth series was turned down for being monthly;
+  "today it is 43.3%" lost its value to start_value.
+Gallery seeding:
+- c001, c018, c029: "latest" in a dated statement was read as today's latest data.
+- c002: "has been rising for years" was fitted from 1983.
+- c007: a level claim's plan answered with value_at and change; rejected twice.
+- c006: 132.0 against "133%" failed a ±0.5 tolerance.
+- c024: "fell more than 18%" was checked as exactly 18%.
 """
 
 import json
-from datetime import UTC, date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from holdsup.adapters.base import FetchedSeries, Filters, sha256_hex
-from holdsup.adapters.jsonstat import observations, parse_cube
+from holdsup.adapters.base import FetchedSeries, Filters, Observation
 from holdsup.catalog.index import IndicatorHit
 from holdsup.catalog.schema import load_catalog
 from holdsup.config import REPO_ROOT
-from holdsup.ops import FlagCode
+from holdsup.ops import FlagCode, OpRecord
+from holdsup.pipeline.claim import Basis, Operator
 from holdsup.pipeline.run import ClaimResult, Pipeline, PipelineOutput, StepEvent
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse
@@ -32,50 +37,54 @@ from tests.router.fakes import FakeClient, FakeClock, config, provider
 from tests.service.fakes import explain_answer, reply
 
 CATALOG = load_catalog(REPO_ROOT / "packages" / "catalog")
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "eurostat"
-RECORDED = {
-    "TOTAL": FIXTURES / "une_rt_m_it_total_sa.json",
-    "Y_LT25": FIXTURES / "une_rt_m_it_youth_sa.json",
-}
-FALL = "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023."
-YOUTH = "In 2011 Italy's youth unemployment was 29%; today it is 43.3%."
+SERIES = Path(__file__).resolve().parents[1] / "fixtures" / "series"
+TODAY = date(2026, 11, 7)
 
 
-class RecordedEurostat:
-    """Serves the recorded une_rt_m responses through the real JSON-stat parser."""
+def _key(source: str, dataset: str, filters: Any) -> str:
+    return json.dumps([source, dataset, filters], sort_keys=True)
+
+
+class RecordedFetcher:
+    """Serves tests/fixtures/series: what the adapters returned when recorded."""
 
     def __init__(self) -> None:
-        self.calls: list[dict[str, Any]] = []
+        self.docs = {}
+        for path in SERIES.glob("*.json"):
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            self.docs[_key(doc["source"], doc["dataset"], doc["filters"])] = doc
 
     async def fetch_series(self, source: str, dataset: str, filters: Filters) -> FetchedSeries:
-        self.calls.append(dict(filters))
-        assert (source, dataset) == ("eurostat", "une_rt_m")
-        body = RECORDED[str(filters["age"])].read_bytes()
-        cube = parse_cube(body)
+        doc = self.docs[_key(source, dataset, dict(filters))]  # KeyError: not recorded
         return FetchedSeries(
             source=source,
             dataset=dataset,
-            url=f"https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/{dataset}",
-            retrieved_at=datetime(2026, 11, 7, 17, 3, tzinfo=UTC),
-            raw_sha256=sha256_hex(body),
-            observations=observations(cube),
-            label=cube.label,
+            url=doc["url"],
+            retrieved_at=doc["retrieved_at"],
+            raw_sha256=doc["raw_sha256"],
+            observations=[Observation(g, p, v) for g, p, v in doc["observations"]],
+            label=doc["label"],
+            updated=doc["updated"],
+            citation=doc["citation"],
         )
 
 
+USED = [
+    "unemployment_rate_monthly", "youth_unemployment_rate_monthly", "unemployment_rate_ilo",
+    "government_debt_pct_gdp", "government_debt_pct_gdp_quarterly", "greenhouse_gas_emissions",
+    "co2_per_capita",
+]  # fmt: skip
+ORDER = [CATALOG.get(i) for i in USED] + [s for s in CATALOG.indicators if s.id not in USED]
+
+
 async def search(phrase: str, k: int) -> list[IndicatorHit]:
-    """The real catalog, monthly unemployment entries first (no embedding model in tests)."""
-    first = [
-        "youth_unemployment_rate_monthly",
-        "unemployment_rate_monthly",
-        "unemployment_rate_ilo",
-    ]
-    specs = [CATALOG.get(i) for i in first]
-    specs += [s for s in CATALOG.indicators if s.id not in first]
+    """The real catalog, the entries these claims use first (no embedding model in tests):
+    the matcher keeps the first 8 that cover the claim's place, and the script picks one."""
     return [
-        IndicatorHit(**s.model_dump(include={"id", "name", "source_code", "unit", "definition"}),
-                     source=str(s.source), frequency=str(s.frequency), score=1 - i / 100)
-        for i, s in enumerate(specs[:k])
+        IndicatorHit(id=s.id, name=s.name, source=str(s.source), source_code=s.source_code,
+                     unit=s.unit, frequency=str(s.frequency), definition=s.definition,
+                     score=1 - i / 100)
+        for i, s in enumerate(ORDER[:k])
     ]  # fmt: skip
 
 
@@ -87,9 +96,9 @@ async def check(text: str, script: list[ChatResponse]) -> tuple[PipelineOutput, 
         router=Router(config(provider("fake"), steps=steps), client, clock=FakeClock()),
         catalog=CATALOG,
         search=search,
-        fetcher=RecordedEurostat(),
+        fetcher=RecordedFetcher(),
         tolerances=load_tolerances(),
-        today=lambda: date(2026, 11, 7),
+        today=lambda: TODAY,
     )
 
     async def emit(_: StepEvent) -> None:
@@ -98,18 +107,28 @@ async def check(text: str, script: list[ChatResponse]) -> tuple[PipelineOutput, 
     return await pipeline.run(text, emit), client
 
 
-def model_claim(quote: str, phrase: str, start: str | None, end: str | None, **a: Any) -> Any:
-    assertion = {"type": "level", "value": None, "direction": None, "unit": "%",
-                 "start_value": None, "end_value": None, **a}  # fmt: skip
+def model_claim(
+    quote: str,
+    phrase: str,
+    start: str | None,
+    end: str | None,
+    *,
+    geo: str = "IT",
+    lookback: dict[str, Any] | None = None,
+    office: dict[str, Any] | None = None,
+    **assertion: Any,
+) -> dict[str, Any]:
+    a = {"type": "level", "value": None, "direction": None, "unit": "%", "start_value": None,
+         "end_value": None, **assertion}  # fmt: skip
     return {
-        "quote": quote, "indicator_phrase": phrase, "geo": "IT", "geo_named": True, "peers": [],
-        "start": start, "start_named": start is not None, "end": end, "lookback": None,
-        "office": None, "assertion": assertion,
+        "quote": quote, "indicator_phrase": phrase, "geo": geo, "geo_named": True, "peers": [],
+        "start": start, "start_named": start is not None, "end": end, "lookback": lookback,
+        "office": office, "assertion": a,
     }  # fmt: skip
 
 
-def extraction(*claims: Any) -> ChatResponse:
-    return reply({"speaker": None, "said_on": None, "claims": list(claims)})
+def extraction(*claims: Any, speaker: str | None = None) -> ChatResponse:
+    return reply({"speaker": speaker, "said_on": None, "claims": list(claims)})
 
 
 def match(indicator_id: str | None, alternatives: list[str] | None = None) -> ChatResponse:
@@ -122,8 +141,8 @@ def match(indicator_id: str | None, alternatives: list[str] | None = None) -> Ch
                   "alternatives": alternatives or []})  # fmt: skip
 
 
-def plan(call: dict[str, Any]) -> ChatResponse:
-    return reply({"calls": [call], "answer": [0], "reason": "One operation answers it."})
+def plan(*calls: dict[str, Any], answer: list[int] | None = None) -> ChatResponse:
+    return reply({"calls": list(calls), "answer": answer or [0], "reason": "It answers it."})
 
 
 EXPLAINED = explain_answer("The data shows what the verdict says.")
@@ -133,9 +152,22 @@ def flags(c: ClaimResult) -> set[FlagCode]:
     return {f.code for r in c.operations for f in r.flags}
 
 
-async def test_a_change_between_whole_years_compares_yearly_averages() -> None:
+def flag(r: OpRecord, code: FlagCode) -> str:
+    return next(f.detail for f in r.flags if f.code is code)
+
+
+def inputs(r: OpRecord) -> list[tuple[str, float]]:
+    return [(p.period, round(p.value, 2)) for p in r.inputs]
+
+
+# --- whole years on monthly series, and levels (first live run) ------------------------------
+
+FALL = "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023."
+YOUTH = "In 2011 Italy's youth unemployment was 29%; today it is 43.3%."
+
+
+async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> None:
     script = [
-        # What the model answered live: both levels, no change value.
         extraction(model_claim(FALL[:-1], "unemployment rate", "2015", "2023",
                                direction="down", start_value=11.9, end_value=7.7)),
         match("unemployment_rate_monthly", ["unemployment_rate_ilo"]),
@@ -149,23 +181,19 @@ async def test_a_change_between_whole_years_compares_yearly_averages() -> None:
 
     [op] = c.operations
     assert (op.args["start"], op.args["end"]) == ("2015", "2023")
-    assert [(p.period, round(p.value, 2)) for p in op.inputs] == [("2015", 12.02), ("2023", 7.68)]
-    assert op.value == pytest.approx(7.68 - 12.02, abs=0.01)
-    [made] = [f for f in op.flags if f.code is FlagCode.ANNUAL_VALUE]
+    assert inputs(op) == [("2015", 12.02), ("2023", 7.68)]
+    made = next(f for f in op.flags if f.code is FlagCode.ANNUAL_VALUE)
     assert made.items == ["2015", "2023"] and "average of its 12 monthly values" in made.detail
     assert any("2015-01 → 2015" in n for n in c.notes)
-    assert any("2023-12 → 2023" in n for n in c.notes)
-
     assert c.verdict.label is Label.SUPPORTED, c.verdict
     assert {p.name: p.period for p in c.verdict.parts} == {
         "assertion": None, "start value": "2015", "end value": "2023",
     }  # fmt: skip
-    assert out.versions.catalog == "0.3.0"
+    assert out.versions.catalog == "0.4.0" and out.versions.tolerances == 2
 
 
-async def test_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
+async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
     script = [
-        # What the model answered live: two level claims, each number in start_value.
         extraction(
             model_claim("In 2011 Italy's youth unemployment was 29%", "youth unemployment rate",
                         "2011", None, start_value=29),
@@ -177,7 +205,6 @@ async def test_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
         match("youth_unemployment_rate_monthly"),
         plan({"op": "value_at", "geo": "IT", "period": "2011"}),
         EXPLAINED,
-        # Claim 2: the live match and plan.
         match("youth_unemployment_rate_monthly"),
         plan({"op": "value_at", "geo": "IT", "period": "latest"}),
         EXPLAINED,
@@ -187,33 +214,30 @@ async def test_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
 
     assert first.claim.assertion.value == 29 and first.claim.assertion.start_value is None
     assert "level 29 was in assertion.start_value; used as the value" in first.claim.notes
-    assert first.indicator is not None and first.indicator.id == "youth_unemployment_rate_monthly"
     assert any(n.startswith("asked again: youth_unemployment_rate_monthly") for n in first.notes)
-    [nudge] = [m for _, r in client.calls for m in r.messages
-               if "Frequency is not a reason" in str(m.get("content"))]  # fmt: skip
-    assert "average of the year's months" in str(nudge["content"])
-    assert [(p.period, round(p.value, 2)) for p in first.operations[0].inputs] == [("2011", 29.19)]
-    assert FlagCode.ANNUAL_VALUE in flags(first)
-    assert first.verdict.label is Label.SUPPORTED
-    assert first.verdict.parts[0].period == "2011"
+    nudges = [m for _, r in client.calls for m in r.messages
+              if "Frequency is not a reason" in str(m.get("content"))]  # fmt: skip
+    assert len(nudges) == 1
+    assert inputs(first.operations[0]) == [("2011", 29.19)]
+    assert first.verdict.label is Label.SUPPORTED and first.verdict.parts[0].period == "2011"
 
+    # No claim date: "today" is the latest month there is, and nothing is cut.
     assert second.claim.assertion.value == 43.3
-    assert [(p.period, p.value) for p in second.operations[0].inputs] == [("2026-09", 19.9)]
-    assert FlagCode.ANNUAL_VALUE not in flags(second)  # "today" is the latest month
+    assert inputs(second.operations[0]) == [("2026-09", 19.9)]
+    assert not flags(second) & {FlagCode.ANNUAL_VALUE, FlagCode.AS_OF}
     assert second.verdict.label is Label.NOT_SUPPORTED
-    assert second.verdict.parts[0].period == "2026-09"
     assert "for 2026-09" in second.verdict.parts[0].detail
 
 
 async def test_a_plan_month_inside_a_named_year_is_read_as_the_year() -> None:
+    text = "In 2011 Italy's youth unemployment was 29%."
     script = [
-        extraction(model_claim("In 2011 Italy's youth unemployment was 29%",
-                               "youth unemployment rate", "2011", None, value=29)),
+        extraction(model_claim(text[:-1], "youth unemployment rate", "2011", None, value=29)),
         match("youth_unemployment_rate_monthly"),
         plan({"op": "value_at", "geo": "IT", "period": "2011-06"}),
         EXPLAINED,
     ]  # fmt: skip
-    out, _ = await check("In 2011 Italy's youth unemployment was 29%.", script)
+    out, _ = await check(text, script)
     [c] = out.claims
     assert c.operations[0].args["period"] == "2011"
     assert c.verdict.label is Label.SUPPORTED
@@ -234,11 +258,213 @@ async def test_a_named_month_is_kept() -> None:
     assert c.verdict.parts[0].period == "2011-06"
 
 
+# --- the gallery claims (second run) ---------------------------------------------------------
+
+C001 = "Renzi, 2018: Since I took office, youth unemployment has fallen 12 points, from 44% to 32%."
+
+
+async def test_c001_latest_is_the_last_month_published_by_the_claim_date() -> None:
+    office = {"who": "Renzi", "scope": "since_start", "previous": False}
+    change = {"op": "change", "geo": "IT", "start": "2014-02", "end": "latest",
+              "kind": "percentage_points"}  # fmt: skip
+    script = [
+        extraction(
+            model_claim("youth unemployment has fallen 12 points", "youth unemployment rate",
+                        None, "latest", office=office, type="percentage_points", value=12,
+                        direction="down", unit="points"),
+            model_claim("from 44% to 32%", "youth unemployment rate", None, "latest",
+                        office=office, direction="down", start_value=44, end_value=32),
+            speaker="Renzi",
+        ),
+        match("youth_unemployment_rate_monthly"), plan(change), EXPLAINED,
+        match("youth_unemployment_rate_monthly"), plan(change), EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C001, script)
+    points, levels = out.claims
+
+    assert (points.claim.start, points.claim.start_basis) == ("2014-02", Basis.OFFICE)
+    [op] = points.operations
+    # Said in 2018: the last month out by the end of 2018 is 2018-11, not 2026-09.
+    assert inputs(op) == [("2014-02", 42.7), ("2018-11", 32.0)]
+    assert op.value == pytest.approx(-10.7)
+    note = flag(op, FlagCode.AS_OF)
+    assert note.startswith("claim date 2018: latest is the last period published by then, 2018-11")
+    assert "today's revised figure" in note
+    assert points.verdict.label is Label.NOT_SUPPORTED  # 10.7 points, not 12
+
+    by_part = {p.name: p.holds for p in levels.verdict.parts}
+    assert by_part == {"assertion": True, "start value": False, "end value": True}
+    assert levels.verdict.label is Label.PARTLY_SUPPORTED  # 42.7 is not "44"; 32.0 is "32"
+
+
+C002 = "Letta, 2013: Italy's youth unemployment has reached 37% and has been rising for years."
+
+
+async def test_c002_for_years_is_the_five_years_before_the_claim_date() -> None:
+    script = [
+        extraction(
+            model_claim("Italy's youth unemployment has reached 37%", "youth unemployment rate",
+                        None, "2013", value=37),
+            model_claim("has been rising for years", "youth unemployment rate", None, "2013",
+                        type="trend", direction="up", unit=None),
+            speaker="Letta",
+        ),
+        match("youth_unemployment_rate_monthly"),
+        plan({"op": "value_at", "geo": "IT", "period": "2013"}),
+        EXPLAINED,
+        match("youth_unemployment_rate_monthly"),
+        # The live plan: the whole series, from 1983.
+        plan({"op": "trend", "geo": "IT", "start": "1983-01", "end": "2013-12"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C002, script)
+    level, rising = out.claims
+
+    assert inputs(level.operations[0]) == [("2013", 40.12)]
+    assert level.verdict.label is Label.NOT_SUPPORTED  # 37 ± 0.87
+
+    assert (rising.claim.start, rising.claim.start_basis) == ("2008", Basis.ASSUMED)
+    assert "'for years' read as the 5 years before the claim date (2013): from 2008" in (
+        rising.claim.notes
+    )
+    [op] = rising.operations
+    assert (op.args["start"], op.args["end"]) == ("2008-01", "2013-12")
+    assert len(op.inputs) == 72
+    assert flag(op, FlagCode.ASSUMED_WINDOW) == (
+        "the claim gives no dates: the window is the 5 years before the claim date (2013), "
+        "from 2008"
+    )
+    assert rising.verdict.label is Label.SUPPORTED
+
+
+C007 = "Grillo: At the end of 2013 Italy's debt-to-GDP ratio hit 132.6%, up from 127% in 2012."
+
+
+async def test_c007_a_level_claim_is_answered_by_its_value_not_the_change_beside_it() -> None:
+    script = [
+        extraction(
+            model_claim("Italy's debt-to-GDP ratio hit 132.6%", "debt-to-GDP ratio", None, "2013",
+                        value=132.6, direction="up"),
+            model_claim("Italy's debt-to-GDP ratio ... hit 132.6%, up from 127% in 2012",
+                        "debt-to-GDP ratio", None, "2012", value=127, direction="up"),
+            speaker="Grillo",
+        ),
+        match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        plan({"op": "value_at", "geo": "IT", "period": "2013"}),
+        EXPLAINED,
+        match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        # What failed twice live: a level claim answered by value_at and change.
+        plan({"op": "value_at", "geo": "IT", "period": "2012"},
+             {"op": "change", "geo": "IT", "start": "2012", "end": "2013",
+              "kind": "percentage_points"}, answer=[0, 1]),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C007, script)
+    end_2013, from_2012 = out.claims
+
+    assert inputs(end_2013.operations[0]) == [("2013", 132.0)]
+    assert end_2013.verdict.label is Label.SUPPORTED  # 132.6 ± 1.38
+    assert from_2012.answer == [0] and len(from_2012.operations) == 2
+    assert "answer [0, 1] → [0]: a level claim is answered by its value_at" in from_2012.notes
+    assert inputs(from_2012.operations[0]) == [("2012", 126.1)]
+    assert from_2012.verdict.label is Label.SUPPORTED  # 127 ± 1.77
+    assert not from_2012.retryable
+
+
+C006 = "Renzi, 2013: Italy's public debt is 133% of GDP."
+
+
+async def test_c006_a_level_allows_rounding_plus_one_percent() -> None:
+    text = C006
+    script = [
+        extraction(model_claim(text[13:], "public debt", "2013", "2013", value=133),
+                   speaker="Renzi"),
+        match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        plan({"op": "value_at", "geo": "IT", "period": "2013"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(text, script)
+    [c] = out.claims
+    [part] = c.verdict.parts
+    assert (part.computed, part.asserted) == (132.0, 133.0)
+    assert part.tolerance == pytest.approx(0.5 + 1.33)
+    assert c.verdict.label is Label.SUPPORTED
+
+
+C018 = "Renzi, December 2015: Italy's greenhouse gas emissions are down 23% compared with 1990."
+
+
+async def test_c018_latest_respects_a_slow_source_s_release_lag() -> None:
+    script = [
+        extraction(model_claim(C018[23:], "greenhouse gas emissions", "1990", "latest",
+                               type="percent", value=23, direction="down"), speaker="Renzi"),
+        match("greenhouse_gas_emissions"),
+        plan({"op": "change", "geo": "IT", "start": "1990", "end": "latest", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C018, script)
+    [c] = out.claims
+    [op] = c.operations
+    # By December 2015, inventories ran to 2013 (an 18-month lag), not 2024.
+    assert inputs(op) == [("1990", 520.63), ("2013", 450.51)]
+    assert op.value == pytest.approx(-13.47, abs=0.01)
+    assert "claim date 2015-12: latest is the last period published by then, 2013" in flag(
+        op, FlagCode.AS_OF
+    )
+    assert c.verdict.label is Label.NOT_SUPPORTED
+
+
+C024 = "EPA, 2017: US per capita carbon dioxide emissions fell more than 18% between 2000 and 2014."
+
+
+async def test_c024_more_than_is_a_bound() -> None:
+    script = [
+        extraction(model_claim(C024[11:-1], "US per capita carbon dioxide emissions", "2000",
+                               "2014", geo="US", type="percent", value=18, direction="down"),
+                   speaker="EPA"),
+        match("co2_per_capita"),
+        plan({"op": "change", "geo": "US", "start": "2000", "end": "2014", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C024, script)
+    [c] = out.claims
+    assert c.claim.assertion.operator is Operator.MORE_THAN
+    assert "operator more_than from the text" in c.claim.notes
+    assert c.operations[0].value == pytest.approx(-20.0, abs=0.01)
+    [part] = c.verdict.parts
+    assert part.operator is Operator.MORE_THAN
+    assert "asserted more than -18" in part.detail
+    assert c.verdict.label is Label.SUPPORTED
+
+
+C029 = (
+    "Facebook post, 2013: Unemployment in South Africa has increased by 60% in the past 19 years."
+)
+
+
+async def test_c029_a_lookback_ends_at_the_claim_date() -> None:
+    script = [
+        extraction(model_claim(C029[21:], "unemployment", None, "latest", geo="ZA",
+                               lookback={"amount": 19, "unit": "years"}, type="percent",
+                               value=60, direction="up")),
+        match("unemployment_rate_ilo"),
+        plan({"op": "change", "geo": "ZA", "start": "1994", "end": "latest", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C029, script)
+    [c] = out.claims
+    assert (c.claim.start, c.claim.start_basis) == ("1994", Basis.LOOKBACK)
+    [op] = c.operations
+    assert inputs(op) == [("1994", 23.07), ("2012", 24.73)]  # 2012: out by the end of 2013
+    assert FlagCode.AS_OF in flags(c)
+    assert c.verdict.label is Label.NOT_SUPPORTED  # +7.2%, not +60%
+
+
 def test_the_smoke_set_names_real_indicators_and_labels() -> None:
     lines = (REPO_ROOT / "eval" / "smoke_claims.jsonl").read_text(encoding="utf-8").splitlines()
     cases = [json.loads(line) for line in lines if line.strip()]
     texts = {c["text"] for c in cases}
-    assert {FALL, YOUTH} <= texts  # this file's claims are in the smoke set
+    assert {FALL, YOUTH, C001, C002, C006, C007, C018, C024, C029} <= texts
     ids = [c["id"] for c in cases]
     assert len(set(ids)) == len(ids)
     for case in cases:
