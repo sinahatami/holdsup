@@ -14,5 +14,11 @@ frequency: monthly
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1983
 last_year: null # still updated
-related: [youth_unemployment_rate_monthly, unemployment_rate_ilo]
+related:
+  [
+    youth_unemployment_rate_monthly,
+    unemployment_rate_ilo,
+    unemployment_rate_25_74_monthly,
+    long_term_unemployment_rate,
+  ]
 filters: { age: "TOTAL", sex: "T", unit: "PC_ACT", s_adj: "SA" }

@@ -1,0 +1,17 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of real_gdp_volume (the total, not per person) and real_gdp_growth)
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1991..2025, FR 1975..2025, IT 1995..2025
+id: real_gdp_per_capita
+source: eurostat
+source_code: "nama_10_pc"
+name: "Real GDP per capita"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Gross domestic product at market prices in chain-linked volumes (reference year 2020) divided by the population, in euro per person."
+unit: "euro per person, chain-linked volumes (2020)"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1975
+last_year: null # still updated
+related: [real_gdp_volume, real_gdp_growth, nominal_gdp_eur]
+filters: { na_item: "B1GQ", unit: "CLV20_EUR_HAB" }

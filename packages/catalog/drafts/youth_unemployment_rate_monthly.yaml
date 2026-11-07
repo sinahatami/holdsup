@@ -13,5 +13,5 @@ frequency: monthly
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1983
 last_year: null # still updated
-related: [unemployment_rate_monthly]
+related: [unemployment_rate_monthly, unemployment_rate_25_74_monthly]
 filters: { age: "Y_LT25", sex: "T", unit: "PC_ACT", s_adj: "SA" }

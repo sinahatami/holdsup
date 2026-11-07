@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of hicp_inflation_monthly (EU harmonised index, monthly))
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: GB 1960..2025, IT 1960..2025, US 1960..2024, ZA 1960..2025, World (1W) 1981..2025
+# Note: National CPI (e.g. Italy's NIC, UK CPI), not the HICP; annual average change, so it differs from December-on-December or monthly year-on-year figures. The World aggregate comes back as geo 1W.
+id: cpi_inflation_annual
+source: worldbank
+source_code: "FP.CPI.TOTL.ZG"
+name: "Consumer price inflation (annual, national CPI)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Annual percentage change in the national consumer price index (annual average), from the IMF International Financial Statistics."
+unit: "% change on previous year"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1960
+last_year: null # still updated
+related: [hicp_inflation_monthly]
+filters: {}

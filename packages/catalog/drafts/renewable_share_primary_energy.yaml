@@ -1,18 +1,21 @@
 # DRAFT: not loaded by `make catalog` until moved to ../indicators/.
 # Seed claims: c019
-# Verified 2026-11-06 against the live API: one series per geo with these filters.
-#   coverage: ARE 2025..2025, ARG 2025..2025, AUS 2025..2025, AUT 2025..2025, AZE 2025..2025, BEL 2025..2025, BGD 2025..2025, BGR 2025..2025, BLR 2025..2025, BRA 2025..2025, CAN 2025..2025, CHE 2025..2025, CHL 2025..2025, CHN 2025..2025, COL 2025..2025, CYP 2025..2025, CZE 2025..2025, DEU 2025..2025, DNK 2025..2025, DZA 2025..2025, ECU 2025..2025, EGY 2025..2025, ESP 2025..2025, EST 2025..2025, FIN 2025..2025, FRA 2025..2025, GBR 2025..2025, GRC 2025..2025, HRV 2025..2025, HUN 2025..2025, IDN 2025..2025, IND 2025..2025, IRL 2025..2025, IRN 2025..2025, IRQ 2025..2025, ISL 2025..2025, ISR 2025..2025, ITA 2025..2025, JPN 2025..2025, KAZ 2025..2025, KOR 2025..2025, KWT 2025..2025, LKA 2025..2025, LTU 2025..2025, LUX 2025..2025, LVA 2025..2025, MAR 2025..2025, MEX 2025..2025, MKD 2025..2025, MYS 2025..2025, NLD 2025..2025, NOR 2025..2025, NZL 2025..2025, OMN 2025..2025, PAK 2025..2025, PER 2025..2025, PHL 2025..2025, POL 2025..2025, PRT 2025..2025, QAT 2025..2025, ROU 2025..2025, RUS 2025..2025, SAU 2025..2025, SGP 2025..2025, SVK 2025..2025, SVN 2025..2025, SWE 2025..2025, THA 2025..2025, TKM 2025..2025, TTO 2025..2025, TUR 2025..2025, TWN 2025..2025, UKR 2025..2025, USA 2025..2025, UZB 2025..2025, VEN 2025..2025, VNM 2025..2025, ZAF 2025..2025
-# Note: NOT FETCHABLE CORRECTLY YET: this slug redirects to energy-mix?metric=share&source=renewables, which ignores the country filter and returns only the latest year in the filtered CSV. Needs adapter support (chart query params + client-side country filter) before it moves to indicators/.
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: DEU 1965..2025, ITA 1965..2025, OWID_EU27 1965..2025, OWID_WRL 1800..2025
+# Note: `energy-mix` is a multi-view chart; metric and source pick the view (the old slug
+#   renewable-share-energy redirects here). Needs the 2026-11-07 OWID adapter (view options,
+#   tab=chart, own country/time filtering). World data before 1965 are sparse.
 id: renewable_share_primary_energy
 source: owid
-source_code: "renewable-share-energy"
+source_code: "energy-mix"
 name: "Renewable share of primary energy"
 aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
 definition: "Share of primary energy that comes from renewable sources, from the Energy Institute Statistical Review of World Energy."
 unit: "% of primary energy"
 frequency: annual
 geo_coverage: ["All countries", "OWID_WRL"]
-first_year: 2025
+first_year: 1965
 last_year: null # still updated
 related: [renewable_share_final_energy]
-filters: { column: "renewables_share_pct" }
+filters:
+  { metric: "share", source: "renewables", column: "renewables_share_pct" }

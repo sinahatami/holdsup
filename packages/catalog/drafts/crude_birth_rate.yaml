@@ -13,5 +13,5 @@ frequency: annual
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1960
 last_year: null # still updated
-related: [live_births, total_fertility_rate]
+related: [live_births, total_fertility_rate, crude_death_rate]
 filters: { indic_de: "GBIRTHRT" }

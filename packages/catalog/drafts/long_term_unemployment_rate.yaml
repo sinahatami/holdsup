@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of unemployment_rate_monthly (all unemployed, monthly) and unemployment_rate_ilo)
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2009..2025, DE 2009..2025, FR 2003..2025, IT 2009..2025
+# Note: A share of the labour force, not of the unemployed (unit PC_UNE would give that).
+id: long_term_unemployment_rate
+source: eurostat
+source_code: "une_ltu_a"
+name: "Long-term unemployment rate"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "People aged 15 to 74 unemployed for 12 months or more, as a percentage of the labour force of the same age, annual average."
+unit: "% of labour force aged 15-74"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 2003
+last_year: null # still updated
+related: [unemployment_rate_monthly, unemployment_rate_ilo]
+filters: { indic_em: "LTU", age: "Y15-74", sex: "T", unit: "PC_ACT" }

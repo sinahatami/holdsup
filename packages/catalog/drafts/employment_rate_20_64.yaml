@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of employment_persons (same dataset, a head count for ages 15-64, not a rate))
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2009..2025, DE 2009..2025, FR 2003..2025, IT 2009..2025
+# Note: Ages 20-64 is the EU 2030 target age range; national headlines often use 15-64.
+id: employment_rate_20_64
+source: eurostat
+source_code: "lfsi_emp_a"
+name: "Employment rate, ages 20-64"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Employed people aged 20 to 64 as a percentage of the total population of the same age, Labour Force Survey, annual average; the EU 2030 target metric."
+unit: "% of population aged 20-64"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 2003
+last_year: null # still updated
+related: [employment_persons]
+filters: { indic_em: "EMP_LFS", age: "Y20-64", sex: "T", unit: "PC_POP" }

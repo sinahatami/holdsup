@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of cpi_inflation_annual (national CPI, annual average, World Bank))
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EA 1997-01..2026-10, EU27_2020 2000-12..2026-09, DE 1997-01..2026-10, FR 1997-01..2026-10, IT 1997-01..2026-10
+# Note: ECOICOP ver.2 dataset; the old prc_hicp_manr stopped at 2025 (last updated 2026-02). Annual averages are in prc_hicp_ainr (unit RCH_A_AVG). 'EA' is the euro area in its current composition.
+id: hicp_inflation_monthly
+source: eurostat
+source_code: "prc_hicp_minr"
+name: "HICP inflation (monthly, annual rate)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Harmonised index of consumer prices, all items: percentage change on the same month of the previous year; the euro-area inflation measure the ECB targets."
+unit: "% change on same month of previous year"
+frequency: monthly
+geo_coverage: ["EA", "EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1997
+last_year: null # still updated
+related: [cpi_inflation_annual]
+filters: { coicop18: "TOTAL", unit: "RCH_A" }

@@ -1,0 +1,18 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of real_gdp_volume (same dataset, chain-linked volumes instead of current prices))
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1991..2025, FR 1975..2025, IT 1995..2025
+# Note: Growth in this series includes inflation; real growth claims belong to real_gdp_volume.
+id: nominal_gdp_eur
+source: eurostat
+source_code: "nama_10_gdp"
+name: "Nominal GDP (current prices)"
+aliases: [] # TODO (you): 3-5 phrases people actually say; not the name again
+definition: "Gross domestic product at market prices in current prices, in million euro; not adjusted for inflation."
+unit: "million euro (current prices)"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1975
+last_year: null # still updated
+related: [real_gdp_volume, government_debt_eur, real_gdp_per_capita]
+filters: { na_item: "B1GQ", unit: "CP_MEUR" }
