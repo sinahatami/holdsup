@@ -1,0 +1,237 @@
+# Terms of office, for resolving "since I took office" / "under the last Labour government"
+# in code instead of from the model's memory (docs/notes.md "P1.12 Pivot test review", item 3).
+# Heads of government for the countries in the seed claims, plus governing parties where
+# claims name a party. Dates are the day the term started and ended; end: null = in office.
+# Last checked: 2026-11-07 against the agent's knowledge (to mid-2026). Verify before relying
+# on a recent change of government, and add countries as the catalog grows.
+#
+# aliases: other ways a claim names the holder. Matched as whole words, case-insensitive.
+# Avoid aliases that are common words ("May", "Brown", "Bush" alone).
+
+holders:
+  # Italy: prime ministers
+  - {
+      name: Silvio Berlusconi,
+      aliases: [Berlusconi],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2008-05-08, end: 2011-11-16 }],
+    }
+  - {
+      name: Mario Monti,
+      aliases: [Monti],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2011-11-16, end: 2013-04-28 }],
+    }
+  - {
+      name: Enrico Letta,
+      aliases: [Letta],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2013-04-28, end: 2014-02-22 }],
+    }
+  - {
+      name: Matteo Renzi,
+      aliases: [Renzi],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2014-02-22, end: 2016-12-12 }],
+    }
+  - {
+      name: Paolo Gentiloni,
+      aliases: [Gentiloni],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2016-12-12, end: 2018-06-01 }],
+    }
+  - {
+      name: Giuseppe Conte,
+      aliases: [Conte],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2018-06-01, end: 2021-02-13 }],
+    }
+  - {
+      name: Mario Draghi,
+      aliases: [Draghi],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2021-02-13, end: 2022-10-22 }],
+    }
+  - {
+      name: Giorgia Meloni,
+      aliases: [Meloni],
+      country: IT,
+      office: prime minister,
+      terms: [{ start: 2022-10-22, end: null }],
+    }
+
+  # United Kingdom: prime ministers and governing parties
+  - {
+      name: Tony Blair,
+      aliases: [Blair],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 1997-05-02, end: 2007-06-27 }],
+    }
+  - {
+      name: Gordon Brown,
+      aliases: [],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2007-06-27, end: 2010-05-11 }],
+    }
+  - {
+      name: David Cameron,
+      aliases: [Cameron],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2010-05-11, end: 2016-07-13 }],
+    }
+  - {
+      name: Theresa May,
+      aliases: [],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2016-07-13, end: 2019-07-24 }],
+    }
+  - {
+      name: Boris Johnson,
+      aliases: [Johnson],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2019-07-24, end: 2022-09-06 }],
+    }
+  - {
+      name: Liz Truss,
+      aliases: [Truss],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2022-09-06, end: 2022-10-25 }],
+    }
+  - {
+      name: Rishi Sunak,
+      aliases: [Sunak],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2022-10-25, end: 2024-07-05 }],
+    }
+  - {
+      name: Keir Starmer,
+      aliases: [Starmer],
+      country: GB,
+      office: prime minister,
+      terms: [{ start: 2024-07-05, end: null }],
+    }
+  - name: Labour Party
+    aliases: [Labour]
+    country: GB
+    office: governing party
+    terms:
+      [{ start: 1997-05-02, end: 2010-05-11 }, { start: 2024-07-05, end: null }]
+  - name: Conservative Party
+    aliases: [Conservatives, Conservative, Tories, Tory]
+    country: GB
+    office: governing party (with the Liberal Democrats 2010-2015)
+    terms: [{ start: 2010-05-11, end: 2024-07-05 }]
+
+  # United States: presidents
+  - {
+      name: George W. Bush,
+      aliases: [],
+      country: US,
+      office: president,
+      terms: [{ start: 2001-01-20, end: 2009-01-20 }],
+    }
+  - {
+      name: Barack Obama,
+      aliases: [Obama],
+      country: US,
+      office: president,
+      terms: [{ start: 2009-01-20, end: 2017-01-20 }],
+    }
+  - name: Donald Trump
+    aliases: [Trump]
+    country: US
+    office: president
+    terms:
+      [{ start: 2017-01-20, end: 2021-01-20 }, { start: 2025-01-20, end: null }]
+  - {
+      name: Joe Biden,
+      aliases: [Biden],
+      country: US,
+      office: president,
+      terms: [{ start: 2021-01-20, end: 2025-01-20 }],
+    }
+
+  # South Africa: presidents
+  - {
+      name: Jacob Zuma,
+      aliases: [Zuma],
+      country: ZA,
+      office: president,
+      terms: [{ start: 2009-05-09, end: 2018-02-14 }],
+    }
+  - {
+      name: Cyril Ramaphosa,
+      aliases: [Ramaphosa],
+      country: ZA,
+      office: president,
+      terms: [{ start: 2018-02-15, end: null }],
+    }
+
+  # France: presidents
+  - {
+      name: François Hollande,
+      aliases: [Hollande, Francois Hollande],
+      country: FR,
+      office: president,
+      terms: [{ start: 2012-05-15, end: 2017-05-14 }],
+    }
+  - {
+      name: Emmanuel Macron,
+      aliases: [Macron],
+      country: FR,
+      office: president,
+      terms: [{ start: 2017-05-14, end: null }],
+    }
+
+  # Germany: chancellors
+  - {
+      name: Angela Merkel,
+      aliases: [Merkel],
+      country: DE,
+      office: chancellor,
+      terms: [{ start: 2005-11-22, end: 2021-12-08 }],
+    }
+  - {
+      name: Olaf Scholz,
+      aliases: [Scholz],
+      country: DE,
+      office: chancellor,
+      terms: [{ start: 2021-12-08, end: 2025-05-06 }],
+    }
+  - {
+      name: Friedrich Merz,
+      aliases: [Merz],
+      country: DE,
+      office: chancellor,
+      terms: [{ start: 2025-05-06, end: null }],
+    }
+
+  # Spain: prime ministers
+  - {
+      name: Mariano Rajoy,
+      aliases: [Rajoy],
+      country: ES,
+      office: prime minister,
+      terms: [{ start: 2011-12-21, end: 2018-06-02 }],
+    }
+  - {
+      name: Pedro Sánchez,
+      aliases: [Sánchez, Sanchez, Pedro Sanchez],
+      country: ES,
+      office: prime minister,
+      terms: [{ start: 2018-06-02, end: null }],
+    }
