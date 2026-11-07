@@ -1,8 +1,10 @@
+from datetime import date
+
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from holdsup.ops import Frequency, OpError, Period, parse_period, years_between
+from holdsup.ops import Frequency, OpError, Period, parse_period, published_by, years_between
 from holdsup.ops.periods import periods_between
 
 
@@ -54,3 +56,24 @@ def test_label_round_trips(p: Period) -> None:
 def test_years_between_matches_the_time_axis(year: int, a: int, b: int) -> None:
     pa, pb = Period(year, a, Frequency.MONTHLY), Period(year + 1, b, Frequency.MONTHLY)
     assert years_between(pa, pb) == pytest.approx(pb.time - pa.time)
+
+
+@pytest.mark.parametrize(
+    ("frequency", "as_of", "lag", "last"),
+    [
+        (Frequency.MONTHLY, date(2018, 12, 31), 1, "2018-11"),
+        (Frequency.MONTHLY, date(2018, 1, 15), 1, "2017-12"),
+        (Frequency.QUARTERLY, date(2018, 12, 31), 1, "2018-Q3"),
+        (Frequency.QUARTERLY, date(2013, 12, 31), 4, "2013-Q2"),
+        (Frequency.ANNUAL, date(2015, 12, 31), 18, "2013"),
+        (Frequency.ANNUAL, date(2013, 12, 31), 12, "2012"),
+        (Frequency.ANNUAL, date(2015, 12, 31), 0, "2015"),
+    ],
+)
+def test_published_by(frequency: Frequency, as_of: date, lag: int, last: str) -> None:
+    assert str(published_by(frequency, as_of, lag)) == last
+
+
+def test_published_by_rejects_a_negative_lag() -> None:
+    with pytest.raises(OpError, match="cannot be negative"):
+        published_by(Frequency.ANNUAL, date(2015, 1, 1), -1)

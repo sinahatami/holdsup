@@ -1,6 +1,6 @@
 # Verdict tolerances (docs/spec.md "Tolerances"). Shown on every receipt.
 # Tune on the dev split only (P4.7); bump `version` whenever a value changes.
-version: 1
+version: 2
 
 # "Supported" also needs the claim to hold in at least this share of reasonable time windows
 # (the cherry-pick sweep, P3.1); below it the label is "supported, but framing matters".
@@ -8,10 +8,12 @@ framing_threshold: 0.7
 
 # A stated value holds when |computed - asserted| <= the largest of:
 #   relative × |asserted|, absolute, and (if rounding) half a unit of the asserted number's
-#   last written digit (23 → 0.5, 2.3 → 0.05).
+#   last written digit (23 → 0.5, 2.3 → 0.05);
+# plus plus_relative × |asserted| on top (room for data revisions since the claim).
+# Levels (D020): half a unit of the stated precision plus 1%: "133%" holds within ±1.83.
 values:
-  level: { relative: 0.05, rounding: true } # "debt of 2.9 trillion euros"
-  level_rate: { absolute: 0.5, rounding: true } # levels of series in % ("youth unemployment is 20%")
+  level: { rounding: true, plus_relative: 0.01 } # "debt of 2.9 trillion euros"
+  level_rate: { rounding: true, plus_relative: 0.01 } # levels of series in % ("youth unemployment is 20%")
   absolute: { relative: 0.05, rounding: true } # "grew by 116 billion euros"
   percent: { relative: 0.05, rounding: true } # "down 23%", also a growth rate or CAGR
   percentage_points: { absolute: 0.5, rounding: true } # "fallen 12 points"

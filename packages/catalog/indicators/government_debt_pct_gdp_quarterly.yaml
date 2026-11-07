@@ -14,6 +14,7 @@ aliases:
 definition: "General government consolidated gross debt (Maastricht definition) at the end of the quarter, as a percentage of GDP."
 unit: "% of GDP"
 frequency: quarterly
+annual_value: end
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 2000
 last_year: null # still updated

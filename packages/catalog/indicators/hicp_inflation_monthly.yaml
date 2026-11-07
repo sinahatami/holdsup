@@ -16,6 +16,7 @@ aliases:
 definition: "Harmonised index of consumer prices, all items: percentage change on the same month of the previous year; the euro-area inflation measure the ECB targets."
 unit: "% change on same month of previous year"
 frequency: monthly
+annual_value: mean
 geo_coverage: ["EA", "EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1997
 last_year: null # still updated

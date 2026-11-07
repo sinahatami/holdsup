@@ -19,13 +19,16 @@ from holdsup.pipeline.claim import (
     CHANGE_TYPES,
     LATEST,
     PERIOD_RE,
+    VAGUE_YEARS,
     Assertion,
     AssertionType,
     Basis,
     ClaimSpec,
     Direction,
+    Operator,
 )
 from holdsup.pipeline.terms import OfficeTerms, find_holders, pick_term
+from holdsup.places import is_name, place_code
 from holdsup.router import Attempt, Router, Use
 
 # --- what the model returns ------------------------------------------------------------------
@@ -115,6 +118,14 @@ government", "since Labour came to power"): fill office, leave start null.
 - assertion.type: a change in points of a rate is percentage_points; "by 23%" is percent; \
 "by 2 million" is absolute; "halved"/"doubled" is ratio. A level reached ("rose to 30%") is \
 level with a direction.
+- A level's number goes in assertion.value ("debt is 133%": value 133); start_value and \
+end_value are only for "from X to Y" and "fell to Y".
+- assertion.operator: more_than for "more than 18%" or "over 18%", less_than for "under" or \
+"less than", at_least, at_most for "no more than" or "up to"; otherwise about.
+- "Hit 132.6% in 2013, up from 127% in 2012" is one change claim: start "2012", end "2013", \
+start_value 127, end_value 132.6, direction up.
+- Two levels at different times with no change written ("In 2011 it was 29%; today it is \
+43.3%") are two level claims, each with its own value and period (end "2011"; end "latest").
 - assertion.value is the stated change or level, as a positive magnitude; the sign goes in \
 direction. "From 25.6% to 33.9%" with no change written: value null, start_value 25.6, \
 end_value 33.9.
@@ -165,17 +176,6 @@ WORD_NUMBERS = {
             ]
         )
     },
-}
-GEO_GROUPS = frozenset({"EU", "EA", "WORLD", "G7", "G20", "OECD"})
-GEO_ALIASES = {
-    "UK": "GB",
-    "EL": "GR",
-    "EU27": "EU",
-    "EU27_2020": "EU",
-    "EZ": "EA",
-    "EA20": "EA",
-    "EUROZONE": "EA",
-    "WLD": "WORLD",
 }
 
 
@@ -253,11 +253,9 @@ def _norm_text(text: str) -> str:
 
 
 def normalize_geo(code: str | None) -> str | None:
-    if code is None:
-        return None
-    code = code.strip().upper()
-    code = GEO_ALIASES.get(code, code)
-    return code if re.fullmatch(r"[A-Z]{2}", code) or code in GEO_GROUPS else None
+    """The claim code for what the model wrote: a code, a country name, a demonym ("Italian")
+    or a short form ("the UK", "America"); None when the place is unknown."""
+    return place_code(code)
 
 
 def normalize_period(period: str | None, *, allow_latest: bool = False) -> str | None:
@@ -354,6 +352,15 @@ def _check_assertion(assertion: Assertion, text: str, notes: list[str]) -> Asser
         if a.direction is None and a.start_value != a.end_value:
             a.direction = Direction.UP if a.end_value > a.start_value else Direction.DOWN
         notes.append(f"'from X to Y' levels: checked as a {a.type} change with both levels")
+    # "Today it is 43.3%" with the number put in start_value (or "fell to 7%" only in
+    # end_value): a level has one number, and it is the asserted value.
+    if a.type == AssertionType.LEVEL and a.value is None:
+        stated = [f for f in ("start_value", "end_value") if getattr(a, f) is not None]
+        if len(stated) == 1:
+            a.value = getattr(a, stated[0])
+            if stated[0] == "start_value":
+                a.start_value = None
+            notes.append(f"level {a.value:g} was in assertion.{stated[0]}; used as the value")
     if a.type == AssertionType.RATIO and a.value is not None and a.value > 0:
         implied = (
             Direction.FLAT if a.value == 1 else (Direction.UP if a.value > 1 else Direction.DOWN)
@@ -363,6 +370,52 @@ def _check_assertion(assertion: Assertion, text: str, notes: list[str]) -> Asser
         elif a.direction != implied:
             notes.append(f"direction {a.direction} contradicts ratio {a.value:g}")
     return a
+
+
+# "more than 18%": the words right before the asserted number (longest phrases first).
+_OPERATORS = [
+    ("no more than", Operator.AT_MOST), ("not more than", Operator.AT_MOST),
+    ("at most", Operator.AT_MOST), ("up to", Operator.AT_MOST),
+    ("no less than", Operator.AT_LEAST), ("no fewer than", Operator.AT_LEAST),
+    ("at least", Operator.AT_LEAST),
+    ("more than", Operator.MORE_THAN), ("in excess of", Operator.MORE_THAN),
+    ("over", Operator.MORE_THAN), ("above", Operator.MORE_THAN),
+    ("less than", Operator.LESS_THAN), ("fewer than", Operator.LESS_THAN),
+    ("under", Operator.LESS_THAN), ("below", Operator.LESS_THAN),
+]  # fmt: skip
+_OPERATOR_RE = re.compile(
+    r"\b(" + "|".join(re.escape(p) for p, _ in _OPERATORS) + r")\s+(\d+(?:[.,]\d+)*)",
+    re.IGNORECASE,
+)
+# Phrases that give a window without dates: read as the 5 years before the claim date.
+VAGUE_RE = re.compile(
+    r"\b(for years|for many years|in recent years|recent years|recently|lately|"
+    r"over the years|for some years)\b",
+    re.IGNORECASE,
+)
+
+
+def operator_in(quote: str, value: float) -> Operator | None:
+    """The bound written right before `value` in the quote ("more than 18%"), if any."""
+    ops = dict(_OPERATORS)
+    for m in _OPERATOR_RE.finditer(quote):
+        if any(_in(value, values) for values in _readings(m[2])):
+            return ops[m[1].casefold()]
+    return None
+
+
+def _assumed_window(assertion: Assertion, quote: str, said: SaidOn) -> tuple[str, str] | None:
+    """(start, why) for a trend with no dates, or a change that says "for years" or
+    "recently": the 5 years before the claim date."""
+    vague = VAGUE_RE.search(quote)
+    if assertion.type != AssertionType.TREND and not (vague and assertion.type in CHANGE_TYPES):
+        return None
+    why = f"'{vague[1]}'" if vague else "no window given"
+    start = str(said.by.year - VAGUE_YEARS)
+    return start, (
+        f"{why} read as the {VAGUE_YEARS} years before the claim date ({said.text or 'today'}): "
+        f"from {start}"
+    )
 
 
 def resolve(
@@ -378,14 +431,18 @@ def resolve(
 
     geo = normalize_geo(claim.geo)
     if claim.geo is not None and geo is None:
-        notes.append(f"geo {claim.geo!r} is not a known code; dropped")
+        notes.append(f"geo {claim.geo!r} is not a known place; dropped")
+    elif claim.geo is not None and is_name(claim.geo):
+        notes.append(f"geo {claim.geo!r} read as {geo}")
     geo_basis = None if geo is None else (Basis.STATED if claim.geo_named else Basis.INFERRED)
     peers = []
     for raw in claim.peers:
         if (code := normalize_geo(raw)) is None:
-            notes.append(f"peer {raw!r} is not a known code; dropped")
+            notes.append(f"peer {raw!r} is not a known place; dropped")
         elif code not in peers:
             peers.append(code)
+            if is_name(raw):
+                notes.append(f"peer {raw!r} read as {code}")
 
     start = normalize_period(claim.start)
     if claim.start is not None and start is None:
@@ -429,6 +486,19 @@ def resolve(
                 notes.append(f"geo {geo} differs from {holder.name}'s country {holder.country}")
 
     assertion = _check_assertion(claim.assertion, text, notes)
+    if (
+        assertion.operator is Operator.ABOUT
+        and assertion.value is not None
+        and (bound := operator_in(claim.quote, assertion.value)) is not None
+    ):
+        assertion.operator = bound
+        notes.append(f"operator {bound} from the text")
+
+    if start is None and (window := _assumed_window(assertion, claim.quote, said)) is not None:
+        start, start_basis = window[0], Basis.ASSUMED
+        notes.append(window[1])
+        if end is None:
+            end, end_basis = LATEST, Basis.ASSUMED
 
     if _norm_text(claim.quote) not in _norm_text(text):
         notes.append("quote is not an exact span of the text")

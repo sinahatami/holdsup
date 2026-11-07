@@ -68,3 +68,12 @@ def test_from_record() -> None:
     assert (s.geo, s.unit, s.points[0][1]) == ("IT", "EUR per person", 3.0)
     with pytest.raises(OpError, match="no output series"):
         Series.from_record(OpRecord(op="value_at", args={}, inputs=[], value=1.0))
+
+
+def test_until_keeps_values_up_to_a_period() -> None:
+    s = Series.from_values("IT", {"2015": 1.0, "2016": 2.0, "2017": 3.0})
+    assert [str(p) for p, _ in s.until(parse_period("2016")).points] == ["2015", "2016"]
+    with pytest.raises(OpError, match="no value up to 2014"):
+        s.until(parse_period("2014"))
+    with pytest.raises(OpError, match="2016-01 is monthly but the series is annual"):
+        s.until(parse_period("2016-01"))

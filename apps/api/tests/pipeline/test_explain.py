@@ -5,7 +5,17 @@ from typing import Any
 
 import pytest
 
-from holdsup.ops import ChangeKind, Series, change, compare, rank, value_at
+from holdsup.ops import (
+    AnnualValue,
+    ChangeKind,
+    Frequency,
+    Series,
+    annual_flag,
+    change,
+    compare,
+    rank,
+    value_at,
+)
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
 from holdsup.pipeline.explain import (
     EXPLAIN_SYSTEM,
@@ -94,6 +104,14 @@ def test_window_share_and_threshold_are_allowed() -> None:
     v = decide(claim(), RECORDS, [0], unit="%", tolerances=TOL, window_share=0.4)
     allowed = allowed_numbers(RECORDS, v, claim(), "%")
     assert invented_numbers("It holds in 40% of windows; the bar is 70%.", allowed) == []
+
+
+def test_numbers_in_code_written_notes_are_allowed() -> None:
+    note = annual_flag(Frequency.MONTHLY, AnnualValue.MEAN, ["2015", "2023"])
+    r = RECORDS[0].model_copy(update={"flags": [note]})
+    allowed = allowed_numbers([r], VERDICT, claim(), "%")
+    assert invented_numbers("Each year is the average of its 12 monthly values.", allowed) == []
+    assert invented_numbers("Each year is the average of 13 values.", ALLOWED) == ["13"]
 
 
 @pytest.mark.parametrize(
