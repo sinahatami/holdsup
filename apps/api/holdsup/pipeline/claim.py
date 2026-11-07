@@ -102,3 +102,18 @@ class ClaimSpec(BaseModel):
     speaker: str | None
     said_on: str | None  # "YYYY", "YYYY-MM" or "YYYY-MM-DD"
     notes: list[str] = Field(default_factory=list)  # what code changed or could not verify
+
+
+def says_now(claim: ClaimSpec) -> bool:
+    """Whether the claim is about the present: "latest", or a level said in the year it is
+    about (Renzi, 2013: "debt is 133%")."""
+    if claim.end == LATEST:
+        return True
+    a = claim.assertion
+    return (
+        a.type is AssertionType.LEVEL
+        and claim.said_on is not None
+        and claim.end is not None
+        and claim.end[:4] == claim.said_on[:4]
+        and claim.start in (None, claim.end)
+    )

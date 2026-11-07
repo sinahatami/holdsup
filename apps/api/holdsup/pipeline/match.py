@@ -18,7 +18,7 @@ from holdsup.catalog.coverage import covers
 from holdsup.catalog.embed import Embedder
 from holdsup.catalog.index import IndicatorHit
 from holdsup.catalog.schema import AnnualValue, Catalog, Frequency, IndicatorSpec
-from holdsup.pipeline.claim import AssertionType, ClaimSpec
+from holdsup.pipeline.claim import AssertionType, ClaimSpec, says_now
 from holdsup.router import Router, Use
 from holdsup.router.client import ToolCall
 
@@ -76,6 +76,8 @@ growth-rate series. A claim about one period's growth rate needs the growth-rate
 - Frequency never rules a candidate out. A claim about a whole year can use a monthly or \
 quarterly series: code makes the year's value from it (each candidate says how). Prefer the \
 claim's frequency only between candidates that measure the same thing.
+- A claim about the present ("is", "now", "today") is best checked on the most frequent series \
+that measures the same thing: a quarterly series is out months before the annual one.
 - Tools, only when the candidates do not settle it (at most 4 calls): search_catalog for \
 another phrasing, get_indicator_meta for an entry's full definition and related entries, \
 list_geos for the places an entry covers.
@@ -237,6 +239,27 @@ def _yearly_alternative(run: _Run, answer: MatchAnswer | None) -> IndicatorSpec 
     return None
 
 
+_FINENESS = {Frequency.MONTHLY: 0, Frequency.QUARTERLY: 1, Frequency.ANNUAL: 2}
+
+
+def _finer_alternative(run: _Run, answer: MatchAnswer | None) -> IndicatorSpec | None:
+    """For a claim about the present: the picked series' more frequent alternative (same unit),
+    the finest one the model listed. A series with a more frequent twin is out later."""
+    if answer is None or answer.indicator_id is None or not says_now(run.claim):
+        return None
+    picked = run.eligible.get(answer.indicator_id)
+    if picked is None:
+        return None
+    finer = [
+        spec
+        for i in answer.alternatives
+        if (spec := run.eligible.get(i)) is not None
+        and spec.unit == picked.unit
+        and _FINENESS[spec.frequency] < _FINENESS[picked.frequency]
+    ]
+    return min(finer, key=lambda spec: _FINENESS[spec.frequency], default=None)
+
+
 @dataclass
 class Matcher:
     router: Router
@@ -273,7 +296,26 @@ class Matcher:
         run = _Run(claim, {h.id: self.catalog.get(h.id) for h in candidates})
         answer, convo = await self._ask(run)
         if (spec := _yearly_alternative(run, answer)) is not None:
-            answer = await self._ask_again(run, convo, answer, spec)
+            run.notes.append(f"asked again: {spec.id} was turned down, and frequency is no reason")
+            nudge = (
+                f"Frequency is not a reason to turn down {spec.id}: it is {spec.frequency}, and "
+                f"code makes a year's value from it.{yearly_note(spec)} If it measures the same "
+                "thing as the claim (population, unit, definition), pick it; otherwise answer "
+                "null again. Answer with the JSON object only."
+            )
+            answer = await self._ask_again(run, convo, answer, nudge)
+        elif (spec := _finer_alternative(run, answer)) is not None and answer is not None:
+            run.notes.append(
+                f"asked again: {spec.id} is {spec.frequency}, more often than {answer.indicator_id}"
+                ", and the claim is about the present"
+            )
+            nudge = (
+                f"The claim is about the present, and {spec.id} ({spec.frequency}) is out sooner "
+                f"than {answer.indicator_id}. If it measures the same thing as the claim "
+                f"(population, unit, definition), pick it;{yearly_note(spec)} otherwise keep "
+                f"{answer.indicator_id}. Answer with the JSON object only."
+            )
+            answer = await self._ask_again(run, convo, answer, nudge)
         return self._verdict(run, answer, shown, excluded)
 
     async def _ask_again(
@@ -281,17 +323,9 @@ class Matcher:
         run: _Run,
         convo: list[ChatCompletionMessageParam],
         answer: MatchAnswer | None,
-        spec: IndicatorSpec,
+        nudge: str,
     ) -> MatchAnswer | None:
-        """One more turn when the model turned down a monthly or quarterly series that code can
-        make yearly values from: frequency alone is never a reason to say no."""
-        run.notes.append(f"asked again: {spec.id} was turned down, and frequency is no reason")
-        nudge = (
-            f"Frequency is not a reason to turn down {spec.id}: it is {spec.frequency}, and code "
-            f"makes a year's value from it.{yearly_note(spec)} If it measures the same thing as "
-            "the claim (population, unit, definition), pick it; otherwise answer null again. "
-            "Answer with the JSON object only."
-        )
+        """One more turn with `nudge` after the model's first answer."""
         previous = "" if answer is None else answer.model_dump_json()
         result = await self.router.complete(
             "match",

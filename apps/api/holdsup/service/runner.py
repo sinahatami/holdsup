@@ -100,10 +100,12 @@ class CheckRunner:
     channels: dict[UUID, Channel] = field(default_factory=dict)
     tasks: set[asyncio.Task[None]] = field(default_factory=set)
 
-    async def submit(self, text: str, client: str) -> Submitted:
-        """Start a check of `text`. Raises ProblemError (429) when `client` is over its limit."""
+    async def submit(self, text: str, client: str, *, fresh: bool = False) -> Submitted:
+        """Start a check of `text`. Raises ProblemError (429) when `client` is over its limit.
+        `fresh` skips the ledger, so the claim is checked again (the seed's --force); the new
+        result then becomes the ledger's newest entry for the claim."""
         started = self.now()
-        hit = await self.ledger.lookup(text)
+        hit = None if fresh else await self.ledger.lookup(text)
         if hit is not None:
             return await self._copy(text, CheckResult.model_validate(hit.entry.result), started)
         wait = self.limiter.hit(client)

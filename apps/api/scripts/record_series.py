@@ -28,7 +28,8 @@ OUT = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "series"
 SERIES = [
     ("unemployment_rate_monthly", "IT"),  # r001
     ("youth_unemployment_rate_monthly", "IT"),  # c001, c002, c004
-    ("government_debt_pct_gdp", "IT"),  # c007, c008
+    ("government_debt_pct_gdp", "IT"),  # c006, c007
+    ("government_debt_pct_gdp_quarterly", "IT"),  # c006
     ("greenhouse_gas_emissions", "IT"),  # c018
     ("co2_per_capita", "US"),  # c024
     ("unemployment_rate_ilo", "ZA"),  # c029
