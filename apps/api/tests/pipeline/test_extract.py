@@ -210,7 +210,8 @@ def test_numbers_in_reads_both_decimal_marks_and_words() -> None:
 @pytest.mark.parametrize(
     ("raw", "code"),
     [("it", "IT"), ("UK", "GB"), ("EL", "GR"), ("EU27_2020", "EU"), ("Eurozone", "EA"),
-     ("WLD", "WORLD"), ("G7", "G7"), ("ITA", None), ("Italy", None), (None, None)],
+     ("WLD", "WORLD"), ("G7", "G7"), ("ITA", "IT"), ("Italy", "IT"), ("the UK", "GB"),
+     ("Italian", "IT"), ("America", "US"), ("XX", None), ("Atlantis", None), (None, None)],
 )  # fmt: skip
 def test_normalize_geo(raw: str | None, code: str | None) -> None:
     assert normalize_geo(raw) == code
@@ -265,19 +266,34 @@ def test_resolve_states_where_each_value_came_from() -> None:
         Basis.STATED,
     )
     assert spec.indicator_phrase == "GDP growth" and spec.speaker == "Renzi"
-    assert spec.notes == ["peer 'Europe' is not a known code; dropped"]
+    assert spec.notes == ["peer 'Europe' is not a known place; dropped"]
+
+
+def test_resolve_reads_place_names_as_codes_and_says_so() -> None:
+    spec = resolve(
+        model_claim(geo="Italy", peers=["the UK", "Germans", "fr"]),
+        text="GDP grew 2% in 2024",
+        speaker=None,
+        said=SAID_2018,
+    )
+    assert (spec.geo, spec.geo_basis, spec.peers) == ("IT", Basis.STATED, ["GB", "DE", "FR"])
+    assert spec.notes == [
+        "geo 'Italy' read as IT",
+        "peer 'the UK' read as GB",
+        "peer 'Germans' read as DE",
+    ]
 
 
 def test_resolve_drops_what_it_cannot_read() -> None:
     spec = resolve(
-        model_claim(geo="Italy", start="spring 2015", end="soon", quote="GDP rose 2%"),
+        model_claim(geo="Atlantis", start="spring 2015", end="soon", quote="GDP rose 2%"),
         text="GDP grew 2% in 2024",
         speaker=None,
         said=SAID_2018,
     )
     assert (spec.geo, spec.start, spec.end) == (None, None, None)
     assert spec.notes == [
-        "geo 'Italy' is not a known code; dropped",
+        "geo 'Atlantis' is not a known place; dropped",
         "start 'spring 2015' is not a period; dropped",
         "end 'soon' is not a period; dropped",
         "quote is not an exact span of the text",

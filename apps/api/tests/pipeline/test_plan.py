@@ -662,3 +662,72 @@ def test_a_level_claim_keeps_its_one_value_at_as_the_answer() -> None:
            {"op": "value_at", "geo": "IT", "period": "2019"}]  # fmt: skip
     with pytest.raises(PlanInvalid):
         validate_plan(plan(*two, answer=[0, 1]), ctx(c))
+
+
+# --- two value_at calls for a "from X to Y" change -------------------------------------------
+
+VALUES = [{"op": "value_at", "geo": "IT", "period": "2015"},
+          {"op": "value_at", "geo": "IT", "period": "2020"}]  # fmt: skip
+
+
+def test_two_values_for_a_change_claim_become_one_change() -> None:
+    valid = validate_plan(plan(*VALUES, answer=[0, 1]), ctx())
+    [call] = valid.calls
+    assert (call.op, call.geo, call.start, call.end, call.kind) == (
+        "change", "IT", "2015", "2020", ChangeKind.PERCENTAGE_POINTS,
+    )  # fmt: skip
+    assert valid.answer == [0]
+    note = "calls 0 and 1: two value_at (2015, 2020) → one change 2015 to 2020"
+    assert valid.notes == [f"{note} (percentage_points), the claim is about a change"]
+
+
+def test_the_later_value_first_still_makes_a_forward_change() -> None:
+    valid = validate_plan(plan(VALUES[1], VALUES[0], answer=[0, 1]), ctx())
+    assert (valid.calls[0].start, valid.calls[0].end) == ("2015", "2020")
+
+
+def test_latest_is_the_end_of_the_change() -> None:
+    later = {**VALUES[1], "period": "latest"}
+    valid = validate_plan(plan(later, VALUES[0], answer=[0, 1]), ctx())
+    assert (valid.calls[0].start, valid.calls[0].end) == ("2015", "latest")
+
+
+def test_the_change_has_the_claims_own_kind() -> None:
+    valid = validate_plan(plan(*VALUES, answer=[0, 1]), ctx(claim(AssertionType.PERCENT, 5)))
+    assert valid.calls[0].kind is ChangeKind.PERCENT
+
+
+def test_calls_after_the_merged_pair_move_up() -> None:
+    pop = {"op": "per_capita", "geo": "IT", "population": "pop"}
+    later = {"op": "value_at", "geo": "IT", "period": "2020", "series": "@2"}
+    c = ctx(claim(AssertionType.ABSOLUTE, 5), GDP, POP)
+    valid = validate_plan(plan(VALUES[0], VALUES[1], pop, later, answer=[0, 1]), c)
+    assert [x.op for x in valid.calls] == ["change", "per_capita", "value_at"]
+    assert valid.calls[2].series == "@1" and valid.answer == [0]
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        # two values on different places, or the same period twice
+        [VALUES[0], {**VALUES[1], "geo": "DE"}],
+        [VALUES[0], {**VALUES[0]}],
+        # a series that is not the same one
+        [VALUES[0], {**VALUES[1], "series": "gdp"}],
+    ],
+)
+def test_two_values_that_are_not_one_change_are_left_to_the_checks(
+    calls: list[dict[str, Any]],
+) -> None:
+    with pytest.raises(PlanInvalid):
+        validate_plan(plan(*calls, answer=[0, 1]), ctx(None, RATE, GDP))
+
+
+def test_a_level_claim_with_two_values_is_not_turned_into_a_change() -> None:
+    with pytest.raises(PlanInvalid, match="do not answer a level claim"):
+        validate_plan(plan(*VALUES, answer=[0, 1]), ctx(claim(AssertionType.LEVEL, 28, None)))
+
+
+def test_one_value_of_a_growth_rate_series_stays_a_value() -> None:
+    valid = validate_plan(plan(VALUES[0]), ctx())
+    assert [c.op for c in valid.calls] == ["value_at"] and valid.notes == []

@@ -45,6 +45,7 @@ from holdsup.ops import (
     year_window,
 )
 from holdsup.pipeline.claim import (
+    CHANGE_TYPES,
     VAGUE_YEARS,
     AssertionType,
     Basis,
@@ -336,6 +337,51 @@ def _latest_cutoff(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     return notes
 
 
+def _period_order(period: str) -> float | None:
+    """Where a period falls in time ("latest" last); None if it is not a period."""
+    if period == LATEST:
+        return float("inf")
+    try:
+        return float(parse_period(period).ordinal)
+    except (ValueError, OpError):
+        return None
+
+
+def _values_as_change(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """A "from X to Y" change claim answered by two value_at calls (one per end) is a change:
+    the two become one change call of the claim's own kind, and the calls after it move up."""
+    claim = ctx.claim
+    if claim.assertion.type not in CHANGE_TYPES or len(plan.answer) != 2:
+        return []
+    first, second = sorted(plan.answer)
+    if not 0 <= first < second < len(plan.calls):
+        return []
+    a, b = plan.calls[first], plan.calls[second]
+    if (
+        a.op != "value_at"
+        or b.op != "value_at"
+        or a.geo != b.geo
+        or a.series != b.series
+        or a.period is None
+        or b.period is None
+    ):
+        return []
+    order_a, order_b = _period_order(a.period), _period_order(b.period)
+    if order_a is None or order_b is None or order_a == order_b:
+        return []
+    start, end = (a.period, b.period) if order_a < order_b else (b.period, a.period)
+    kind = ChangeKind(str(claim.assertion.type))
+    merged = OpCall(op="change", series=a.series, geo=a.geo, start=start, end=end, kind=kind)
+    plan.calls[first] = merged
+    del plan.calls[second]
+    for call in plan.calls[second:]:  # references to later calls shift down by one
+        if call.series is not None and call.series.startswith("@") and _step(call.series) > second:
+            call.series = f"@{_step(call.series) - 1}"
+    plan.answer = [first]
+    note = f"calls {first} and {second}: two value_at ({a.period}, {b.period}) → one change"
+    return [f"{note} {start} to {end} ({kind}), the claim is about a change"]
+
+
 def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     """A level claim is answered by one value_at; extra answer calls (a change to show the
     rise) are kept as context."""
@@ -487,7 +533,8 @@ def validate_plan(plan: ModelPlan, ctx: PlanContext) -> ValidPlan:
     if not plan.calls:
         raise PlanInvalid(["the plan has no calls"])
     notes = (
-        _assumed_start(plan, ctx)
+        _values_as_change(plan, ctx)
+        + _assumed_start(plan, ctx)
         + _latest_cutoff(plan, ctx)
         + _whole_years(plan, ctx)
         + _level_answer(plan, ctx)
