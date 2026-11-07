@@ -384,7 +384,9 @@ export interface components {
       | "zero_denominator"
       | "few_points"
       | "constant_series"
-      | "window_not_covered";
+      | "window_not_covered"
+      | "annual_value"
+      | "latest_year";
     /** GalleryItem */
     GalleryItem: {
       /**
@@ -521,6 +523,8 @@ export interface components {
       asserted?: number | null;
       /** Tolerance */
       tolerance?: number | null;
+      /** Period */
+      period?: string | null;
       /** Detail */
       detail: string;
     };

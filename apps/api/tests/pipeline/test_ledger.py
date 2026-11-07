@@ -155,3 +155,14 @@ async def test_default_clock_is_utc_now() -> None:
     entry = await store.remember(TEXT, {})
     assert entry.created_at.tzinfo is UTC
     assert abs(datetime.now(UTC) - entry.created_at) < timedelta(minutes=1)
+
+
+async def test_a_result_from_another_catalog_or_tolerances_is_not_reused() -> None:
+    current = {"catalog": "0.3.0", "tolerances": 1}
+    store = Ledger(InMemoryLedgerStore(), HashEmbedder(), now=Clock(), versions=current)
+    await store.remember(TEXT, {"versions": {"app": "0.0.0", "catalog": "0.2.0", "tolerances": 1}})
+    await store.remember(TEXT.replace("since", "from"), {"no": "versions"})
+    assert await store.lookup(TEXT) is None  # neither the exact nor the near entry counts
+    await store.remember(TEXT, {"versions": {"app": "0.0.1", **current}})
+    hit = await store.lookup(TEXT)
+    assert hit is not None and hit.entry.result["versions"]["catalog"] == "0.3.0"

@@ -36,6 +36,8 @@ class FlagCode(StrEnum):
     FEW_POINTS = "few_points"  # a fit through two points (R² is trivially 1)
     CONSTANT_SERIES = "constant_series"  # every value is equal, so R² is undefined
     WINDOW_NOT_COVERED = "window_not_covered"  # data starts after or ends before the window
+    ANNUAL_VALUE = "annual_value"  # yearly values made from a monthly or quarterly series
+    LATEST_YEAR = "latest_year"  # "latest" in yearly values: the last complete year
 
 
 class Flag(BaseModel):

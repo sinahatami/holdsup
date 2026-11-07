@@ -239,6 +239,11 @@ class Pipeline:
     terms: OfficeTerms | None = None
     today: Callable[[], date] | None = None
 
+    def versions(self) -> dict[str, object]:
+        """What a stored result must match to be reused (the ledger): the catalog and the
+        tolerances its verdicts came from."""
+        return {"catalog": self.catalog.version, "tolerances": self.tolerances.version}
+
     def _uses(self, step: Step, providers: Sequence[str]) -> list[ModelUse]:
         models = {p.name: p.model for p in self.router.config.providers}
         return [ModelUse(step=step, provider=p, model=models.get(p, "?")) for p in providers]

@@ -75,6 +75,9 @@ def allowed_numbers(
         for arg in r.args.values():
             if isinstance(arg, str):
                 values.update(_period_numbers(arg))
+        # Notes are written by code ("the average of its 12 monthly values"; "2016-09").
+        for flag in r.flags:
+            values.update(w.value for w in written_numbers(flag.detail))
     for part in verdict.parts:
         values.update(x for x in (part.computed, part.asserted, part.tolerance) if x is not None)
     if verdict.window_share is not None:
@@ -152,7 +155,10 @@ You explain a fact-check result to a general reader in 2 or 3 plain sentences. T
 - Use only numbers that appear in RESULTS or in the claim. Never compute a new number: no \
 differences, sums, averages, or percentages of your own. Round only as RESULTS show them.
 - Say what the data shows, never anything about the person who made the claim.
-- Mention a note (a substituted period, missing data) when it matters for the verdict.
+- Mention a note (a substituted period, missing data, a yearly average) when it matters for \
+the verdict.
+- When the claim is about the present ("today", "now"), name the period of the latest value, \
+as RESULTS write it after the place (for example "September 2026" for IT 2026-09).
 
 Answer with JSON: {"explanation": "..."}."""
 
@@ -192,6 +198,8 @@ def template_explanation(verdict: Verdict, indicator: str) -> str:
         if p.computed is None:
             continue
         line = f"For the {p.name}, the {indicator} data gives {fmt(p.computed)}"
+        if p.period:
+            line += f" for {p.period}"
         if p.asserted is not None:
             line += f" against {fmt(p.asserted)} claimed"
         details.append(line + ".")

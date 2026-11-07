@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, ValidationError
 from holdsup.catalog.coverage import covers
 from holdsup.catalog.embed import Embedder
 from holdsup.catalog.index import IndicatorHit
-from holdsup.catalog.schema import Catalog, IndicatorSpec
+from holdsup.catalog.schema import AnnualValue, Catalog, Frequency, IndicatorSpec
 from holdsup.pipeline.claim import AssertionType, ClaimSpec
 from holdsup.router import Router, Use
 from holdsup.router.client import ToolCall
@@ -73,7 +73,9 @@ the same thing as the claim: the same population (age range, sex), unit and defi
 - A claim about cumulative change since a start ("has grown more since the pandemic", \
 "doubled since 1950") needs a level series (GDP volume, population, debt in euros), not a \
 growth-rate series. A claim about one period's growth rate needs the growth-rate series.
-- Prefer the frequency the claim uses (monthly, quarterly, annual).
+- Frequency never rules a candidate out. A claim about a whole year can use a monthly or \
+quarterly series: code makes the year's value from it (each candidate says how). Prefer the \
+claim's frequency only between candidates that measure the same thing.
 - Tools, only when the candidates do not settle it (at most 4 calls): search_catalog for \
 another phrasing, get_indicator_meta for an entry's full definition and related entries, \
 list_geos for the places an entry covers.
@@ -142,10 +144,22 @@ def vector_search(
     return search
 
 
-def _describe(spec: IndicatorSpec | IndicatorHit) -> str:
+def yearly_note(spec: IndicatorSpec) -> str:
+    """How a monthly or quarterly entry answers a claim about a whole year."""
+    if spec.frequency is Frequency.ANNUAL:
+        return ""
+    sub = "months" if spec.frequency is Frequency.MONTHLY else "quarters"
+    if spec.annual_value is AnnualValue.MEAN:
+        return f" Yearly values: the average of the year's {sub}."
+    if spec.annual_value is AnnualValue.END:
+        return f" Yearly values: the year's last {sub[:-1]}."
+    return " No yearly values."
+
+
+def _describe(spec: IndicatorSpec) -> str:
     return (
         f"- {spec.id}: {spec.name}. {spec.definition} Unit: {spec.unit}. "
-        f"Frequency: {spec.frequency}."
+        f"Frequency: {spec.frequency}.{yearly_note(spec)}"
     )
 
 
@@ -167,7 +181,7 @@ def needs_level_series(claim: ClaimSpec) -> bool:
     return spans and claim.assertion.type in _CUMULATIVE
 
 
-def claim_message(claim: ClaimSpec, candidates: Sequence[IndicatorHit]) -> str:
+def claim_message(claim: ClaimSpec, candidates: Sequence[IndicatorSpec]) -> str:
     a = claim.assertion
     period = f"{claim.start or '?'} to {claim.end or '?'}"
     asserted = " ".join(str(x) for x in (a.type, a.direction, a.value, a.unit) if x is not None)
@@ -207,6 +221,20 @@ class _Run:
     eligible: dict[str, IndicatorSpec] = field(default_factory=dict)  # ids it may pick
     tool_calls: list[ToolUse] = field(default_factory=list)
     providers: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+
+
+def _yearly_alternative(run: _Run, answer: MatchAnswer | None) -> IndicatorSpec | None:
+    """A monthly or quarterly series with yearly values that the model named but turned down
+    (no pick, or a low-confidence one)."""
+    if answer is None or (answer.indicator_id is not None and answer.confidence != "low"):
+        return None
+    named = [answer.indicator_id] if answer.indicator_id else []
+    for indicator_id in [*named, *answer.alternatives]:
+        spec = run.eligible.get(indicator_id)
+        if spec is not None and spec.frequency is not Frequency.ANNUAL and spec.annual_value:
+            return spec
+    return None
 
 
 @dataclass
@@ -243,20 +271,52 @@ class Matcher:
                 excluded_by_geo=excluded,
             )
         run = _Run(claim, {h.id: self.catalog.get(h.id) for h in candidates})
-        answer = await self._ask(run, candidates)
+        answer, convo = await self._ask(run)
+        if (spec := _yearly_alternative(run, answer)) is not None:
+            answer = await self._ask_again(run, convo, answer, spec)
         return self._verdict(run, answer, shown, excluded)
 
-    async def _ask(self, run: _Run, candidates: Sequence[IndicatorHit]) -> MatchAnswer | None:
+    async def _ask_again(
+        self,
+        run: _Run,
+        convo: list[ChatCompletionMessageParam],
+        answer: MatchAnswer | None,
+        spec: IndicatorSpec,
+    ) -> MatchAnswer | None:
+        """One more turn when the model turned down a monthly or quarterly series that code can
+        make yearly values from: frequency alone is never a reason to say no."""
+        run.notes.append(f"asked again: {spec.id} was turned down, and frequency is no reason")
+        nudge = (
+            f"Frequency is not a reason to turn down {spec.id}: it is {spec.frequency}, and code "
+            f"makes a year's value from it.{yearly_note(spec)} If it measures the same thing as "
+            "the claim (population, unit, definition), pick it; otherwise answer null again. "
+            "Answer with the JSON object only."
+        )
+        previous = "" if answer is None else answer.model_dump_json()
+        result = await self.router.complete(
+            "match",
+            [
+                *convo,
+                {"role": "assistant", "content": previous},
+                {"role": "user", "content": nudge},
+            ],
+            use=self.use,
+            schema=MatchAnswer,
+        )
+        run.providers.append(result.provider)
+        return result.parsed or answer
+
+    async def _ask(self, run: _Run) -> tuple[MatchAnswer | None, list[ChatCompletionMessageParam]]:
         convo: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": MATCH_SYSTEM},
-            {"role": "user", "content": claim_message(run.claim, candidates)},
+            {"role": "user", "content": claim_message(run.claim, list(run.eligible.values()))},
         ]
         while len(run.tool_calls) < MAX_TOOL_CALLS:
             result = await self.router.complete("match", convo, use=self.use, tools=TOOLS)
             run.providers.append(result.provider)
             if not result.tool_calls:
                 if (answer := _parse_answer(result.content)) is not None:
-                    return answer
+                    return answer, convo
                 convo.append({"role": "assistant", "content": result.content or ""})
                 break
             convo.append(_assistant_tool_message(result.tool_calls))
@@ -273,7 +333,7 @@ class Matcher:
             schema=MatchAnswer,
         )  # fmt: skip
         run.providers.append(final.provider)
-        return final.parsed
+        return final.parsed, convo
 
     async def _tool(self, run: _Run, call: ToolCall) -> str:
         """Run one tool call; the answer is JSON for the model. Calls past the budget fail."""
@@ -297,7 +357,7 @@ class Matcher:
             hits, _ = await self._covered_hits(str(args.get("query", "")), geo)
             for h in hits:
                 run.eligible.setdefault(h.id, self.catalog.get(h.id))
-            return {"results": [_describe(h)[2:] for h in hits]}
+            return {"results": [_describe(self.catalog.get(h.id))[2:] for h in hits]}
         if name in ("get_indicator_meta", "list_geos"):
             indicator_id = str(args.get("indicator_id", ""))
             try:
@@ -336,7 +396,7 @@ class Matcher:
         shown: list[Candidate],
         excluded: list[str],
     ) -> MatchResult:
-        notes: list[str] = []
+        notes: list[str] = list(run.notes)
         picked = None if answer is None else answer.indicator_id
         if picked is not None and picked not in run.eligible:
             notes.append(f"model picked {picked!r}, which it was not shown for this place")

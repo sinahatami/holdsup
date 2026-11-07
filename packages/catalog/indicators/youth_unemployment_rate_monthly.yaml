@@ -15,6 +15,7 @@ aliases:
 definition: "Unemployed people aged under 25 as a percentage of the labour force of the same age, monthly, seasonally adjusted (ILO definition)."
 unit: "% of labour force aged under 25"
 frequency: monthly
+annual_value: mean
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1983
 last_year: null # still updated

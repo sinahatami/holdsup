@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from holdsup.catalog.load import main as load_main
 from holdsup.catalog.schema import CatalogError, IndicatorSpec, load_catalog
@@ -120,3 +121,11 @@ def test_drafts_folder_is_ignored(tmp_path: Path) -> None:
     (root / "drafts" / "half_done.yaml").write_text(entry(id="half_done", aliases=[]))
     catalog = load_catalog(root)
     assert [s.id for s in catalog.indicators] == ["unemployment_rate"]
+
+
+def test_annual_value_is_only_for_monthly_or_quarterly_series() -> None:
+    with pytest.raises(ValidationError, match="annual_value is only for monthly or quarterly"):
+        IndicatorSpec.model_validate({**VALID, "annual_value": "mean"})
+    monthly = IndicatorSpec.model_validate({**VALID, "frequency": "monthly", "annual_value": "end"})
+    assert monthly.annual_value is not None and monthly.annual_value.value == "end"
+    assert IndicatorSpec.model_validate({**VALID, "frequency": "quarterly"}).annual_value is None

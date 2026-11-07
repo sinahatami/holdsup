@@ -31,6 +31,13 @@ class Frequency(StrEnum):
     MONTHLY = "monthly"
 
 
+class AnnualValue(StrEnum):
+    """How a year's value is made from a monthly or quarterly series."""
+
+    MEAN = "mean"  # the average of the year's months or quarters (rates, shares, yoy growth)
+    END = "end"  # the last month or quarter of the year (stocks such as debt to GDP)
+
+
 class IndicatorSpec(BaseModel):
     """One curated indicator. Field meanings: docs/spec.md "Data sources and indicator catalog"."""
 
@@ -52,11 +59,16 @@ class IndicatorSpec(BaseModel):
     related: list[Slug] = Field(default_factory=list)
     # Fixed query filters for the adapter (not geo/time), e.g. Eurostat {sex: T, unit: PC_ACT}.
     filters: dict[str, str | list[str]] = Field(default_factory=dict)
+    # Monthly or quarterly series only: how code makes a year's value for a claim about a whole
+    # year. Null means no yearly value can be made (e.g. growth on the previous quarter).
+    annual_value: AnnualValue | None = None
 
     @model_validator(mode="after")
     def _check(self) -> Self:
         if self.last_year is not None and self.last_year < self.first_year:
             raise ValueError("last_year is before first_year")
+        if self.frequency is Frequency.ANNUAL and self.annual_value is not None:
+            raise ValueError("annual_value is only for monthly or quarterly series")
         lowered = [a.lower() for a in self.aliases]
         if len(set(lowered)) != len(lowered):
             raise ValueError("aliases contain duplicates")
