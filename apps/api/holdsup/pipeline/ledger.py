@@ -5,6 +5,7 @@ embedding is close **and** it writes the same numbers and the same direction wor
 that, "fell 12 points" would return the result for "fell 21 points".
 """
 
+import asyncio
 import re
 import unicodedata
 from collections.abc import Awaitable, Callable
@@ -158,7 +159,7 @@ class Ledger:
         if (entry := await self.store.exact(normalized, since)) is not None:
             return LedgerHit(entry, 1.0)
         mine = fingerprint(normalized)
-        embedding = self.embedder.embed([normalized])[0]
+        embedding = await self._embed(normalized)
         for entry, similarity in await self.store.nearest(embedding, since, k=5):
             if similarity < self.threshold:
                 break
@@ -166,14 +167,24 @@ class Ledger:
                 return LedgerHit(entry, similarity)
         return None
 
-    async def remember(self, text: str, result: dict[str, Any]) -> LedgerEntry:
+    async def _embed(self, normalized: str) -> list[float]:
+        # Embedding is CPU-bound; keep it off the event loop.
+        [vector] = await asyncio.to_thread(self.embedder.embed, [normalized])
+        return vector
+
+    async def entry(self, text: str, result: dict[str, Any]) -> LedgerEntry:
+        """The entry `remember` would store, without storing it (a check store keeps it with
+        the check's own row)."""
         normalized = normalize_text(text)
-        entry = LedgerEntry(
+        return LedgerEntry(
             normalized=normalized,
-            embedding=self.embedder.embed([normalized])[0],
+            embedding=await self._embed(normalized),
             result=result,
             created_at=self.now(),
         )
+
+    async def remember(self, text: str, result: dict[str, Any]) -> LedgerEntry:
+        entry = await self.entry(text, result)
         await self.store.add(entry)
         return entry
 

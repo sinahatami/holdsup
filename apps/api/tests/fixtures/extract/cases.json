@@ -796,12 +796,12 @@
           "start_basis": "office",
           "end": "latest",
           "end_basis": "office",
-          "type": "level",
+          "type": "percentage_points",
           "value": null,
           "direction": "up",
           "start_value": 25.6,
           "end_value": 33.9,
-          "notes": 0
+          "notes": 1
         }
       ]
     },
