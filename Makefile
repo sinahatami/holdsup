@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types format db-migrate docker-api smoke-providers list-models pivot-test record-extractions embed-model catalog catalog-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions embed-model catalog catalog-check
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -61,6 +61,9 @@ types: ## Regenerate apps/web/src/lib/api/schema.ts from FastAPI's OpenAPI schem
 	cd $(API_DIR) && uv run python -m scripts.export_openapi $(CURDIR)/.cache/openapi.json
 	pnpm --filter @holdsup/web exec openapi-typescript $(CURDIR)/.cache/openapi.json -o src/lib/api/schema.ts
 	pnpm exec prettier --write $(WEB_DIR)/src/lib/api/schema.ts
+
+seed-gallery: ## Run eval/gallery_claims.txt and feature the results (needs keys, DATABASE_URL, catalog; not CI)
+	cd $(API_DIR) && uv run python -m scripts.seed_gallery $(ARGS)
 
 format: ## Auto-format Python and web code
 	uv run ruff format .
