@@ -10,6 +10,7 @@ from holdsup.ops.record import DataPoint, Flag, FlagCode, OpError, OpRecord
 from holdsup.ops.series import Series
 from holdsup.ops.transforms import deflate, per_capita
 from holdsup.ops.trend import LinearFit, linear_fit, trend
+from holdsup.ops.units import is_rate, unit_scale
 from holdsup.ops.values import cagr, change, compare, rank, value_at
 
 __all__ = [
@@ -30,11 +31,13 @@ __all__ = [
     "compare",
     "compound_rate",
     "deflate",
+    "is_rate",
     "linear_fit",
     "parse_period",
     "per_capita",
     "rank",
     "trend",
+    "unit_scale",
     "value_at",
     "years_between",
 ]
