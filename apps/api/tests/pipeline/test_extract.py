@@ -324,6 +324,54 @@ def test_resolve_drops_a_level_read_as_the_change() -> None:
 
 
 @pytest.mark.parametrize(
+    ("unit", "direction", "expected_type", "expected_direction"),
+    [
+        ("%", Direction.DOWN, AssertionType.PERCENTAGE_POINTS, Direction.DOWN),
+        ("% of GDP", None, AssertionType.PERCENTAGE_POINTS, Direction.DOWN),
+        ("million people", None, AssertionType.ABSOLUTE, Direction.DOWN),
+    ],
+)
+def test_resolve_checks_from_x_to_y_levels_as_a_change(
+    unit: str,
+    direction: Direction | None,
+    expected_type: AssertionType,
+    expected_direction: Direction,
+) -> None:
+    # Live run, P2.6: "fell from 11.9% in 2015 to 7.7% in 2023" came back as a level with no
+    # value, which no plan can answer.
+    assertion = Assertion(
+        type=AssertionType.LEVEL,
+        value=None,
+        direction=direction,
+        unit=unit,
+        start_value=11.9,
+        end_value=7.7,
+    )
+    text = "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023."
+    spec = resolve(
+        model_claim(assertion=assertion, quote=text), text=text, speaker=None, said=SAID_2018
+    )
+    assert spec.assertion.type is expected_type
+    assert spec.assertion.direction is expected_direction
+    assert (spec.assertion.start_value, spec.assertion.end_value) == (11.9, 7.7)
+    assert spec.notes == [
+        f"'from X to Y' levels: checked as a {expected_type} change with both levels"
+    ]
+
+
+def test_resolve_keeps_a_level_with_its_value() -> None:
+    assertion = Assertion(
+        type=AssertionType.LEVEL, value=7.7, direction=Direction.DOWN, unit="%",
+        start_value=None, end_value=None,
+    )  # fmt: skip
+    text = "unemployment fell to 7.7%"
+    spec = resolve(
+        model_claim(assertion=assertion, quote=text), text=text, speaker=None, said=SAID_2018
+    )
+    assert spec.assertion.type is AssertionType.LEVEL and spec.notes == []
+
+
+@pytest.mark.parametrize(
     ("value", "given", "direction", "notes"),
     [(0.5, None, Direction.DOWN, 0), (2.0, None, Direction.UP, 0), (1.0, None, Direction.FLAT, 0),
      (2.0, Direction.DOWN, Direction.DOWN, 1)],

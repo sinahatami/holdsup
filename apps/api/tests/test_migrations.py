@@ -17,7 +17,7 @@ def _config(buffer: io.StringIO) -> Config:
 
 def test_single_head() -> None:
     script = ScriptDirectory.from_config(_config(io.StringIO()))
-    assert script.get_heads() == ["0004"]
+    assert script.get_heads() == ["0005"]
 
 
 def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -30,6 +30,9 @@ def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "CREATE TABLE series_cache" in sql
     assert "CREATE TABLE indicators" in sql
     assert "USING hnsw (embedding vector_cosine_ops)" in sql
+    for table in ("checks", "claims", "operations"):
+        assert f"CREATE TABLE {table}" in sql
+    assert "USING hnsw (input_embedding vector_cosine_ops)" in sql
 
 
 def test_downgrade_drops_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
