@@ -1,9 +1,10 @@
 import { CheckForm } from "@/components/check-form";
 import { Gallery } from "@/components/gallery";
-import { getGallery } from "@/lib/api/client";
+import { getGallery } from "@/lib/api/gallery";
 import { strings } from "@/lib/strings";
 
-// Pre-rendered at build time: the home page still shows the gallery when the API is stopped.
+// Prerendered: the gallery read is cached (see getGallery), so the page still
+// renders when the API is stopped.
 export default async function Home() {
   const items = await getGallery();
   return (

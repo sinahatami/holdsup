@@ -67,15 +67,3 @@ export async function getCheck(id: string): Promise<CheckView> {
 export function streamUrl(id: string): string {
   return `${browserApiUrl()}/v1/checks/${id}/stream`;
 }
-
-/** The gallery, read on the server at build time; empty when the API is down. */
-export async function getGallery(): Promise<GalleryItem[]> {
-  try {
-    const res = await fetch(`${serverApiUrl()}/v1/gallery?limit=12`);
-    if (!res.ok) return [];
-    const body = (await res.json()) as { items: GalleryItem[] };
-    return body.items;
-  } catch {
-    return [];
-  }
-}
