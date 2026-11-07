@@ -525,8 +525,8 @@
           "geo": "GB",
           "geo_basis": "inferred",
           "peers": [],
-          "start": null,
-          "start_basis": null,
+          "start": "2014",
+          "start_basis": "assumed",
           "end": "latest",
           "end_basis": "stated",
           "type": "trend",
@@ -534,7 +534,7 @@
           "direction": "down",
           "start_value": null,
           "end_value": null,
-          "notes": 0
+          "notes": 1
         }
       ]
     },
@@ -771,7 +771,7 @@
           "direction": "down",
           "start_value": null,
           "end_value": null,
-          "notes": 0
+          "notes": 1
         }
       ]
     },

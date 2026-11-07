@@ -8,8 +8,9 @@ import pytest
 
 from holdsup.catalog.index import IndicatorHit, InMemoryIndex
 from holdsup.catalog.schema import Catalog, load_catalog
+from holdsup.config import REPO_ROOT
 from holdsup.pipeline import match as match_module
-from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, says_now
 from holdsup.pipeline.match import (
     FINAL_PROMPT,
     MATCH_SYSTEM,
@@ -20,6 +21,7 @@ from holdsup.pipeline.match import (
     claim_message,
     needs_level_series,
     vector_search,
+    yearly_note,
 )
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse, ToolCall
@@ -345,3 +347,175 @@ async def test_empty_answer_gets_a_final_schema_call() -> None:
     result = await m.match(claim("unemployment rate"))
 
     assert result.indicator_id == "unemployment_rate" and len(client.calls) == 2
+
+
+# --- frequency never rules a series out ------------------------------------------------------
+
+REAL = load_catalog(REPO_ROOT / "packages" / "catalog")
+
+
+async def real_search(phrase: str, k: int) -> list[IndicatorHit]:
+    ids = ["youth_unemployment_rate_monthly", "unemployment_rate_monthly", "unemployment_rate_ilo",
+           "real_gdp_growth_quarterly_qoq"]  # fmt: skip
+    return [
+        IndicatorHit(id=s.id, name=s.name, source=str(s.source), source_code=s.source_code,
+                     unit=s.unit, frequency=str(s.frequency), definition=s.definition, score=0.9)
+        for s in (REAL.get(i) for i in ids[:k])
+    ]  # fmt: skip
+
+
+def real_matcher(outcomes: list[ChatResponse]) -> tuple[Matcher, FakeClient]:
+    client = FakeClient()
+    client.script("fake", outcomes)
+    router = Router(config(provider("fake"), steps={"match": ["fake"]}), client, clock=FakeClock())
+    return Matcher(router, REAL, real_search), client
+
+
+def test_candidates_say_how_a_year_is_made() -> None:
+    assert "Frequency never rules a candidate out." in MATCH_SYSTEM
+    assert yearly_note(REAL.get("youth_unemployment_rate_monthly")) == (
+        " Yearly values: the average of the year's months."
+    )
+    assert yearly_note(REAL.get("government_debt_pct_gdp_quarterly")) == (
+        " Yearly values: the year's last quarter."
+    )
+    assert yearly_note(REAL.get("real_gdp_growth_quarterly_qoq")) == " No yearly values."
+    assert yearly_note(REAL.get("unemployment_rate_ilo")) == ""
+    user = claim_message(claim(), [REAL.get("youth_unemployment_rate_monthly")])
+    assert "Frequency: monthly. Yearly values: the average of the year's months." in user
+
+
+@pytest.mark.parametrize(
+    "first",
+    [
+        answer(None, alternatives=["youth_unemployment_rate_monthly"]),
+        answer("youth_unemployment_rate_monthly", confidence="low"),
+    ],
+)
+async def test_a_series_turned_down_for_its_frequency_is_asked_about_again(first: str) -> None:
+    m, client = real_matcher(
+        [ChatResponse(content=first),
+         ChatResponse(content=answer("youth_unemployment_rate_monthly"))]
+    )  # fmt: skip
+    result = await m.match(claim())
+    assert (result.status, result.indicator_id) == ("matched", "youth_unemployment_rate_monthly")
+    assert result.notes[0] == (
+        "asked again: youth_unemployment_rate_monthly was turned down, and frequency is no reason"
+    )
+    assert len(client.calls) == 2 and result.providers == ["fake", "fake"]
+    nudge = str(client.calls[1][1].messages[-1]["content"])
+    assert nudge.startswith(
+        "Frequency is not a reason to turn down youth_unemployment_rate_monthly"
+    )
+    assert client.calls[1][1].response_format is not None  # the answer must fit the schema
+
+
+async def test_asking_again_can_still_end_in_no_match() -> None:
+    m, client = real_matcher(
+        [ChatResponse(content=answer(None, alternatives=["unemployment_rate_monthly"])),
+         ChatResponse(content=answer(None))]
+    )  # fmt: skip
+    result = await m.match(claim())
+    assert result.status == "cant_check" and len(client.calls) == 2
+
+
+@pytest.mark.parametrize(
+    "alternatives", [["unemployment_rate_ilo"], ["real_gdp_growth_quarterly_qoq"], []]
+)
+async def test_no_second_ask_without_a_series_that_has_yearly_values(
+    alternatives: list[str],
+) -> None:
+    m, client = real_matcher([ChatResponse(content=answer(None, alternatives=alternatives))])
+    result = await m.match(claim())
+    assert result.status == "cant_check" and len(client.calls) == 1
+    assert not any(n.startswith("asked again") for n in result.notes)
+
+
+# --- a claim about the present prefers the more frequent series ------------------------------
+
+DEBT = ["government_debt_pct_gdp", "government_debt_pct_gdp_quarterly", "government_debt_eur"]
+
+
+async def debt_search(phrase: str, k: int) -> list[IndicatorHit]:
+    return [
+        IndicatorHit(id=s.id, name=s.name, source=str(s.source), source_code=s.source_code,
+                     unit=s.unit, frequency=str(s.frequency), definition=s.definition, score=0.9)
+        for s in (REAL.get(i) for i in DEBT[:k])
+    ]  # fmt: skip
+
+
+def debt_matcher(outcomes: list[ChatResponse]) -> tuple[Matcher, FakeClient]:
+    client = FakeClient()
+    client.script("fake", outcomes)
+    router = Router(config(provider("fake"), steps={"match": ["fake"]}), client, clock=FakeClock())
+    return Matcher(router, REAL, debt_search), client
+
+
+def level(said_on: str | None, start: str | None, end: str | None) -> ClaimSpec:
+    return claim(
+        "public debt", start=start, end=end, said_on=said_on,
+        quote="Italy's public debt is 133% of GDP",
+        assertion=Assertion(type=AssertionType.LEVEL, value=133, direction=None, unit="%",
+                            start_value=None, end_value=None),
+    )  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    ("claim_", "now"),
+    [
+        (level(None, None, "latest"), True),
+        (level("2013", None, "2013"), True),  # Renzi, 2013: "is 133%"
+        (level("2013-06", "2013", "2013"), True),
+        (level("2015", None, "2013"), False),  # said later about an earlier year
+        (level(None, None, "2013"), False),  # no date to say it was about the present
+        (claim(start="2014", end="2020", said_on="2020"), False),  # not a level
+    ],
+)
+def test_a_claim_is_about_the_present_when_it_says_latest_or_a_level_of_its_own_year(
+    claim_: ClaimSpec, now: bool
+) -> None:
+    assert says_now(claim_) is now
+
+
+async def test_a_present_tense_claim_is_asked_again_about_a_more_frequent_alternative() -> None:
+    m, client = debt_matcher(
+        [ChatResponse(content=answer("government_debt_pct_gdp", alternatives=DEBT[1:])),
+         ChatResponse(content=answer("government_debt_pct_gdp_quarterly"))]
+    )  # fmt: skip
+    result = await m.match(level("2013", None, "2013"))
+    assert result.indicator_id == "government_debt_pct_gdp_quarterly"
+    asked = "asked again: government_debt_pct_gdp_quarterly is quarterly, more often than"
+    assert result.notes == [f"{asked} government_debt_pct_gdp, and the claim is about the present"]
+    nudge = str(client.calls[1][1].messages[-1]["content"])
+    assert nudge.startswith("The claim is about the present, and government_debt_pct_gdp_quarterly")
+    assert "otherwise keep government_debt_pct_gdp" in nudge
+    assert client.calls[1][1].response_format is not None
+
+
+async def test_the_model_may_keep_the_annual_series_when_asked_again() -> None:
+    m, client = debt_matcher(
+        [ChatResponse(content=answer("government_debt_pct_gdp", alternatives=DEBT[1:2])),
+         ChatResponse(content=answer("government_debt_pct_gdp"))]
+    )  # fmt: skip
+    result = await m.match(level(None, None, "latest"))
+    assert result.indicator_id == "government_debt_pct_gdp" and len(client.calls) == 2
+
+
+@pytest.mark.parametrize(
+    ("claim_", "first"),
+    [
+        (level(None, None, "2013"), answer("government_debt_pct_gdp", alternatives=DEBT[1:2])),
+        (
+            level(None, None, "latest"),
+            answer("government_debt_pct_gdp_quarterly"),
+        ),  # already finest
+        (level(None, None, "latest"), answer("government_debt_pct_gdp", alternatives=DEBT[2:])),
+        (level(None, None, "latest"), answer("government_debt_pct_gdp", alternatives=["nope"])),
+    ],
+)
+async def test_no_second_ask_unless_a_present_claim_has_a_more_frequent_same_unit_alternative(
+    claim_: ClaimSpec, first: str
+) -> None:
+    m, client = debt_matcher([ChatResponse(content=first)])
+    result = await m.match(claim_)
+    assert result.status == "matched" and len(client.calls) == 1 and result.notes == []

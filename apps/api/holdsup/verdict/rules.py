@@ -12,7 +12,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from holdsup.ops import ChangeKind, Frequency, OpRecord, is_rate, unit_scale
-from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, Operator
 
 TOLERANCES = Path(__file__).with_name("tolerances.yaml")
 
@@ -34,11 +34,14 @@ class ValueTolerance(BaseModel):
     relative: float = Field(default=0.0, ge=0)
     absolute: float = Field(default=0.0, ge=0)
     rounding: bool
+    # Added on top of the rest, as a share of the asserted value: room for data revisions.
+    plus_relative: float = Field(default=0.0, ge=0)
 
     def band(self, asserted: float) -> float:
         """The largest |computed - asserted| that still holds."""
         rounding = half_unit(asserted) if self.rounding else 0.0
-        return max(self.relative * abs(asserted), self.absolute, rounding)
+        base = max(self.relative * abs(asserted), self.absolute, rounding)
+        return base + self.plus_relative * abs(asserted)
 
 
 class ValueTolerances(BaseModel):
@@ -89,6 +92,8 @@ class Part(BaseModel):
     computed: float | None = None
     asserted: float | None = None
     tolerance: float | None = None  # the largest |computed - asserted| that holds
+    period: str | None = None  # the period the computed value is for, e.g. "2026-09"
+    operator: Operator = Operator.ABOUT  # how the asserted value bounds the computed one
     detail: str
 
 
@@ -100,6 +105,14 @@ class Verdict(BaseModel):
     framing_threshold: float | None = None
     distortions: list[str] = Field(default_factory=list)  # failed distortion checks (P3.4)
     tolerances_version: int | None = None
+
+
+OPERATOR_TEXT = {
+    Operator.MORE_THAN: "more than",
+    Operator.LESS_THAN: "less than",
+    Operator.AT_LEAST: "at least",
+    Operator.AT_MOST: "at most",
+}
 
 
 def cant_check(reason: str) -> Verdict:
@@ -129,19 +142,51 @@ class _Rules:
     # -- value comparisons --
 
     def _value_part(
-        self, name: str, computed: float, asserted: float, tol: ValueTolerance, scaled: bool
+        self,
+        name: str,
+        computed: float,
+        asserted: float,
+        tol: ValueTolerance,
+        scaled: bool,
+        period: str | None = None,
     ) -> Part:
         factor = self.factor if scaled else 1.0
         target, band = asserted * factor, tol.band(asserted) * factor
-        holds = abs(computed - target) <= band
+        # Only the main assertion carries a bound ("fell more than 18%"); stated levels are
+        # always "about".
+        op = self.a.operator if name == "assertion" else Operator.ABOUT
+        holds = self._bounded(op, computed, target, band)
+        at = f" for {period}" if period else ""
+        claimed = f"{target:.6g} ± {band:.6g}"
+        if op is not Operator.ABOUT:
+            claimed = f"{OPERATOR_TEXT[op]} {target:.6g} (± {band:.6g})"
         return Part(
             name=name,
             holds=holds,
             computed=computed,
             asserted=target,
             tolerance=band,
-            detail=f"computed {computed:.6g}, asserted {target:.6g} ± {band:.6g}",
+            period=period,
+            operator=op,
+            detail=f"computed {computed:.6g}{at}, asserted {claimed}",
         )
+
+    def _bounded(self, op: Operator, computed: float, target: float, band: float) -> bool:
+        """Whether `computed` meets the claim. Bounds compare sizes in the claimed direction:
+        "fell more than 18%" holds for a change of -20%."""
+        if op is Operator.ABOUT:
+            return abs(computed - target) <= band
+        flip = target < 0
+        c, t = (-computed, -target) if flip else (computed, target)
+        if self.a.direction in (Direction.UP, Direction.DOWN) and c < 0:
+            return False  # it moved the other way
+        if op is Operator.MORE_THAN:
+            return c > t
+        if op is Operator.LESS_THAN:
+            return c < t
+        if op is Operator.AT_LEAST:
+            return c >= t - band
+        return c <= t + band  # at most
 
     def _signed(self, value: float) -> float:
         return -value if self.a.direction is Direction.DOWN else value
@@ -169,7 +214,10 @@ class _Rules:
         computed = _value(r)
         if self.a.type is AssertionType.LEVEL:
             assert self.a.value is not None  # noqa: S101 (decide: no level claim without a value)
-            return self._value_part("assertion", computed, self.a.value, self._level_tol(), True)
+            period = r.inputs[0].period
+            return self._value_part(
+                "assertion", computed, self.a.value, self._level_tol(), True, period
+            )
         # A change claim answered by one value of a growth-rate series ("grew 0.7% in 2024").
         if self.a.value is None:
             return self._direction_part("assertion", computed, 0.0, "growth rate")
@@ -249,7 +297,11 @@ class _Rules:
             ("end value", self.a.end_value, r.inputs[1]),
         ):
             if stated is not None:
-                parts.append(self._value_part(name, point.value, stated, self._level_tol(), True))
+                parts.append(
+                    self._value_part(
+                        name, point.value, stated, self._level_tol(), True, point.period
+                    )
+                )
         return parts
 
 

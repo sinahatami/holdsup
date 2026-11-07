@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web format db-migrate docker-api smoke-providers list-models pivot-test record-extractions embed-model catalog catalog-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -54,6 +54,17 @@ test-py:
 test-web:
 	pnpm --filter @holdsup/web test --coverage
 
+e2e: ## Playwright against a mocked API (incl. axe accessibility checks)
+	pnpm --filter @holdsup/web e2e
+
+types: ## Regenerate apps/web/src/lib/api/schema.ts from FastAPI's OpenAPI schema
+	cd $(API_DIR) && uv run python -m scripts.export_openapi $(CURDIR)/.cache/openapi.json
+	pnpm --filter @holdsup/web exec openapi-typescript $(CURDIR)/.cache/openapi.json -o src/lib/api/schema.ts
+	pnpm exec prettier --write $(WEB_DIR)/src/lib/api/schema.ts
+
+seed-gallery: ## Run eval/gallery_claims.txt and feature the results (needs keys, DATABASE_URL, catalog; not CI)
+	cd $(API_DIR) && uv run python -m scripts.seed_gallery $(ARGS)
+
 format: ## Auto-format Python and web code
 	uv run ruff format .
 	uv run ruff check --fix .
@@ -77,6 +88,9 @@ pivot-test: ## Phase 1 pivot test over eval/seed_claims.csv -> eval/reports/pivo
 
 record-extractions: ## Record live extraction responses for the P2.1 tests (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.record_extractions $(ARGS)
+
+record-series: ## Record adapter output for the pipeline regression tests (network; not CI)
+	cd $(API_DIR) && uv run python -m scripts.record_series $(ARGS)
 
 embed-model: ## Download the embedding model into .cache/fastembed (needed by tests and catalog)
 	cd $(API_DIR) && uv run python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('$(FASTEMBED_CACHE_PATH)')"

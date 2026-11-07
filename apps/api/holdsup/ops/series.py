@@ -63,6 +63,15 @@ class Series:
         geo = record.series[0].geo
         return cls.from_values(geo, {p.period: p.value for p in record.series}, record.unit)
 
+    def until(self, last: Period) -> "Series":
+        """The values up to and including `last` (same frequency)."""
+        if last.frequency is not self.frequency:
+            raise OpError(f"{last} is {last.frequency} but the series is {self.frequency}")
+        kept = tuple((p, v) for p, v in self.points if p.ordinal <= last.ordinal)
+        if not kept:
+            raise OpError(f"{self.geo} has no value up to {last}")
+        return Series(self.geo, self.frequency, kept, self.unit)
+
     def get(self, period: Period) -> float | None:
         return self._index.get(period)
 
