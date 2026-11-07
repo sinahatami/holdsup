@@ -380,6 +380,7 @@ async def test_c006_a_level_allows_rounding_plus_one_percent() -> None:
         extraction(model_claim(text[13:], "public debt", "2013", "2013", value=133),
                    speaker="Renzi"),
         match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        match("government_debt_pct_gdp"),  # asked again about the quarterly series: kept annual
         plan({"op": "value_at", "geo": "IT", "period": "2013"}),
         EXPLAINED,
     ]  # fmt: skip
@@ -389,6 +390,31 @@ async def test_c006_a_level_allows_rounding_plus_one_percent() -> None:
     assert (part.computed, part.asserted) == (132.0, 133.0)
     assert part.tolerance == pytest.approx(0.5 + 1.33)
     assert c.verdict.label is Label.SUPPORTED
+
+
+async def test_c006_a_statement_about_the_present_is_checked_on_the_quarterly_series() -> None:
+    """Live, the annual series was picked and "latest" by end-2013 was 2012 (126.1): not
+    supported, against a fact-check that finds 133% right. The quarterly series is out sooner."""
+    script = [
+        extraction(model_claim(C006[13:], "public debt", None, "2013", value=133),
+                   speaker="Renzi"),
+        match("government_debt_pct_gdp", ["government_debt_pct_gdp_quarterly"]),
+        match("government_debt_pct_gdp_quarterly"),  # asked again: it is out months sooner
+        plan({"op": "value_at", "geo": "IT", "period": "2013-Q2"}),  # the cut-off, written out
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C006, script)
+    [c] = out.claims
+    assert c.indicator is not None and c.indicator.id == "government_debt_pct_gdp_quarterly"
+    assert any(n.startswith("asked again: government_debt_pct_gdp_quarterly") for n in c.notes)
+    cutoff = "call 0 (value_at): period 2013-Q2 → latest, the last period published by the claim"
+    assert any(n.startswith(cutoff) for n in c.notes)
+    [op] = c.operations
+    assert inputs(op) == [("2013-Q2", 132.6)]  # 2013-Q3 is out in January 2014
+    assert "latest is the last period published by then, 2013-Q2" in flag(op, FlagCode.AS_OF)
+    [part] = c.verdict.parts
+    assert part.tolerance == pytest.approx(0.5 + 1.33)
+    assert c.verdict.label is Label.SUPPORTED  # 132.6 against 133 ± 1.83
 
 
 C018 = "Renzi, December 2015: Italy's greenhouse gas emissions are down 23% compared with 1990."
@@ -411,6 +437,22 @@ async def test_c018_latest_respects_a_slow_source_s_release_lag() -> None:
     assert "claim date 2015-12: latest is the last period published by then, 2013" in flag(
         op, FlagCode.AS_OF
     )
+    assert c.verdict.label is Label.NOT_SUPPORTED
+
+
+async def test_c018_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date_note() -> None:
+    script = [
+        extraction(model_claim(C018[23:], "greenhouse gas emissions", "1990", "latest",
+                               type="percent", value=23, direction="down"), speaker="Renzi"),
+        match("greenhouse_gas_emissions"),
+        plan({"op": "change", "geo": "IT", "start": "1990", "end": "2013", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C018, script)
+    [c] = out.claims
+    assert c.operations[0].args["end"] == "latest"
+    assert inputs(c.operations[0]) == [("1990", 520.63), ("2013", 450.51)]
+    assert FlagCode.AS_OF in flags(c)
     assert c.verdict.label is Label.NOT_SUPPORTED
 
 
@@ -458,6 +500,21 @@ async def test_c029_a_lookback_ends_at_the_claim_date() -> None:
     assert inputs(op) == [("1994", 23.07), ("2012", 24.73)]  # 2012: out by the end of 2013
     assert FlagCode.AS_OF in flags(c)
     assert c.verdict.label is Label.NOT_SUPPORTED  # +7.2%, not +60%
+
+
+async def test_c029_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date_note() -> None:
+    script = [
+        extraction(model_claim(C029[21:], "unemployment", None, "latest", geo="ZA",
+                               lookback={"amount": 19, "unit": "years"}, type="percent",
+                               value=60, direction="up")),
+        match("unemployment_rate_ilo"),
+        plan({"op": "change", "geo": "ZA", "start": "1994", "end": "2012", "kind": "percent"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C029, script)
+    [c] = out.claims
+    assert c.operations[0].args["end"] == "latest" and FlagCode.AS_OF in flags(c)
+    assert inputs(c.operations[0]) == [("1994", 23.07), ("2012", 24.73)]
 
 
 def test_the_smoke_set_names_real_indicators_and_labels() -> None:

@@ -44,7 +44,14 @@ from holdsup.ops import (
     value_at,
     year_window,
 )
-from holdsup.pipeline.claim import VAGUE_YEARS, AssertionType, Basis, ClaimSpec, Direction
+from holdsup.pipeline.claim import (
+    VAGUE_YEARS,
+    AssertionType,
+    Basis,
+    ClaimSpec,
+    Direction,
+    says_now,
+)
 from holdsup.router import Router, Use
 from holdsup.verdict.rules import UNSUPPORTED, Tolerances
 
@@ -302,6 +309,33 @@ def _assumed_start(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     return notes
 
 
+def _latest_cutoff(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """In a dated claim about the present, a call that names the claim date's last published
+    period itself (2013-Q2) means "latest": written that way, the receipt gets the claim-date
+    note. A period the claim itself names is left alone."""
+    claim = ctx.claim
+    if ctx.as_of is None or not says_now(claim):
+        return []
+    names = [n for n, wanted in (("start", claim.start), ("end", claim.end)) if wanted == LATEST]
+    if not names and claim.end is not None and len(claim.end) == 4:
+        names = ["period"]  # a level said in its own year ("is 133%"), no month or quarter named
+    elif names:
+        names.append("period")
+    notes = []
+    for i, call in enumerate(plan.calls):
+        info = _source_of(i, plan.calls, ctx)
+        if info is None:
+            continue
+        for name in names:
+            if getattr(call, name) == ctx.published(info):
+                notes.append(
+                    f"call {i} ({call.op}): {name} {getattr(call, name)} → {LATEST}, "
+                    f"the last period published by the claim date {claim.said_on}"
+                )
+                setattr(call, name, LATEST)
+    return notes
+
+
 def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     """A level claim is answered by one value_at; extra answer calls (a change to show the
     rise) are kept as context."""
@@ -452,7 +486,12 @@ def validate_plan(plan: ModelPlan, ctx: PlanContext) -> ValidPlan:
     errors: list[str] = []
     if not plan.calls:
         raise PlanInvalid(["the plan has no calls"])
-    notes = _assumed_start(plan, ctx) + _whole_years(plan, ctx) + _level_answer(plan, ctx)
+    notes = (
+        _assumed_start(plan, ctx)
+        + _latest_cutoff(plan, ctx)
+        + _whole_years(plan, ctx)
+        + _level_answer(plan, ctx)
+    )
     if len(plan.calls) > MAX_CALLS:
         errors.append(f"at most {MAX_CALLS} calls")
     for i, call in enumerate(plan.calls):

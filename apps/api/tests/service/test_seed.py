@@ -49,6 +49,20 @@ async def test_a_rerun_reuses_the_ledger_with_no_model_call() -> None:
     assert [g.id for g in await store.gallery(10)] == [again[0].check_id] != first
 
 
+async def test_force_checks_again_even_with_a_current_ledger_entry() -> None:
+    runner, client, store = make_runner(happy_script() * 2)
+    [first] = await seed_gallery(runner, store, [TEXT])
+    calls = len(client.calls)
+    [forced] = await seed_gallery(runner, store, [TEXT], force=True)
+    assert len(client.calls) > calls  # models were called again
+    after_forced = len(client.calls)
+    assert forced.check_id != first.check_id
+    assert [g.id for g in await store.gallery(10)] == [forced.check_id]
+    # The forced result is now the newest ledger entry: a plain rerun copies it.
+    [plain] = await seed_gallery(runner, store, [TEXT])
+    assert len(client.calls) == after_forced and plain.featured
+
+
 async def test_other_featured_checks_are_left_alone() -> None:
     runner, _, store = make_runner(happy_script() * 2)
     [other] = await seed_gallery(runner, store, ["Italy's unemployment rate fell 4 points."])

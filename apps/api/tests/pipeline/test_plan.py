@@ -594,6 +594,37 @@ def test_latest_among_yearly_values_of_a_dated_claim() -> None:
     assert run.error == "IT: the window resolves to 2015..2015"
 
 
+def test_a_period_the_plan_wrote_for_latest_is_turned_back_into_latest() -> None:
+    c = dated(claim(type=AssertionType.LEVEL, value=15, direction=None, start="latest",
+                    end="latest"), "2016-06", date(2016, 6, 30))  # fmt: skip
+    p = validate_plan(plan({"op": "value_at", "geo": "IT", "period": "2016-05"}), c)
+    assert p.calls[0].period == "latest"
+    note = "call 0 (value_at): period 2016-05 → latest, the last period published by the claim"
+    assert p.notes == [f"{note} date 2016-06"]
+    [r] = execute_plan(p, c, MONTHLY_DATA, TOL).records
+    assert [f.code for f in r.flags] == [FlagCode.AS_OF]  # the receipt gets its claim-date note
+
+
+def test_a_change_to_the_cutoff_period_ends_at_latest() -> None:
+    c = dated(year_claim(start="2015-06", end="latest"), "2016-06", date(2016, 6, 30))
+    call = {**CHANGE, "start": "2015-06", "end": "2016-05"}
+    p = validate_plan(plan(call), c)
+    assert (p.calls[0].start, p.calls[0].end) == ("2015-06", "latest")
+
+
+@pytest.mark.parametrize(
+    ("end", "as_of"),
+    [("2016-05", date(2016, 6, 30)), ("latest", None), ("latest", date(2016, 7, 31))],
+)
+def test_a_period_is_kept_unless_it_is_the_claim_date_s_cutoff_for_latest(
+    end: str, as_of: date | None
+) -> None:
+    base = claim(type=AssertionType.LEVEL, value=15, direction=None, start=end, end=end)
+    c = PlanContext(base.model_copy(update={"said_on": "2016-06"}), LAGGED, as_of=as_of)
+    p = validate_plan(plan({"op": "value_at", "geo": "IT", "period": "2016-05"}), c)
+    assert p.calls[0].period == "2016-05" and p.notes == []
+
+
 # --- a window code assumed, and level answers -------------------------------------------------
 
 

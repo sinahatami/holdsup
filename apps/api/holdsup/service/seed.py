@@ -41,18 +41,19 @@ def _unfit(result: CheckResult) -> str | None:
 
 
 async def seed_gallery(
-    runner: CheckRunner, store: CheckStore, claims: Sequence[str]
+    runner: CheckRunner, store: CheckStore, claims: Sequence[str], *, force: bool = False
 ) -> list[SeedOutcome]:
     """Check the claims one after another (to respect provider limits) and feature good results.
 
     Reruns are cheap: a claim checked before comes back from the ledger with no model call.
     Earlier featured checks of the same claims are taken out of the gallery, so a rerun after a
-    fix replaces old verdicts instead of showing both.
+    fix replaces old verdicts instead of showing both. `force` checks every claim again even
+    when the ledger holds a current result (a fix that changed no catalog or tolerance version).
     """
     outcomes: list[SeedOutcome] = []
     for text in claims:
         try:
-            submitted = await runner.submit(text, SEED_CLIENT)
+            submitted = await runner.submit(text, SEED_CLIENT, fresh=force)
         except ProblemError as err:
             outcomes.append(SeedOutcome(text, None, False, err.problem.title))
             continue
