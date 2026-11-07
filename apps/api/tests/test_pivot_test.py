@@ -10,14 +10,20 @@ from scripts.pivot_test import (
     COLUMNS,
     ClaimError,
     Deps,
+    Row,
     SeedClaim,
     geo_filter,
     main,
     pick_points,
     read_claims,
+    read_rows,
+    read_steps,
+    refetch,
     run,
+    steps_path,
     summary,
     write_rows,
+    write_steps,
 )
 
 from holdsup.adapters.base import FetchedSeries, Filters, Observation, SourceNotFound
@@ -109,7 +115,7 @@ async def test_run_writes_one_row_per_claim(tmp_path: Path) -> None:
     )
     lines: list[str] = []
 
-    rows = await run(deps, read_claims(SEED), lines.append)
+    rows, steps = await run(deps, read_claims(SEED), lines.append)
 
     c1, c2, c3, c4 = rows
     assert (c1.matched_indicator, c1.match_confidence, c1.error) == (
@@ -160,6 +166,88 @@ async def test_run_writes_one_row_per_claim(tmp_path: Path) -> None:
     assert list(written[0]) == COLUMNS and COLUMNS[-1] == "correct_match"
     assert [r["id"] for r in written] == ["c1", "c2", "c3", "c4"]
 
+    # Every claim's model answers are saved, as far as they got.
+    assert [s.id for s in steps] == ["c1", "c2", "c3", "c4"]
+    assert steps[0].pick is not None and steps[0].pick.indicator_id == "youth_unemployment_rate"
+    assert steps[1].pick is not None and steps[1].pick.indicator_id == "startup_count"
+    assert steps[3].extracted is None and steps[3].pick is None
+
+
+class HealedFetcher(FakeFetcher):
+    """World Bank is back: answers what FakeFetcher refused."""
+
+    async def fetch_series(self, source: str, dataset: str, filters: Filters) -> FetchedSeries:
+        self.calls.append((source, dataset, dict(filters)))
+        return FetchedSeries(
+            source=source,
+            dataset=dataset,
+            url="https://example.invalid",
+            retrieved_at=datetime(2026, 11, 6, tzinfo=UTC),
+            raw_sha256="0" * 64,
+            observations=[obs("2010", 10.0, geo="PL"), obs("2023", 15.0, geo="PL")],
+            unit="current US$",
+        )
+
+
+async def test_refetch_redoes_only_failed_fetches_without_model_calls(tmp_path: Path) -> None:
+    catalog = load_catalog(FIXTURE_CATALOG)
+    embedder = HashEmbedder()
+    client = FakeClient()
+    client.script(
+        "fake",
+        [
+            extraction("youth unemployment rate", "IT", "ITA", 2015, 2024, "percent"),
+            pick("youth_unemployment_rate"),
+            extraction("unicorn startups", "ES", "ESP", 2019, 2025, "ratio"),
+            pick("startup_count"),
+            extraction("GDP per capita", "PL", "POL", 2010, 2023, "percent"),
+            pick("gdp_per_capita"),
+        ],
+    )
+    names = ["fake"]
+    router = Router(config(provider("fake"), steps={"extract": names, "match": names}), client)
+    deps = Deps(
+        router, embedder, InMemoryIndex.build(catalog.indicators, embedder), catalog, FakeFetcher()
+    )
+    rows, steps = await run(deps, read_claims(SEED, limit=3))
+    out = tmp_path / "pivot.csv"
+    write_rows(out, rows)
+    write_steps(steps_path(out), steps)
+    assert steps_path(out).name == "pivot.steps.jsonl"
+    model_calls = len(client.calls)
+
+    rows = read_rows(out)
+    rows[0].correct_match = "y"  # the human's column survives
+    healed = HealedFetcher()
+    lines: list[str] = []
+    retried = await refetch(catalog, healed, rows, read_steps(steps_path(out)), lines.append)
+
+    assert retried == 1 and len(client.calls) == model_calls
+    assert [(c[0], c[2]) for c in healed.calls] == [("worldbank", {"country": "PL"})]
+    c1, c2, c3 = rows
+    assert c1.correct_match == "y" and c1.computed_value  # untouched success
+    assert c2.error.startswith("match: no match") and c2.computed_value == ""  # not retried
+    assert c3.error == "" and float(c3.computed_value) == pytest.approx(50.0)
+    assert (c3.start_period, c3.end_period, c3.unit) == ("2010", "2023", "current US$")
+    assert len(lines) == 1
+
+
+async def test_refetch_keeps_rows_whose_saved_steps_do_not_match(tmp_path: Path) -> None:
+    catalog = load_catalog(FIXTURE_CATALOG)
+    row = Row(id="x", text="GDP in Poland grew.", matched_indicator="gdp_per_capita")
+    row.error = "fetch: down"
+    lines: list[str] = []
+    retried = await refetch(catalog, HealedFetcher(), [row], {}, lines.append)
+    assert retried == 0 and row.error == "fetch: down"
+    assert "no matching saved steps" in lines[0]
+
+
+def test_main_refetch_without_previous_run_exits_2(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["--refetch", "--out", str(tmp_path / "pivot.csv")]) == 2
+    assert "run without --refetch first" in capsys.readouterr().err
+
 
 async def test_low_confidence_is_not_a_match() -> None:
     catalog = load_catalog(FIXTURE_CATALOG)
@@ -177,7 +265,7 @@ async def test_low_confidence_is_not_a_match() -> None:
     deps = Deps(
         router, embedder, InMemoryIndex.build(catalog.indicators, embedder), catalog, FakeFetcher()
     )
-    [row] = await run(deps, [SeedClaim("x", "Unemployment in Italy fell.", "")])
+    [row], _ = await run(deps, [SeedClaim("x", "Unemployment in Italy fell.", "")])
     assert row.matched_indicator == "" and row.match_confidence == "low"
     assert "no confident match" in row.error
 
