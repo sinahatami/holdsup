@@ -1,0 +1,432 @@
+"""Planning and execution with a fake router (no network, no model)."""
+
+import json
+from typing import Any
+
+import pytest
+from pydantic import ValidationError
+
+from holdsup.adapters.base import Observation
+from holdsup.catalog.schema import load_catalog
+from holdsup.ops import ChangeKind, FlagCode, Frequency
+from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.plan import (
+    MAX_CALLS,
+    PLAN_SYSTEM,
+    ModelPlan,
+    OpCall,
+    PlanContext,
+    PlanInvalid,
+    SeriesInfo,
+    execute_plan,
+    per_person_unit,
+    plan_analysis,
+    plan_message,
+    validate_plan,
+)
+from holdsup.router import Router, RouterError
+from holdsup.router.client import ChatResponse
+from holdsup.verdict import Label, decide, load_tolerances
+from tests.catalog.helpers import FIXTURE_CATALOG
+from tests.router.fakes import FakeClient, FakeClock, config, provider
+
+TOL = load_tolerances()
+
+
+def claim(
+    type: AssertionType = AssertionType.PERCENTAGE_POINTS,
+    value: float | None = 12,
+    direction: Direction | None = Direction.DOWN,
+    geo: str | None = "IT",
+    **kw: Any,
+) -> ClaimSpec:
+    base: dict[str, Any] = {
+        "quote": "Italy's unemployment fell 12 points since 2015",
+        "indicator_phrase": "unemployment rate",
+        "geo": geo,
+        "geo_basis": "stated",
+        "peers": [],
+        "start": "2015",
+        "start_basis": "stated",
+        "end": "latest",
+        "end_basis": "stated",
+        "assertion": Assertion(
+            type=type,
+            value=value,
+            direction=direction,
+            unit="points",
+            start_value=None,
+            end_value=None,
+        ),
+        "speaker": None,
+        "said_on": None,
+    }
+    return ClaimSpec.model_validate({**base, **kw})
+
+
+def obs(indicator: dict[str, dict[str, float | None]]) -> list[Observation]:
+    return [Observation(g, p, v) for g, values in indicator.items() for p, v in values.items()]
+
+
+DATA = {
+    "rate": obs(
+        {
+            "IT": {
+                "2015": 40.0,
+                "2016": 37.0,
+                "2017": 35.0,
+                "2018": 32.0,
+                "2019": 30.0,
+                "2020": 28.0,
+                "2021": None,
+            },
+            "DE": {"2015": 7.0, "2020": 6.0},
+            "FR": {"2015": 24.0, "2020": 20.0},
+        }
+    ),
+    "gdp": obs({"IT": {"2015": 1_650_000.0, "2020": 1_660_000.0}}),
+    "pop": obs({"IT": {"2015": 60_000.0, "2020": 59_000.0}}),
+    "cpi": obs({"IT": {"2015": 100.0, "2020": 104.0}}),
+    "pop_q": obs({"IT": {"2015-Q1": 60_000.0}}),
+}
+RATE = SeriesInfo("rate", "Unemployment rate", "% of labour force", Frequency.ANNUAL,
+                  frozenset({"IT", "DE", "FR"}), "2015", "2020")  # fmt: skip
+GDP = SeriesInfo("gdp", "GDP", "million euro", Frequency.ANNUAL, frozenset({"IT"}), "2015", "2020")
+POP = SeriesInfo("pop", "Population", "thousand persons", Frequency.ANNUAL, frozenset({"IT"}),
+                 "2015", "2020")  # fmt: skip
+CPI = SeriesInfo("cpi", "Prices", "index 2015=100", Frequency.ANNUAL, frozenset({"IT"}), "2015",
+                 "2020")  # fmt: skip
+POP_Q = SeriesInfo("pop_q", "Population", "thousand persons", Frequency.QUARTERLY,
+                   frozenset({"IT"}), "2015-Q1", "2015-Q1")  # fmt: skip
+
+
+def ctx(c: ClaimSpec | None = None, main: SeriesInfo = RATE, *others: SeriesInfo) -> PlanContext:
+    return PlanContext(c or claim(), main, others)
+
+
+def plan(*calls: dict[str, Any], answer: list[int] | None = None) -> ModelPlan:
+    return ModelPlan.model_validate(
+        {"calls": list(calls), "answer": [0] if answer is None else answer, "reason": "Because."}
+    )
+
+
+CHANGE = {"op": "change", "geo": "IT", "start": "2015", "end": "latest",
+          "kind": "percentage_points"}  # fmt: skip
+
+
+# --- the plan schema rejects unknown operations ----------------------------------------------
+
+
+def test_unknown_op_fails_the_schema() -> None:
+    with pytest.raises(ValidationError, match="value_at"):
+        plan({"op": "regress", "geo": "IT"})
+
+
+async def test_unknown_op_is_rejected_through_the_router() -> None:
+    bad = json.dumps({"calls": [{"op": "exec_python", "geo": "IT"}], "answer": [0], "reason": ""})
+    client = FakeClient()
+    client.script("fake", [ChatResponse(content=bad), ChatResponse(content=bad)])
+    router = Router(config(provider("fake"), steps={"plan": ["fake"]}), client, clock=FakeClock())
+    with pytest.raises(RouterError):
+        await plan_analysis(router, ctx())
+    # The router asked once for a corrected answer before giving up on the provider.
+    assert len(client.calls) == 2
+    assert "not valid for the required JSON Schema" in str(client.calls[1][1].messages[-1])
+
+
+# --- validation ------------------------------------------------------------------------------
+
+
+def test_valid_plan_drops_arguments_the_op_does_not_take() -> None:
+    p = validate_plan(plan({**CHANGE, "period": "2020", "geo_b": "DE"}), ctx())
+    assert p.calls[0].period is None and p.calls[0].geo_b is None
+    assert p.notes == [
+        "call 0 (change): dropped geo_b, which change does not take",
+        "call 0 (change): dropped period, which change does not take",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("call", "error"),
+    [
+        ({"op": "change", "geo": "IT", "start": "2015"}, "call 0 (change): missing end"),
+        ({**CHANGE, "start": "2015-03"}, "start '2015-03' must be YYYY for the annual rate"),
+        ({**CHANGE, "start": "around 2015"}, "start 'around 2015' is not a period"),
+        ({**CHANGE, "start": "2015", "end": "2014-Q1"}, "end '2014-Q1' must be YYYY"),
+        ({**CHANGE, "geo": "ES"}, "no data for geo 'ES' in rate"),
+        ({**CHANGE, "start": "2020", "end": "2015"}, "start must be before end"),
+        ({**CHANGE, "series": "gdp_nominal"}, "unknown series 'gdp_nominal'"),
+        ({**CHANGE, "series": "@0"}, "series '@0' must name an earlier per_capita or deflate"),
+        ({**CHANGE, "series": "@x"}, "series '@x' must name an earlier"),
+        ({"op": "rank", "geo": "IT", "geos": ["IT", "XX"], "period": "2020"},
+         "no data for 'XX' in rate"),
+        ({"op": "compare", "geo": "IT", "geo_b": "XX", "period": "2020"},
+         "no data for geo_b 'XX'"),
+    ],
+)  # fmt: skip
+def test_invalid_calls(call: dict[str, Any], error: str) -> None:
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(plan(call), ctx())
+    assert any(error in e for e in info.value.errors), info.value.errors
+
+
+@pytest.mark.parametrize(
+    ("call", "error"),
+    [
+        ({"op": "per_capita", "geo": "IT", "series": "gdp", "population": "rate"},
+         "population 'rate' is not a listed indicator"),
+        ({"op": "per_capita", "geo": "IT", "series": "gdp", "population": "nope"},
+         "population 'nope' is not a listed indicator"),
+        ({"op": "per_capita", "geo": "IT", "series": "gdp", "population": "pop_q"},
+         "population 'pop_q' is quarterly, not annual"),
+    ],
+)  # fmt: skip
+def test_invalid_series_arguments(call: dict[str, Any], error: str) -> None:
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(plan(call, CHANGE, answer=[1]), ctx(None, RATE, GDP, POP_Q))
+    assert any(error in e for e in info.value.errors), info.value.errors
+
+
+def test_reference_to_a_call_with_an_unknown_series_reports_it_once() -> None:
+    p = plan(
+        {"op": "per_capita", "geo": "IT", "series": "nope", "population": "pop"},
+        {**CHANGE, "series": "@0"},
+        answer=[1],
+    )
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(p, ctx(None, RATE, POP))
+    assert info.value.errors == ["call 0 (per_capita): unknown series 'nope'"]
+
+
+def test_chained_references_resolve_to_the_indicator() -> None:
+    c = claim(AssertionType.PERCENT, 1, Direction.UP)
+    p = plan(
+        {"op": "deflate", "geo": "IT", "series": "gdp", "price_index": "cpi", "base": "2020"},
+        {"op": "per_capita", "geo": "IT", "series": "@0", "population": "pop"},
+        {"op": "change", "geo": "IT", "start": "2015", "end": "2020", "kind": "percent",
+         "series": "@1"},
+        answer=[2],
+    )  # fmt: skip
+    assert validate_plan(p, ctx(c, RATE, GDP, POP, CPI)).answer == [2]
+
+
+def test_plan_limits() -> None:
+    with pytest.raises(PlanInvalid, match="no calls"):
+        validate_plan(plan(), ctx())
+    with pytest.raises(PlanInvalid, match=f"at most {MAX_CALLS} calls"):
+        validate_plan(plan(*[CHANGE] * (MAX_CALLS + 1)), ctx())
+
+
+@pytest.mark.parametrize(
+    ("c", "calls", "answer", "error"),
+    [
+        (claim(), [CHANGE], [], "at least one call"),
+        (claim(), [CHANGE], [1], "distinct indexes"),
+        (claim(), [CHANGE, CHANGE], [0, 0], "distinct indexes"),
+        (claim(), [{**CHANGE, "geo": "DE"}], [0], "about IT, not DE"),
+        (claim(), [{**CHANGE, "kind": "percent"}], [0], "do not answer a percentage_points"),
+        (claim(AssertionType.LEVEL, 28), [CHANGE], [0], "do not answer a level"),
+        (claim(AssertionType.TREND), [CHANGE], [0], "do not answer a trend"),
+        (claim(AssertionType.RANK), [CHANGE], [0], "do not answer a rank"),
+        (claim(AssertionType.PERCENTAGE_POINTS),
+         [{"op": "cagr", "geo": "IT", "start": "2015", "end": "2020"}], [0], "do not answer"),
+        (claim(AssertionType.COMPARE),
+         [CHANGE, {**CHANGE, "geo": "FR", "kind": "percent"}], [0, 1], "do not answer a compare"),
+        (claim(AssertionType.COMPARE), [CHANGE, CHANGE], [0, 1], "do not answer a compare"),
+    ],
+)  # fmt: skip
+def test_answer_must_fit_the_claim(
+    c: ClaimSpec, calls: list[dict[str, Any]], answer: list[int], error: str
+) -> None:
+    with pytest.raises(PlanInvalid, match=error):
+        validate_plan(plan(*calls, answer=answer), ctx(c))
+
+
+@pytest.mark.parametrize(
+    ("c", "calls", "answer"),
+    [
+        (claim(AssertionType.LEVEL, 28), [{"op": "value_at", "geo": "IT", "period": "2020"}], [0]),
+        (claim(AssertionType.PERCENT, 1, Direction.UP),
+         [{"op": "value_at", "geo": "IT", "period": "2020"}], [0]),
+        (claim(AssertionType.PERCENT, 2, Direction.UP),
+         [{"op": "cagr", "geo": "IT", "start": "2015", "end": "2020"}], [0]),
+        (claim(AssertionType.TREND), [{"op": "trend", "geo": "IT", "start": "2015",
+                                       "end": "latest"}], [0]),
+        (claim(AssertionType.RANK, None), [{"op": "rank", "geo": "IT", "geos": ["DE", "FR"],
+                                            "period": "2020"}], [0]),
+        (claim(AssertionType.COMPARE), [{"op": "compare", "geo": "IT", "geo_b": "DE",
+                                         "period": "2020"}], [0]),
+        (claim(AssertionType.COMPARE), [CHANGE, {**CHANGE, "geo": "FR"}], [0, 1]),
+        (claim(geo=None), [{**CHANGE, "geo": "DE"}], [0]),
+    ],
+)  # fmt: skip
+def test_answers_that_fit(c: ClaimSpec, calls: list[dict[str, Any]], answer: list[int]) -> None:
+    assert validate_plan(plan(*calls, answer=answer), ctx(c)).answer == answer
+
+
+# --- the model call --------------------------------------------------------------------------
+
+
+def planner(*contents: str) -> tuple[Router, FakeClient]:
+    client = FakeClient()
+    client.script("fake", [ChatResponse(content=c) for c in contents])
+    router = Router(config(provider("fake"), steps={"plan": ["fake"]}), client, clock=FakeClock())
+    return router, client
+
+
+def as_json(p: ModelPlan) -> str:
+    return p.model_dump_json(exclude_none=True)
+
+
+async def test_plan_on_the_first_try() -> None:
+    router, client = planner(as_json(plan(CHANGE)))
+    result = await plan_analysis(router, ctx())
+    assert (result.status, result.attempts, result.providers) == ("planned", 1, ["fake"])
+    assert result.plan is not None and result.plan.calls[0].kind is ChangeKind.PERCENTAGE_POINTS
+    [(_, request)] = client.calls
+    assert request.messages[0]["content"] == PLAN_SYSTEM
+    assert request.response_format is not None and request.response_format["type"] == "json_schema"
+
+
+async def test_rejected_plan_gets_one_repair_turn() -> None:
+    router, client = planner(as_json(plan({**CHANGE, "geo": "ES"})), as_json(plan(CHANGE)))
+    result = await plan_analysis(router, ctx())
+    assert (result.status, result.attempts, result.errors) == ("planned", 2, [])
+    repair = str(client.calls[1][1].messages[-1]["content"])
+    assert repair.startswith("Code rejected that plan:\n- call 0 (change): no data for geo 'ES'")
+
+
+async def test_plan_invalid_twice_is_cant_check() -> None:
+    bad = as_json(plan({**CHANGE, "start": "2015-01"}))
+    router, client = planner(bad, bad, as_json(plan(CHANGE)))
+    result = await plan_analysis(router, ctx())
+    assert (result.status, result.plan, result.attempts) == ("cant_check", None, 2)
+    assert result.reason == "The analysis plan was invalid twice."
+    assert result.errors and "must be YYYY" in result.errors[0]
+    assert len(client.calls) == 2
+
+
+async def test_unsupported_claims_make_no_model_call() -> None:
+    router, client = planner()
+    result = await plan_analysis(router, ctx(claim(AssertionType.RECORD)))
+    assert (result.status, result.reason) == ("cant_check", "record claims cannot be checked yet")
+    assert client.calls == []
+
+
+def test_plan_message() -> None:
+    c = claim(peers=["FR", "DE"], assertion=Assertion(
+        type=AssertionType.PERCENTAGE_POINTS, value=12, direction=Direction.DOWN, unit="points",
+        start_value=40, end_value=None))  # fmt: skip
+    text = plan_message(ctx(c, RATE, POP))
+    assert text.startswith("<claim>\nItaly's unemployment")
+    assert "Place: IT (compared with FR, DE)" in text and "Period: 2015 to latest" in text
+    assert "states a value: yes; states start/end levels: yes" in text
+    assert "- rate: Unemployment rate. Unit: % of labour force. Frequency: annual. " in text
+    assert "Places: DE, FR, IT. Periods: 2015 to 2020." in text
+    assert "Other indicators:\n- pop:" in text
+    assert "12" not in text.split("</claim>")[1]  # the asserted number is not repeated
+    bare = plan_message(ctx(claim(geo=None, start=None, end=None, value=None)))
+    assert "Place: not stated\nPeriod: ? to ?" in bare and "Other indicators" not in bare
+
+
+def test_series_info_from_data() -> None:
+    spec = load_catalog(FIXTURE_CATALOG).get("unemployment_rate")
+    info = SeriesInfo.from_data(spec, DATA["rate"])
+    assert (info.geos, info.first, info.last) == (frozenset({"IT", "DE", "FR"}), "2015", "2020")
+    empty = SeriesInfo.from_data(spec, [])
+    assert (empty.first, empty.last) == (None, None)
+    assert "Places: none. Periods: ? to ?." in empty.describe()
+
+
+# --- execution and the verdict ---------------------------------------------------------------
+
+
+def run(c: ClaimSpec, *calls: dict[str, Any], answer: list[int] | None = None,
+        others: tuple[SeriesInfo, ...] = (), main: SeriesInfo = RATE) -> Any:  # fmt: skip
+    context = PlanContext(c, main, others)
+    valid = validate_plan(plan(*calls, answer=answer), context)
+    return execute_plan(valid, context, DATA, TOL), valid
+
+
+def test_execute_change_and_decide_supported() -> None:
+    ex, valid = run(claim(), CHANGE)
+    assert ex.error is None and ex.unit == "% of labour force"
+    [r] = ex.records
+    assert (r.op, r.value, [p.period for p in r.inputs]) == ("change", -12.0, ["2015", "2020"])
+    v = decide(claim(), ex.records, valid.answer, unit=ex.unit, tolerances=TOL)
+    assert v.label is Label.SUPPORTED
+
+
+def test_execute_every_value_op() -> None:
+    c = claim(AssertionType.LEVEL, 28, None)
+    ex, _ = run(
+        c,
+        {"op": "value_at", "geo": "IT", "period": "2021"},  # empty cell → 2020, flagged
+        {"op": "cagr", "geo": "IT", "start": "2015", "end": "2020"},
+        {"op": "trend", "geo": "IT", "start": "2015", "end": "latest"},
+        {"op": "compare", "geo": "IT", "geo_b": "DE", "period": "2020"},
+        {"op": "rank", "geo": "IT", "geos": ["DE", "FR"], "period": "2020"},
+    )
+    value, growth, line, diff, position = ex.records
+    assert (value.value, value.flags[0].code) == (28.0, FlagCode.NEAREST_PERIOD)
+    assert growth.value is not None and growth.value < 0
+    assert line.value is not None and line.value < 0
+    assert (diff.value, position.value) == (22.0, 1.0)  # highest first: IT has the most
+
+
+def test_rank_order_follows_a_down_claim() -> None:
+    c = claim(AssertionType.RANK, None, Direction.DOWN, geo="DE")
+    ex, valid = run(c, {"op": "rank", "geo": "DE", "geos": ["IT", "FR", "DE"], "period": "2020"})
+    assert ex.records[0].value == 1.0 and ex.records[0].args["highest_first"] is False
+    assert (
+        decide(c, ex.records, valid.answer, unit=ex.unit, tolerances=TOL).label is Label.SUPPORTED
+    )
+
+
+def test_execute_series_ops_and_units() -> None:
+    c = claim(AssertionType.PERCENT, 2, Direction.DOWN)
+    ex, valid = run(
+        c,
+        {"op": "deflate", "geo": "IT", "series": "gdp", "price_index": "cpi", "base": "2020"},
+        {"op": "per_capita", "geo": "IT", "series": "@0", "population": "pop"},
+        {"op": "change", "geo": "IT", "start": "2015", "end": "2020", "kind": "percent",
+         "series": "@1"},
+        {"op": "value_at", "geo": "IT", "period": "2020", "series": "@1"},
+        answer=[2],
+        others=(GDP, POP, CPI),
+    )  # fmt: skip
+    assert ex.error is None
+    real, per_person, growth, level = ex.records
+    assert real.unit == "million euro, 2020 prices"
+    assert per_person.unit == "euro, 2020 prices per person"
+    # 1,650,000 million × 1.04 / 60,000 thousand = 28,600 euro; 1,660,000 / 59,000 ≈ 28,136.
+    assert per_person.series is not None
+    assert per_person.series[0].value == pytest.approx(28_600.0)
+    assert level.value == pytest.approx(1_660_000 / 59)
+    assert growth.value == pytest.approx((1_660_000 / 59 / 28_600 - 1) * 100)
+    assert ex.unit == "euro, 2020 prices per person"
+    v = decide(c, ex.records, valid.answer, unit=ex.unit, tolerances=TOL)
+    # -1.62% against "down 2%": |0.38| is within the rounding of "2" (±0.5).
+    assert v.label is Label.SUPPORTED
+
+
+def test_execution_error_stops_the_plan() -> None:
+    far = {"op": "value_at", "geo": "DE", "period": "2018"}  # DE has 2015 and 2020: 2 years off
+    ex, _ = run(claim(geo=None, assertion=Assertion(type=AssertionType.LEVEL, value=6,
+                direction=None, unit=None, start_value=None, end_value=None)), far, CHANGE)  # fmt: skip
+    assert ex.records == [] and ex.unit is None
+    assert ex.error == "DE has no value within 1 periods of 2018 (nearest is 2020)"
+
+
+def test_from_to_levels_end_to_end() -> None:
+    c = claim(assertion=Assertion(type=AssertionType.PERCENTAGE_POINTS, value=12,
+              direction=Direction.DOWN, unit="%", start_value=40, end_value=30))  # fmt: skip
+    ex, valid = run(c, CHANGE)
+    v = decide(c, ex.records, valid.answer, unit=ex.unit, tolerances=TOL)
+    assert v.label is Label.PARTLY_SUPPORTED  # 2020 is 28, not 30
+
+
+def test_per_person_unit() -> None:
+    assert per_person_unit("million euro (current prices)") == "euro (current prices) per person"
+    assert per_person_unit(None) is None
+    assert OpCall(op="value_at").given() == set()
