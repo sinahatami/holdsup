@@ -6,8 +6,13 @@ import httpx
 import pytest
 from tenacity import wait_none
 
-from holdsup.adapters.base import SourceFormatError, SourceNotFound, SourceNotRedistributable
-from holdsup.adapters.owid import OwidAdapter, parse_csv
+from holdsup.adapters.base import (
+    Observation,
+    SourceFormatError,
+    SourceNotFound,
+    SourceNotRedistributable,
+)
+from holdsup.adapters.owid import OwidAdapter, parse_csv, select
 from tests.adapters.helpers import Handler, fixture, mock_client
 
 CSV = fixture("owid/co2_per_capita_it_de.csv")
@@ -131,3 +136,125 @@ def test_malformed_csv(body: bytes, message: str) -> None:
 def test_daily_charts_and_non_finite_values() -> None:
     _, obs = parse_csv(b"entity,code,day,v\nItaly,ITA,2020-03-01,inf\n", "x", None)
     assert (obs[0].period, obs[0].value) == ("2020-03-01", None)
+
+
+# --- multi-view charts, redirects, and filters the server ignores ----------------------------
+
+MIX_CSV = fixture("owid/energy_mix_renewables_share_de_it.csv")
+MIX_META = fixture("owid/energy_mix_renewables_share.metadata.json")
+MIX_SNAPSHOT = fixture("owid/energy_mix_renewables_share_map_snapshot.csv")
+# Live behaviour on 2026-11-07: the old slug 301s to the energy-mix view, keeping the query,
+# and the old slug's metadata URL is a 404.
+REDIRECT = "/grapher/energy-mix.csv?metric=share&source=renewables&"
+
+
+def energy_mix_server(seen: list[httpx.Request], csv_body: bytes = MIX_CSV) -> Handler:
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        path = request.url.path
+        if path == "/grapher/renewable-share-energy.csv":
+            query = request.url.query.decode()
+            return httpx.Response(301, headers={"location": REDIRECT + query})
+        if path == "/grapher/energy-mix.csv":
+            return httpx.Response(200, content=csv_body, headers={"content-type": "text/csv"})
+        if path == "/grapher/energy-mix.metadata.json":
+            return httpx.Response(200, content=MIX_META)
+        return httpx.Response(404, content=b"Not found")
+
+    return handler
+
+
+async def test_view_options_are_sent_and_metadata_matches_the_view() -> None:
+    seen: list[httpx.Request] = []
+    filters = {
+        "metric": "share",
+        "source": "renewables",
+        "column": "renewables_share_pct",
+        "country": ["DEU", "ITA"],
+        "time": "2015..2024",
+    }
+    series = await adapter(energy_mix_server(seen)).fetch_series("energy-mix", filters)
+
+    values = {(o.geo, o.period): o.value for o in series.observations}
+    assert len(values) == 20
+    assert values[("DEU", "2024")] == 15.078017
+    assert values[("ITA", "2015")] == 12.642635
+    assert series.label == "Renewables as a share of total energy supply"
+    assert series.unit == "%"
+    assert series.citation is not None and series.citation.startswith("Energy Institute")
+
+    csv_params = seen[0].url.params
+    assert (csv_params["metric"], csv_params["source"], csv_params["tab"]) == (
+        "share",
+        "renewables",
+        "chart",
+    )
+    assert "column" not in csv_params  # used by the adapter, not sent
+    meta_params = seen[1].url.params
+    assert (meta_params["metric"], meta_params["source"]) == ("share", "renewables")
+    assert "country" not in meta_params and "tab" not in meta_params
+
+
+async def test_old_slug_follows_the_redirect_for_csv_and_metadata() -> None:
+    seen: list[httpx.Request] = []
+    series = await adapter(energy_mix_server(seen)).fetch_series(
+        "renewable-share-energy", {"column": "renewables_share_pct", "country": "DEU"}
+    )
+
+    assert [r.url.path for r in seen] == [
+        "/grapher/renewable-share-energy.csv",
+        "/grapher/energy-mix.csv",
+        "/grapher/energy-mix.metadata.json",  # the old slug's metadata URL would 404
+    ]
+    assert {o.geo for o in series.observations} == {"DEU"}
+    assert series.dataset == "renewable-share-energy"  # what the catalog asked for
+    assert series.url.startswith("https://ourworldindata.org/grapher/energy-mix.csv?")
+    assert series.unit == "%"
+    assert series.raw_sha256 == hashlib.sha256(MIX_CSV).hexdigest()
+
+
+async def test_a_server_ignoring_country_and_time_cannot_leak_other_rows() -> None:
+    # The map snapshot: every country, only the first and last year of the range.
+    seen: list[httpx.Request] = []
+    filters = {"metric": "share", "source": "renewables", "country": ["DEU", "ITA"]}
+    series = await adapter(energy_mix_server(seen, MIX_SNAPSHOT)).fetch_series(
+        "energy-mix", {**filters, "time": "2015..2024"}
+    )
+    assert {(o.geo, o.period) for o in series.observations} == {
+        ("DEU", "2015"),
+        ("DEU", "2024"),
+        ("ITA", "2015"),
+        ("ITA", "2024"),
+    }
+
+    with pytest.raises(SourceNotFound, match="no values"):
+        await adapter(energy_mix_server(seen, MIX_SNAPSHOT)).fetch_series(
+            "energy-mix", {**filters, "time": "2016..2023"}
+        )
+
+
+def _obs(geo: str, period: str, entity: str = "") -> Observation:
+    return Observation(geo=geo, period=period, value=1.0, dims={"entity": entity or geo})
+
+
+@pytest.mark.parametrize(
+    ("time", "kept"),
+    [
+        ("2019..2020", ["2019", "2020-06-01"]),
+        ("earliest..2019", ["2018", "2019"]),
+        ("2020..latest", ["2020-06-01", "2021"]),
+        ("2019", ["2019"]),
+        ("2020-01-01..2020-12-31", ["2020-06-01"]),
+    ],
+)
+def test_select_time_bounds(time: str, kept: list[str]) -> None:
+    obs = [_obs("ITA", p) for p in ("2018", "2019", "2020-06-01", "2021")]
+    assert [o.period for o in select(obs, {"time": time})] == kept
+
+
+def test_select_countries_by_code_or_entity_name() -> None:
+    obs = [_obs("ITA", "2020", "Italy"), _obs("US Henry Hub", "2020"), _obs("DEU", "2020")]
+    picked = select(obs, {"country": ["ITA", "US Henry Hub"]})
+    assert [o.geo for o in picked] == ["ITA", "US Henry Hub"]
+    assert [o.geo for o in select(obs, {"country": "Germany"})] == []
+    assert select(obs, {}) == obs

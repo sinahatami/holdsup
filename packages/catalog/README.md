@@ -7,7 +7,9 @@ make catalog-check   # validate only (no database, no model)
 make catalog         # validate, embed (fastembed, local), and sync the `indicators` table
 ```
 
-`make catalog` mirrors this folder: entries removed here are deleted from the table.
+`make catalog` mirrors `indicators/`: entries removed there are deleted from the table.
+
+`drafts/` holds unfinished entries (for example with `aliases: []`). The validator and loader only read `indicators/*.yaml`, so drafts are never checked or loaded. To publish a draft: fill in the `# TODO (you)` fields, move it to `indicators/`, bump `VERSION`, and run `make catalog-check`.
 
 ## Entry format
 

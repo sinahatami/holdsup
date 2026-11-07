@@ -111,3 +111,12 @@ def test_cli_check(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
 def test_copy_of_fixture_catalog_round_trips(tmp_path: Path) -> None:
     shutil.copytree(FIXTURE_CATALOG, tmp_path / "c")
     assert load_catalog(tmp_path / "c") == load_catalog(FIXTURE_CATALOG)
+
+
+def test_drafts_folder_is_ignored(tmp_path: Path) -> None:
+    """packages/catalog/drafts/ holds unfinished entries (e.g. empty aliases); never loaded."""
+    root = make_catalog(tmp_path, {"unemployment_rate.yaml": entry()})
+    (root / "drafts").mkdir()
+    (root / "drafts" / "half_done.yaml").write_text(entry(id="half_done", aliases=[]))
+    catalog = load_catalog(root)
+    assert [s.id for s in catalog.indicators] == ["unemployment_rate"]

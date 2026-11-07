@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: none (added as a close neighbor of unemployment_rate_monthly (all ages 15-74) and youth_unemployment_rate_monthly (under 25))
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2000-01..2026-09, DE 1991-01..2026-09, FR 1983-01..2026-09, IT 1983-01..2026-06
+# Note: Italy's 25-74 series ends 2026-06 while the all-ages one reaches 2026-09.
+id: unemployment_rate_25_74_monthly
+source: eurostat
+source_code: "une_rt_m"
+name: "Unemployment rate, ages 25-74 (monthly)"
+aliases:
+  - "adult unemployment rate (25-74)"
+  - "unemployment excluding young people"
+  - "jobless rate for over-25s"
+  - "monthly unemployment among adults aged 25 to 74"
+definition: "Unemployed people aged 25 to 74 as a percentage of the labour force aged 25 to 74, monthly, seasonally adjusted (ILO definition); excludes young people."
+unit: "% of labour force aged 25-74"
+frequency: monthly
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1983
+last_year: null # still updated
+related: [unemployment_rate_monthly, youth_unemployment_rate_monthly]
+filters: { age: "Y25-74", sex: "T", unit: "PC_ACT", s_adj: "SA" }

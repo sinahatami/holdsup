@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c018
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1990..2024
+id: greenhouse_gas_emissions
+source: eurostat
+source_code: "env_air_gge"
+name: "Greenhouse gas emissions"
+aliases:
+  - "total greenhouse gas emissions (CO2 equivalent)"
+  - "GHG emissions"
+  - "climate-warming emissions including methane"
+  - "carbon equivalent emissions"
+  - "emissions of all greenhouse gases"
+definition: "Total greenhouse gas emissions (CO2, methane, nitrous oxide and fluorinated gases in CO2 equivalent) excluding land use, land-use change and forestry, from national inventories."
+unit: "million tonnes CO2 equivalent"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1990
+last_year: null # still updated
+related: [co2_emissions_annual]
+filters: { airpol: "GHG", src_crf: "TOTX4_MEMO", unit: "MIO_T" }

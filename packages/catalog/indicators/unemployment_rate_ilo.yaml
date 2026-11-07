@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c021 c028 c029
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: GB 1991..2025, ZA 1991..2025
+# Note: South Africa's Stats SA headline uses the 'narrow' definition; expect gaps against national figures (c028).
+id: unemployment_rate_ilo
+source: worldbank
+source_code: "SL.UEM.TOTL.ZS"
+name: "Unemployment rate (ILO modelled estimate)"
+aliases:
+  - "unemployment rate (ILO estimate)"
+  - "jobless rate, ILO modelled"
+  - "internationally comparable unemployment rate"
+  - "share of the labour force out of work (ILO)"
+definition: "Unemployed people as a percentage of the total labour force, ILO modelled estimate; can differ from national statistics office figures."
+unit: "% of total labour force"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1991
+last_year: null # still updated
+related: [unemployment_rate_monthly]
+filters: {}

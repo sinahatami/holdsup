@@ -1,0 +1,28 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c012
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: DE 1992..2025, FR 1975..2025, IT 1996..2025
+id: real_gdp_growth
+source: eurostat
+source_code: "nama_10_gdp"
+name: "Real GDP growth"
+aliases:
+  - "economic growth"
+  - "annual GDP growth"
+  - "growth rate of the economy (inflation-adjusted)"
+  - "how much the economy grew last year"
+  - "real growth rate"
+definition: "Percentage change of real GDP (chain-linked volumes) on the previous year."
+unit: "% change on previous year"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1975
+last_year: null # still updated
+related:
+  [
+    real_gdp_volume,
+    real_gdp_growth_quarterly_yoy,
+    regional_real_gdp_growth,
+    real_gdp_growth_world,
+  ]
+filters: { na_item: "B1GQ", unit: "CLV_PCH_PRE" }

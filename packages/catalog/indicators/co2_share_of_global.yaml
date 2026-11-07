@@ -1,0 +1,21 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c025
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: CHN 1907..2024
+id: co2_share_of_global
+source: owid
+source_code: "annual-share-of-co2-emissions"
+name: "Share of global CO2 emissions"
+aliases:
+  - "percentage of the world's CO2 emissions"
+  - "share of world carbon emissions"
+  - "country's contribution to global emissions"
+  - "what percent of global CO2 a country emits"
+definition: "A country's share of global annual carbon dioxide emissions from fossil fuels and industry, excluding land-use change."
+unit: "% of global emissions"
+frequency: annual
+geo_coverage: ["All countries", "OWID_WRL"]
+first_year: 1907
+last_year: null # still updated
+related: [co2_emissions_annual, co2_per_capita]
+filters: { column: "emissions_total_as_share_of_global" }

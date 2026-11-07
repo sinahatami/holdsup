@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c008 c009
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1995..2025
+id: government_debt_eur
+source: eurostat
+source_code: "gov_10dd_edpt1"
+name: "Government debt (euro)"
+aliases:
+  - "public debt in euros"
+  - "national debt (million euro)"
+  - "total government debt in euros"
+  - "how much the government owes in euros"
+  - "state debt level in euros"
+definition: "General government consolidated gross debt (Maastricht definition) at the end of the year, in million euro at current prices."
+unit: "million euro (current prices)"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1995
+last_year: null # still updated
+related: [government_debt_pct_gdp]
+filters: { na_item: "GD", sector: "S13", unit: "MIO_EUR" }

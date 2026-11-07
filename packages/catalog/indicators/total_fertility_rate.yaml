@@ -1,0 +1,23 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c014
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1960..2024
+# Note: World Bank SP.DYN.TFRT.IN covers all countries but lags Eurostat by about a year.
+id: total_fertility_rate
+source: eurostat
+source_code: "demo_find"
+name: "Total fertility rate"
+aliases:
+  - "fertility rate"
+  - "children per woman"
+  - "average number of babies per woman"
+  - "birth rate per woman"
+  - "TFR"
+definition: "Average number of children a woman would have over her lifetime if she experienced the current age-specific fertility rates."
+unit: "live births per woman"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated
+related: [live_births, crude_birth_rate]
+filters: { indic_de: "TOTFERRT" }
