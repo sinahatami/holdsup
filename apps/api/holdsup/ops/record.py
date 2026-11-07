@@ -38,6 +38,8 @@ class FlagCode(StrEnum):
     WINDOW_NOT_COVERED = "window_not_covered"  # data starts after or ends before the window
     ANNUAL_VALUE = "annual_value"  # yearly values made from a monthly or quarterly series
     LATEST_YEAR = "latest_year"  # "latest" in yearly values: the last complete year
+    AS_OF = "as_of"  # "latest" for a dated claim: the last period published by its date
+    ASSUMED_WINDOW = "assumed_window"  # "for years", "recently": a window code assumed
 
 
 class Flag(BaseModel):

@@ -31,6 +31,10 @@ class Frequency(StrEnum):
     MONTHLY = "monthly"
 
 
+# Typical months from the end of a period to its first release, when an entry does not say.
+DEFAULT_LAG = {Frequency.MONTHLY: 1, Frequency.QUARTERLY: 4, Frequency.ANNUAL: 12}
+
+
 class AnnualValue(StrEnum):
     """How a year's value is made from a monthly or quarterly series."""
 
@@ -62,6 +66,15 @@ class IndicatorSpec(BaseModel):
     # Monthly or quarterly series only: how code makes a year's value for a claim about a whole
     # year. Null means no yearly value can be made (e.g. growth on the previous quarter).
     annual_value: AnnualValue | None = None
+    # Months from the end of a period to its first release, for checking a dated claim against
+    # what was published by its date. Null uses the default for the frequency (DEFAULT_LAG).
+    release_lag_months: int | None = Field(default=None, ge=0, le=36)
+
+    @property
+    def lag_months(self) -> int:
+        if self.release_lag_months is not None:
+            return self.release_lag_months
+        return DEFAULT_LAG[self.frequency]
 
     @model_validator(mode="after")
     def _check(self) -> Self:

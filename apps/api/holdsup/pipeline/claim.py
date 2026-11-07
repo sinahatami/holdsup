@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 # "2015", "2024-03", "2025-Q1"
 PERIOD_RE = re.compile(r"^\d{4}(?:-(?:0[1-9]|1[0-2])|-Q[1-4])?$")
 LATEST = "latest"
+VAGUE_YEARS = 5  # "for years", "recently": the years before the claim date (Basis.ASSUMED)
 
 
 class AssertionType(StrEnum):
@@ -52,6 +53,17 @@ class Basis(StrEnum):
     INFERRED = "inferred"  # the model's reading of context (speaker, a well-known event)
     LOOKBACK = "lookback"  # code: "in the past 19 years" counted back from when it was said
     OFFICE = "office"  # code: a term of office from office_terms.yaml
+    ASSUMED = "assumed"  # code: "for years", "recently" read as the 5 years before the claim date
+
+
+class Operator(StrEnum):
+    """How the asserted number bounds the true one."""
+
+    ABOUT = "about"  # "fell 18%": within tolerance
+    MORE_THAN = "more_than"  # "more than 18%", "over 18%"
+    LESS_THAN = "less_than"  # "less than 5%", "under 5%"
+    AT_LEAST = "at_least"  # "at least 2 million"
+    AT_MOST = "at_most"  # "at most 3%", "no more than 3%"
 
 
 class Assertion(BaseModel):
@@ -67,6 +79,11 @@ class Assertion(BaseModel):
     unit: str | None = Field(description="The unit as written: '%', 'points', 'billion euros'.")
     start_value: float | None = Field(description="X in 'from X to Y', else null.")
     end_value: float | None = Field(description="Y in 'from X to Y' or 'fell to Y', else null.")
+    operator: Operator = Field(
+        default=Operator.ABOUT,
+        description="about, more_than ('more than 18%', 'over'), less_than ('under'), "
+        "at_least or at_most ('no more than') for the asserted value.",
+    )
 
 
 class ClaimSpec(BaseModel):

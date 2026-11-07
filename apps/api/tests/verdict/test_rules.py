@@ -5,7 +5,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from holdsup.ops import ChangeKind, OpRecord, Series, cagr, change, compare, rank, trend, value_at
-from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, Operator
 from holdsup.verdict import Label, cant_check, combine, decide, load_tolerances
 from holdsup.verdict.rules import ValueTolerance, half_unit
 
@@ -64,7 +64,7 @@ def test_supported() -> None:
     assert v.label is Label.SUPPORTED
     [part] = v.parts
     assert (part.computed, part.asserted, part.tolerance) == (-12.0, -12.0, 0.5)
-    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (1, 0.7, 0.9)
+    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (2, 0.7, 0.9)
 
 
 def test_supported_framing_matters_by_window_share() -> None:
@@ -130,9 +130,12 @@ def test_cant_check_without_an_answer() -> None:
 
 
 @pytest.mark.parametrize(
-    ("value", "label"), [(28, Label.SUPPORTED), (28.4, Label.SUPPORTED), (29, Label.NOT_SUPPORTED)]
-)
+    ("value", "label"),
+    [(28, Label.SUPPORTED), (28.3, Label.SUPPORTED), (28.4, Label.NOT_SUPPORTED),
+     (27.7, Label.SUPPORTED), (29, Label.NOT_SUPPORTED)],
+)  # fmt: skip
 def test_level_of_a_rate_uses_points(value: float, label: Label) -> None:
+    # 28.0 in the data: "28.3" allows 0.05 + 1% = 0.333; "28.4" allows 0.334; "27.7" 0.327.
     assert verdict(claim(AssertionType.LEVEL, value), value_at(RATE, "2020")) is label
 
 
@@ -142,7 +145,8 @@ def test_level_with_scale_words() -> None:
     v = decide(c, [value_at(DEBT, "2020")], [0], unit="million euro", tolerances=TOL)
     assert v.label is Label.SUPPORTED
     assert v.parts[0].asserted == pytest.approx(2.6e6)
-    assert v.parts[0].tolerance == pytest.approx(0.13e6)  # 5% relative beats the rounding
+    # Half a unit of "2.6" (0.05 trillion) plus 1% for revisions (0.026 trillion).
+    assert v.parts[0].tolerance == pytest.approx(0.076e6)
 
 
 def test_absolute_change_with_scale_words() -> None:
@@ -286,8 +290,9 @@ def test_band_takes_the_largest_allowance() -> None:
     assert t.band(1.5) == 0.2
 
 
-@given(asserted=st.floats(0.01, 1e6), share=st.floats(0, 0.049))
+@given(asserted=st.floats(0.01, 1e6), share=st.floats(0, 0.0099))
 def test_within_relative_tolerance_holds(asserted: float, share: float) -> None:
+    # Levels allow 1% for revisions on top of the rounding of the stated number (D020).
     s = Series.from_values("IT", {"2020": asserted * (1 + share)}, "euro")
     v = decide(claim(AssertionType.LEVEL, asserted), [value_at(s, "2020")], [0], unit="euro",
                tolerances=TOL)  # fmt: skip
@@ -313,3 +318,56 @@ def test_combine(labels: list[Label], out: Label) -> None:
 def test_tolerances_file() -> None:
     assert TOL.values.percentage_points.band(12.0) == 0.5
     assert TOL.max_period_gap
+
+
+# --- bounds: "more than", "at most" ----------------------------------------------------------
+
+
+def bounded(c: ClaimSpec, op: Operator) -> ClaimSpec:
+    return c.model_copy(update={"assertion": c.assertion.model_copy(update={"operator": op})})
+
+
+# RATE: 40 (2015) → 28 (2020) is -30%; -12 points.
+@pytest.mark.parametrize(
+    ("type", "value", "op", "label"),
+    [
+        (AssertionType.PERCENT, 25, Operator.MORE_THAN, Label.SUPPORTED),  # fell 30% > 25%
+        (AssertionType.PERCENT, 30, Operator.MORE_THAN, Label.NOT_SUPPORTED),  # not more than 30
+        (AssertionType.PERCENT, 31, Operator.AT_LEAST, Label.SUPPORTED),  # within ± 1.55
+        (AssertionType.PERCENT, 35, Operator.LESS_THAN, Label.SUPPORTED),
+        (AssertionType.PERCENT, 25, Operator.LESS_THAN, Label.NOT_SUPPORTED),
+        (AssertionType.PERCENTAGE_POINTS, 12, Operator.AT_MOST, Label.SUPPORTED),
+        (AssertionType.PERCENTAGE_POINTS, 10, Operator.AT_MOST, Label.NOT_SUPPORTED),
+    ],
+)
+def test_bounds_compare_sizes_in_the_claimed_direction(
+    type: AssertionType, value: float, op: Operator, label: Label
+) -> None:
+    c = bounded(claim(type, value, Direction.DOWN), op)
+    kind = ChangeKind.PERCENT if type is AssertionType.PERCENT else ChangeKind.PERCENTAGE_POINTS
+    assert verdict(c, change(RATE, "2015", "2020", kind)) is label
+
+
+def test_a_bound_fails_when_it_moved_the_other_way() -> None:
+    rising = Series.from_values("IT", {"2015": 10.0, "2020": 11.0}, "%")
+    c = bounded(claim(AssertionType.PERCENT, 5, Direction.DOWN), Operator.LESS_THAN)
+    assert verdict(c, change(rising, "2015", "2020", ChangeKind.PERCENT)) is Label.NOT_SUPPORTED
+
+
+def test_a_level_bound_and_its_detail() -> None:
+    c = bounded(claim(AssertionType.LEVEL, 25), Operator.MORE_THAN)
+    v = decide(c, [value_at(RATE, "2020")], [0], unit="%", tolerances=TOL)
+    [part] = v.parts
+    assert (v.label, part.operator) == (Label.SUPPORTED, Operator.MORE_THAN)
+    assert part.detail == "computed 28 for 2020, asserted more than 25 (± 0.75)"
+
+
+def test_stated_levels_are_always_about() -> None:
+    c = bounded(
+        claim(AssertionType.PERCENTAGE_POINTS, 10, Direction.DOWN, start_value=40, end_value=28),
+        Operator.MORE_THAN,
+    )
+    v = decide(c, [change(RATE, "2015", "2020", ChangeKind.PERCENTAGE_POINTS)], [0], unit="%",
+               tolerances=TOL)  # fmt: skip
+    assert [p.operator for p in v.parts] == [Operator.MORE_THAN, Operator.ABOUT, Operator.ABOUT]
+    assert v.label is Label.SUPPORTED

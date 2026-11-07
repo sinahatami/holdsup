@@ -19,11 +19,13 @@ from holdsup.pipeline.claim import (
     CHANGE_TYPES,
     LATEST,
     PERIOD_RE,
+    VAGUE_YEARS,
     Assertion,
     AssertionType,
     Basis,
     ClaimSpec,
     Direction,
+    Operator,
 )
 from holdsup.pipeline.terms import OfficeTerms, find_holders, pick_term
 from holdsup.router import Attempt, Router, Use
@@ -117,6 +119,10 @@ government", "since Labour came to power"): fill office, leave start null.
 level with a direction.
 - A level's number goes in assertion.value ("debt is 133%": value 133); start_value and \
 end_value are only for "from X to Y" and "fell to Y".
+- assertion.operator: more_than for "more than 18%" or "over 18%", less_than for "under" or \
+"less than", at_least, at_most for "no more than" or "up to"; otherwise about.
+- "Hit 132.6% in 2013, up from 127% in 2012" is one change claim: start "2012", end "2013", \
+start_value 127, end_value 132.6, direction up.
 - Two levels at different times with no change written ("In 2011 it was 29%; today it is \
 43.3%") are two level claims, each with its own value and period (end "2011"; end "latest").
 - assertion.value is the stated change or level, as a positive magnitude; the sign goes in \
@@ -378,6 +384,52 @@ def _check_assertion(assertion: Assertion, text: str, notes: list[str]) -> Asser
     return a
 
 
+# "more than 18%": the words right before the asserted number (longest phrases first).
+_OPERATORS = [
+    ("no more than", Operator.AT_MOST), ("not more than", Operator.AT_MOST),
+    ("at most", Operator.AT_MOST), ("up to", Operator.AT_MOST),
+    ("no less than", Operator.AT_LEAST), ("no fewer than", Operator.AT_LEAST),
+    ("at least", Operator.AT_LEAST),
+    ("more than", Operator.MORE_THAN), ("in excess of", Operator.MORE_THAN),
+    ("over", Operator.MORE_THAN), ("above", Operator.MORE_THAN),
+    ("less than", Operator.LESS_THAN), ("fewer than", Operator.LESS_THAN),
+    ("under", Operator.LESS_THAN), ("below", Operator.LESS_THAN),
+]  # fmt: skip
+_OPERATOR_RE = re.compile(
+    r"\b(" + "|".join(re.escape(p) for p, _ in _OPERATORS) + r")\s+(\d+(?:[.,]\d+)*)",
+    re.IGNORECASE,
+)
+# Phrases that give a window without dates: read as the 5 years before the claim date.
+VAGUE_RE = re.compile(
+    r"\b(for years|for many years|in recent years|recent years|recently|lately|"
+    r"over the years|for some years)\b",
+    re.IGNORECASE,
+)
+
+
+def operator_in(quote: str, value: float) -> Operator | None:
+    """The bound written right before `value` in the quote ("more than 18%"), if any."""
+    ops = dict(_OPERATORS)
+    for m in _OPERATOR_RE.finditer(quote):
+        if any(_in(value, values) for values in _readings(m[2])):
+            return ops[m[1].casefold()]
+    return None
+
+
+def _assumed_window(assertion: Assertion, quote: str, said: SaidOn) -> tuple[str, str] | None:
+    """(start, why) for a trend with no dates, or a change that says "for years" or
+    "recently": the 5 years before the claim date."""
+    vague = VAGUE_RE.search(quote)
+    if assertion.type != AssertionType.TREND and not (vague and assertion.type in CHANGE_TYPES):
+        return None
+    why = f"'{vague[1]}'" if vague else "no window given"
+    start = str(said.by.year - VAGUE_YEARS)
+    return start, (
+        f"{why} read as the {VAGUE_YEARS} years before the claim date ({said.text or 'today'}): "
+        f"from {start}"
+    )
+
+
 def resolve(
     claim: ModelClaim,
     *,
@@ -442,6 +494,19 @@ def resolve(
                 notes.append(f"geo {geo} differs from {holder.name}'s country {holder.country}")
 
     assertion = _check_assertion(claim.assertion, text, notes)
+    if (
+        assertion.operator is Operator.ABOUT
+        and assertion.value is not None
+        and (bound := operator_in(claim.quote, assertion.value)) is not None
+    ):
+        assertion.operator = bound
+        notes.append(f"operator {bound} from the text")
+
+    if start is None and (window := _assumed_window(assertion, claim.quote, said)) is not None:
+        start, start_basis = window[0], Basis.ASSUMED
+        notes.append(window[1])
+        if end is None:
+            end, end_basis = LATEST, Basis.ASSUMED
 
     if _norm_text(claim.quote) not in _norm_text(text):
         notes.append("quote is not an exact span of the text")

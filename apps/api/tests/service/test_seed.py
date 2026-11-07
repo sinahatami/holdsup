@@ -42,9 +42,18 @@ async def test_a_rerun_reuses_the_ledger_with_no_model_call() -> None:
     runner, client, store = make_runner(happy_script())
     await seed_gallery(runner, store, [TEXT])
     calls = len(client.calls)
+    first = [g.id for g in await store.gallery(10)]
     again = await seed_gallery(runner, store, [TEXT])
     assert again[0].featured and len(client.calls) == calls
-    assert len(await store.gallery(10)) == 2  # the copy has its own link
+    # The rerun's copy has its own link and replaces the earlier one in the gallery.
+    assert [g.id for g in await store.gallery(10)] == [again[0].check_id] != first
+
+
+async def test_other_featured_checks_are_left_alone() -> None:
+    runner, _, store = make_runner(happy_script() * 2)
+    [other] = await seed_gallery(runner, store, ["Italy's unemployment rate fell 4 points."])
+    await seed_gallery(runner, store, [TEXT])
+    assert {g.id for g in await store.gallery(10)} >= {other.check_id}
 
 
 async def test_a_result_with_a_source_down_is_not_featured() -> None:

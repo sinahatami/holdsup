@@ -12,7 +12,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from holdsup.ops import ChangeKind, Frequency, OpRecord, is_rate, unit_scale
-from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, Operator
 
 TOLERANCES = Path(__file__).with_name("tolerances.yaml")
 
@@ -34,11 +34,14 @@ class ValueTolerance(BaseModel):
     relative: float = Field(default=0.0, ge=0)
     absolute: float = Field(default=0.0, ge=0)
     rounding: bool
+    # Added on top of the rest, as a share of the asserted value: room for data revisions.
+    plus_relative: float = Field(default=0.0, ge=0)
 
     def band(self, asserted: float) -> float:
         """The largest |computed - asserted| that still holds."""
         rounding = half_unit(asserted) if self.rounding else 0.0
-        return max(self.relative * abs(asserted), self.absolute, rounding)
+        base = max(self.relative * abs(asserted), self.absolute, rounding)
+        return base + self.plus_relative * abs(asserted)
 
 
 class ValueTolerances(BaseModel):
@@ -90,6 +93,7 @@ class Part(BaseModel):
     asserted: float | None = None
     tolerance: float | None = None  # the largest |computed - asserted| that holds
     period: str | None = None  # the period the computed value is for, e.g. "2026-09"
+    operator: Operator = Operator.ABOUT  # how the asserted value bounds the computed one
     detail: str
 
 
@@ -101,6 +105,14 @@ class Verdict(BaseModel):
     framing_threshold: float | None = None
     distortions: list[str] = Field(default_factory=list)  # failed distortion checks (P3.4)
     tolerances_version: int | None = None
+
+
+OPERATOR_TEXT = {
+    Operator.MORE_THAN: "more than",
+    Operator.LESS_THAN: "less than",
+    Operator.AT_LEAST: "at least",
+    Operator.AT_MOST: "at most",
+}
 
 
 def cant_check(reason: str) -> Verdict:
@@ -140,8 +152,14 @@ class _Rules:
     ) -> Part:
         factor = self.factor if scaled else 1.0
         target, band = asserted * factor, tol.band(asserted) * factor
-        holds = abs(computed - target) <= band
+        # Only the main assertion carries a bound ("fell more than 18%"); stated levels are
+        # always "about".
+        op = self.a.operator if name == "assertion" else Operator.ABOUT
+        holds = self._bounded(op, computed, target, band)
         at = f" for {period}" if period else ""
+        claimed = f"{target:.6g} ± {band:.6g}"
+        if op is not Operator.ABOUT:
+            claimed = f"{OPERATOR_TEXT[op]} {target:.6g} (± {band:.6g})"
         return Part(
             name=name,
             holds=holds,
@@ -149,8 +167,26 @@ class _Rules:
             asserted=target,
             tolerance=band,
             period=period,
-            detail=f"computed {computed:.6g}{at}, asserted {target:.6g} ± {band:.6g}",
+            operator=op,
+            detail=f"computed {computed:.6g}{at}, asserted {claimed}",
         )
+
+    def _bounded(self, op: Operator, computed: float, target: float, band: float) -> bool:
+        """Whether `computed` meets the claim. Bounds compare sizes in the claimed direction:
+        "fell more than 18%" holds for a change of -20%."""
+        if op is Operator.ABOUT:
+            return abs(computed - target) <= band
+        flip = target < 0
+        c, t = (-computed, -target) if flip else (computed, target)
+        if self.a.direction in (Direction.UP, Direction.DOWN) and c < 0:
+            return False  # it moved the other way
+        if op is Operator.MORE_THAN:
+            return c > t
+        if op is Operator.LESS_THAN:
+            return c < t
+        if op is Operator.AT_LEAST:
+            return c >= t - band
+        return c <= t + band  # at most
 
     def _signed(self, value: float) -> float:
         return -value if self.a.direction is Direction.DOWN else value

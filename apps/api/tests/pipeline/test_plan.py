@@ -1,6 +1,7 @@
 """Planning and execution with a fake router (no network, no model)."""
 
 import json
+from datetime import date
 from typing import Any
 
 import pytest
@@ -532,3 +533,101 @@ def test_a_trend_over_whole_years_reads_their_months() -> None:
     [r] = execute_plan(validate_plan(plan(call), ctx(c, M)), ctx(c, M), MONTHLY_DATA, TOL).records
     assert (r.args["start"], r.args["end"]) == ("2015-01", "2016-12")
     assert len(r.inputs) == 24 and not r.flags
+
+
+# --- a dated claim is checked as of its date -------------------------------------------------
+
+LAGGED = SeriesInfo("m", "Unemployment rate (monthly)", "%", Frequency.MONTHLY,
+                    frozenset({"IT", "DE"}), "2015-01", "2017-01", AnnualValue.MEAN,
+                    lag_months=1)  # fmt: skip
+
+
+def dated(c: ClaimSpec, said_on: str, as_of: date) -> PlanContext:
+    return PlanContext(c.model_copy(update={"said_on": said_on}), LAGGED, as_of=as_of)
+
+
+def test_latest_for_a_dated_claim_is_the_last_period_out_by_then() -> None:
+    c = dated(claim(type=AssertionType.LEVEL, value=15, direction=None), "2016-06",
+              date(2016, 6, 30))  # fmt: skip
+    assert c.published(LAGGED) == "2016-05"
+    assert 'Claim date: 2016-06. "latest" means the last period published by then (2016-05).' in (
+        plan_message(c)
+    )
+    p = validate_plan(plan({"op": "value_at", "geo": "IT", "period": "latest"}), c)
+    [r] = execute_plan(p, c, MONTHLY_DATA, TOL).records
+    assert [(i.period, i.value) for i in r.inputs] == [("2016-05", 16.05)]
+    [note] = r.flags
+    assert (note.code, note.used) == (FlagCode.AS_OF, "2016-05")
+    assert note.detail.startswith(
+        "claim date 2016-06: latest is the last period published by then, 2016-05 (a release "
+        "about 1 month after a period ends)"
+    )
+
+
+def test_a_claim_date_after_the_data_cuts_nothing() -> None:
+    c = dated(claim(type=AssertionType.LEVEL, value=15, direction=None), "2026", date(2026, 12, 31))
+    p = validate_plan(plan({"op": "value_at", "geo": "IT", "period": "latest"}), c)
+    [r] = execute_plan(p, c, MONTHLY_DATA, TOL).records
+    assert r.inputs[0].period == "2017-01" and r.flags == []
+
+
+def test_explicit_periods_of_a_dated_claim_are_not_cut() -> None:
+    c = dated(year_claim(), "2015", date(2015, 12, 31))
+    p = validate_plan(plan({**CHANGE, "start": "2015", "end": "2016"}), c)
+    [r] = execute_plan(p, c, MONTHLY_DATA, TOL).records
+    assert [i.period for i in r.inputs] == ["2015", "2016"]
+    assert FlagCode.AS_OF not in {f.code for f in r.flags}
+
+
+def test_latest_among_yearly_values_of_a_dated_claim() -> None:
+    call = {**CHANGE, "start": "2015", "end": "latest"}
+    # Said in January 2017: December 2016 is out, so 2016 is a complete year.
+    c = dated(year_claim(end="latest"), "2017-01", date(2017, 1, 31))
+    [r] = execute_plan(validate_plan(plan(call), c), c, MONTHLY_DATA, TOL).records
+    assert [i.period for i in r.inputs] == ["2015", "2016"]
+    assert [f.code for f in r.flags] == [
+        FlagCode.ANNUAL_VALUE, FlagCode.LATEST_YEAR, FlagCode.AS_OF,
+    ]  # fmt: skip
+    # Said in December 2016: 2016 is not complete yet, so there is nothing after 2015.
+    c = dated(year_claim(end="latest"), "2016-12", date(2016, 12, 31))
+    run = execute_plan(validate_plan(plan(call), c), c, MONTHLY_DATA, TOL)
+    assert run.error == "IT: the window resolves to 2015..2015"
+
+
+# --- a window code assumed, and level answers -------------------------------------------------
+
+
+def assumed(start: str = "2015") -> ClaimSpec:
+    return claim(type=AssertionType.TREND, value=None, direction=Direction.UP, start=start,
+                 start_basis="assumed", end="latest", end_basis="assumed")  # fmt: skip
+
+
+def test_the_assumed_window_replaces_the_plan_s_start_in_the_end_s_form() -> None:
+    call = {"op": "trend", "geo": "IT", "start": "1983-01", "end": "2016-12"}
+    p = validate_plan(plan(call), ctx(assumed(), M))
+    assert p.calls[0].start == "2015-01"
+    assert "call 0 (trend): start 1983-01 → 2015-01, the assumed window" in p.notes
+    [r] = execute_plan(p, ctx(assumed(), M), MONTHLY_DATA, TOL).records
+    assert [f.code for f in r.flags] == [FlagCode.ASSUMED_WINDOW]
+
+
+def test_a_stated_start_is_left_to_the_plan() -> None:
+    call = {"op": "trend", "geo": "IT", "start": "2015-03", "end": "2016-12"}
+    c = claim(type=AssertionType.TREND, value=None, direction=Direction.UP, start="2014",
+              end="2016")  # fmt: skip
+    p = validate_plan(plan(call), ctx(c, M))
+    assert p.calls[0].start == "2015-03" and p.notes == []
+
+
+def test_a_level_claim_keeps_its_one_value_at_as_the_answer() -> None:
+    c = claim(type=AssertionType.LEVEL, value=32, direction=Direction.UP, start="2020", end="2020")
+    calls = [{"op": "value_at", "geo": "IT", "period": "2020"},
+             {**CHANGE, "start": "2015", "end": "2020"}]  # fmt: skip
+    p = validate_plan(plan(*calls, answer=[1, 0]), ctx(c))
+    assert p.answer == [0]
+    assert p.notes == ["answer [1, 0] → [0]: a level claim is answered by its value_at"]
+    # Two values, or none, cannot be settled by code: the model is asked to fix it.
+    two = [{"op": "value_at", "geo": "IT", "period": "2020"},
+           {"op": "value_at", "geo": "IT", "period": "2019"}]  # fmt: skip
+    with pytest.raises(PlanInvalid):
+        validate_plan(plan(*two, answer=[0, 1]), ctx(c))

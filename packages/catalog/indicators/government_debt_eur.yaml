@@ -15,6 +15,7 @@ aliases:
 definition: "General government consolidated gross debt (Maastricht definition) at the end of the year, in million euro at current prices."
 unit: "million euro (current prices)"
 frequency: annual
+release_lag_months: 4 # April EDP notification for the previous year
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1995
 last_year: null # still updated

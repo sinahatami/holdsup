@@ -9,6 +9,7 @@ period may be from the data, unit scales, and the rank order.
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Literal
 
 from openai.types.chat import ChatCompletionMessageParam
@@ -20,9 +21,12 @@ from holdsup.ops import (
     LATEST,
     AnnualValue,
     ChangeKind,
+    Flag,
+    FlagCode,
     Frequency,
     OpError,
     OpRecord,
+    Period,
     Series,
     annual,
     annual_flag,
@@ -33,13 +37,14 @@ from holdsup.ops import (
     latest_year_flag,
     parse_period,
     per_capita,
+    published_by,
     rank,
     trend,
     unit_scale,
     value_at,
     year_window,
 )
-from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction
+from holdsup.pipeline.claim import VAGUE_YEARS, AssertionType, Basis, ClaimSpec, Direction
 from holdsup.router import Router, Use
 from holdsup.verdict.rules import UNSUPPORTED, Tolerances
 
@@ -108,6 +113,7 @@ class SeriesInfo:
     first: str | None
     last: str | None
     annual: AnnualValue | None = None  # monthly or quarterly: how a year's value is made
+    lag_months: int = 0  # months from the end of a period to its release (dated claims)
 
     @classmethod
     def from_data(cls, spec: IndicatorSpec, observations: Sequence[Observation]) -> "SeriesInfo":
@@ -123,6 +129,7 @@ class SeriesInfo:
             first=str(periods[0]) if periods else None,
             last=str(periods[-1]) if periods else None,
             annual=None if spec.annual_value is None else AnnualValue(spec.annual_value.value),
+            lag_months=spec.lag_months,
         )
 
     def years(self) -> str:
@@ -149,6 +156,13 @@ class PlanContext:
     claim: ClaimSpec
     main: SeriesInfo  # the matched indicator; `series: null` in a call
     others: tuple[SeriesInfo, ...] = ()  # e.g. population or a price index, when fetched
+    as_of: date | None = None  # a dated claim is checked as of this day ("latest" then)
+
+    def published(self, info: SeriesInfo) -> str | None:
+        """The last period of `info` out by the claim date, if the claim has one."""
+        if self.as_of is None:
+            return None
+        return str(published_by(info.frequency, self.as_of, info.lag_months))
 
     def info(self, indicator_id: str | None) -> SeriesInfo | None:
         if indicator_id is None or indicator_id == self.main.id:
@@ -262,6 +276,50 @@ def _whole_years(plan: ModelPlan, ctx: PlanContext) -> list[str]:
             )
             setattr(call, name, year)
     return notes
+
+
+def _assumed_start(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """A window code assumed ("for years": the 5 years before the claim date) is the window:
+    answer calls that start elsewhere start there instead."""
+    claim = ctx.claim
+    if claim.start_basis is not Basis.ASSUMED or claim.start is None:
+        return []
+    notes = []
+    for i in plan.answer:
+        if not 0 <= i < len(plan.calls):
+            continue
+        call = plan.calls[i]
+        info = _source_of(i, plan.calls, ctx)
+        if call.op not in ("trend", "change", "cagr") or info is None or call.start == claim.start:
+            continue
+        start = claim.start
+        form = _frequency(call.end)
+        if len(start) == 4 and form in (Frequency.MONTHLY, Frequency.QUARTERLY):
+            start = str(Period(int(start), 1, form))  # the same form as the call's end
+        if _period_error(start, info, call.op) is None:
+            notes.append(f"call {i} ({call.op}): start {call.start} → {start}, the assumed window")
+            call.start = start
+    return notes
+
+
+def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """A level claim is answered by one value_at; extra answer calls (a change to show the
+    rise) are kept as context."""
+    claim = ctx.claim
+    if claim.assertion.type is not AssertionType.LEVEL or len(plan.answer) < 2:
+        return []
+    values = [
+        i
+        for i in plan.answer
+        if 0 <= i < len(plan.calls)
+        and plan.calls[i].op == "value_at"
+        and plan.calls[i].geo == claim.geo
+    ]
+    if len(values) != 1:
+        return []
+    note = f"answer {plan.answer} → {values}: a level claim is answered by its value_at"
+    plan.answer = values
+    return [note]
 
 
 def _check_call(
@@ -394,7 +452,7 @@ def validate_plan(plan: ModelPlan, ctx: PlanContext) -> ValidPlan:
     errors: list[str] = []
     if not plan.calls:
         raise PlanInvalid(["the plan has no calls"])
-    notes = _whole_years(plan, ctx)
+    notes = _assumed_start(plan, ctx) + _whole_years(plan, ctx) + _level_answer(plan, ctx)
     if len(plan.calls) > MAX_CALLS:
         errors.append(f"at most {MAX_CALLS} calls")
     for i, call in enumerate(plan.calls):
@@ -453,7 +511,13 @@ def plan_message(ctx: PlanContext) -> str:
         f"Place: {c.geo or 'not stated'}"
         + (f" (compared with {', '.join(c.peers)})" if c.peers else "")
         + f"\nPeriod: {c.start or '?'} to {c.end or '?'}\n"
-        f"Assertion: {stated} (states a value: {'yes' if a.value is not None else 'no'}; "
+        + (
+            f'Claim date: {c.said_on}. "latest" means the last period published by then '
+            f"({ctx.published(ctx.main)}).\n"
+            if ctx.as_of is not None
+            else ""
+        )
+        + f"Assertion: {stated} (states a value: {'yes' if a.value is not None else 'no'}; "
         f"states start/end levels: {levels})\n\n"
         f"Matched indicator:\n- {ctx.main.describe()}\n"
         + (
@@ -562,10 +626,16 @@ def execute_plan(
         for i, call in enumerate(plan.calls):
             source = _source_of(i, plan.calls, ctx)
             how = _yearly(call, source)
+            read, cut = _as_of(call, source, native, ctx)
             if how is None:
-                records.append(_run(call, native, ctx, tolerances))
+                record = _run(call, read, ctx, tolerances)
             else:
-                records.append(_run_yearly(call, native, how, ctx, tolerances))
+                record = _run_yearly(call, read, how, ctx, tolerances)
+            records.append(
+                record.model_copy(
+                    update={"flags": [*record.flags, *cut(), *_window_flags(call, ctx)]}
+                )
+            )
             units.append(unit_of(call))
     except OpError as exc:
         return Execution(records, str(exc), None)
@@ -573,6 +643,60 @@ def execute_plan(
 
 
 SeriesReader = Callable[[str | None, str], Series]
+
+
+def _as_of(
+    call: OpCall, source: SeriesInfo | None, native: SeriesReader, ctx: PlanContext
+) -> tuple[SeriesReader, Callable[[], list[Flag]]]:
+    """For a dated claim, "latest" is the last period published by its date: series are cut
+    there. Returns the reader and, after the call ran, the receipt's note (if anything was cut).
+    """
+    if ctx.as_of is None or source is None or LATEST not in (call.period, call.start, call.end):
+        return native, list
+    as_of, lag = ctx.as_of, source.lag_months
+    cuts: dict[str, tuple[Series, Series]] = {}
+
+    def read(ref: str | None, geo: str) -> Series:
+        s = native(ref, geo)
+        last = published_by(s.frequency, as_of, lag)
+        cut = s.until(last) if last.ordinal < s.last.ordinal else s
+        cuts.setdefault(geo, (cut, s))
+        return cut
+
+    def flags() -> list[Flag]:
+        cut, full = cuts.get(call.geo or "", (None, None))
+        if cut is None or full is None or cut.last == full.last:
+            return []
+        months = f"{lag} month{'s' if lag != 1 else ''}"
+        return [
+            Flag(
+                code=FlagCode.AS_OF,
+                detail=f"claim date {ctx.claim.said_on}: latest is the last period published by "
+                f"then, {cut.last} (a release about {months} after a period ends); its value is "
+                "today's revised figure, which may differ from the one first published",
+                requested="latest",
+                used=str(cut.last),
+            )
+        ]
+
+    return read, flags
+
+
+def _window_flags(call: OpCall, ctx: PlanContext) -> list[Flag]:
+    """Say so when a call's window is the one code assumed for "for years" or "recently"."""
+    claim = ctx.claim
+    if claim.start_basis is not Basis.ASSUMED or claim.start is None or call.start is None:
+        return []
+    if call.start[:4] != claim.start[:4]:
+        return []
+    return [
+        Flag(
+            code=FlagCode.ASSUMED_WINDOW,
+            detail=f"the claim gives no dates: the window is the {VAGUE_YEARS} years before the "
+            f"claim date ({claim.said_on or 'today'}), from {claim.start}",
+            requested=claim.start,
+        )
+    ]
 
 
 def _yearly(call: OpCall, source: SeriesInfo | None) -> AnnualValue | None:

@@ -15,6 +15,7 @@ aliases:
 definition: "Total greenhouse gas emissions (CO2, methane, nitrous oxide and fluorinated gases in CO2 equivalent) excluding land use, land-use change and forestry, from national inventories."
 unit: "million tonnes CO2 equivalent"
 frequency: annual
+release_lag_months: 18 # national inventories: April of year+2, Eurostat by June
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1990
 last_year: null # still updated

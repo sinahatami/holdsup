@@ -139,6 +139,11 @@ export interface components {
        * @description Y in 'from X to Y' or 'fell to Y', else null.
        */
       end_value: number | null;
+      /**
+       * @description about, more_than ('more than 18%', 'over'), less_than ('under'), at_least or at_most ('no more than') for the asserted value.
+       * @default about
+       */
+      operator: components["schemas"]["Operator"];
     };
     /**
      * AssertionType
@@ -161,7 +166,7 @@ export interface components {
      * @description Where a field's value came from; shown on the receipt.
      * @enum {string}
      */
-    Basis: "stated" | "inferred" | "lookback" | "office";
+    Basis: "stated" | "inferred" | "lookback" | "office" | "assumed";
     /** CheckAccepted */
     CheckAccepted: {
       /**
@@ -386,7 +391,9 @@ export interface components {
       | "constant_series"
       | "window_not_covered"
       | "annual_value"
-      | "latest_year";
+      | "latest_year"
+      | "as_of"
+      | "assumed_window";
     /** GalleryItem */
     GalleryItem: {
       /**
@@ -509,6 +516,12 @@ export interface components {
       flags?: components["schemas"]["Flag"][];
     };
     /**
+     * Operator
+     * @description How the asserted number bounds the true one.
+     * @enum {string}
+     */
+    Operator: "about" | "more_than" | "less_than" | "at_least" | "at_most";
+    /**
      * Part
      * @description One checked piece of a claim.
      */
@@ -525,6 +538,8 @@ export interface components {
       tolerance?: number | null;
       /** Period */
       period?: string | null;
+      /** @default about */
+      operator: components["schemas"]["Operator"];
       /** Detail */
       detail: string;
     };

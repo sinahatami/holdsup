@@ -11,6 +11,7 @@ from holdsup.service.store import CheckResult, CheckStatus, CheckStore
 from holdsup.verdict import Label
 
 SEED_CLIENT = "gallery-seed"
+RETIRE_SCAN = 1000  # featured checks looked at for earlier copies of the curated claims
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,8 @@ async def seed_gallery(
     """Check the claims one after another (to respect provider limits) and feature good results.
 
     Reruns are cheap: a claim checked before comes back from the ledger with no model call.
+    Earlier featured checks of the same claims are taken out of the gallery, so a rerun after a
+    fix replaces old verdicts instead of showing both.
     """
     outcomes: list[SeedOutcome] = []
     for text in claims:
@@ -68,7 +71,20 @@ async def seed_gallery(
             continue
         await store.set_featured(submitted.id, True)
         outcomes.append(SeedOutcome(text, submitted.id, True, "featured", verdicts))
+    await retire_earlier(store, outcomes)
     return outcomes
+
+
+async def retire_earlier(store: CheckStore, outcomes: Sequence[SeedOutcome]) -> list[UUID]:
+    """Unfeature featured checks of these claims other than the ones this run just checked."""
+    texts = {o.text for o in outcomes}
+    current = {o.check_id for o in outcomes}
+    retired = [
+        c.id for c in await store.gallery(RETIRE_SCAN) if c.text in texts and c.id not in current
+    ]
+    for check_id in retired:
+        await store.set_featured(check_id, False)
+    return retired
 
 
 def format_table(outcomes: Sequence[SeedOutcome]) -> str:
