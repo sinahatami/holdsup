@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c001 c002 c003 c004
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2000-01..2026-09, IT 1983-01..2026-09
+id: youth_unemployment_rate_monthly
+source: eurostat
+source_code: "une_rt_m"
+name: "Youth unemployment rate (monthly)"
+aliases:
+  - "youth unemployment"
+  - "jobless rate for under-25s"
+  - "unemployment among young people under 25"
+  - "monthly youth jobless rate"
+  - "young people out of work"
+definition: "Unemployed people aged under 25 as a percentage of the labour force of the same age, monthly, seasonally adjusted (ILO definition)."
+unit: "% of labour force aged under 25"
+frequency: monthly
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1983
+last_year: null # still updated
+related: [unemployment_rate_monthly, unemployment_rate_25_74_monthly]
+filters: { age: "Y_LT25", sex: "T", unit: "PC_ACT", s_adj: "SA" }

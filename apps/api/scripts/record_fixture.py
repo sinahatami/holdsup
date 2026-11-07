@@ -66,6 +66,22 @@ FIXTURES: dict[str, str] = {
     "owid/error_not_found.csv": (
         f"{OWID}/no-such-chart-holdsup.csv?v=1&csvType=filtered&useColumnShortNames=true"
     ),
+    # OWID old slug that redirects (301) to a multi-view chart: renewable-share-energy ->
+    # energy-mix?metric=share&source=renewables. Recorded after the redirect, with tab=chart.
+    "owid/energy_mix_renewables_share_de_it.csv": (
+        f"{OWID}/renewable-share-energy.csv?v=1&csvType=filtered&useColumnShortNames=true"
+        "&tab=chart&country=DEU~ITA&time=2015..2024"
+    ),
+    "owid/energy_mix_renewables_share.metadata.json": (
+        f"{OWID}/energy-mix.metadata.json?v=1&useColumnShortNames=true"
+        "&metric=share&source=renewables"
+    ),
+    # The same chart without tab=chart: the map's latest-year snapshot of every country,
+    # which ignores country and time (what the adapter got before tab=chart).
+    "owid/energy_mix_renewables_share_map_snapshot.csv": (
+        f"{OWID}/energy-mix.csv?v=1&csvType=filtered&useColumnShortNames=true"
+        "&metric=share&source=renewables&country=DEU~ITA&time=2015..2024"
+    ),
     # NOTE: owid/error_403_not_redistributable.txt is hand-written (no public chart that
     # returns 403 was found on 2026-11-06); it is not in this manifest.
 }

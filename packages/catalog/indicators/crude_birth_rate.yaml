@@ -1,0 +1,21 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c016
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: ES 1960..2025, EU27_2020 1961..2025, IT 1960..2025
+id: crude_birth_rate
+source: eurostat
+source_code: "demo_gind"
+name: "Crude birth rate"
+aliases:
+  - "birth rate"
+  - "births per 1,000 people"
+  - "birth rate per thousand inhabitants"
+  - "number of babies born per 1,000 population"
+definition: "Live births during the year per 1,000 people of the average population."
+unit: "births per 1,000 people"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated
+related: [live_births, total_fertility_rate, crude_death_rate]
+filters: { indic_de: "GBIRTHRT" }

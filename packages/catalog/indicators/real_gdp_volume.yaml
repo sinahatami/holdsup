@@ -1,0 +1,21 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c010
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: DE 1991..2025, FR 1975..2025, IT 1995..2025
+id: real_gdp_volume
+source: eurostat
+source_code: "nama_10_gdp"
+name: "Real GDP (volume)"
+aliases:
+  - "inflation-adjusted GDP"
+  - "size of the economy in real terms"
+  - "GDP at constant prices"
+  - "real output level (chain-linked euros)"
+definition: "Gross domestic product at market prices in chain-linked volumes with reference year 2020, used to compare real growth between two years."
+unit: "million euro, chain-linked volumes (2020)"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1975
+last_year: null # still updated
+related: [real_gdp_growth, nominal_gdp_eur, real_gdp_per_capita]
+filters: { na_item: "B1GQ", unit: "CLV20_MEUR" }

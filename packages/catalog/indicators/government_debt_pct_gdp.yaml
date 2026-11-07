@@ -1,0 +1,22 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c007 c008
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: IT 1995..2025
+id: government_debt_pct_gdp
+source: eurostat
+source_code: "gov_10dd_edpt1"
+name: "Government debt to GDP"
+aliases:
+  - "debt-to-GDP ratio"
+  - "public debt as a share of GDP"
+  - "national debt as percent of GDP"
+  - "Maastricht debt ratio"
+  - "government debt ratio at end of year"
+definition: "General government consolidated gross debt (Maastricht definition) at the end of the year, as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1995
+last_year: null # still updated
+related: [government_debt_eur, government_debt_pct_gdp_quarterly]
+filters: { na_item: "GD", sector: "S13", unit: "PC_GDP" }

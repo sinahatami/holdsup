@@ -1,0 +1,23 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c013
+# Verified 2026-11-06 against the live API: one series per geo with these filters.
+#   coverage: DE 2001..2024, FR 2000..2024, ITF 2001..2024, ITG 2001..2024
+# Note: Southern Italy = ITF (Sud) plus ITG (Isole) at NUTS 1; there is no single 'Mezzogiorno' code. Published about 15 months after the year ends.
+id: regional_real_gdp_growth
+source: eurostat
+source_code: "nama_10r_2gvagr"
+name: "Regional real GDP growth"
+aliases:
+  - "regional economic growth"
+  - "GDP growth by region"
+  - "growth in NUTS 2 regions"
+  - "how fast a region's economy grew"
+  - "regional growth rate"
+definition: "Percentage change of real GDP (volume) on the previous year for NUTS 1 and NUTS 2 regions and for whole countries."
+unit: "% change on previous year"
+frequency: annual
+geo_coverage: ["NUTS 1 and NUTS 2 regions", "EU member states"]
+first_year: 2000
+last_year: null # still updated
+related: [real_gdp_growth]
+filters: { na_item: "B1GQ", unit: "PCH_PRE" }

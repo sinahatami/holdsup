@@ -1,0 +1,25 @@
+# DRAFT: not loaded by `make catalog` until moved to ../indicators/.
+# Seed claims: c019
+# Verified 2026-11-07 against the live API: one series per geo with these filters.
+#   coverage: DEU 1965..2025, ITA 1965..2025, OWID_EU27 1965..2025, OWID_WRL 1800..2025
+# Note: `energy-mix` is a multi-view chart; metric and source pick the view (the old slug
+#   renewable-share-energy redirects here). Needs the 2026-11-07 OWID adapter (view options,
+#   tab=chart, own country/time filtering). World data before 1965 are sparse.
+id: renewable_share_primary_energy
+source: owid
+source_code: "energy-mix"
+name: "Renewable share of primary energy"
+aliases:
+  - "share of primary energy from renewables"
+  - "percentage of energy from renewable sources (primary energy basis)"
+  - "green energy share of total energy use (primary)"
+  - "renewables in the energy mix (primary energy)"
+definition: "Share of primary energy that comes from renewable sources, from the Energy Institute Statistical Review of World Energy."
+unit: "% of primary energy"
+frequency: annual
+geo_coverage: ["All countries", "OWID_WRL"]
+first_year: 1965
+last_year: null # still updated
+related: [renewable_share_final_energy]
+filters:
+  { metric: "share", source: "renewables", column: "renewables_share_pct" }
