@@ -31,7 +31,7 @@ from holdsup.catalog.embed import Embedder, default_embedder
 from holdsup.catalog.index import IndicatorHit, InMemoryIndex
 from holdsup.catalog.schema import Catalog, CatalogError, Source, load_catalog
 from holdsup.config import REPO_ROOT, get_settings
-from holdsup.ops import ChangeKind, change
+from holdsup.ops import ChangeKind, change_between
 from holdsup.router import Router, RouterError, Use, load_router_config
 from holdsup.router.client import OpenAICompatibleClient
 
@@ -318,7 +318,7 @@ async def data_steps(
         row.start_period, row.start_value = start.period, repr(start.value)
         row.end_period, row.end_value = end.period, repr(end.value)
         row.change_kind = str(kind)
-        row.computed_value = repr(round(change(start.value, end.value, kind), 6))
+        row.computed_value = repr(round(change_between(start.value, end.value, kind), 6))
     except (ClaimError, AdapterError, ValueError, KeyError) as exc:
         row.error = f"{stage}: {exc}"
 
