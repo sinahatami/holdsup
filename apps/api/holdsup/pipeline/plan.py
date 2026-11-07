@@ -18,21 +18,26 @@ from holdsup.adapters.base import Observation
 from holdsup.catalog.schema import IndicatorSpec
 from holdsup.ops import (
     LATEST,
+    AnnualValue,
     ChangeKind,
     Frequency,
     OpError,
     OpRecord,
     Series,
+    annual,
+    annual_flag,
     cagr,
     change,
     compare,
     deflate,
+    latest_year_flag,
     parse_period,
     per_capita,
     rank,
     trend,
     unit_scale,
     value_at,
+    year_window,
 )
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction
 from holdsup.router import Router, Use
@@ -102,6 +107,7 @@ class SeriesInfo:
     geos: frozenset[str]
     first: str | None
     last: str | None
+    annual: AnnualValue | None = None  # monthly or quarterly: how a year's value is made
 
     @classmethod
     def from_data(cls, spec: IndicatorSpec, observations: Sequence[Observation]) -> "SeriesInfo":
@@ -116,12 +122,24 @@ class SeriesInfo:
             geos=frozenset(o.geo for o in present),
             first=str(periods[0]) if periods else None,
             last=str(periods[-1]) if periods else None,
+            annual=None if spec.annual_value is None else AnnualValue(spec.annual_value.value),
         )
+
+    def years(self) -> str:
+        """What a whole-year period (YYYY) means on this series."""
+        if self.frequency is Frequency.ANNUAL:
+            return ""
+        sub = "months" if self.frequency is Frequency.MONTHLY else "quarters"
+        if self.annual is AnnualValue.MEAN:
+            return f" A whole year (YYYY) is the average of its {sub}."
+        if self.annual is AnnualValue.END:
+            return f" A whole year (YYYY) is its last {sub[:-1]}."
+        return f" No yearly value: use {_FORMAT[self.frequency]} (a trend may use YYYY)."
 
     def describe(self) -> str:
         return (
-            f"{self.id}: {self.name}. Unit: {self.unit}. Frequency: {self.frequency}. "
-            f"Places: {', '.join(sorted(self.geos)) or 'none'}. "
+            f"{self.id}: {self.name}. Unit: {self.unit}. Frequency: {self.frequency}."
+            f"{self.years()} Places: {', '.join(sorted(self.geos)) or 'none'}. "
             f"Periods: {self.first or '?'} to {self.last or '?'}."
         )
 
@@ -160,16 +178,90 @@ _FORMAT = {
 }
 
 
-def _period_error(value: str, info: SeriesInfo) -> str | None:
+def yearly_allowed(op: str, info: SeriesInfo) -> bool:
+    """Whether `op` may take a whole year (YYYY) on this series: a trend reads the year's
+    months; other operations need the catalog's rule for a year's value."""
+    if info.frequency is Frequency.ANNUAL:
+        return True
+    if op == "trend":
+        return True
+    return info.annual is not None and op not in SERIES_OPS
+
+
+def _period_error(value: str, info: SeriesInfo, op: str = "value_at") -> str | None:
     if value == LATEST:
         return None
     try:
         p = parse_period(value)
     except OpError:
         return f"{value!r} is not a period"
-    if p.frequency is not info.frequency:
-        return f"{value!r} must be {_FORMAT[info.frequency]} for the {info.frequency} {info.id}"
-    return None
+    if p.frequency is info.frequency:
+        return None
+    if p.frequency is Frequency.ANNUAL and yearly_allowed(op, info):
+        return None
+    if p.frequency is Frequency.ANNUAL:
+        return f"{value!r}: {info.id} has no yearly value; use {_FORMAT[info.frequency]}"
+    form = _FORMAT[info.frequency]
+    if info.frequency is not Frequency.ANNUAL and yearly_allowed(op, info):
+        form = f"YYYY or {form}"
+    return f"{value!r} must be {form} for the {info.frequency} {info.id}"
+
+
+def _frequency(value: str | None) -> Frequency | None:
+    """The frequency a period argument is written in; None for latest or a bad period."""
+    if value is None or value == LATEST:
+        return None
+    try:
+        return parse_period(value).frequency
+    except OpError:
+        return None
+
+
+def claim_years(claim: ClaimSpec) -> set[str]:
+    """Years the claim names as whole years ("in 2015"), and no month or quarter of."""
+    periods = [p for p in (claim.start, claim.end) if p and p != LATEST]
+    whole = {p for p in periods if len(p) == 4}
+    return whole - {p[:4] for p in periods if len(p) > 4}
+
+
+def _whole_years(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """Code's fix for a month or quarter the claim never named: "in 2015" on a monthly series is
+    the year 2015 (its average), not 2015-01. A call is rewritten whole or not at all, so its
+    start and end keep one form. Periods are rewritten in place; returns notes."""
+    years = claim_years(ctx.claim)
+    notes: list[str] = []
+    if not years:
+        return notes
+    for i, call in enumerate(plan.calls):
+        ref = call.series
+        if ref is not None and ref.startswith("@"):
+            n = _step(ref)
+            info = _source_of(n, plan.calls, ctx) if 0 <= n < i else None
+        else:
+            info = ctx.info(ref)
+        if info is None or info.frequency is Frequency.ANNUAL or not yearly_allowed(call.op, info):
+            continue
+        finer = {
+            name: str(getattr(call, name))
+            for name in PERIOD_ARGS
+            if _frequency(getattr(call, name)) in (Frequency.MONTHLY, Frequency.QUARTERLY)
+        }
+        new = {name: value[:4] for name, value in finer.items()}
+        if not new or not set(new.values()) <= years:
+            continue  # it also names a month or quarter the claim does name: leave it whole
+        if (
+            call.start is not None
+            and call.end is not None
+            and new.get("start", call.start) == (new.get("end", call.end))
+        ):
+            continue  # a change within one year: the months are what the plan means
+        for name, year in new.items():
+            notes.append(
+                f"call {i} ({call.op}): {name} {getattr(call, name)} → {year}, "
+                "the claim names the whole year"
+            )
+            setattr(call, name, year)
+    return notes
 
 
 def _check_call(
@@ -214,9 +306,15 @@ def _check_call(
             errors.append(f"{where}: no data for {geo!r} in {info.id}")
     for name in PERIOD_ARGS:
         value = getattr(call, name)
-        if value is not None and (problem := _period_error(value, info)):
+        if value is not None and (problem := _period_error(value, info, call.op)):
             errors.append(f"{where}: {name} {problem}")
-    if _reversed(call.start, call.end, info):
+    written = {f for f in (_frequency(call.start), _frequency(call.end)) if f is not None}
+    if len(written) > 1:
+        errors.append(
+            f"{where}: start and end must both be whole years (YYYY) or both "
+            f"{_FORMAT[info.frequency]}"
+        )
+    elif _reversed(call.start, call.end, info, call.op):
         errors.append(f"{where}: start must be before end")
     for name in ("population", "price_index"):
         ref_id = getattr(call, name)
@@ -230,11 +328,11 @@ def _check_call(
     return errors, notes
 
 
-def _reversed(start: str | None, end: str | None, info: SeriesInfo) -> bool:
+def _reversed(start: str | None, end: str | None, info: SeriesInfo, op: str) -> bool:
     """Both periods valid and `end` not after `start` ("latest" is always after)."""
     if not start or not end or LATEST in (start, end):
         return False
-    if _period_error(start, info) or _period_error(end, info):
+    if _period_error(start, info, op) or _period_error(end, info, op):
         return False
     return parse_period(start).ordinal >= parse_period(end).ordinal
 
@@ -294,9 +392,9 @@ def validate_plan(plan: ModelPlan, ctx: PlanContext) -> ValidPlan:
     """The plan with unused arguments dropped, or PlanInvalid listing every problem."""
     plan = plan.model_copy(deep=True)
     errors: list[str] = []
-    notes: list[str] = []
     if not plan.calls:
         raise PlanInvalid(["the plan has no calls"])
+    notes = _whole_years(plan, ctx)
     if len(plan.calls) > MAX_CALLS:
         errors.append(f"at most {MAX_CALLS} calls")
     for i, call in enumerate(plan.calls):
@@ -329,7 +427,10 @@ Operations (arguments; `series` is optional everywhere: null means the matched i
 - deflate(geo, price_index, base): the series in prices of the base period; output '@N'.
 
 Rules:
-- Periods are YYYY, YYYY-Qn or YYYY-MM, matching the series' frequency, or "latest".
+- Periods: YYYY when the claim names a whole year ("in 2015"), even on a monthly or quarterly \
+series (code makes the year's value as the series says); YYYY-MM or YYYY-Qn only when the \
+claim names that month or quarter; "latest" for the present ("today", "now", "is"). Start and \
+end of one call use the same form.
 - Use only places and indicators listed below.
 - `answer` lists the calls that decide the claim: value_at for a level; change with the \
 claim's own kind for a change (or value_at when the series itself is a growth rate and the \
@@ -438,7 +539,7 @@ def execute_plan(
     records: list[OpRecord] = []
     units: list[str | None] = []
 
-    def read(ref: str | None, geo: str) -> Series:
+    def native(ref: str | None, geo: str) -> Series:
         if ref is not None and ref.startswith("@"):
             return Series.from_record(records[_step(ref)])
         info = ctx.info(ref)
@@ -458,8 +559,13 @@ def execute_plan(
         return None if info is None else info.unit
 
     try:
-        for call in plan.calls:
-            records.append(_run(call, read, ctx, tolerances))
+        for i, call in enumerate(plan.calls):
+            source = _source_of(i, plan.calls, ctx)
+            how = _yearly(call, source)
+            if how is None:
+                records.append(_run(call, native, ctx, tolerances))
+            else:
+                records.append(_run_yearly(call, native, how, ctx, tolerances))
             units.append(unit_of(call))
     except OpError as exc:
         return Execution(records, str(exc), None)
@@ -467,6 +573,39 @@ def execute_plan(
 
 
 SeriesReader = Callable[[str | None, str], Series]
+
+
+def _yearly(call: OpCall, source: SeriesInfo | None) -> AnnualValue | None:
+    """How to make yearly values when a call names whole years on a monthly or quarterly
+    series; None when it reads the series as it is (a trend widens years to their months)."""
+    if source is None or source.frequency is Frequency.ANNUAL or source.annual is None:
+        return None
+    if call.op == "trend" or call.op in SERIES_OPS:
+        return None
+    named = (getattr(call, name) for name in PERIOD_ARGS)
+    return source.annual if Frequency.ANNUAL in map(_frequency, named) else None
+
+
+def _run_yearly(
+    call: OpCall, native: SeriesReader, how: AnnualValue, ctx: PlanContext, tol: Tolerances
+) -> OpRecord:
+    """Run `call` on yearly values made from its monthly or quarterly series; the record says
+    how they were made, and which year "latest" is."""
+    made: dict[str, tuple[Series, Series]] = {}
+
+    def read(ref: str | None, geo: str) -> Series:
+        if geo not in made:
+            base = native(ref, geo)
+            made[geo] = (annual(base, how), base)
+        return made[geo][0]
+
+    record = _run(call, read, ctx, tol)
+    yearly, base = made[call.geo or ""]
+    years = sorted({p.period for p in record.inputs})
+    flags = [annual_flag(base.frequency, how, years)]
+    if LATEST in (call.period, call.start, call.end):
+        flags.append(latest_year_flag(yearly, base))
+    return record.model_copy(update={"flags": [*record.flags, *flags]})
 
 
 def _run(call: OpCall, read: SeriesReader, ctx: PlanContext, tolerances: Tolerances) -> OpRecord:
@@ -481,7 +620,8 @@ def _run(call: OpCall, read: SeriesReader, ctx: PlanContext, tolerances: Toleran
     if call.op == "cagr":
         return cagr(s, call.start or "", call.end or LATEST, max_distance=gap)
     if call.op == "trend":
-        return trend(s, call.start or "", call.end or LATEST)
+        start, end = year_window(s, call.start or "", call.end or LATEST)
+        return trend(s, start, end)
     if call.op == "compare":
         return compare(s, read(call.series, call.geo_b or ""), call.period or LATEST, gap)
     if call.op == "rank":

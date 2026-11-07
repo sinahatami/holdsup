@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from holdsup.adapters.base import Observation
 from holdsup.catalog.schema import load_catalog
-from holdsup.ops import ChangeKind, FlagCode, Frequency
+from holdsup.ops import AnnualValue, ChangeKind, FlagCode, Frequency
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
 from holdsup.pipeline.plan import (
     MAX_CALLS,
@@ -430,3 +430,105 @@ def test_per_person_unit() -> None:
     assert per_person_unit("million euro (current prices)") == "euro (current prices) per person"
     assert per_person_unit(None) is None
     assert OpCall(op="value_at").given() == set()
+
+
+# --- whole years on monthly and quarterly series ---------------------------------------------
+
+MONTHLY = {f"{y}-{m:02d}": float(y - 2000) + m / 100 for y in (2015, 2016) for m in range(1, 13)}
+MONTHLY_DATA = {
+    "m": obs({"IT": {**MONTHLY, "2017-01": 30.0}, "DE": dict.fromkeys(MONTHLY, 5.0)}),
+}
+M = SeriesInfo("m", "Unemployment rate (monthly)", "%", Frequency.MONTHLY,
+               frozenset({"IT", "DE"}), "2015-01", "2017-01", AnnualValue.MEAN)  # fmt: skip
+QOQ = SeriesInfo("q", "GDP growth on previous quarter", "%", Frequency.QUARTERLY,
+                 frozenset({"IT"}), "2015-Q1", "2016-Q4")  # fmt: skip
+
+
+def year_claim(start: str | None = "2015", end: str | None = "2016") -> ClaimSpec:
+    return claim(start=start, end=end)
+
+
+def test_a_whole_year_is_allowed_on_a_series_with_yearly_values() -> None:
+    p = validate_plan(plan({**CHANGE, "start": "2015", "end": "2016"}), ctx(year_claim(), M))
+    assert (p.calls[0].start, p.calls[0].end) == ("2015", "2016") and p.notes == []
+    assert "A whole year (YYYY) is the average of its months." in M.describe()
+
+
+def test_a_series_without_yearly_values_needs_its_own_periods() -> None:
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(plan({**CHANGE, "start": "2015", "end": "2016"}), ctx(year_claim(), QOQ))
+    assert "'2015': q has no yearly value; use YYYY-Qn" in info.value.errors[0]
+    assert "No yearly value: use YYYY-Qn (a trend may use YYYY)." in QOQ.describe()
+    # A trend over whole years reads their quarters.
+    trend_call = {"op": "trend", "geo": "IT", "start": "2015", "end": "2016"}
+    validate_plan(plan(trend_call), ctx(claim(type=AssertionType.TREND, value=None), QOQ))
+
+
+def test_months_inside_years_the_claim_names_become_the_years() -> None:
+    call = {**CHANGE, "start": "2015-01", "end": "2016-12"}
+    p = validate_plan(plan(call), ctx(year_claim(), M))
+    assert (p.calls[0].start, p.calls[0].end) == ("2015", "2016")
+    assert p.notes == [
+        "call 0 (change): start 2015-01 → 2015, the claim names the whole year",
+        "call 0 (change): end 2016-12 → 2016, the claim names the whole year",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("claim_start", "call"),
+    [
+        ("2015-03", {**CHANGE, "start": "2015-03", "end": "2016-12"}),  # the claim names a month
+        ("2015", {**CHANGE, "start": "2015-01", "end": "2015-12"}),  # a change within the year
+    ],
+)
+def test_months_are_kept_when_the_claim_means_them(claim_start: str, call: dict[str, Any]) -> None:
+    p = validate_plan(plan(call), ctx(year_claim(start=claim_start, end="2016"), M))
+    assert (p.calls[0].start, p.calls[0].end) == (call["start"], call["end"])
+    assert not any("whole year" in n for n in p.notes)
+
+
+def test_start_and_end_must_use_one_form() -> None:
+    with pytest.raises(PlanInvalid) as info:
+        call = {**CHANGE, "start": "2015", "end": "2016-06"}  # the claim does not name 2016
+        validate_plan(plan(call), ctx(year_claim(end="latest"), M))
+    assert "start and end must both be whole years (YYYY) or both YYYY-MM" in info.value.errors[0]
+
+
+def test_whole_years_run_on_yearly_averages() -> None:
+    p = validate_plan(plan({**CHANGE, "start": "2015", "end": "2016"}), ctx(year_claim(), M))
+    run = execute_plan(p, ctx(year_claim(), M), MONTHLY_DATA, TOL)
+    [r] = run.records
+    assert [(i.period, round(i.value, 3)) for i in r.inputs] == [("2015", 15.065), ("2016", 16.065)]
+    assert [f.code for f in r.flags] == [FlagCode.ANNUAL_VALUE]
+
+
+def test_latest_among_whole_years_is_the_last_complete_year() -> None:
+    p = validate_plan(plan({**CHANGE, "start": "2015", "end": "latest"}), ctx(year_claim(), M))
+    [r] = execute_plan(p, ctx(year_claim(), M), MONTHLY_DATA, TOL).records
+    assert [i.period for i in r.inputs] == ["2015", "2016"]  # 2017 has only January
+    latest = next(f for f in r.flags if f.code is FlagCode.LATEST_YEAR)
+    assert latest.detail == (
+        "IT: latest is the last complete year, 2016; the latest month is 2017-01"
+    )
+
+
+def test_compare_and_rank_use_yearly_values_for_every_place() -> None:
+    c = claim(type=AssertionType.COMPARE, value=None, direction=Direction.UP, peers=["DE"])
+    calls: list[dict[str, Any]] = [
+        {"op": "compare", "geo": "IT", "geo_b": "DE", "period": "2016"},
+        {"op": "rank", "geo": "IT", "geos": ["IT", "DE"], "period": "2016"},
+    ]
+    p = validate_plan(plan(*calls), ctx(c, M))
+    cmp_, rnk = execute_plan(p, ctx(c, M), MONTHLY_DATA, TOL).records
+    assert [(i.geo, i.period, i.value) for i in cmp_.inputs] == [
+        ("IT", "2016", pytest.approx(16.065)), ("DE", "2016", 5.0),
+    ]  # fmt: skip
+    assert rnk.value == 1.0 and {i.period for i in rnk.inputs} == {"2016"}
+
+
+def test_a_trend_over_whole_years_reads_their_months() -> None:
+    c = claim(type=AssertionType.TREND, value=None, direction=Direction.UP)
+    call = {"op": "trend", "geo": "IT", "start": "2015", "end": "2016"}
+    [r] = execute_plan(validate_plan(plan(call), ctx(c, M)), ctx(c, M), MONTHLY_DATA, TOL).records
+    assert (r.args["start"], r.args["end"]) == ("2015-01", "2016-12")
+    assert len(r.inputs) == 24 and not r.flags

@@ -126,6 +126,24 @@ describe("Receipt", () => {
     expect(screen.getByText("ab12")).toBeInTheDocument();
     expect(screen.getByText(/change\(/)).toBeInTheDocument();
     expect(screen.getByText(/catalog 0.2.0/)).toBeInTheDocument();
+    expect(screen.queryByTestId("op-notes")).not.toBeInTheDocument();
+  });
+  it("shows each calculation's notes, such as how a year's value was made", () => {
+    const detail =
+      "each year's value is the average of its 12 monthly values; complete years only (2015, 2023)";
+    const op = {
+      ...claim.operations![0],
+      flags: [{ code: "annual_value", detail, items: [] }],
+    };
+    render(
+      <Receipt
+        claim={{ ...claim, operations: [op] } as ClaimResult}
+        versions={{ app: "a", catalog: "0.3.0", tolerances: 1 }}
+      />,
+    );
+    expect(screen.getByTestId("op-notes")).toHaveTextContent(
+      `${strings.receipt.note}: ${detail}`,
+    );
   });
   it("says so when no data was fetched", () => {
     render(

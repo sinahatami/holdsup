@@ -14,6 +14,7 @@ aliases:
 definition: "Percentage change of real GDP (chain-linked volumes, seasonally and calendar adjusted) on the same quarter of the previous year."
 unit: "% change on same quarter of previous year"
 frequency: quarterly
+annual_value: mean
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1981
 last_year: null # still updated

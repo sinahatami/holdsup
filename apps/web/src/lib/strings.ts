@@ -79,5 +79,6 @@ export const strings = {
     tolerances: "tolerances",
     noData: "No data was fetched for this claim.",
     result: "result",
+    note: "Note",
   },
 } as const;

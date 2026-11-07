@@ -3,12 +3,15 @@
 A hit needs the same claim, not merely similar text: the normalized text is equal, or its
 embedding is close **and** it writes the same numbers and the same direction words. Without
 that, "fell 12 points" would return the result for "fell 21 points".
+
+A hit also needs the result to come from the current catalog and tolerances: after either
+changes, an old verdict may be wrong, so the claim is checked again.
 """
 
 import asyncio
 import re
 import unicodedata
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
@@ -152,18 +155,30 @@ class Ledger:
     threshold: float = SIMILARITY_THRESHOLD
     max_age: timedelta = MAX_AGE
     now: Callable[[], datetime] = _utcnow
+    # e.g. {"catalog": "0.3.0", "tolerances": 1}: a stored result must carry the same values
+    # in its `versions`. None accepts any (tests that do not care about versions).
+    versions: Mapping[str, object] | None = None
+
+    def _current(self, entry: LedgerEntry) -> bool:
+        if self.versions is None:
+            return True
+        stored = entry.result.get("versions")
+        if not isinstance(stored, Mapping):
+            return False
+        return all(stored.get(k) == v for k, v in self.versions.items())
 
     async def lookup(self, text: str) -> LedgerHit | None:
         normalized = normalize_text(text)
         since = self.now() - self.max_age
-        if (entry := await self.store.exact(normalized, since)) is not None:
+        entry = await self.store.exact(normalized, since)
+        if entry is not None and self._current(entry):
             return LedgerHit(entry, 1.0)
         mine = fingerprint(normalized)
         embedding = await self._embed(normalized)
         for entry, similarity in await self.store.nearest(embedding, since, k=5):
             if similarity < self.threshold:
                 break
-            if fingerprint(entry.normalized) == mine:
+            if fingerprint(entry.normalized) == mine and self._current(entry):
                 return LedgerHit(entry, similarity)
         return None
 

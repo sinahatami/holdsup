@@ -82,6 +82,16 @@ export function Receipt({
                       ))}
                     </ul>
                   )}
+                  {(op.flags ?? []).length > 0 && (
+                    <ul className="mt-1" data-testid="op-notes">
+                      {(op.flags ?? []).map((f, j) => (
+                        <li key={j}>
+                          <span className="font-medium">{r.note}:</span>{" "}
+                          {f.detail}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ol>

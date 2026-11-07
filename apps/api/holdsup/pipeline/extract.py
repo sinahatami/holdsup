@@ -115,6 +115,10 @@ government", "since Labour came to power"): fill office, leave start null.
 - assertion.type: a change in points of a rate is percentage_points; "by 23%" is percent; \
 "by 2 million" is absolute; "halved"/"doubled" is ratio. A level reached ("rose to 30%") is \
 level with a direction.
+- A level's number goes in assertion.value ("debt is 133%": value 133); start_value and \
+end_value are only for "from X to Y" and "fell to Y".
+- Two levels at different times with no change written ("In 2011 it was 29%; today it is \
+43.3%") are two level claims, each with its own value and period (end "2011"; end "latest").
 - assertion.value is the stated change or level, as a positive magnitude; the sign goes in \
 direction. "From 25.6% to 33.9%" with no change written: value null, start_value 25.6, \
 end_value 33.9.
@@ -354,6 +358,15 @@ def _check_assertion(assertion: Assertion, text: str, notes: list[str]) -> Asser
         if a.direction is None and a.start_value != a.end_value:
             a.direction = Direction.UP if a.end_value > a.start_value else Direction.DOWN
         notes.append(f"'from X to Y' levels: checked as a {a.type} change with both levels")
+    # "Today it is 43.3%" with the number put in start_value (or "fell to 7%" only in
+    # end_value): a level has one number, and it is the asserted value.
+    if a.type == AssertionType.LEVEL and a.value is None:
+        stated = [f for f in ("start_value", "end_value") if getattr(a, f) is not None]
+        if len(stated) == 1:
+            a.value = getattr(a, stated[0])
+            if stated[0] == "start_value":
+                a.start_value = None
+            notes.append(f"level {a.value:g} was in assertion.{stated[0]}; used as the value")
     if a.type == AssertionType.RATIO and a.value is not None and a.value > 0:
         implied = (
             Direction.FLAT if a.value == 1 else (Direction.UP if a.value > 1 else Direction.DOWN)

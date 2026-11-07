@@ -63,7 +63,7 @@ def build_runner(settings: Settings) -> Built:  # pragma: no cover (needs Postgr
     store = SqlCheckStore(sessionmaker)
     runner = CheckRunner(
         store=store,
-        ledger=Ledger(store, embedder),
+        ledger=Ledger(store, embedder, versions=pipeline.versions()),
         pipeline=pipeline,
         limiter=RateLimiter(settings.checks_per_hour, HOUR_S),
     )

@@ -4,6 +4,13 @@ Each operation takes `Series` values and plain arguments and returns an `OpRecor
 inputs, output and flags; an `OpError` means it cannot give a meaningful answer.
 """
 
+from holdsup.ops.aggregate import (
+    AnnualValue,
+    annual,
+    annual_flag,
+    latest_year_flag,
+    year_window,
+)
 from holdsup.ops.change import ChangeKind, change_between, compound_rate
 from holdsup.ops.periods import LATEST, Frequency, Period, parse_period, years_between
 from holdsup.ops.record import DataPoint, Flag, FlagCode, OpError, OpRecord
@@ -15,6 +22,7 @@ from holdsup.ops.values import cagr, change, compare, rank, value_at
 
 __all__ = [
     "LATEST",
+    "AnnualValue",
     "ChangeKind",
     "DataPoint",
     "Flag",
@@ -25,6 +33,8 @@ __all__ = [
     "OpRecord",
     "Period",
     "Series",
+    "annual",
+    "annual_flag",
     "cagr",
     "change",
     "change_between",
@@ -32,6 +42,7 @@ __all__ = [
     "compound_rate",
     "deflate",
     "is_rate",
+    "latest_year_flag",
     "linear_fit",
     "parse_period",
     "per_capita",
@@ -39,5 +50,6 @@ __all__ = [
     "trend",
     "unit_scale",
     "value_at",
+    "year_window",
     "years_between",
 ]

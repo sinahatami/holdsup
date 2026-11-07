@@ -89,6 +89,7 @@ class Part(BaseModel):
     computed: float | None = None
     asserted: float | None = None
     tolerance: float | None = None  # the largest |computed - asserted| that holds
+    period: str | None = None  # the period the computed value is for, e.g. "2026-09"
     detail: str
 
 
@@ -129,18 +130,26 @@ class _Rules:
     # -- value comparisons --
 
     def _value_part(
-        self, name: str, computed: float, asserted: float, tol: ValueTolerance, scaled: bool
+        self,
+        name: str,
+        computed: float,
+        asserted: float,
+        tol: ValueTolerance,
+        scaled: bool,
+        period: str | None = None,
     ) -> Part:
         factor = self.factor if scaled else 1.0
         target, band = asserted * factor, tol.band(asserted) * factor
         holds = abs(computed - target) <= band
+        at = f" for {period}" if period else ""
         return Part(
             name=name,
             holds=holds,
             computed=computed,
             asserted=target,
             tolerance=band,
-            detail=f"computed {computed:.6g}, asserted {target:.6g} ± {band:.6g}",
+            period=period,
+            detail=f"computed {computed:.6g}{at}, asserted {target:.6g} ± {band:.6g}",
         )
 
     def _signed(self, value: float) -> float:
@@ -169,7 +178,10 @@ class _Rules:
         computed = _value(r)
         if self.a.type is AssertionType.LEVEL:
             assert self.a.value is not None  # noqa: S101 (decide: no level claim without a value)
-            return self._value_part("assertion", computed, self.a.value, self._level_tol(), True)
+            period = r.inputs[0].period
+            return self._value_part(
+                "assertion", computed, self.a.value, self._level_tol(), True, period
+            )
         # A change claim answered by one value of a growth-rate series ("grew 0.7% in 2024").
         if self.a.value is None:
             return self._direction_part("assertion", computed, 0.0, "growth rate")
@@ -249,7 +261,11 @@ class _Rules:
             ("end value", self.a.end_value, r.inputs[1]),
         ):
             if stated is not None:
-                parts.append(self._value_part(name, point.value, stated, self._level_tol(), True))
+                parts.append(
+                    self._value_part(
+                        name, point.value, stated, self._level_tol(), True, point.period
+                    )
+                )
         return parts
 
 

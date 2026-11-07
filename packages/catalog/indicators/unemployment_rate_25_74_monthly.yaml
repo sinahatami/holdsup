@@ -15,6 +15,7 @@ aliases:
 definition: "Unemployed people aged 25 to 74 as a percentage of the labour force aged 25 to 74, monthly, seasonally adjusted (ILO definition); excludes young people."
 unit: "% of labour force aged 25-74"
 frequency: monthly
+annual_value: mean
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1983
 last_year: null # still updated

@@ -466,3 +466,31 @@ def test_office_problems_become_notes(who: str, geo: str | None, said: SaidOn, n
         said=said,
     )
     assert note in spec.notes[0]
+
+
+@pytest.mark.parametrize(
+    ("field", "text"), [("start_value", "today it is 43.3%"), ("end_value", "it fell to 43.3%")]
+)
+def test_a_level_in_start_or_end_value_becomes_the_value(field: str, text: str) -> None:
+    assertion = Assertion(type=AssertionType.LEVEL, value=None, direction=None, unit="%",
+                          start_value=None, end_value=None)  # fmt: skip
+    setattr(assertion, field, 43.3)
+    spec = resolve(model_claim(assertion=assertion, quote=text), text=text, speaker=None,
+                   said=SAID_2018)  # fmt: skip
+    assert spec.assertion.value == 43.3
+    assert spec.assertion.start_value is None  # "fell to" keeps its end_value
+    assert spec.notes == [f"level 43.3 was in assertion.{field}; used as the value"]
+
+
+def test_from_to_levels_are_still_a_change() -> None:
+    assertion = Assertion(type=AssertionType.LEVEL, value=None, direction=None, unit="%",
+                          start_value=11.9, end_value=7.7)  # fmt: skip
+    text = "fell from 11.9% to 7.7%"
+    spec = resolve(model_claim(assertion=assertion, quote=text), text=text, speaker=None,
+                   said=SAID_2018)  # fmt: skip
+    assert spec.assertion.type is AssertionType.PERCENTAGE_POINTS and spec.assertion.value is None
+
+
+def test_prompt_keeps_each_level_with_its_own_value() -> None:
+    assert "A level's number goes in assertion.value" in EXTRACT_SYSTEM
+    assert "two level claims, each with its own value and period" in EXTRACT_SYSTEM
