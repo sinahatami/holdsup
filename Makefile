@@ -48,6 +48,8 @@ test: test-py test-web ## pytest with coverage, vitest
 
 test-py:
 	cd $(API_DIR) && uv run pytest --cov=holdsup --cov-report=term-missing --cov-report=xml --cov-fail-under=85
+	@echo "ops/ must stay at 100% line coverage (CLAUDE.md, Testing standards):"
+	cd $(API_DIR) && uv run coverage report --include='holdsup/ops/*' --fail-under=100 --skip-covered
 
 test-web:
 	pnpm --filter @holdsup/web test --coverage
