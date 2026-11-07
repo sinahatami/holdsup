@@ -338,6 +338,22 @@ def _check_assertion(assertion: Assertion, text: str, notes: list[str]) -> Asser
     ):
         notes.append(f"assertion.value {a.value:g} is a start or end level, not a change; dropped")
         a.value = None
+    # "Fell from 11.9% to 7.7%" read as a level: both levels are asserted, and the move between
+    # them. Check it as a change (direction plus both levels), in points for a percentage.
+    if (
+        a.type == AssertionType.LEVEL
+        and a.value is None
+        and a.start_value is not None
+        and a.end_value is not None
+    ):
+        a.type = (
+            AssertionType.PERCENTAGE_POINTS
+            if a.unit is not None and "%" in a.unit
+            else AssertionType.ABSOLUTE
+        )
+        if a.direction is None and a.start_value != a.end_value:
+            a.direction = Direction.UP if a.end_value > a.start_value else Direction.DOWN
+        notes.append(f"'from X to Y' levels: checked as a {a.type} change with both levels")
     if a.type == AssertionType.RATIO and a.value is not None and a.value > 0:
         implied = (
             Direction.FLAT if a.value == 1 else (Direction.UP if a.value > 1 else Direction.DOWN)
