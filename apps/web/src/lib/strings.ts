@@ -62,6 +62,10 @@ export const strings = {
       "Italy's public debt is 133% of GDP.",
       "Youth unemployment in Italy has risen every year since 2008.",
     ],
+    canCheckHeading: "What HoldsUp can check",
+    canCheckBody:
+      "Every claim is matched to an official statistic. Browse the full list to see which topics, countries and years are covered.",
+    canCheckLink: "See everything HoldsUp can check",
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",
     maxChars: 2000,
