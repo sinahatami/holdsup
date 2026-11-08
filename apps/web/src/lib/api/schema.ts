@@ -193,6 +193,7 @@ export interface components {
       id: string;
       /** Name */
       name: string;
+      theme: components["schemas"]["Theme"];
       /** Definition */
       definition: string;
       /** Unit */
@@ -653,6 +654,21 @@ export interface components {
       /** Name */
       name: string;
     };
+    /**
+     * Theme
+     * @description The topic an indicator is listed under on the /indicators page, in display order.
+     * @enum {string}
+     */
+    Theme:
+      | "population"
+      | "economy"
+      | "work"
+      | "prices"
+      | "poverty"
+      | "health"
+      | "education"
+      | "environment"
+      | "safety";
     /** ValidationError */
     ValidationError: {
       /** Location */

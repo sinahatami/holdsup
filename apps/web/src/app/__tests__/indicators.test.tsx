@@ -11,6 +11,7 @@ describe("Indicators page", () => {
       {
         id: "p",
         name: "Total population (Eurostat)",
+        theme: "population",
         definition: "People resident on 1 January.",
         unit: "persons",
         source: "Eurostat",
@@ -23,7 +24,7 @@ describe("Indicators page", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ version: "0.5.0", indicators }),
+        json: async () => ({ version: "0.6.0", indicators }),
       }),
     );
     render(await Page());

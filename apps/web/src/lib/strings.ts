@@ -96,7 +96,20 @@ export const strings = {
       "The list could not be loaded just now. Please try again in a few minutes.",
     years: (first: number, last: number | null) =>
       last === null ? `since ${first}` : `${first} to ${last}`,
-    count: (n: number) => `${n} statistics`,
+    count: (n: number) => (n === 1 ? "1 statistic" : `${n} statistics`),
+    themesNav: "Jump to a topic",
+    // Listed in this order on the page. Keys are the API's `theme` values.
+    themes: {
+      population: "Population",
+      economy: "Economy",
+      work: "Work and pay",
+      prices: "Prices and housing",
+      poverty: "Poverty and inequality",
+      health: "Health",
+      education: "Education",
+      environment: "Environment",
+      safety: "Safety",
+    },
   },
   steps: {
     ledger: "Looking for an earlier check",
