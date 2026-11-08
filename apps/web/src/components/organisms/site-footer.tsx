@@ -29,6 +29,11 @@ export function SiteFooter() {
             </Link>
           </li>
           <li>
+            <Link href={routes.indicators} className={footerLink}>
+              {strings.nav.canCheck}
+            </Link>
+          </li>
+          <li>
             <a
               href={strings.footer.repoUrl}
               className={pill({ tone: "glass" })}
