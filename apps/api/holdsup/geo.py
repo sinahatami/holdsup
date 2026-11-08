@@ -77,6 +77,10 @@ GEO_FILTER = {Source.EUROSTAT: "geo", Source.WORLDBANK: "country", Source.OWID: 
 class UnknownPlace(ValueError):
     """The source has no code for this place (e.g. G7 on Eurostat)."""
 
+    def __init__(self, message: str, place: str | None = None) -> None:
+        super().__init__(message)
+        self.place = place  # the claim code, when the problem is one place
+
 
 def to_source(source: Source, code: str) -> str:
     """The source's code for a claim code."""
@@ -84,7 +88,7 @@ def to_source(source: Source, code: str) -> str:
     if code in special:
         return special[code]
     if code not in ISO3:
-        raise UnknownPlace(f"{source} has no code for {code}")
+        raise UnknownPlace(f"{source} has no code for {code}", code)
     return ISO3[code] if source is Source.OWID else code
 
 

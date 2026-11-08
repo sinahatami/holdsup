@@ -4,12 +4,14 @@ Handlers take these as `Annotated` parameters (`Runner`, `Store`, `Search`) and 
 Tests swap the providers with `app.dependency_overrides`; nothing here connects at import.
 """
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, Request
 
 from holdsup.catalog.embed import default_embedder
 from holdsup.catalog.index import SqlIndex
+from holdsup.catalog.schema import Catalog, load_catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
 from holdsup.db.session import get_sessionmaker
@@ -37,6 +39,13 @@ def get_catalog_search() -> CatalogSearch:  # pragma: no cover (tests override t
     return vector_search(SqlIndex(get_sessionmaker()).search, embedder)
 
 
+@lru_cache
+def get_catalog() -> Catalog:  # pragma: no cover (tests override this)
+    """The curated indicators, read once from the catalog directory."""
+    return load_catalog(get_settings().catalog_dir)
+
+
 Runner = Annotated[CheckRunner, Depends(get_runner)]
 Store = Annotated[CheckStore, Depends(get_store)]
 Search = Annotated[CatalogSearch, Depends(get_catalog_search)]
+CatalogDep = Annotated[Catalog, Depends(get_catalog)]

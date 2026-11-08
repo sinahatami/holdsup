@@ -8,6 +8,8 @@ First run:
 - r001 "fell from 11.9% in 2015 to 7.7% in 2023": the plan compared 2015-01 with 2023-12.
 - c004 "In 2011 ... 29%": the monthly youth series was turned down for being monthly;
   "today it is 43.3%" lost its value to start_value.
+Population (2026-11-08):
+- p001 "Italy has 20 millions population in 2022": no population indicator in the catalog.
 Gallery seeding:
 - c001, c018, c029: "latest" in a dated statement was read as today's latest data.
 - c002: "has been rising for years" was fitted from 1983.
@@ -74,7 +76,7 @@ class RecordedFetcher:
 USED = [
     "unemployment_rate_monthly", "youth_unemployment_rate_monthly", "unemployment_rate_ilo",
     "government_debt_pct_gdp", "government_debt_pct_gdp_quarterly", "greenhouse_gas_emissions",
-    "co2_per_capita",
+    "co2_per_capita", "population_total",
 ]  # fmt: skip
 ORDER = [CATALOG.get(i) for i in USED] + [s for s in CATALOG.indicators if s.id not in USED]
 
@@ -191,7 +193,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.name: p.period for p in c.verdict.parts} == {
         "assertion": None, "start value": "2015", "end value": "2023",
     }  # fmt: skip
-    assert out.versions.catalog == "0.4.0" and out.versions.tolerances == 2
+    assert out.versions.catalog == "0.5.0" and out.versions.tolerances == 2
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
@@ -559,11 +561,48 @@ async def test_c007_two_values_for_a_change_claim_become_one_change() -> None:
     assert any("two value_at (2012, 2013) → one change" in n for n in c.notes)
 
 
+ITALY = "Italy has 20 millions population in 2022."
+
+
+async def test_p001_total_population_is_in_the_catalog_and_checks_a_headcount() -> None:
+    script = [
+        extraction(model_claim(ITALY[:-1], "population of Italy", "2022", "2022",
+                               unit="million people", value=20)),
+        match("population_total", ["population_total_world"]),
+        plan({"op": "value_at", "geo": "IT", "period": "2022"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(ITALY, script)
+    [c] = out.claims
+    assert c.indicator is not None and c.indicator.source_code == "demo_pjan"
+    assert inputs(c.operations[0]) == [("2022", 59030133.0)]
+    assert c.verdict.label is Label.NOT_SUPPORTED, c.verdict
+    assert c.extra_sources == []  # a population claim needs no second series
+
+
+async def test_the_population_denominator_is_fetched_and_cited_for_per_capita() -> None:
+    claim_text = "Italy emitted about 6 tonnes of greenhouse gases per person in 2022."
+    script = [
+        extraction(model_claim(claim_text[:-1], "greenhouse gas emissions per person", "2022",
+                               "2022", unit="tonnes", value=6)),
+        match("greenhouse_gas_emissions"),
+        plan({"op": "per_capita", "geo": "IT", "population": "population_total"},
+             {"op": "value_at", "series": "@0", "geo": "IT", "period": "2022"}, answer=[1]),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(claim_text, script)
+    [c] = out.claims
+    assert [o.op for o in c.operations] == ["per_capita", "value_at"]
+    assert c.verdict.label is not Label.CANT_CHECK, c.verdict
+    [extra] = c.extra_sources
+    assert (extra.indicator.id, extra.data.dataset) == ("population_total", "demo_pjan")
+
+
 def test_the_smoke_set_names_real_indicators_and_labels() -> None:
     lines = (REPO_ROOT / "eval" / "smoke_claims.jsonl").read_text(encoding="utf-8").splitlines()
     cases = [json.loads(line) for line in lines if line.strip()]
     texts = {c["text"] for c in cases}
-    assert {FALL, YOUTH, C001, C002, C006, C007, C018, C024, C029} <= texts
+    assert {FALL, YOUTH, C001, C002, C006, C007, C018, C024, C029, ITALY} <= texts
     ids = [c["id"] for c in cases]
     assert len(set(ids)) == len(ids)
     for case in cases:

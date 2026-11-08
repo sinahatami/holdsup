@@ -171,7 +171,10 @@ async def test_no_indicator_covers_the_place_means_no_model_call() -> None:
 
     result = await m.match(claim(geo="ZA"))
 
-    assert result.status == "cant_check" and result.reason == "No catalog indicator covers ZA."
+    assert (
+        result.status == "cant_check"
+        and result.reason == "HoldsUp has no statistics for South Africa yet."
+    )
     assert len(result.excluded_by_geo) == 6 and client.calls == []
 
 
@@ -306,7 +309,7 @@ def test_no_answer_at_all_is_cant_check() -> None:
     assert (result.status, result.confidence, result.reason) == (
         "cant_check",
         None,
-        "No answer from the model.",
+        "No answer.",
     )
 
 

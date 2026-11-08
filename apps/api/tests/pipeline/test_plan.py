@@ -27,9 +27,11 @@ from holdsup.pipeline.plan import (
     plan_message,
     validate_plan,
 )
+from holdsup.pipeline.plan.prompt import PLAN_FAILED
 from holdsup.router import Router, RouterError
 from holdsup.router.client import ChatResponse
 from holdsup.verdict import Label, decide, load_tolerances
+from holdsup.verdict.rules import unsupported_reason
 from tests.catalog.helpers import FIXTURE_CATALOG
 from tests.router.fakes import FakeClient, FakeClock, config, provider
 
@@ -304,7 +306,7 @@ async def test_plan_invalid_twice_is_cant_check() -> None:
     router, client = planner(bad, bad, as_json(plan(CHANGE)))
     result = await plan_analysis(router, ctx())
     assert (result.status, result.plan, result.attempts) == ("cant_check", None, 2)
-    assert result.reason == "The analysis plan was invalid twice."
+    assert result.reason == PLAN_FAILED
     assert result.errors and "must be YYYY" in result.errors[0]
     assert len(client.calls) == 2
 
@@ -312,7 +314,10 @@ async def test_plan_invalid_twice_is_cant_check() -> None:
 async def test_unsupported_claims_make_no_model_call() -> None:
     router, client = planner()
     result = await plan_analysis(router, ctx(claim(AssertionType.RECORD)))
-    assert (result.status, result.reason) == ("cant_check", "record claims cannot be checked yet")
+    assert (result.status, result.reason) == (
+        "cant_check",
+        unsupported_reason(AssertionType.RECORD),
+    )
     assert client.calls == []
 
 

@@ -5,12 +5,16 @@ from collections.abc import Sequence
 import pytest
 
 from holdsup.adapters.base import SourceNotFound, SourceUnavailable
+from holdsup.pipeline.claim import AssertionType
+from holdsup.pipeline.plan.prompt import PLAN_FAILED
 from holdsup.pipeline.result import PipelineOutput
+from holdsup.pipeline.run import NO_CLAIM, NO_MATCH, NO_PLACE
 from holdsup.pipeline.trace import Step, StepEvent
 from holdsup.router import RouterError
 from holdsup.router.client import ChatResponse
 from holdsup.router.errors import ProviderError, ProviderUnavailable
 from holdsup.verdict import Label
+from holdsup.verdict.rules import unsupported_reason
 from tests.service.fakes import (
     EXPLANATION,
     TEXT,
@@ -100,9 +104,9 @@ async def test_steps_summaries_name_what_happened() -> None:
 
 async def test_no_claim_found() -> None:
     out, events, calls, fetcher = await run([extraction()])
-    assert out.claims == [] and out.notes == ["No numeric claim was found in the text."]
+    assert out.claims == [] and out.notes == [NO_CLAIM]
     assert done(events) == [("extract", "cant_check")]
-    assert events[-1].summary == "Found no numeric claim."
+    assert events[-1].summary == "Found no claim with a number in it."
     assert calls == 1 and fetcher.calls == []
 
 
@@ -124,20 +128,22 @@ async def test_no_match_stops_the_claim() -> None:
     [c] = out.claims
     assert c.verdict.label is Label.CANT_CHECK and c.indicator is None
     assert done(events)[-1] == ("match", "cant_check")
-    assert c.explanation.startswith("Can't check")
+    assert c.verdict.reason == NO_MATCH
+    assert c.explanation == ""  # the page already shows the reason; "Why" has nothing to add
+    assert 1 <= len(c.suggestions) <= 3 and all(s.name for s in c.suggestions)
     assert calls == 2 and fetcher.calls == []
 
 
 async def test_a_claim_with_no_place_cannot_be_fetched() -> None:
     out, events, _, fetcher = await run([extraction(claim_json(geo=None)), match_answer()])
-    assert out.claims[0].verdict.reason == "The claim names no place."
+    assert out.claims[0].verdict.reason == NO_PLACE
     assert done(events)[-1] == ("fetch", "cant_check") and fetcher.calls == []
 
 
 async def test_a_place_the_source_has_no_code_for() -> None:
     script = [extraction(claim_json(type="compare", peers=["G7"])), match_answer()]
     out, events, _, fetcher = await run(script)
-    assert "no code for G7" in out.claims[0].verdict.reason
+    assert out.claims[0].verdict.reason == "Eurostat has no figures for G7."
     assert done(events)[-1] == ("fetch", "cant_check") and fetcher.calls == []
 
 
@@ -146,7 +152,7 @@ async def test_source_down_is_retryable() -> None:
     out, events, _, _ = await run([extraction(claim_json()), match_answer()], fetcher)
     [c] = out.claims
     assert c.retryable and out.retryable
-    assert c.verdict.reason == "eurostat did not answer; try again later."
+    assert c.verdict.reason == "Eurostat didn't answer just now. Please try again in a few minutes."
     assert done(events)[-1] == ("fetch", "cant_check")
 
 
@@ -154,13 +160,13 @@ async def test_source_without_the_data_is_not_retryable() -> None:
     fetcher = FakeFetcher(error=SourceNotFound("no such dataset"))
     out, _, _, _ = await run([extraction(claim_json()), match_answer()], fetcher)
     assert not out.retryable
-    assert out.claims[0].verdict.reason == "eurostat could not provide the data."
+    assert out.claims[0].verdict.reason == "Eurostat couldn't provide the figures."
 
 
 async def test_no_rows_for_the_claims_place() -> None:
     fetcher = FakeFetcher(rows=observations({"DE": {"2015": 4.6, "2023": 3.0}}))
     out, _, calls, _ = await run([extraction(claim_json()), match_answer()], fetcher)
-    assert out.claims[0].verdict.reason == "The source has no Unemployment rate data for IT."
+    assert out.claims[0].verdict.reason == "Eurostat has no Unemployment rate figures for Italy."
     assert out.claims[0].data is not None and out.claims[0].data.places == ["DE"]
     assert calls == 2  # no plan call
 
@@ -184,7 +190,7 @@ async def test_an_invalid_plan_twice_is_cant_check() -> None:
     bad = reply({"calls": [], "answer": [], "reason": "Nothing to do."})
     out, events, calls, _ = await run([extraction(claim_json()), match_answer(), bad, bad])
     [c] = out.claims
-    assert c.verdict.reason == "The analysis plan was invalid twice."
+    assert c.verdict.reason == PLAN_FAILED
     assert done(events)[-1] == ("plan", "cant_check") and calls == 4
     assert events[-1].models == ["fake/fake-model", "fake/fake-model"]
     assert c.notes and all(n.startswith("Plan rejected: ") for n in c.notes)
@@ -195,7 +201,7 @@ async def test_an_unsupported_claim_type_is_not_retryable() -> None:
     script = [extraction(claim_json(type="record", value=None)), match_answer()]
     out, events, calls, _ = await run(script)
     [c] = out.claims
-    assert c.verdict.reason == "record claims cannot be checked yet"
+    assert c.verdict.reason == unsupported_reason(AssertionType.RECORD)
     assert not c.retryable and calls == 2  # no plan call
     assert events[-1].models == []
 
