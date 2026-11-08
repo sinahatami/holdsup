@@ -32,6 +32,11 @@ FIXTURES: dict[str, str] = {
         f"{EUROSTAT}/nama_10_gdp?format=JSON&lang=EN&geo=IT&geo=MT&geo=LI"
         "&na_item=B1GQ&unit=CP_MEUR&sinceTimePeriod=2018"
     ),
+    # Half-yearly (2023-S1, 2023-S2, ...): minimum wages in euro per month, 3 geos.
+    "eurostat/earn_mw_cur_semiannual.json": (
+        f"{EUROSTAT}/earn_mw_cur?format=JSON&lang=EN&geo=DE&geo=FR&geo=BG"
+        "&currency=EUR&sinceTimePeriod=2022-S1"
+    ),
     # Error body for an unknown dataset (HTTP 404).
     "eurostat/error_not_found.json": f"{EUROSTAT}/no_such_dataset?format=JSON&lang=EN",
     # World Bank: two countries, annual, all values present.

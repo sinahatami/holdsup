@@ -31,9 +31,10 @@ Operations (arguments; `series` is optional everywhere: null means the matched i
 - deflate(geo, price_index, base): the series in prices of the base period; output '@N'.
 
 Rules:
-- Periods: YYYY when the claim names a whole year ("in 2015"), even on a monthly or quarterly \
-series (code makes the year's value as the series says); YYYY-MM or YYYY-Qn only when the \
-claim names that month or quarter; "latest" for the present ("today", "now", "is"). Start and \
+- Periods: YYYY when the claim names a whole year ("in 2015"), even on a monthly, quarterly or \
+half-yearly series (code makes the year's value as the series says); YYYY-MM, YYYY-Qn or \
+YYYY-Sn (S1 = January to June, S2 = July to December) only when the claim names that month, \
+quarter or half-year; "latest" for the present ("today", "now", "is"). Start and \
 end of one call use the same form.
 - Use only places and indicators listed below.
 - `answer` lists the calls that decide the claim: value_at for a level; change with the \

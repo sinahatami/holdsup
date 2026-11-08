@@ -28,4 +28,4 @@ trend_min_r2: 0.5
 
 # How far (in periods) a requested start or end may be from the nearest available value.
 # Farther → can't check. Nearer but not exact → the substitution is flagged on the receipt.
-max_period_gap: { annual: 1, quarterly: 2, monthly: 3 }
+max_period_gap: { annual: 1, semiannual: 1, quarterly: 2, monthly: 3 }

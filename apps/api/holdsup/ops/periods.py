@@ -1,4 +1,4 @@
-"""Periods as sources write them: "2024", "2024-Q1", "2024-03"."""
+"""Periods as sources write them: "2024", "2024-S1", "2024-Q1", "2024-03"."""
 
 import re
 from dataclasses import dataclass
@@ -9,23 +9,39 @@ from holdsup.ops.record import OpError
 
 LATEST = "latest"
 
-_PERIOD_RE = re.compile(r"^(\d{4})(?:-(0[1-9]|1[0-2])|-Q([1-4]))?$")
+_PERIOD_RE = re.compile(r"^(\d{4})(?:-(0[1-9]|1[0-2])|-Q([1-4])|-S([12]))?$")
 
 
 class Frequency(StrEnum):
     ANNUAL = "annual"
+    SEMIANNUAL = "semiannual"  # two half-years a year: 2024-S1 (January to June), 2024-S2
     QUARTERLY = "quarterly"
     MONTHLY = "monthly"
 
     @property
     def per_year(self) -> int:
-        return {Frequency.ANNUAL: 1, Frequency.QUARTERLY: 4, Frequency.MONTHLY: 12}[self]
+        return {
+            Frequency.ANNUAL: 1,
+            Frequency.SEMIANNUAL: 2,
+            Frequency.QUARTERLY: 4,
+            Frequency.MONTHLY: 12,
+        }[self]
+
+    @property
+    def part(self) -> str:
+        """What one period of this frequency is called, for notes a reader sees."""
+        return {
+            Frequency.ANNUAL: "year",
+            Frequency.SEMIANNUAL: "half-year",
+            Frequency.QUARTERLY: "quarter",
+            Frequency.MONTHLY: "month",
+        }[self]
 
 
 @dataclass(frozen=True)
 class Period:
     year: int
-    sub: int  # 1 for annual; the quarter (1-4) or month (1-12) otherwise
+    sub: int  # 1 for annual; the half-year (1-2), quarter (1-4) or month (1-12) otherwise
     frequency: Frequency
 
     @property
@@ -39,6 +55,8 @@ class Period:
         return self.year + (self.sub - 1) / self.frequency.per_year
 
     def __str__(self) -> str:
+        if self.frequency is Frequency.SEMIANNUAL:
+            return f"{self.year}-S{self.sub}"
         if self.frequency is Frequency.QUARTERLY:
             return f"{self.year}-Q{self.sub}"
         if self.frequency is Frequency.MONTHLY:
@@ -49,10 +67,12 @@ class Period:
 def parse_period(text: str) -> Period:
     match = _PERIOD_RE.match(text)
     if match is None:
-        raise OpError(f"unsupported period {text!r} (expected YYYY, YYYY-Qn or YYYY-MM)")
-    year, month, quarter = match.groups()
+        raise OpError(f"unsupported period {text!r} (expected YYYY, YYYY-Sn, YYYY-Qn or YYYY-MM)")
+    year, month, quarter, half = match.groups()
     if month is not None:
         return Period(int(year), int(month), Frequency.MONTHLY)
+    if half is not None:
+        return Period(int(year), int(half), Frequency.SEMIANNUAL)
     if quarter is not None:
         return Period(int(year), int(quarter), Frequency.QUARTERLY)
     return Period(int(year), 1, Frequency.ANNUAL)

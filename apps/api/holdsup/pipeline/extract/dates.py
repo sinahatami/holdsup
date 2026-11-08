@@ -54,6 +54,12 @@ def normalize_period(period: str | None, *, allow_latest: bool = False) -> str |
     if m := re.fullmatch(r"(\d{4})\s*-?\s*Q([1-4])", p) or re.fullmatch(r"Q([1-4])\s*(\d{4})", p):
         year, quarter = (m[1], m[2]) if len(m[1]) == 4 else (m[2], m[1])
         return f"{year}-Q{quarter}"
+    # Half-years: "2024-S1", "2024 H2", "S1 2024" (S1 = January to June, S2 = July to December).
+    if m := re.fullmatch(r"(\d{4})\s*-?\s*[SH]([12])", p) or re.fullmatch(
+        r"[SH]([12])\s*(\d{4})", p
+    ):
+        year, half = (m[1], m[2]) if len(m[1]) == 4 else (m[2], m[1])
+        return f"{year}-S{half}"
     if m := re.fullmatch(r"(\d{4})-(\d{1,2})(?:-\d{1,2})?", p):
         month = int(m[2])
         return f"{m[1]}-{month:02d}" if 1 <= month <= 12 else None

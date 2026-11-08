@@ -13,6 +13,16 @@ def test_from_values_sorts_and_infers_the_frequency() -> None:
     assert s.get(parse_period("2020-Q3")) is None
 
 
+def test_half_years_are_read_as_they_are_written() -> None:
+    rows = [Observation("DE", "2023-S2", 2.0), Observation("DE", "2023-S1", 1.0)]
+    s = Series.from_observations(rows, "DE")
+    assert s.frequency is Frequency.SEMIANNUAL
+    assert [str(p) for p, _ in s.points] == ["2023-S1", "2023-S2"]
+    assert s.get(parse_period("2023-S2")) == 2.0 and s.get(parse_period("2024-S1")) is None
+    with pytest.raises(OpError, match="more than one frequency"):
+        Series.from_values("DE", {"2023-S1": 1.0, "2023-Q1": 1.0})
+
+
 def test_from_observations_keeps_one_geo_and_skips_empty_cells() -> None:
     rows = [
         Observation("IT", "2021", 2.0),
