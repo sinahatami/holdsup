@@ -44,6 +44,7 @@ class ModelUse(BaseModel):
     step: Step
     provider: str
     model: str
+    label: str = ""  # the model's name for a reader, e.g. "GPT-OSS 120B (Groq)"
 
 
 Emit = Callable[[StepEvent], Awaitable[None]]

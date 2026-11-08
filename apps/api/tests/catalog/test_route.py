@@ -52,3 +52,18 @@ def test_query_validation() -> None:
     assert http.get("/v1/indicators").status_code == 422
     assert http.get("/v1/indicators", params={"q": "x"}).status_code == 422
     assert http.get("/v1/indicators", params={"q": "inflation", "limit": 50}).status_code == 422
+
+
+def test_catalog_lists_everything_a_to_z() -> None:
+    from holdsup.routes.deps import get_catalog
+
+    app = create_app()
+    catalog = load_catalog(FIXTURE_CATALOG)
+    app.dependency_overrides[get_catalog] = lambda: catalog
+    body = TestClient(app).get("/v1/catalog").json()
+    names = [i["name"] for i in body["indicators"]]
+    assert body["version"] == catalog.version
+    assert names == sorted(names, key=str.casefold) and len(names) == len(catalog.indicators)
+    assert set(body["indicators"][0]) == {
+        "id", "name", "definition", "unit", "source", "frequency", "first_year", "last_year",
+    }  # fmt: skip
