@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { CustomCursor } from "@/components/custom-cursor";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { CustomCursor } from "@/components/atoms/custom-cursor";
+import { SiteFooter } from "@/components/organisms/site-footer";
+import { SiteHeader } from "@/components/organisms/site-header";
 import { strings } from "@/lib/strings";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("holdsup-theme");if(t==="dark"||t==="light")document.documentElement.classList.add(t)}catch(e){}`,
+            __html: themeInitScript,
           }}
         />
       </head>

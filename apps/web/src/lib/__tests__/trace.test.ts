@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { StepEvent } from "@/lib/api/client";
-import { applyStep } from "@/lib/use-check";
+import { applyStep } from "@/lib/trace";
 
 const ev = (over: Partial<StepEvent>): StepEvent => ({
   event: "step_started",

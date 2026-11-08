@@ -4,17 +4,15 @@ import {
   CircleSlash,
   CircleDot,
   Scale,
+  type LucideIcon,
 } from "lucide-react";
-import type { ComponentType } from "react";
 import type { Label } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 // Each verdict has its own icon and words, so colour is never the only signal.
 // Colours come from the --v / --vbg tokens set per [data-verdict] in globals.css.
-export const verdictIcon: Record<
-  Label,
-  ComponentType<{ className?: string; "aria-hidden"?: boolean }>
-> = {
+export const verdictIcon: Record<Label, LucideIcon> = {
   supported: CheckCircle2,
   supported_framing_matters: Scale,
   partly_supported: CircleDot,
@@ -38,9 +36,10 @@ export function VerdictBadge({
         background: "var(--vbg)",
         borderColor: "color-mix(in oklch, var(--v) 30%, transparent)",
       }}
-      className={`inline-flex items-center gap-2 rounded-full border font-semibold ${
-        large ? "px-4 py-1.5 text-base" : "px-3 py-1 text-sm"
-      }`}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border font-semibold",
+        large ? "px-4 py-1.5 text-base" : "px-3 py-1 text-sm",
+      )}
     >
       <Icon className={large ? "size-5" : "size-4"} aria-hidden />
       {strings.verdicts[label]}
