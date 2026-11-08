@@ -1,0 +1,22 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2007-S1..2026-S1, DE 2007-S1..2026-S1, FR 2007-S2..2026-S1, IT 2008-S1..2026-S1 (30 of 31 EU/EFTA countries have data)
+# Note: Published twice a year (periods 2024-S1, 2024-S2). A claim about a whole year is read as the average of the year's two half-yearly prices (annual_value: mean); the receipt says so. Only the middle consumption band (DC) with all taxes and levies is catalogued, so a claim about another band or about the price before taxes does not match.
+id: household_electricity_price
+source: eurostat
+source_code: "nrg_pc_204"
+name: "Household electricity price"
+theme: prices
+aliases:
+  - "price of electricity for household consumers"
+  - "household electricity price per kilowatt-hour"
+  - "electricity price with all taxes and levies included"
+  - "euro per kWh for households using 2,500 to 4,999 kWh a year"
+definition: "Price of electricity for household consumers using 2,500 to 4,999 kWh a year (Eurostat consumption band DC), with all taxes and levies included, in euro per kilowatt-hour. Published for each half-year (S1 is January to June, S2 is July to December)."
+unit: "euro per kWh"
+frequency: semiannual
+annual_value: mean
+geo_coverage: ["EU27_2020", "EU member states", "IS", "LI", "NO"]
+first_year: 2007
+last_year: null # still updated (latest period seen: 2026)
+related: []
+filters: { nrg_cons: "KWH2500-4999", tax: "I_TAX", currency: "EUR" }
