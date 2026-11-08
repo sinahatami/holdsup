@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 from holdsup.catalog.embed import Embedder
-from holdsup.pipeline.extract import numbers_in
+from holdsup.pipeline.extract.numbers import numbers_in
 
 SIMILARITY_THRESHOLD = 0.95
 MAX_AGE = timedelta(days=7)  # sources update; an old result may be stale

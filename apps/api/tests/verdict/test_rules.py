@@ -4,10 +4,21 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from holdsup.ops import ChangeKind, OpRecord, Series, cagr, change, compare, rank, trend, value_at
+from holdsup.ops import (
+    ChangeKind,
+    OpRecord,
+    Series,
+    cagr,
+    change,
+    compare,
+    per_capita,
+    rank,
+    trend,
+    value_at,
+)
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, Operator
 from holdsup.verdict import Label, cant_check, combine, decide, load_tolerances
-from holdsup.verdict.rules import ValueTolerance, half_unit
+from holdsup.verdict.tolerances import ValueTolerance, half_unit
 
 TOL = load_tolerances()
 
@@ -371,3 +382,11 @@ def test_stated_levels_are_always_about() -> None:
                tolerances=TOL)  # fmt: skip
     assert [p.operator for p in v.parts] == [Operator.MORE_THAN, Operator.ABOUT, Operator.ABOUT]
     assert v.label is Label.SUPPORTED
+
+
+def test_a_series_making_operation_cannot_decide_a_claim() -> None:
+    population = Series.from_values("IT", {"2015": 60.0, "2020": 59.0}, "million persons")
+    record = per_capita(DEBT, population)
+    v = decide(claim(AssertionType.LEVEL, 40), [record], [0], unit="%", tolerances=TOL)
+    assert v.label is Label.CANT_CHECK
+    assert "per_capita" in v.reason

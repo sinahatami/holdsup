@@ -18,7 +18,8 @@ from uuid import UUID, uuid4
 import structlog
 
 from holdsup.pipeline.ledger import Ledger
-from holdsup.pipeline.run import Pipeline, Step, StepEvent
+from holdsup.pipeline.run import Pipeline
+from holdsup.pipeline.trace import Step, StepEvent
 from holdsup.problems import (
     Problem,
     ProblemError,

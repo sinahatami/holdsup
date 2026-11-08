@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CheckForm } from "@/components/check-form";
-import { Gallery } from "@/components/gallery";
-import { Receipt } from "@/components/receipt";
-import { Trace } from "@/components/trace";
-import { VerdictBadge } from "@/components/verdict";
+import { CheckForm } from "@/components/organisms/check-form";
+import { Gallery } from "@/components/organisms/gallery";
+import { Receipt } from "@/components/organisms/receipt";
+import { Trace } from "@/components/organisms/trace";
+import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import type { ClaimResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 

@@ -15,7 +15,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from holdsup.db.models import Check
 from holdsup.db.url import to_async_url
 from holdsup.main import create_app
-from holdsup.routes.checks import MAX_TEXT, get_runner, get_store
+from holdsup.routes.checks import MAX_TEXT
+from holdsup.routes.deps import get_runner, get_store
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import InMemoryCheckStore, SqlCheckStore
 from tests.router.fakes import FakeClient
