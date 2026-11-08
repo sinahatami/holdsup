@@ -9,8 +9,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-# "2015", "2024-03", "2025-Q1"
-PERIOD_RE = re.compile(r"^\d{4}(?:-(?:0[1-9]|1[0-2])|-Q[1-4])?$")
+# "2015", "2024-03", "2025-Q1", "2025-S1" (S1 = January to June, S2 = July to December)
+PERIOD_RE = re.compile(r"^\d{4}(?:-(?:0[1-9]|1[0-2])|-Q[1-4]|-S[12])?$")
 LATEST = "latest"
 VAGUE_YEARS = 5  # "for years", "recently": the years before the claim date (Basis.ASSUMED)
 

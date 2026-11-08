@@ -19,6 +19,7 @@ from holdsup.pipeline.match.prompt import (
 )
 from holdsup.pipeline.match.second_look import second_look
 from holdsup.pipeline.match.tools import MAX_TOOL_CALLS, TOOLS, answer_tool_call
+from holdsup.places import place_name
 from holdsup.router import Router, Use
 
 MAX_ALTERNATIVES = 3
@@ -43,7 +44,7 @@ class Matcher:
                 status="cant_check",
                 indicator_id=None,
                 confidence=None,
-                reason=f"No catalog indicator covers {claim.geo}.",
+                reason=f"HoldsUp has no statistics for {place_name(claim.geo)} yet.",
                 alternatives=[],
                 candidates=[],
                 excluded_by_geo=excluded,
@@ -125,7 +126,7 @@ class Matcher:
             if alt in run.eligible and alt != picked and alt not in alternatives:
                 alternatives.append(alt)
         confidence = None if answer is None else answer.confidence
-        reason = "No answer from the model." if answer is None else answer.reason
+        reason = "No answer." if answer is None else answer.reason
         if picked is not None and confidence == "low":
             notes.append(f"model picked {picked!r} with low confidence")
             alternatives.insert(0, picked)

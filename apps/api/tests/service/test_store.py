@@ -145,6 +145,21 @@ async def test_add_stores_a_finished_check_from_an_entry(store: CheckStore) -> N
     assert hit is not None and CheckResult.model_validate(hit.entry.result).id == check_id
 
 
+async def test_finished_results_are_the_computed_ones(store: CheckStore) -> None:
+    """Unfinished checks and cached copies are left out, so a claim asked twice counts once."""
+    done, unfinished, copy = uuid4(), uuid4(), uuid4()
+    result = await a_result(done)
+    await store.create(StoredCheck(done, TEXT, CheckStatus.QUEUED, T0))
+    await store.finish(result, None)
+    await store.create(StoredCheck(unfinished, TEXT, CheckStatus.QUEUED, T0))
+    await store.create(
+        StoredCheck(copy, TEXT, CheckStatus.DONE, T0, result=result.model_dump(mode="json"),
+                    cached_from=done)
+    )  # fmt: skip
+    got = await store.finished_results()
+    assert [CheckResult.model_validate(r).id for r in got] == [done]
+
+
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="TEST_DATABASE_URL not set")
 async def test_postgres_rows_for_claims_and_operations() -> None:
     assert TEST_DATABASE_URL is not None

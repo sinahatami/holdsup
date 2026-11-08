@@ -142,6 +142,19 @@ def test_cagr_quarterly_uses_years() -> None:
     assert r.value == pytest.approx((1.15 ** (1 / 1.5) - 1) * 100)
 
 
+def test_half_years_count_two_to_a_year() -> None:
+    s = Series.from_values("DE", {"2022-S1": 100.0, "2022-S2": 110.0, "2023-S2": 121.0})
+    r = cagr(s, "2022-S2", "2023-S2")
+    assert r.extras["years"] == 1.0 and r.value == pytest.approx(10.0)
+    assert cagr(s, "2022-S1", "2022-S2").extras["years"] == 0.5
+    gap = value_at(s, "2023-S1")  # no value: the earlier of the two neighbours, one period away
+    assert (gap.inputs[0].period, gap.flags[0].distance) == ("2022-S2", 1)
+    with pytest.raises(OpError, match="is quarterly but the DE series is semiannual"):
+        value_at(s, "2023-Q1")
+    with pytest.raises(OpError, match="is annual but the DE series is semiannual"):
+        value_at(s, "2023")
+
+
 def test_cagr_needs_a_positive_start() -> None:
     s = Series.from_values("IT", {"2020": -1.0, "2021": 1.0})
     with pytest.raises(OpError, match="positive start"):

@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 from holdsup.ops import (
     ChangeKind,
+    Frequency,
     OpRecord,
     Series,
     cagr,
@@ -118,11 +119,11 @@ def test_partly_supported_from_to_levels() -> None:
 @pytest.mark.parametrize(
     ("c", "reason"),
     [
-        (claim(AssertionType.RECORD, direction=Direction.DOWN), "record claims cannot be checked"),
-        (claim(AssertionType.TARGET), "target claims"),
-        (claim(AssertionType.STREAK, direction=Direction.UP), "streak claims"),
-        (claim(AssertionType.PERCENT), "neither a value nor a direction"),
-        (claim(AssertionType.LEVEL, direction=Direction.UP), "a level claim without a value"),
+        (claim(AssertionType.RECORD, direction=Direction.DOWN), "claims about records"),
+        (claim(AssertionType.TARGET), "claims about reaching a target"),
+        (claim(AssertionType.STREAK, direction=Direction.UP), "claims about a streak"),
+        (claim(AssertionType.PERCENT), "gives no number"),
+        (claim(AssertionType.LEVEL, direction=Direction.UP), "doesn't give the number"),
     ],
 )
 def test_cant_check(c: ClaimSpec, reason: str) -> None:
@@ -133,7 +134,10 @@ def test_cant_check(c: ClaimSpec, reason: str) -> None:
 
 def test_cant_check_without_an_answer() -> None:
     v = decide(claim(AssertionType.LEVEL, 28), [], [], unit="%", tolerances=TOL)
-    assert (v.label, v.reason) == (Label.CANT_CHECK, "the plan names no result to check")
+    assert (v.label, v.reason) == (
+        Label.CANT_CHECK,
+        "HoldsUp couldn't find a calculation that answers this claim.",
+    )
     assert cant_check("x").parts == []
 
 
@@ -328,7 +332,7 @@ def test_combine(labels: list[Label], out: Label) -> None:
 
 def test_tolerances_file() -> None:
     assert TOL.values.percentage_points.band(12.0) == 0.5
-    assert TOL.max_period_gap
+    assert set(TOL.max_period_gap) == set(Frequency)  # a missing one would mean no limit
 
 
 # --- bounds: "more than", "at most" ----------------------------------------------------------
@@ -389,4 +393,4 @@ def test_a_series_making_operation_cannot_decide_a_claim() -> None:
     record = per_capita(DEBT, population)
     v = decide(claim(AssertionType.LEVEL, 40), [record], [0], unit="%", tolerances=TOL)
     assert v.label is Label.CANT_CHECK
-    assert "per_capita" in v.reason
+    assert "can't settle" in v.reason

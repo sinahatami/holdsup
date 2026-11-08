@@ -11,6 +11,7 @@ providers:
   - name: groq-gpt-oss-120b
     base_url: https://api.groq.com/openai/v1
     model: openai/gpt-oss-120b
+    label: GPT-OSS 120B (Groq)
     api_key_env: GROQ_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 131072
@@ -21,6 +22,7 @@ providers:
   - name: groq-gpt-oss-20b
     base_url: https://api.groq.com/openai/v1
     model: openai/gpt-oss-20b
+    label: GPT-OSS 20B (Groq)
     api_key_env: GROQ_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 131072
@@ -30,6 +32,7 @@ providers:
   - name: mistral-ministral-14b
     base_url: https://api.mistral.ai/v1
     model: ministral-14b-2512
+    label: Ministral 14B (Mistral)
     api_key_env: MISTRAL_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 131072
@@ -42,6 +45,7 @@ providers:
   - name: openrouter-nemotron-free
     base_url: https://openrouter.ai/api/v1
     model: nvidia/nemotron-3.5-super-vl:free
+    label: Nemotron 3.5 Super (OpenRouter, free)
     api_key_env: OPENROUTER_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 1000000
@@ -53,6 +57,7 @@ providers:
     base_url: https://generativelanguage.googleapis.com/v1beta/openai/
     # gemini-3.8-flash and gemini-flash-latest: HTTP 503 "high demand" on 2026-11-06.
     model: gemini-3.5-flash
+    label: Gemini 3.5 Flash (Google)
     api_key_env: GEMINI_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 1048576

@@ -6,6 +6,7 @@ id: crude_birth_rate
 source: eurostat
 source_code: "demo_gind"
 name: "Crude birth rate"
+theme: population
 aliases:
   - "birth rate"
   - "births per 1,000 people"

@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2009..2025, DE 2009..2025, FR 2003..2025, IT 2009..2025 (30 of 31 EU/EFTA countries have data)
+id: neet_rate
+source: eurostat
+source_code: "lfsi_neet_a"
+name: "Young people not in employment, education or training, ages 15-29 (Eurostat)"
+theme: work
+aliases:
+  - "young people who are not working or studying"
+  - "share of 15-29 year olds neither in a job nor in education or training"
+  - "NEET rate for ages 15-29"
+definition: "Share of people aged 15 to 29 who are neither in employment nor in education and training, as a percentage of the total population of that age (the NEET rate)."
+unit: "% of population aged 15-29"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 2003
+last_year: null # still updated (latest period seen: 2025)
+related: [neet_rate_world, youth_unemployment_rate_monthly]
+filters: { sex: "T", age: "Y15-29", unit: "PC_POP" }

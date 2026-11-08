@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1974..2022, IT 1973..2024, US 1972..2024, WLD 1991..2024 (all countries listed by the source; years vary by country)
+id: tax_revenue_world
+source: worldbank
+source_code: "GC.TAX.TOTL.GD.ZS"
+name: "Tax revenue to GDP (World Bank)"
+theme: economy
+aliases:
+  - "compulsory payments to government as a share of GDP"
+  - "taxes collected relative to GDP"
+  - "tax revenue as a percent of GDP"
+definition: "Taxes, the compulsory, unrequited payments in cash or in kind made by institutional units to government units, as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1972
+last_year: null # still updated (latest period seen: 2024)
+related: [tax_revenue, government_spending_world]
+filters: {}

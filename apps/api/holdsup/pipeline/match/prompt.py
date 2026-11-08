@@ -7,6 +7,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from pydantic import ValidationError
 
 from holdsup.catalog.schema import AnnualValue, Frequency, IndicatorSpec
+from holdsup.ops import Frequency as OpsFrequency
 from holdsup.pipeline.claim import AssertionType, ClaimSpec
 from holdsup.pipeline.match.model import MatchAnswer
 from holdsup.router.client import ToolCall
@@ -20,9 +21,9 @@ the same thing as the claim: the same population (age range, sex), unit and defi
 - A claim about cumulative change since a start ("has grown more since the pandemic", \
 "doubled since 1950") needs a level series (GDP volume, population, debt in euros), not a \
 growth-rate series. A claim about one period's growth rate needs the growth-rate series.
-- Frequency never rules a candidate out. A claim about a whole year can use a monthly or \
-quarterly series: code makes the year's value from it (each candidate says how). Prefer the \
-claim's frequency only between candidates that measure the same thing.
+- Frequency never rules a candidate out. A claim about a whole year can use a monthly, \
+quarterly or half-yearly series: code makes the year's value from it (each candidate says \
+how). Prefer the claim's frequency only between candidates that measure the same thing.
 - A claim about the present ("is", "now", "today") is best checked on the most frequent series \
 that measures the same thing: a quarterly series is out months before the annual one.
 - Tools, only when the candidates do not settle it (at most 4 calls): search_catalog for \
@@ -37,10 +38,10 @@ FINAL_PROMPT = "Answer now with the JSON object only."
 
 
 def yearly_note(spec: IndicatorSpec) -> str:
-    """How a monthly or quarterly entry answers a claim about a whole year."""
+    """How a monthly, quarterly or half-yearly entry answers a claim about a whole year."""
     if spec.frequency is Frequency.ANNUAL:
         return ""
-    sub = "months" if spec.frequency is Frequency.MONTHLY else "quarters"
+    sub = f"{OpsFrequency(spec.frequency.value).part}s"
     if spec.annual_value is AnnualValue.MEAN:
         return f" Yearly values: the average of the year's {sub}."
     if spec.annual_value is AnnualValue.END:

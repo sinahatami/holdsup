@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     # Proxies in front of the API that append to X-Forwarded-For (0 = use the socket address).
     trusted_proxies: int = 0
     log_level: str = "INFO"
+    # The git commit this build came from (the image build sets it); stamped on every receipt.
+    app_commit: str = ""
 
 
 @lru_cache

@@ -8,7 +8,14 @@ import yaml
 from pydantic import ValidationError
 
 from holdsup.catalog.load import main as load_main
-from holdsup.catalog.schema import CatalogError, IndicatorSpec, load_catalog
+from holdsup.catalog.schema import (
+    AnnualValue,
+    CatalogError,
+    Frequency,
+    IndicatorSpec,
+    Theme,
+    load_catalog,
+)
 from tests.catalog.helpers import FIXTURE_CATALOG
 
 VALID = yaml.safe_load((FIXTURE_CATALOG / "indicators" / "unemployment_rate.yaml").read_text())
@@ -32,6 +39,19 @@ def test_real_catalog_is_valid() -> None:
     assert load_catalog(root).version
 
 
+def test_theme_is_required() -> None:
+    without_theme = {k: v for k, v in VALID.items() if k != "theme"}
+    with pytest.raises(ValidationError, match="theme"):
+        IndicatorSpec.model_validate(without_theme)
+
+
+def test_real_catalog_lists_every_theme_and_no_unthemed_entry() -> None:
+    """The /indicators page groups by theme; an empty theme would be a heading with no entries."""
+    root = Path(__file__).resolve().parents[4] / "packages" / "catalog"
+    used = {spec.theme for spec in load_catalog(root).indicators}
+    assert used == set(Theme)
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
@@ -47,6 +67,7 @@ def test_real_catalog_is_valid() -> None:
         ({"definition": "short"}, "at least 10"),
         ({"geo_coverage": []}, "at least 1"),
         ({"surprise": 1}, "Extra inputs"),
+        ({"theme": "sport"}, "population"),
     ],
 )
 def test_invalid_entries(change: dict[str, object], message: str) -> None:
@@ -123,9 +144,13 @@ def test_drafts_folder_is_ignored(tmp_path: Path) -> None:
     assert [s.id for s in catalog.indicators] == ["unemployment_rate"]
 
 
-def test_annual_value_is_only_for_monthly_or_quarterly_series() -> None:
-    with pytest.raises(ValidationError, match="annual_value is only for monthly or quarterly"):
+def test_annual_value_is_only_for_series_finer_than_annual() -> None:
+    with pytest.raises(ValidationError, match="annual_value is only for monthly, quarterly or"):
         IndicatorSpec.model_validate({**VALID, "annual_value": "mean"})
+    halves = IndicatorSpec.model_validate(
+        {**VALID, "frequency": "semiannual", "annual_value": "end"}
+    )
+    assert halves.frequency is Frequency.SEMIANNUAL and halves.annual_value is AnnualValue.END
     monthly = IndicatorSpec.model_validate({**VALID, "frequency": "monthly", "annual_value": "end"})
     assert monthly.annual_value is not None and monthly.annual_value.value == "end"
     assert IndicatorSpec.model_validate({**VALID, "frequency": "quarterly"}).annual_value is None
@@ -133,6 +158,7 @@ def test_annual_value_is_only_for_monthly_or_quarterly_series() -> None:
 
 def test_release_lag_defaults_by_frequency() -> None:
     assert IndicatorSpec.model_validate(VALID).lag_months == 12
+    assert IndicatorSpec.model_validate({**VALID, "frequency": "semiannual"}).lag_months == 4
     monthly = IndicatorSpec.model_validate({**VALID, "frequency": "monthly"})
     assert monthly.lag_months == 1
     assert IndicatorSpec.model_validate({**VALID, "release_lag_months": 18}).lag_months == 18

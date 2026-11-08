@@ -33,8 +33,11 @@ _NUMERAL = re.compile(
     rf"(?<![\w.])-?(\d{{1,3}}(?:,\d{{3}})+|\d+)(\.\d+)?(?:\s*({_SCALE_WORDS})s?\b)?",
     re.IGNORECASE,
 )
-# Period labels written as dates, not quantities: "2024-Q1", "Q1 2024", "2024-03", "2015-2020".
-_PERIODS = re.compile(r"\b\d{4}-Q[1-4]\b|\bQ[1-4]\b|\b\d{4}-(?:0[1-9]|1[0-2])\b", re.IGNORECASE)
+# Period labels written as dates, not quantities: "2024-Q1", "Q1 2024", "2024-S1", "2024-03".
+_PERIODS = re.compile(
+    r"\b\d{4}-(?:Q[1-4]|S[12])\b|\b(?:Q[1-4]|S[12])\b|\b\d{4}-(?:0[1-9]|1[0-2])\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -155,6 +158,8 @@ You explain a fact-check result to a general reader in 2 or 3 plain sentences. T
 - Use only numbers that appear in RESULTS or in the claim. Never compute a new number: no \
 differences, sums, averages, or percentages of your own. Round only as RESULTS show them.
 - Say what the data shows, never anything about the person who made the claim.
+- The reader already sees the verdict and its one-line reason above your text: do not repeat \
+either (no "the claim does not hold up"). Say what the data shows, in your own words.
 - Mention a note (a substituted period, missing data, a yearly average) when it matters for \
 the verdict.
 - When the claim is about the present ("today", "now"), name the period of the latest value, \
@@ -191,8 +196,8 @@ class Explanation:
 
 
 def template_explanation(verdict: Verdict, indicator: str) -> str:
-    """Code-written fallback: only numbers from the verdict parts."""
-    first = f"{LABEL_TEXT[verdict.label]}: {verdict.reason}"
+    """Code-written fallback: only numbers from the verdict parts. It does not repeat the
+    verdict's label or reason, which the page shows above it; empty when there is nothing to add."""
     details = []
     for p in verdict.parts:
         if p.computed is None:
@@ -203,7 +208,7 @@ def template_explanation(verdict: Verdict, indicator: str) -> str:
         if p.asserted is not None:
             line += f" against {fmt(p.asserted)} claimed"
         details.append(line + ".")
-    return " ".join([first, *details[:2]])
+    return " ".join(details[:2])
 
 
 async def explain(

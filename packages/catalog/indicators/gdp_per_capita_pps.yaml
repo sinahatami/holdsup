@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1995..2025, FR 1995..2025, IT 1995..2025 (29 of 31 EU/EFTA countries have data)
+id: gdp_per_capita_pps
+source: eurostat
+source_code: "nama_10_pc"
+name: "GDP per capita in purchasing power standards (Eurostat)"
+theme: economy
+aliases:
+  - "GDP per head adjusted for purchasing power"
+  - "GDP per inhabitant in purchasing power standards"
+  - "output per person adjusted for differences in price levels"
+definition: "Gross domestic product at market prices per inhabitant, at current prices, in purchasing power standards (PPS, EU27 from 2020), which remove price-level differences between countries."
+unit: "PPS (EU27 from 2020) per inhabitant"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "IS", "NO"]
+first_year: 1995
+last_year: null # still updated (latest period seen: 2025)
+related: [gdp_per_capita_ppp_world, real_gdp_per_capita, nominal_gdp_eur]
+filters: { na_item: "B1GQ", unit: "CP_PPS_EU27_2020_HAB" }

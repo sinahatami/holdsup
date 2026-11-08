@@ -27,9 +27,11 @@ from holdsup.pipeline.plan import (
     plan_message,
     validate_plan,
 )
+from holdsup.pipeline.plan.prompt import PLAN_FAILED
 from holdsup.router import Router, RouterError
 from holdsup.router.client import ChatResponse
 from holdsup.verdict import Label, decide, load_tolerances
+from holdsup.verdict.rules import unsupported_reason
 from tests.catalog.helpers import FIXTURE_CATALOG
 from tests.router.fakes import FakeClient, FakeClock, config, provider
 
@@ -304,7 +306,7 @@ async def test_plan_invalid_twice_is_cant_check() -> None:
     router, client = planner(bad, bad, as_json(plan(CHANGE)))
     result = await plan_analysis(router, ctx())
     assert (result.status, result.plan, result.attempts) == ("cant_check", None, 2)
-    assert result.reason == "The analysis plan was invalid twice."
+    assert result.reason == PLAN_FAILED
     assert result.errors and "must be YYYY" in result.errors[0]
     assert len(client.calls) == 2
 
@@ -312,7 +314,10 @@ async def test_plan_invalid_twice_is_cant_check() -> None:
 async def test_unsupported_claims_make_no_model_call() -> None:
     router, client = planner()
     result = await plan_analysis(router, ctx(claim(AssertionType.RECORD)))
-    assert (result.status, result.reason) == ("cant_check", "record claims cannot be checked yet")
+    assert (result.status, result.reason) == (
+        "cant_check",
+        unsupported_reason(AssertionType.RECORD),
+    )
     assert client.calls == []
 
 
@@ -535,6 +540,105 @@ def test_a_trend_over_whole_years_reads_their_months() -> None:
     [r] = execute_plan(validate_plan(plan(call), ctx(c, M)), ctx(c, M), MONTHLY_DATA, TOL).records
     assert (r.args["start"], r.args["end"]) == ("2015-01", "2016-12")
     assert len(r.inputs) == 24 and not r.flags
+
+
+# --- half-yearly series ----------------------------------------------------------------------
+
+HALVES = {f"{y}-S{h}": 100.0 * (y - 2014) + 10.0 * h for y in (2015, 2016) for h in (1, 2)}
+HALF_DATA = {"h": obs({"DE": {**HALVES, "2017-S1": 400.0}})}
+H = SeriesInfo("h", "Minimum wage", "euro per month", Frequency.SEMIANNUAL, frozenset({"DE"}),
+               "2015-S1", "2017-S1", AnnualValue.END, lag_months=4)  # fmt: skip
+H_NO_YEAR = SeriesInfo("h2", "Prices", "euro per kWh", Frequency.SEMIANNUAL, frozenset({"DE"}),
+                       "2015-S1", "2017-S1")  # fmt: skip
+HALF_CALL = {"op": "change", "geo": "DE", "kind": "absolute"}
+
+
+def half_claim(**kw: Any) -> ClaimSpec:
+    return claim(type=AssertionType.ABSOLUTE, value=100, direction=Direction.UP, geo="DE", **kw)
+
+
+def test_half_years_are_a_period_form_of_their_own() -> None:
+    assert "Frequency: semiannual. A whole year (YYYY) is its last half-year." in H.describe()
+    assert "No yearly value: use YYYY-Sn (a trend may use YYYY)." in H_NO_YEAR.describe()
+    average = SeriesInfo("h3", "x", "u", Frequency.SEMIANNUAL, frozenset({"DE"}), None, None,
+                         AnnualValue.MEAN)  # fmt: skip
+    assert "the average of its half-years." in average.describe()
+    ok = validate_plan(plan({**HALF_CALL, "start": "2015-S1", "end": "2016-S2"}),
+                       ctx(half_claim(start="2015-S1", end="2016-S2"), H))  # fmt: skip
+    assert (ok.calls[0].start, ok.calls[0].end) == ("2015-S1", "2016-S2") and ok.notes == []
+
+
+@pytest.mark.parametrize(
+    ("call", "error"),
+    [
+        ({"start": "2015-Q1", "end": "2016-S2"}, "must be YYYY or YYYY-Sn for the semiannual h"),
+        ({"start": "2015-03", "end": "latest"}, "must be YYYY or YYYY-Sn for the semiannual h"),
+        ({"start": "2015-S1", "end": "2016"}, "start and end must both be whole years"),
+        ({"start": "2016-S2", "end": "2015-S1"}, "start must be before end"),
+        ({"start": "2016-S1", "end": "2016-S1"}, "start must be before end"),
+    ],
+)
+def test_half_year_periods_are_checked(call: dict[str, Any], error: str) -> None:
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(plan({**HALF_CALL, **call}), ctx(half_claim(start="2015-S1"), H))
+    assert error in " ".join(info.value.errors)
+
+
+def test_a_half_year_series_without_yearly_values_needs_its_own_periods() -> None:
+    with pytest.raises(PlanInvalid) as info:
+        validate_plan(plan({**HALF_CALL, "start": "2015", "end": "2016"}),
+                      ctx(half_claim(start="2015", end="2016"), H_NO_YEAR))  # fmt: skip
+    assert "'2015': h2 has no yearly value; use YYYY-Sn" in info.value.errors[0]
+
+
+def test_half_years_inside_years_the_claim_names_become_the_years() -> None:
+    call = {**HALF_CALL, "start": "2015-S1", "end": "2016-S2"}
+    p = validate_plan(plan(call), ctx(half_claim(start="2015", end="2016"), H))
+    assert (p.calls[0].start, p.calls[0].end) == ("2015", "2016")
+    assert p.notes[0] == "call 0 (change): start 2015-S1 → 2015, the claim names the whole year"
+    # The claim names a half-year: it stays one.
+    kept = validate_plan(plan(call), ctx(half_claim(start="2015-S1", end="2016"), H))
+    assert kept.calls[0].start == "2015-S1"
+
+
+def test_whole_years_run_on_a_half_yearly_series() -> None:
+    c = ctx(half_claim(start="2015", end="2016"), H)
+    p = validate_plan(plan({**HALF_CALL, "start": "2015", "end": "latest"}), c)
+    [r] = execute_plan(p, c, HALF_DATA, TOL).records
+    assert [(i.period, i.value) for i in r.inputs] == [("2015", 120.0), ("2016", 220.0)]
+    assert r.value == 100.0  # the year's last half-year; 2017 has only its first
+    codes = [f.code for f in r.flags]
+    assert codes == [FlagCode.ANNUAL_VALUE, FlagCode.LATEST_YEAR]
+    assert "its last half-year (end of year)" in r.flags[0].detail
+    assert r.flags[1].detail.endswith("the latest half-year is 2017-S1")
+
+
+def test_half_years_run_as_written() -> None:
+    c = ctx(half_claim(start="2015-S2", end="2016-S1"), H)
+    p = validate_plan(plan({**HALF_CALL, "start": "2015-S2", "end": "2016-S1"}), c)
+    [r] = execute_plan(p, c, HALF_DATA, TOL).records
+    assert [(i.period, i.value) for i in r.inputs] == [("2015-S2", 120.0), ("2016-S1", 210.0)]
+    assert r.flags == []
+    near = ctx(half_claim(start="2015-S1", end="2018-S1"), H)
+    far = execute_plan(validate_plan(plan({**HALF_CALL, "start": "2015-S1", "end": "2018-S1"}),
+                                     near), near, HALF_DATA, TOL)  # fmt: skip
+    assert far.error is not None and "within 1 periods of 2018-S1" in far.error
+
+
+def test_the_assumed_window_starts_a_half_yearly_series_at_the_first_half() -> None:
+    call = {"op": "trend", "geo": "DE", "start": "2010-S2", "end": "2016-S2"}
+    c = claim(type=AssertionType.TREND, value=None, direction=Direction.UP, geo="DE",
+              start="2015", start_basis="assumed", end="latest", end_basis="assumed")  # fmt: skip
+    p = validate_plan(plan(call), ctx(c, H))
+    assert p.calls[0].start == "2015-S1"
+
+
+def test_latest_of_a_dated_claim_on_a_half_yearly_series() -> None:
+    c = PlanContext(half_claim(start="latest", end="latest").model_copy(update={"said_on": "2016-12"}),
+                    H, as_of=date(2016, 12, 31))  # fmt: skip
+    assert c.published(H) == "2016-S1"  # a release comes 4 months after the half-year ends
+    p = validate_plan(plan({"op": "value_at", "geo": "DE", "period": "2016-S1"}), c)
+    assert p.calls[0].period == "latest"
 
 
 # --- a dated claim is checked as of its date -------------------------------------------------
