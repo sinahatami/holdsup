@@ -29,7 +29,9 @@ from holdsup.catalog.schema import load_catalog
 from holdsup.config import REPO_ROOT
 from holdsup.ops import FlagCode, OpRecord
 from holdsup.pipeline.claim import Basis, Operator
-from holdsup.pipeline.run import ClaimResult, Pipeline, PipelineOutput, StepEvent
+from holdsup.pipeline.result import ClaimResult, PipelineOutput
+from holdsup.pipeline.run import Pipeline
+from holdsup.pipeline.trace import StepEvent
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse
 from holdsup.verdict import Label, load_tolerances

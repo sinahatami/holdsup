@@ -6,7 +6,48 @@ export const strings = {
   tagline: "Every number has a denominator.",
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
+  errors: {
+    network: "Network error",
+  },
+  nav: {
+    main: "Main",
+    home: "Home",
+    howItWorks: "How it works",
+    recent: "Recent checks",
+    theme: "Theme",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+  },
+  footer: {
+    blurb:
+      "Numeric claims, checked against official statistics, with the receipts.",
+    github: "View on GitHub",
+    repoUrl: "https://github.com/sinahatami/holdsup",
+    note: "Open source. Data from official statistical agencies.",
+    copyright: "© 2026",
+  },
+  notFound: {
+    code: "404",
+    heading: "Page not found",
+    body: "That page doesn't exist, but there are plenty of claims left to check.",
+  },
   home: {
+    howHeading: "How it works",
+    how: [
+      {
+        title: "Paste a claim",
+        body: "Any sentence with a number in it: a rate, a change, a share.",
+      },
+      {
+        title: "We find the data",
+        body: "HoldsUp matches it to an official series and fetches the figures.",
+      },
+      {
+        title: "See the receipt",
+        body: "Every calculation, source and fingerprint is shown, so you can verify it yourself.",
+      },
+    ],
     intro:
       "Paste a sentence with a number in it. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
     inputLabel: "The claim to check",

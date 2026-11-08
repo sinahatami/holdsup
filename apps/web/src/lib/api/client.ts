@@ -1,3 +1,4 @@
+import { strings } from "@/lib/strings";
 import type { components } from "./schema";
 
 export type CheckResult = components["schemas"]["CheckResult"];
@@ -20,17 +21,25 @@ export interface StepEvent {
   ms: number | null;
 }
 
+/** What a caller of {@link ApiClient.follow} hears while a check runs. */
+export interface CheckStreamHandlers {
+  onStep(event: StepEvent): void;
+  onResult(result: CheckResult): void;
+  onProblem(problem: Problem): void;
+  onConnectionLost(): void;
+}
+
+const LOCAL_API = "http://localhost:8000";
+
 /** The browser talks to the API directly (CORS allows only the web origin). */
 export function browserApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  return process.env.NEXT_PUBLIC_API_URL ?? LOCAL_API;
 }
 
 /** Server-side reads (gallery pre-render) use the private variable when set. */
 export function serverApiUrl(): string {
   return (
-    process.env.HOLDSUP_API_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    "http://localhost:8000"
+    process.env.HOLDSUP_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? LOCAL_API
   );
 }
 
@@ -38,6 +47,21 @@ export class ApiError extends Error {
   constructor(readonly problem: Problem) {
     super(problem.title);
   }
+}
+
+/** The problem shown when the API could not be reached at all. */
+export function networkProblem(): Problem {
+  return { type: "about:blank", title: strings.errors.network, status: 0 };
+}
+
+/** Any thrown value as a problem: the API's own, or a network failure. */
+export function toProblem(err: unknown): Problem {
+  return err instanceof ApiError ? err.problem : networkProblem();
+}
+
+/** The one line a person should read about a problem. */
+export function problemMessage(problem: Problem): string {
+  return problem.detail ?? problem.title;
 }
 
 async function problemFrom(res: Response): Promise<Problem> {
@@ -48,22 +72,58 @@ async function problemFrom(res: Response): Promise<Problem> {
   }
 }
 
-export async function submitCheck(text: string): Promise<CheckAccepted> {
-  const res = await fetch(`${browserApiUrl()}/v1/checks`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+function followStream(url: string, on: CheckStreamHandlers): () => void {
+  const source = new EventSource(url);
+  const parse = <T>(e: MessageEvent<string>) => JSON.parse(e.data) as T;
+  const onStep = (e: MessageEvent<string>) => on.onStep(parse<StepEvent>(e));
+  source.addEventListener("step_started", onStep);
+  source.addEventListener("step_done", onStep);
+  source.addEventListener("result", (e) => {
+    on.onResult(parse<CheckResult>(e));
+    source.close();
   });
-  if (!res.ok) throw new ApiError(await problemFrom(res));
-  return (await res.json()) as CheckAccepted;
+  source.addEventListener("error", (e) => {
+    if (e instanceof MessageEvent) {
+      on.onProblem(parse<Problem>(e));
+      source.close();
+    } else if (source.readyState === EventSource.CLOSED) {
+      on.onConnectionLost();
+    }
+  });
+  return () => source.close();
 }
 
-export async function getCheck(id: string): Promise<CheckView> {
-  const res = await fetch(`${browserApiUrl()}/v1/checks/${id}`);
-  if (!res.ok) throw new ApiError(await problemFrom(res));
-  return (await res.json()) as CheckView;
+/**
+ * Factory for an API client bound to one base URL: the browser and the server
+ * reach the API at different addresses but speak the same contract.
+ */
+export function createApiClient(baseUrl: string) {
+  const url = (path: string) => `${baseUrl}/v1${path}`;
+
+  async function request<T>(path: string, init?: RequestInit): Promise<T> {
+    const res = await fetch(url(path), init);
+    if (!res.ok) throw new ApiError(await problemFrom(res));
+    return (await res.json()) as T;
+  }
+
+  return {
+    submitCheck: (text: string) =>
+      request<CheckAccepted>("/checks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      }),
+    getCheck: (id: string) => request<CheckView>(`/checks/${id}`),
+    gallery: async (limit: number) =>
+      (await request<{ items: GalleryItem[] }>(`/gallery?limit=${limit}`))
+        .items,
+    /** Follows a running check's live trace; returns a function that stops. */
+    follow: (id: string, on: CheckStreamHandlers) =>
+      followStream(url(`/checks/${id}/stream`), on),
+  };
 }
 
-export function streamUrl(id: string): string {
-  return `${browserApiUrl()}/v1/checks/${id}/stream`;
-}
+export type ApiClient = ReturnType<typeof createApiClient>;
+
+/** The client components use by default. */
+export const browserApi: ApiClient = createApiClient(browserApiUrl());

@@ -10,12 +10,10 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, StringConstraints
 
 from holdsup.config import get_settings
-from holdsup.db.session import get_sessionmaker
 from holdsup.problems import Problem, ProblemError, not_found
+from holdsup.routes.deps import Runner, Store
 from holdsup.service.ratelimit import client_ip
-from holdsup.service.runner import CheckRunner
-from holdsup.service.store import CheckResult, CheckStatus, CheckStore, SqlCheckStore
-from holdsup.service.wiring import build_runner
+from holdsup.service.store import CheckResult, CheckStatus
 from holdsup.verdict import Label
 
 MAX_TEXT = 2_000  # characters, after trimming whitespace
@@ -24,24 +22,6 @@ GALLERY_MAX = 24
 router = APIRouter(tags=["checks"])
 
 PROBLEM = {"model": Problem, "content": {"application/problem+json": {}}}
-
-
-def get_runner(request: Request) -> CheckRunner:
-    """The app's runner, built on first use (it loads the embedding model)."""
-    state = request.app.state
-    if getattr(state, "built", None) is None:  # pragma: no cover (tests override this)
-        state.built = build_runner(get_settings())
-    runner: CheckRunner = state.built.runner
-    return runner
-
-
-def get_store() -> CheckStore:  # pragma: no cover (tests override this)
-    """Reads need no runner, so the gallery loads without the embedding model."""
-    return SqlCheckStore(get_sessionmaker())
-
-
-Runner = Annotated[CheckRunner, Depends(get_runner)]
-Store = Annotated[CheckStore, Depends(get_store)]
 
 
 class CheckRequest(BaseModel):

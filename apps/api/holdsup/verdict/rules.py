@@ -4,108 +4,12 @@ No model is involved. Every comparison is a `Part` with the computed value, the 
 and the tolerance used, so the receipt can show why the label was given.
 """
 
-from collections.abc import Iterable, Sequence
-from enum import StrEnum
-from pathlib import Path
+from collections.abc import Callable, Iterable, Mapping, Sequence
 
-import yaml
-from pydantic import BaseModel, ConfigDict, Field
-
-from holdsup.ops import ChangeKind, Frequency, OpRecord, is_rate, unit_scale
+from holdsup.ops import ChangeKind, OpRecord, is_rate, unit_scale
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, Operator
-
-TOLERANCES = Path(__file__).with_name("tolerances.yaml")
-
-
-class Label(StrEnum):
-    SUPPORTED = "supported"
-    SUPPORTED_FRAMING_MATTERS = "supported_framing_matters"
-    NOT_SUPPORTED = "not_supported"
-    PARTLY_SUPPORTED = "partly_supported"
-    CANT_CHECK = "cant_check"
-
-
-# --- tolerances ------------------------------------------------------------------------------
-
-
-class ValueTolerance(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    relative: float = Field(default=0.0, ge=0)
-    absolute: float = Field(default=0.0, ge=0)
-    rounding: bool
-    # Added on top of the rest, as a share of the asserted value: room for data revisions.
-    plus_relative: float = Field(default=0.0, ge=0)
-
-    def band(self, asserted: float) -> float:
-        """The largest |computed - asserted| that still holds."""
-        rounding = half_unit(asserted) if self.rounding else 0.0
-        base = max(self.relative * abs(asserted), self.absolute, rounding)
-        return base + self.plus_relative * abs(asserted)
-
-
-class ValueTolerances(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    level: ValueTolerance
-    level_rate: ValueTolerance
-    absolute: ValueTolerance
-    percent: ValueTolerance
-    percentage_points: ValueTolerance
-    ratio: ValueTolerance
-    rank: ValueTolerance
-
-
-class Tolerances(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    version: int
-    framing_threshold: float = Field(ge=0, le=1)
-    values: ValueTolerances
-    flat_relative: float = Field(ge=0)
-    trend_min_r2: float = Field(ge=0, le=1)
-    max_period_gap: dict[Frequency, int]
-
-
-def load_tolerances(path: Path = TOLERANCES) -> Tolerances:
-    return Tolerances.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
-
-
-def half_unit(value: float) -> float:
-    """Half a unit of the last written digit: 23 → 0.5, 2.3 → 0.05, 0.25 → 0.005."""
-    if value.is_integer():
-        return 0.5
-    text = repr(abs(value))
-    if "e" in text:
-        return 0.0
-    return 0.5 * 10.0 ** -len(text.split(".")[1])
-
-
-# --- results ---------------------------------------------------------------------------------
-
-
-class Part(BaseModel):
-    """One checked piece of a claim."""
-
-    name: str  # "assertion", "start value", "end value", "vs FR"
-    holds: bool
-    computed: float | None = None
-    asserted: float | None = None
-    tolerance: float | None = None  # the largest |computed - asserted| that holds
-    period: str | None = None  # the period the computed value is for, e.g. "2026-09"
-    operator: Operator = Operator.ABOUT  # how the asserted value bounds the computed one
-    detail: str
-
-
-class Verdict(BaseModel):
-    label: Label
-    reason: str
-    parts: list[Part] = Field(default_factory=list)
-    window_share: float | None = None  # share of windows where the claim holds (P3.1)
-    framing_threshold: float | None = None
-    distortions: list[str] = Field(default_factory=list)  # failed distortion checks (P3.4)
-    tolerances_version: int | None = None
-
+from holdsup.verdict.model import Label, Part, Verdict, cant_check
+from holdsup.verdict.tolerances import Tolerances, ValueTolerance
 
 OPERATOR_TEXT = {
     Operator.MORE_THAN: "more than",
@@ -115,19 +19,8 @@ OPERATOR_TEXT = {
 }
 
 
-def cant_check(reason: str) -> Verdict:
-    return Verdict(label=Label.CANT_CHECK, reason=reason)
-
-
 # Claims no operation answers yet: "the lowest since 1977", "met its target", "rose every month".
 UNSUPPORTED = frozenset({AssertionType.RECORD, AssertionType.TARGET, AssertionType.STREAK})
-
-_CHANGE_TYPES = {
-    AssertionType.ABSOLUTE: ChangeKind.ABSOLUTE,
-    AssertionType.PERCENT: ChangeKind.PERCENT,
-    AssertionType.PERCENTAGE_POINTS: ChangeKind.PERCENTAGE_POINTS,
-    AssertionType.RATIO: ChangeKind.RATIO,
-}
 
 
 class _Rules:
@@ -305,6 +198,35 @@ class _Rules:
         return parts
 
 
+Judge = Callable[[_Rules, Sequence[OpRecord]], list[Part]]
+
+
+def _one(rule: Callable[[_Rules, OpRecord], Part]) -> Judge:
+    """A judge that checks the first answer record with one rule."""
+    return lambda rules, chosen: [rule(rules, chosen[0])]
+
+
+def _change(rules: _Rules, chosen: Sequence[OpRecord]) -> list[Part]:
+    """One change against the claim, or the claim's place against its peers ("grew more than
+    France"); then any stated start and end values."""
+    first = chosen[0]
+    parts = rules.peers(chosen) if len(chosen) > 1 else [rules.change(first)]
+    return parts + rules.levels(first)
+
+
+# How each operation's answer records are judged against the claim. per_capita and deflate make
+# series for later calls and never decide a claim themselves (plan validation keeps them out of
+# answers).
+_JUDGES: Mapping[str, Judge] = {
+    "value_at": _one(_Rules.value_at),
+    "change": _change,
+    "cagr": _one(_Rules.cagr),
+    "trend": _one(_Rules.trend),
+    "compare": _one(_Rules.compare),
+    "rank": _one(_Rules.rank),
+}
+
+
 def _value(r: OpRecord) -> float:
     if r.value is None:
         raise ValueError(f"{r.op} has no value")
@@ -337,15 +259,10 @@ def decide(
     if not chosen:
         return cant_check("the plan names no result to check")
 
-    rules = _Rules(claim, unit, tolerances)
-    first = chosen[0]
-    parts: list[Part]
-    if first.op == "change" and len(chosen) > 1:
-        parts = rules.peers(chosen)
-    else:
-        parts = [getattr(rules, first.op)(first)]
-    if first.op == "change":
-        parts += rules.levels(first)
+    judge = _JUDGES.get(chosen[0].op)
+    if judge is None:
+        return cant_check(f"a {chosen[0].op} result cannot decide a claim")
+    parts = judge(_Rules(claim, unit, tolerances), chosen)
 
     held = [p.holds for p in parts]
     framing = list(distortions)

@@ -10,8 +10,8 @@ from typing import Any
 from holdsup.adapters.base import AdapterError, FetchedSeries, Filters, Observation
 from holdsup.catalog.index import InMemoryIndex
 from holdsup.catalog.schema import load_catalog
+from holdsup.catalog.search import vector_search
 from holdsup.pipeline.ledger import Ledger
-from holdsup.pipeline.match import vector_search
 from holdsup.pipeline.run import Pipeline
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse
