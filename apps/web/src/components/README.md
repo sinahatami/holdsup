@@ -3,14 +3,14 @@
 Each layer may import only from layers below it. ESLint enforces this
 (`no-restricted-imports` in `eslint.config.mjs`).
 
-| Layer        | What belongs here                                                                 | Examples                                        |
-| ------------ | --------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `ui/`        | Vendored shadcn/Base UI primitives. Leave as generated.                           | `button`                                        |
-| `atoms/`     | One element or one style: no layout of other components, no data fetching.       | `verdict-badge`, `eyebrow`, `logo`, `pill`      |
-| `molecules/` | A few atoms forming one small unit with one job.                                  | `field-list`, `trace-step`, `theme-toggle`      |
-| `organisms/` | A self-contained region of a page made of molecules and atoms.                    | `check-form`, `receipt`, `trace`, `site-header` |
-| `templates/` | Page layout with slots and no data of its own.                                    | `page-shell`, `check-template`                  |
-| `app/`       | Pages: routes that fetch or bind data and fill a template (Next.js App Router).   | `app/page.tsx`, `app/check/[id]/check-live.tsx` |
+| Layer        | What belongs here                                                               | Examples                                        |
+| ------------ | ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `ui/`        | Vendored shadcn/Base UI primitives. Leave as generated.                         | `button`                                        |
+| `atoms/`     | One element or one style: no layout of other components, no data fetching.      | `verdict-badge`, `eyebrow`, `logo`, `pill`      |
+| `molecules/` | A few atoms forming one small unit with one job.                                | `field-list`, `trace-step`, `theme-toggle`      |
+| `organisms/` | A self-contained region of a page made of molecules and atoms.                  | `check-form`, `receipt`, `trace`, `site-header` |
+| `templates/` | Page layout with slots and no data of its own.                                  | `page-shell`, `check-template`                  |
+| `app/`       | Pages: routes that fetch or bind data and fill a template (Next.js App Router). | `app/page.tsx`, `app/check/[id]/check-live.tsx` |
 
 Logic lives outside `components/`:
 

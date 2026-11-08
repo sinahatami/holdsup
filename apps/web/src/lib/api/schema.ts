@@ -21,6 +21,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/catalog": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Catalog
+     * @description Everything HoldsUp can check, A to Z.
+     */
+    get: operations["list_catalog_v1_catalog_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/indicators": {
     parameters: {
       query?: never;
@@ -167,6 +187,32 @@ export interface components {
      * @enum {string}
      */
     Basis: "stated" | "inferred" | "lookback" | "office" | "assumed";
+    /** CatalogEntry */
+    CatalogEntry: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Definition */
+      definition: string;
+      /** Unit */
+      unit: string;
+      /** Source */
+      source: string;
+      /** Frequency */
+      frequency: string;
+      /** First Year */
+      first_year: number;
+      /** Last Year */
+      last_year: number | null;
+    };
+    /** CatalogResponse */
+    CatalogResponse: {
+      /** Version */
+      version: string;
+      /** Indicators */
+      indicators: components["schemas"]["CatalogEntry"][];
+    };
     /** CheckAccepted */
     CheckAccepted: {
       /**
@@ -258,12 +304,16 @@ export interface components {
       indicator?: components["schemas"]["IndicatorRef"] | null;
       /** Alternatives */
       alternatives?: string[];
+      /** Suggestions */
+      suggestions?: components["schemas"]["Suggestion"][];
       /**
        * Match Reason
        * @default
        */
       match_reason: string;
       data?: components["schemas"]["DataRef"] | null;
+      /** Extra Sources */
+      extra_sources?: components["schemas"]["ExtraSource"][];
       /** Plan Reason */
       plan_reason?: string | null;
       /** Operations */
@@ -363,6 +413,14 @@ export interface components {
      * @enum {string}
      */
     Direction: "up" | "down" | "flat";
+    /**
+     * ExtraSource
+     * @description A series used besides the matched one (the population a per-capita figure divides by).
+     */
+    ExtraSource: {
+      indicator: components["schemas"]["IndicatorRef"];
+      data: components["schemas"]["DataRef"];
+    };
     /** Flag */
     Flag: {
       code: components["schemas"]["FlagCode"];
@@ -491,6 +549,11 @@ export interface components {
       provider: string;
       /** Model */
       model: string;
+      /**
+       * Label
+       * @default
+       */
+      label: string;
     };
     /** OpRecord */
     OpRecord: {
@@ -580,6 +643,16 @@ export interface components {
       | "execute"
       | "verdict"
       | "explain";
+    /**
+     * Suggestion
+     * @description A statistic HoldsUp has that is close to what a claim talks about.
+     */
+    Suggestion: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -643,6 +716,26 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HealthResponse"];
+        };
+      };
+    };
+  };
+  list_catalog_v1_catalog_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CatalogResponse"];
         };
       };
     };

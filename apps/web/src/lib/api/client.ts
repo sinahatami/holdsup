@@ -5,6 +5,8 @@ export type CheckResult = components["schemas"]["CheckResult"];
 export type ClaimResult = components["schemas"]["ClaimResult"];
 export type CheckView = components["schemas"]["CheckView"];
 export type CheckAccepted = components["schemas"]["CheckAccepted"];
+export type CatalogResponse = components["schemas"]["CatalogResponse"];
+export type CatalogEntry = components["schemas"]["CatalogEntry"];
 export type GalleryItem = components["schemas"]["GalleryItem"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
@@ -113,6 +115,7 @@ export function createApiClient(baseUrl: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       }),
+    catalog: () => request<CatalogResponse>("/catalog"),
     getCheck: (id: string) => request<CheckView>(`/checks/${id}`),
     gallery: async (limit: number) =>
       (await request<{ items: GalleryItem[] }>(`/gallery?limit=${limit}`))
