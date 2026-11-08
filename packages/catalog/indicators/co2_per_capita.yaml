@@ -6,6 +6,7 @@ id: co2_per_capita
 source: owid
 source_code: "co2-emissions-per-capita"
 name: "CO2 emissions per capita"
+theme: environment
 aliases:
   - "carbon footprint per person"
   - "CO2 emissions per person"

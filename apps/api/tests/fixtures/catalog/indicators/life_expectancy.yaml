@@ -2,6 +2,7 @@ id: life_expectancy
 source: worldbank
 source_code: SP.DYN.LE00.IN
 name: Life expectancy at birth
+theme: health
 aliases:
   - how long people live
   - average lifespan

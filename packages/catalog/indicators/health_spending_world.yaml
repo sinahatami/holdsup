@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 2000..2023, IT 2000..2024, US 2000..2023, WLD 2000..2023 (all countries listed by the source; years vary by country)
+id: health_spending_world
+source: worldbank
+source_code: "SH.XPD.CHEX.GD.ZS"
+name: "Health spending to GDP (World Bank)"
+theme: health
+aliases:
+  - "current health spending as a share of GDP"
+  - "healthcare goods and services consumed in the year relative to GDP"
+  - "health expenditure excluding capital spending as a percent of GDP"
+definition: "Current health expenditure as a percentage of GDP: healthcare goods and services consumed during the year, excluding capital spending on buildings, machinery, IT and stocks of vaccines."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 2000
+last_year: null # still updated (latest period seen: 2024)
+related: [health_spending, life_expectancy]
+filters: {}

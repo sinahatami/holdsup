@@ -149,6 +149,15 @@ class SqlCheckStore:
                 update(Check).where(Check.id == check_id).values(featured=featured)
             )
 
+    async def finished_results(self) -> list[dict[str, Any]]:
+        stmt = select(Check.result).where(
+            Check.status == str(CheckStatus.DONE),
+            Check.cached_from.is_(None),
+            Check.result.is_not(None),
+        )
+        async with self._sessionmaker() as session:
+            return [r for r in (await session.scalars(stmt)).all() if r is not None]
+
     # LedgerStore: finished, reusable, original checks.
     @staticmethod
     def _ledger_rows(since: datetime) -> Any:  # Any: a Select over Check

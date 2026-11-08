@@ -73,6 +73,11 @@ class CheckStore(LedgerStore, Protocol):
 
     async def set_featured(self, check_id: UUID, featured: bool) -> None: ...
 
+    async def finished_results(self) -> list[dict[str, Any]]:
+        """The result (CheckResult as JSON) of every finished check that was computed, not copied
+        from the ledger, so a claim asked again is not counted twice."""
+        ...
+
 
 async def add_entry(store: CheckStore, entry: LedgerEntry) -> None:
     """Save a ledger entry added directly (not through a run) as a finished check; the entry

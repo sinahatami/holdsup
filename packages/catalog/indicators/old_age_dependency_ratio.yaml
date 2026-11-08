@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2001..2025, DE 1960..2025, FR 1991..2025, IT 1960..2025 (31 of 31 EU/EFTA countries have data)
+id: old_age_dependency_ratio
+source: eurostat
+source_code: "demo_pjanind"
+name: "Old-age dependency ratio (Eurostat)"
+theme: population
+aliases:
+  - "elderly people per 100 people of working age"
+  - "how many people aged 65 and over there are for every 100 aged 15 to 64"
+  - "number of over-65s for each working-age person"
+  - "size of the older population compared with the working-age population"
+definition: "Population aged 65 and over relative to the population aged 15 to 64 on 1 January, shown per 100 people of working age."
+unit: "persons aged 65+ per 100 persons aged 15-64"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [old_age_dependency_ratio_world, median_age]
+filters: { indic_de: "OLDDEP1" }

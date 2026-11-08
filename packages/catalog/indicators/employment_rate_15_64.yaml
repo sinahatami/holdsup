@@ -1,0 +1,21 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2009..2025, DE 2009..2025, FR 2003..2025, IT 2009..2025 (30 of 31 EU/EFTA countries have data)
+# Note: Wider age range than employment_rate_20_64 (the EU 2030 target); both are labour force survey rates.
+id: employment_rate_15_64
+source: eurostat
+source_code: "lfsi_emp_a"
+name: "Employment rate, ages 15-64"
+theme: work
+aliases:
+  - "share of 15-64 year olds in work"
+  - "percentage of the population aged 15 to 64 with a job"
+  - "jobs rate for 15- to 64-year-olds"
+  - "employment rate for the 15-64 age group"
+definition: "Employed people aged 15 to 64 as a percentage of the total population of the same age, Labour Force Survey, annual average."
+unit: "% of population aged 15-64"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 2003
+last_year: null # still updated (latest period seen: 2025)
+related: [employment_rate_20_64, employment_persons, employment_rate_world]
+filters: { indic_em: "EMP_LFS", age: "Y15-64", sex: "T", unit: "PC_POP" }

@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: DE 2009..2025, FR 2007..2025, IT 2002..2025 (31 of 31 EU/EFTA countries have data)
+# Note: A head count, not a share: Eurostat has no ready-made foreign-born share. Divide by population_total for one. The EU27_2020 aggregate is not listed in geo_coverage: how 'foreign country' is counted for an aggregate was not checked.
+id: foreign_born_population
+source: eurostat
+source_code: "migr_pop3ctb"
+name: "Foreign-born population (Eurostat)"
+theme: population
+aliases:
+  - "number of residents born abroad"
+  - "people living here who were born in another country"
+  - "how many residents were born outside the country"
+definition: "Number of people living in the country on 1 January who were born in a foreign country, all ages and both sexes."
+unit: "persons"
+frequency: annual
+geo_coverage: ["EU member states", "EFTA countries"]
+first_year: 2000
+last_year: null # still updated (latest period seen: 2025)
+related: [foreign_born_share_world, population_total]
+filters: { c_birth: "FOR", age: "TOTAL", sex: "T", unit: "NR" }

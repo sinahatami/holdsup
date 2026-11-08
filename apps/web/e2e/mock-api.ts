@@ -94,7 +94,14 @@ export const result = {
       explanation:
         "Italy's unemployment rate went from 11.9% in 2015 to 7.7% in 2023, a fall of 4.2 points.",
       explanation_source: "model",
-      models: [{ step: "explain", provider: "groq", model: "gpt-oss-20b" }],
+      models: [
+        {
+          step: "explain",
+          provider: "groq",
+          model: "gpt-oss-20b",
+          label: "GPT-OSS 20B (Groq)",
+        },
+      ],
       notes: [],
       retryable: false,
     },

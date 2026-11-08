@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1990..2024, IT 1990..2024, US 1990..2024, WLD 1990..2024 (all countries listed by the source; years vary by country)
+# Note: Estimated every five years (1990, 1995, ... 2020) plus 2024, not every year.
+id: foreign_born_share_world
+source: worldbank
+source_code: "SM.POP.TOTL.ZS"
+name: "Foreign-born share of the population (World Bank)"
+theme: population
+aliases:
+  - "share of residents who were born abroad"
+  - "percentage of the population born in another country"
+  - "migrants including refugees as a percent of residents"
+definition: "International migrant stock: the proportion of people at mid-year who were born in a country other than the one they live in. It also includes refugees."
+unit: "% of population"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1990
+last_year: null # still updated (latest period seen: 2024)
+related: [foreign_born_population, population_total_world]
+filters: {}

@@ -36,6 +36,8 @@ class ProviderConfig(BaseModel):
     base_url: str
     model: str
     api_key_env: str
+    # The model's name for a reader (the receipt); empty = show the model id.
+    label: str = ""
     capabilities: frozenset[Capability]
     context_window: PositiveInt
     limits: Limits

@@ -1,0 +1,22 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: DE 1960..2025, EU27_2020 1960..2025, FR 1991..2025, GR 1960..2025, IT 1960..2025
+# Note: Population on 1 January. The denominator for per-capita checks in Europe; the World Bank entry covers other countries.
+id: population_total
+source: eurostat
+source_code: "demo_pjan"
+name: "Total population (Eurostat)"
+theme: population
+aliases:
+  - "population"
+  - "number of inhabitants"
+  - "how many people live in the country"
+  - "total number of residents"
+  - "population size on 1 January"
+definition: "Number of people usually resident in the country on 1 January, all ages and both sexes."
+unit: "persons"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated
+related: [population_total_world, population_growth]
+filters: { age: "TOTAL", sex: "T", unit: "NR" }

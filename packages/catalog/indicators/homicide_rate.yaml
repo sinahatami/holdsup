@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: DE 2008..2024, FR 2008..2024, IT 2008..2024 (31 of 31 EU/EFTA countries have data)
+# Note: Police-recorded offences; the World Bank entry cites UNODC. Not available for the EU27_2020 aggregate.
+id: homicide_rate
+source: eurostat
+source_code: "crim_off_cat"
+name: "Homicide rate (Eurostat)"
+theme: safety
+aliases:
+  - "intentional killings recorded by police per 100,000 people"
+  - "recorded homicide offences per hundred thousand inhabitants"
+  - "how often intentional homicide is recorded relative to population"
+definition: "Police-recorded offences of intentional homicide per hundred thousand inhabitants."
+unit: "per 100,000 inhabitants"
+frequency: annual
+geo_coverage: ["EU member states", "EFTA countries"]
+first_year: 2008
+last_year: null # still updated (latest period seen: 2024)
+related: [homicide_rate_world]
+filters: { iccs: "ICCS0101", unit: "P_HTHAB" }

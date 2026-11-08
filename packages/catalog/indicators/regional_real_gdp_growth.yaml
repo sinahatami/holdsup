@@ -7,6 +7,7 @@ id: regional_real_gdp_growth
 source: eurostat
 source_code: "nama_10r_2gvagr"
 name: "Regional real GDP growth"
+theme: economy
 aliases:
   - "regional economic growth"
   - "GDP growth by region"

@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1995..2025, FR 1995..2025, IT 1995..2025 (30 of 31 EU/EFTA countries have data)
+id: tax_and_social_contributions
+source: eurostat
+source_code: "gov_10a_taxag"
+name: "Taxes and social contributions to GDP (Eurostat)"
+theme: economy
+aliases:
+  - "total tax burden including social contributions"
+  - "taxes plus social security contributions as a share of GDP"
+  - "overall tax and contribution receipts relative to GDP"
+definition: "Total receipts from taxes and social contributions, including imputed social contributions, after deduction of amounts assessed but unlikely to be collected, as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1995
+last_year: null # still updated (latest period seen: 2025)
+related: [tax_revenue, government_spending]
+filters: { na_item: "D2_D5_D91_D61_M_D995", sector: "S13", unit: "PC_GDP" }

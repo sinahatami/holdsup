@@ -7,6 +7,7 @@ id: real_gdp_growth_world
 source: worldbank
 source_code: "NY.GDP.MKTP.KD.ZG"
 name: "Real GDP growth (World Bank)"
+theme: economy
 aliases:
   - "GDP growth rate (World Bank)"
   - "annual economic growth worldwide"

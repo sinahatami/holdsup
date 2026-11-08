@@ -41,7 +41,12 @@ def yearly_series_turned_down(run: MatchRun, answer: MatchAnswer | None) -> Nudg
     return None
 
 
-_FINENESS = {Frequency.MONTHLY: 0, Frequency.QUARTERLY: 1, Frequency.ANNUAL: 2}
+_FINENESS = {
+    Frequency.MONTHLY: 0,
+    Frequency.QUARTERLY: 1,
+    Frequency.SEMIANNUAL: 2,
+    Frequency.ANNUAL: 3,
+}
 
 
 def finer_series_for_now(run: MatchRun, answer: MatchAnswer | None) -> Nudge | None:

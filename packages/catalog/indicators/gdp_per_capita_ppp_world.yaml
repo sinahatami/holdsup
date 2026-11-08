@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1990..2025, IT 1990..2025, US 1990..2025, WLD 1990..2025 (all countries listed by the source; years vary by country)
+id: gdp_per_capita_ppp_world
+source: worldbank
+source_code: "NY.GDP.PCAP.PP.CD"
+name: "GDP per capita, PPP (World Bank)"
+theme: economy
+aliases:
+  - "GDP per person at purchasing power parity"
+  - "GDP per head in international dollars"
+  - "output per person adjusted for price differences across countries"
+definition: "Gross domestic product per person in current international dollars, converted by purchasing power parities, which account for the different price levels across countries."
+unit: "current international $"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1990
+last_year: null # still updated (latest period seen: 2025)
+related: [gdp_per_capita_pps, population_total_world]
+filters: {}

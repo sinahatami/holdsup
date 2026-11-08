@@ -1,0 +1,51 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2005..2025, DE 2005..2025, FR 2005..2025, IT 2010..2025 (28 of 31 EU/EFTA countries have data)
+# Note: Eurostat only: the World Bank has no house price series.
+id: house_price_index
+source: eurostat
+source_code: "prc_hpi_a"
+name: "House price index (2015=100)"
+theme: prices
+aliases:
+  - "level of house prices relative to 2015"
+  - "index of home prices with 2015 equal to 100"
+  - "price of homes bought by households compared with 2015"
+definition: "Annual average index of the prices of dwellings (new and existing) purchased by households, with 2015 as 100."
+unit: "index, 2015=100"
+frequency: annual
+geo_coverage:
+  [
+    "EU27_2020",
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK",
+    "IS",
+    "NO",
+  ]
+first_year: 2005
+last_year: null # still updated (latest period seen: 2025)
+related: [house_price_change]
+filters: { purchase: "TOTAL", unit: "I15_A_AVG" }

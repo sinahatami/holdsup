@@ -13,6 +13,7 @@ export const strings = {
     main: "Main",
     home: "Home",
     howItWorks: "How it works",
+    canCheck: "What it can check",
     recent: "Recent checks",
     theme: "Theme",
     themeLight: "Light",
@@ -61,6 +62,10 @@ export const strings = {
       "Italy's public debt is 133% of GDP.",
       "Youth unemployment in Italy has risen every year since 2008.",
     ],
+    canCheckHeading: "What HoldsUp can check",
+    canCheckBody:
+      "Every claim is matched to an official statistic. Browse the full list to see which topics, countries and years are covered.",
+    canCheckLink: "See everything HoldsUp can check",
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",
     maxChars: 2000,
@@ -78,7 +83,33 @@ export const strings = {
     retryAfter: (s: number) => `Try again in about ${s} seconds.`,
     cached: "Answered from an earlier check of the same claim.",
     back: "Check another claim",
-    noClaims: "No numeric claim was found in this text.",
+    noClaims:
+      "HoldsUp found no claim with a number in it. Try a sentence such as “Italy's unemployment rate fell to 7.7% in 2023.”",
+    closestHeading: "The closest things HoldsUp can check",
+    seeAll: "See everything HoldsUp can check",
+  },
+  indicators: {
+    heading: "What HoldsUp can check",
+    intro:
+      "Each of these comes from an official source. A claim can be checked when it is about one of them.",
+    unavailable:
+      "The list could not be loaded just now. Please try again in a few minutes.",
+    years: (first: number, last: number | null) =>
+      last === null ? `since ${first}` : `${first} to ${last}`,
+    count: (n: number) => (n === 1 ? "1 statistic" : `${n} statistics`),
+    themesNav: "Jump to a topic",
+    // Listed in this order on the page. Keys are the API's `theme` values.
+    themes: {
+      population: "Population",
+      economy: "Economy",
+      work: "Work and pay",
+      prices: "Prices and housing",
+      poverty: "Poverty and inequality",
+      health: "Health",
+      education: "Education",
+      environment: "Environment",
+      safety: "Safety",
+    },
   },
   steps: {
     ledger: "Looking for an earlier check",
@@ -115,6 +146,7 @@ export const strings = {
     asserted: "Claimed",
     versions: "Versions",
     models: "Models used",
+    alsoUsed: "Also used",
     app: "app",
     catalog: "catalog",
     tolerances: "tolerances",

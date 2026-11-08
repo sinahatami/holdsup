@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
+from holdsup.config import get_settings
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.trace import ModelUse
@@ -69,13 +70,29 @@ class DataRef(BaseModel):
         )
 
 
+class Suggestion(BaseModel):
+    """A statistic HoldsUp has that is close to what a claim talks about."""
+
+    id: str
+    name: str
+
+
+class ExtraSource(BaseModel):
+    """A series used besides the matched one (the population a per-capita figure divides by)."""
+
+    indicator: IndicatorRef
+    data: DataRef
+
+
 class ClaimResult(BaseModel):
     index: int
     claim: ClaimSpec
     indicator: IndicatorRef | None = None
     alternatives: list[str] = Field(default_factory=list)
+    suggestions: list[Suggestion] = Field(default_factory=list)  # when no statistic matched
     match_reason: str = ""
     data: DataRef | None = None
+    extra_sources: list[ExtraSource] = Field(default_factory=list)
     plan_reason: str | None = None
     operations: list[OpRecord] = Field(default_factory=list)
     answer: list[int] = Field(default_factory=list)  # which operations decide the claim
@@ -106,4 +123,8 @@ class PipelineOutput(BaseModel):
 
 
 def app_version() -> str:
-    return version("holdsup")
+    """The package version, with the build's commit when known ("0.0.0+d264e60"): until the
+    first release the package version alone says nothing about which code answered."""
+    commit = get_settings().app_commit.strip()[:7]
+    base = version("holdsup")
+    return f"{base}+{commit}" if commit else base

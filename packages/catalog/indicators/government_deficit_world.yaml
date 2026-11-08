@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1974..2022, IT 1973..2024, US 1972..2024, WLD 1995..2023 (all countries listed by the source; years vary by country)
+id: government_deficit_world
+source: worldbank
+source_code: "GC.NLD.TOTL.GD.ZS"
+name: "Government deficit or surplus (World Bank)"
+theme: economy
+aliases:
+  - "government revenue minus spending as a share of GDP"
+  - "government net borrowing as a percent of GDP"
+  - "how much the government lends or borrows relative to GDP"
+definition: "Net lending (+) or net borrowing (-): government revenue minus expense, minus net investment in nonfinancial assets, as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1972
+last_year: null # still updated (latest period seen: 2024)
+related: [government_deficit, government_debt_pct_gdp]
+filters: {}

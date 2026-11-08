@@ -40,14 +40,16 @@ class ModelClaim(BaseModel):
         description="Places the claim compares or ranks against, as codes; groups as "
         "'EU', 'G7', 'WORLD'. Empty if none."
     )
-    start: str | None = Field(description="First period: 'YYYY', 'YYYY-MM' or 'YYYY-Qn'.")
+    start: str | None = Field(
+        description="First period: 'YYYY', 'YYYY-MM', 'YYYY-Qn' or 'YYYY-Sn' (a half-year)."
+    )
     start_named: bool = Field(
         description="True if the start is written in the text; false if from a well-known "
         "event ('since the pandemic')."
     )
     end: str | None = Field(
-        description="Last period as 'YYYY', 'YYYY-MM' or 'YYYY-Qn'; 'latest' when the claim "
-        "speaks about the present."
+        description="Last period as 'YYYY', 'YYYY-MM', 'YYYY-Qn' or 'YYYY-Sn' (a half-year); "
+        "'latest' when the claim speaks about the present."
     )
     lookback: Lookback | None
     office: Office | None

@@ -48,7 +48,7 @@ def _whole_years(plan: ModelPlan, ctx: PlanContext) -> list[str]:
         finer = {
             name: str(getattr(call, name))
             for name in PERIOD_ARGS
-            if frequency_of(getattr(call, name)) in (Frequency.MONTHLY, Frequency.QUARTERLY)
+            if frequency_of(getattr(call, name)) not in (None, Frequency.ANNUAL)
         }
         new = {name: value[:4] for name, value in finer.items()}
         if not new or not set(new.values()) <= years:
@@ -84,7 +84,7 @@ def _assumed_start(plan: ModelPlan, ctx: PlanContext) -> list[str]:
             continue
         start = claim.start
         form = frequency_of(call.end)
-        if len(start) == 4 and form in (Frequency.MONTHLY, Frequency.QUARTERLY):
+        if len(start) == 4 and form not in (None, Frequency.ANNUAL):
             start = str(Period(int(start), 1, form))  # the same form as the call's end
         if period_error(start, info, call.op) is None:
             notes.append(f"call {i} ({call.op}): start {call.start} → {start}, the assumed window")

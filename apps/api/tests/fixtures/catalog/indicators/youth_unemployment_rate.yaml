@@ -2,6 +2,7 @@ id: youth_unemployment_rate
 source: eurostat
 source_code: une_rt_a
 name: Youth unemployment rate
+theme: work
 aliases:
   - youth unemployment
   - jobless rate for young people

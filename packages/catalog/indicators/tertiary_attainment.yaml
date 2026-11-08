@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2002..2025, DE 1992..2025, FR 1993..2025, IT 1992..2025 (30 of 31 EU/EFTA countries have data)
+id: tertiary_attainment
+source: eurostat
+source_code: "edat_lfse_03"
+name: "Tertiary education attainment, ages 25-34 (Eurostat)"
+theme: education
+aliases:
+  - "share of 25-34 year olds with tertiary education"
+  - "percentage of young adults who attained tertiary education"
+  - "tertiary attainment rate for ages 25-34"
+definition: "People aged 25 to 34 whose highest level of education is tertiary (ISCED levels 5-8), as a percentage of the population of the same age."
+unit: "% of population aged 25-34"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1992
+last_year: null # still updated (latest period seen: 2025)
+related: [tertiary_attainment_world, early_school_leavers]
+filters: { sex: "T", age: "Y25-34", isced11: "ED5-8", unit: "PC" }

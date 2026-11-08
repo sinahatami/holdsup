@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1961..2024, DE 1960..2024, FR 1996..2024, IT 1960..2024 (31 of 31 EU/EFTA countries have data)
+id: infant_mortality_rate
+source: eurostat
+source_code: "demo_minfind"
+name: "Infant mortality rate (Eurostat)"
+theme: health
+aliases:
+  - "babies dying before their first birthday per 1,000 births"
+  - "deaths of children under one year per 1,000 live births"
+  - "how many infants die in their first year"
+definition: "Number of deaths of children under one year of age in a year, per 1,000 live births in the same year."
+unit: "deaths per 1,000 live births"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2024)
+related: [infant_mortality_rate_world, life_expectancy, live_births]
+filters: { indic_de: "INFMORRT" }

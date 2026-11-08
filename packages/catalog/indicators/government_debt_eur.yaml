@@ -6,6 +6,7 @@ id: government_debt_eur
 source: eurostat
 source_code: "gov_10dd_edpt1"
 name: "Government debt (euro)"
+theme: economy
 aliases:
   - "public debt in euros"
   - "national debt (million euro)"
@@ -19,5 +20,5 @@ release_lag_months: 4 # April EDP notification for the previous year
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1995
 last_year: null # still updated
-related: [government_debt_pct_gdp]
+related: [government_debt_pct_gdp, population_total]
 filters: { na_item: "GD", sector: "S13", unit: "MIO_EUR" }

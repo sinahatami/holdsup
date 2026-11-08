@@ -1,0 +1,22 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1997..2025, DE 1995..2025, FR 1995..2025, IT 1995..2025 (27 of 31 EU/EFTA countries have data)
+# Note: Same dataset as government_debt_pct_gdp; the April notification gives the previous year, hence the 4-month lag.
+id: government_deficit
+source: eurostat
+source_code: "gov_10dd_edpt1"
+name: "Government deficit or surplus (Eurostat)"
+theme: economy
+aliases:
+  - "budget deficit as a percent of GDP"
+  - "government net borrowing relative to GDP"
+  - "public deficit or surplus as a share of GDP"
+  - "general government net lending as a share of GDP"
+definition: "General government net lending (+) or net borrowing (-) as a percentage of GDP; a negative value is a deficit and a positive value a surplus."
+unit: "% of GDP"
+frequency: annual
+release_lag_months: 4 # April EDP notification for the previous year
+geo_coverage: ["EU27_2020", "EU member states"]
+first_year: 1995
+last_year: null # still updated (latest period seen: 2025)
+related: [government_deficit_world, government_debt_pct_gdp]
+filters: { na_item: "B9", sector: "S13", unit: "PC_GDP" }

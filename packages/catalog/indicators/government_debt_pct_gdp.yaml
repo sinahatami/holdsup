@@ -6,6 +6,7 @@ id: government_debt_pct_gdp
 source: eurostat
 source_code: "gov_10dd_edpt1"
 name: "Government debt to GDP"
+theme: economy
 aliases:
   - "debt-to-GDP ratio"
   - "public debt as a share of GDP"
