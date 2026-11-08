@@ -30,7 +30,7 @@ from holdsup.pipeline.plan.model import (
 )
 from holdsup.pipeline.plan.operations import OPERATIONS, SeriesReader, run_call
 from holdsup.pipeline.plan.periods import frequency_of
-from holdsup.verdict.rules import Tolerances
+from holdsup.verdict.tolerances import Tolerances
 
 
 @dataclass

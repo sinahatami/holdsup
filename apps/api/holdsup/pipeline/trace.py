@@ -39,9 +39,8 @@ class StepEvent(BaseModel):
     ms: float | None = None  # step_done only
 
 
+# One model call a step made. (A comment, not a docstring: it would change the OpenAPI schema.)
 class ModelUse(BaseModel):
-    """One model call a step made."""
-
     step: Step
     provider: str
     model: str
