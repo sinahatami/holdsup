@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2010..2024, DE 1995..2024, FR 1995..2024, IT 1995..2024 (30 of 31 EU/EFTA countries have data)
+id: government_spending
+source: eurostat
+source_code: "gov_10a_exp"
+name: "Government spending to GDP (Eurostat)"
+theme: economy
+aliases:
+  - "public spending as a share of GDP"
+  - "total government expenditure relative to GDP"
+  - "what the state spends as a percent of GDP"
+definition: "Total expenditure of general government (central, state and local government and social security funds) as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1990
+last_year: null # still updated (latest period seen: 2025)
+related: [government_spending_world, tax_revenue, government_deficit]
+filters: { cofog99: "TOTAL", na_item: "TE", sector: "S13", unit: "PC_GDP" }

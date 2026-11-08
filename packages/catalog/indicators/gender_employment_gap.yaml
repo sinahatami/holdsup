@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2009..2025, DE 2009..2025, FR 2005..2025, IT 2009..2025 (30 of 31 EU/EFTA countries have data)
+# Note: Eurostat only: the World Bank has no employment-rate gap series.
+id: gender_employment_gap
+source: eurostat
+source_code: "tesem060"
+name: "Gender employment gap"
+theme: work
+aliases:
+  - "how much higher men's employment rate is than women's"
+  - "men's employment rate minus women's employment rate"
+  - "difference in the employment rates of men and women aged 20-64"
+definition: "Difference between the employment rates of men and women aged 20 to 64, in percentage points; a positive value means men are employed more often than women."
+unit: "percentage points"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 2005
+last_year: null # still updated (latest period seen: 2025)
+related: [employment_rate_20_64]
+filters: {}

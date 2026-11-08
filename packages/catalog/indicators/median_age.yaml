@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2001..2025, DE 1960..2025, FR 1991..2025, IT 1960..2025 (31 of 31 EU/EFTA countries have data)
+# Note: Eurostat only: the World Bank has no median-age series.
+id: median_age
+source: eurostat
+source_code: "demo_pjanind"
+name: "Median age of the population"
+theme: population
+aliases:
+  - "age dividing the population into two equal halves"
+  - "half of the population is younger than this age"
+  - "age of the middle person in the population"
+definition: "The age that divides the population into two numerically equal groups, one younger and one older, on 1 January."
+unit: "years"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [old_age_dependency_ratio, life_expectancy]
+filters: { indic_de: "MEDAGEPOP" }

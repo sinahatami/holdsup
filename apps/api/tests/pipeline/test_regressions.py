@@ -193,7 +193,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.name: p.period for p in c.verdict.parts} == {
         "assertion": None, "start value": "2015", "end value": "2023",
     }  # fmt: skip
-    assert out.versions.catalog == "0.5.0" and out.versions.tolerances == 2
+    assert out.versions.catalog == "0.6.0" and out.versions.tolerances == 2
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:

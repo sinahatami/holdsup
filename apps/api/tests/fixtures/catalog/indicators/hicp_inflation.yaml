@@ -2,6 +2,7 @@ id: hicp_inflation
 source: eurostat
 source_code: prc_hicp_aind
 name: Consumer price inflation (HICP)
+theme: prices
 aliases:
   - inflation
   - cost of living increase

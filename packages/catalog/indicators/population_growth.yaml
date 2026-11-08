@@ -1,0 +1,21 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1960..2025, DE 1960..2025, FR 1982..2025, IT 1960..2025 (31 of 31 EU/EFTA countries have data)
+# Note: Per 1,000 inhabitants, not per cent: divide by 10 to compare with the World Bank's growth rate.
+id: population_growth
+source: eurostat
+source_code: "demo_gind"
+name: "Population growth rate (Eurostat)"
+theme: population
+aliases:
+  - "how fast the population is growing or shrinking"
+  - "population change per 1,000 people"
+  - "natural change plus net migration per 1,000 inhabitants"
+  - "yearly rise or fall in the number of inhabitants"
+definition: "Total population change over the year (natural change plus net migration, including statistical adjustment) per 1,000 inhabitants, from Eurostat's demographic balance."
+unit: "per 1,000 inhabitants"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [population_growth_world, population_total, net_migration_rate]
+filters: { indic_de: "GROWRT" }

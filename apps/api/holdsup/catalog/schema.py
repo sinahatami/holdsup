@@ -38,6 +38,20 @@ _SOURCE_LABELS = {
 }
 
 
+class Theme(StrEnum):
+    """The topic an indicator is listed under on the /indicators page, in display order."""
+
+    POPULATION = "population"
+    ECONOMY = "economy"
+    WORK = "work"
+    PRICES = "prices"
+    POVERTY = "poverty"
+    HEALTH = "health"
+    EDUCATION = "education"
+    ENVIRONMENT = "environment"
+    SAFETY = "safety"
+
+
 class Frequency(StrEnum):
     ANNUAL = "annual"
     QUARTERLY = "quarterly"
@@ -64,6 +78,7 @@ class IndicatorSpec(BaseModel):
     source: Source
     source_code: Text
     name: Text
+    theme: Theme
     aliases: list[Text] = Field(min_length=3, max_length=5)
     definition: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=10, max_length=500)

@@ -7,6 +7,7 @@ id: hicp_inflation_monthly
 source: eurostat
 source_code: "prc_hicp_minr"
 name: "HICP inflation (monthly, annual rate)"
+theme: prices
 aliases:
   - "euro area inflation"
   - "HICP year-on-year inflation"

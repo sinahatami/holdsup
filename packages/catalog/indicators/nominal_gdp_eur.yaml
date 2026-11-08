@@ -7,6 +7,7 @@ id: nominal_gdp_eur
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Nominal GDP (current prices)"
+theme: economy
 aliases:
   - "GDP in euros (not adjusted for inflation)"
   - "size of the economy in current prices"

@@ -6,6 +6,7 @@ id: real_gdp_growth_quarterly_qoq
 source: eurostat
 source_code: "namq_10_gdp"
 name: "Real GDP growth, quarter on quarter"
+theme: economy
 aliases:
   - "quarterly GDP growth (vs previous quarter)"
   - "quarter-on-quarter growth"

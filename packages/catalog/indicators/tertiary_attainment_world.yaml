@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1994..2021, IT 1971..2023, US 1970..2024 (all countries listed by the source; years vary by country)
+# Note: Ages 25 and over, so lower than the Eurostat 25-34 figure for the same country.
+id: tertiary_attainment_world
+source: worldbank
+source_code: "SE.TER.CUAT.ST.ZS"
+name: "Tertiary education attainment, ages 25+ (World Bank)"
+theme: education
+aliases:
+  - "share of adults aged 25 and over with at least short-cycle tertiary education"
+  - "percentage of the population over 25 with tertiary education"
+  - "adult tertiary attainment, cumulative"
+definition: "Percentage of the population aged 25 and over that attained or completed at least short-cycle tertiary education (cumulative)."
+unit: "% of population aged 25+"
+frequency: annual
+geo_coverage: ["All countries"]
+first_year: 1970
+last_year: null # still updated (latest period seen: 2025)
+related: [tertiary_attainment, early_school_leavers]
+filters: {}

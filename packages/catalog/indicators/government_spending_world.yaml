@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1974..2022, IT 1973..2023, US 1972..2023, WLD 1990..2022 (all countries listed by the source; years vary by country)
+id: government_spending_world
+source: worldbank
+source_code: "GC.XPN.TOTL.GD.ZS"
+name: "Government expense to GDP (World Bank)"
+theme: economy
+aliases:
+  - "government expense as a percent of GDP"
+  - "how much the government spends relative to GDP"
+  - "public expense as a share of GDP"
+definition: "Government expense, a decrease in net worth resulting from a transaction, expressed as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1972
+last_year: null # still updated (latest period seen: 2024)
+related: [government_spending, tax_revenue_world]
+filters: {}

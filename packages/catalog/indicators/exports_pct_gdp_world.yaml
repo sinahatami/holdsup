@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1960..2025, IT 1970..2025, US 1970..2024, WLD 1970..2025 (all countries listed by the source; years vary by country)
+id: exports_pct_gdp_world
+source: worldbank
+source_code: "NE.EXP.GNFS.ZS"
+name: "Exports of goods and services to GDP (World Bank)"
+theme: economy
+aliases:
+  - "exports of goods and services as a percent of GDP"
+  - "what a country sells to non-residents relative to GDP"
+  - "goods and services provided to non-residents as a share of GDP"
+definition: "Exports of goods (changes of economic ownership from residents to non-residents) and of services (provided by residents to non-residents), as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [exports_pct_gdp]
+filters: {}

@@ -9,6 +9,7 @@ id: renewable_share_primary_energy
 source: owid
 source_code: "energy-mix"
 name: "Renewable share of primary energy"
+theme: environment
 aliases:
   - "share of primary energy from renewables"
   - "percentage of energy from renewable sources (primary energy basis)"
@@ -20,6 +21,6 @@ frequency: annual
 geo_coverage: ["All countries", "OWID_WRL"]
 first_year: 1965
 last_year: null # still updated
-related: [renewable_share_final_energy]
+related: [renewable_share_final_energy, renewable_share_electricity_world]
 filters:
   { metric: "share", source: "renewables", column: "renewables_share_pct" }

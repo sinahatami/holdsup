@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2004..2025, DE 2004..2025, FR 2004..2025, IT 2004..2025 (29 of 31 EU/EFTA countries have data)
+# Note: Same dataset as renewable_share_final_energy; only nrg_bal differs.
+id: renewable_share_electricity
+source: eurostat
+source_code: "nrg_ind_ren"
+name: "Renewable share of electricity consumption (Eurostat)"
+theme: environment
+aliases:
+  - "how much of the electricity used comes from renewables"
+  - "renewable electricity as a share of electricity consumption"
+  - "percentage of electricity from renewable sources"
+definition: "Electricity from renewable energy sources as a percentage of gross electricity consumption."
+unit: "% of gross electricity consumption"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "IS", "NO"]
+first_year: 2004
+last_year: null # still updated (latest period seen: 2025)
+related: [renewable_share_electricity_world, renewable_share_final_energy]
+filters: { nrg_bal: "REN_ELC", unit: "PC" }

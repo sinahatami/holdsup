@@ -6,6 +6,7 @@ id: government_debt_eur
 source: eurostat
 source_code: "gov_10dd_edpt1"
 name: "Government debt (euro)"
+theme: economy
 aliases:
   - "public debt in euros"
   - "national debt (million euro)"

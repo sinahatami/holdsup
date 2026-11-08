@@ -7,6 +7,7 @@ id: employment_persons
 source: eurostat
 source_code: "lfsi_emp_a"
 name: "Employed people"
+theme: work
 aliases:
   - "number of people in work"
   - "how many people have jobs"
