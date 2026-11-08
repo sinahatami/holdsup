@@ -20,6 +20,12 @@ export function SiteHeader() {
           >
             {strings.nav.howItWorks}
           </Link>
+          <Link
+            href={routes.indicators}
+            className="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium transition sm:block"
+          >
+            {strings.nav.canCheck}
+          </Link>
           <a
             href={strings.footer.repoUrl}
             aria-label={strings.footer.github}

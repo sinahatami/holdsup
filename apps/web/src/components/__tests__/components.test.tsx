@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
+import { CatalogList } from "@/components/organisms/catalog-list";
+import { ClaimCard } from "@/components/organisms/claim-card";
 import { Receipt } from "@/components/organisms/receipt";
 import { Trace } from "@/components/organisms/trace";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
@@ -111,7 +113,21 @@ const claim = {
       flags: [],
     },
   ],
-  models: [{ step: "extract", provider: "groq", model: "m" }],
+  models: [
+    {
+      step: "match",
+      provider: "g",
+      model: "gpt-oss-120b",
+      label: "GPT-OSS 120B",
+    },
+    {
+      step: "match",
+      provider: "g",
+      model: "gpt-oss-120b",
+      label: "GPT-OSS 120B",
+    },
+    { step: "plan", provider: "g", model: "old-id", label: "" },
+  ],
 } as unknown as ClaimResult;
 
 describe("Receipt", () => {
@@ -127,6 +143,38 @@ describe("Receipt", () => {
     expect(screen.getByText(/change\(/)).toBeInTheDocument();
     expect(screen.getByText(/catalog 0.2.0/)).toBeInTheDocument();
     expect(screen.queryByTestId("op-notes")).not.toBeInTheDocument();
+  });
+  it("lists each step once with a readable model name", () => {
+    render(
+      <Receipt
+        claim={claim}
+        versions={{ app: "0.0.0+d264e60", catalog: "0.5.0", tolerances: 2 }}
+        sharedModels={[
+          { step: "extract", provider: "g", model: "x", label: "GPT-OSS 20B" },
+        ]}
+      />,
+    );
+    const names = (label: string) =>
+      screen.getByText(label).nextElementSibling?.textContent;
+    expect(names(strings.steps.extract)).toBe("GPT-OSS 20B");
+    expect(names(strings.steps.match)).toBe("GPT-OSS 120B");
+    expect(names(strings.steps.plan)).toBe("old-id");
+    expect(screen.getAllByText("GPT-OSS 120B")).toHaveLength(1);
+    expect(screen.getByText(/app 0.0.0\+d264e60/)).toBeInTheDocument();
+  });
+  it("cites a second series used, such as the population", () => {
+    const extra = {
+      indicator: { ...claim.indicator!, name: "Total population (Eurostat)" },
+      data: { ...claim.data!, dataset: "demo_pjan" },
+    };
+    render(
+      <Receipt
+        claim={{ ...claim, extra_sources: [extra] } as ClaimResult}
+        versions={{ app: "a", catalog: "c", tolerances: 1 }}
+      />,
+    );
+    expect(screen.getByText(strings.receipt.alsoUsed)).toBeInTheDocument();
+    expect(screen.getByText("demo_pjan")).toBeInTheDocument();
   });
   it("shows each calculation's notes, such as how a year's value was made", () => {
     const detail =
@@ -212,5 +260,82 @@ describe("CheckForm", () => {
       screen.getByRole("button", { name: strings.home.submit }),
     ).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent(strings.home.tooLong);
+  });
+});
+
+const versions = { app: "a", catalog: "c", tolerances: 1 };
+const cantCheck = {
+  ...claim,
+  claim: { quote: "Italy has 20 millions population in 2022" },
+  verdict: { label: "cant_check", reason: "HoldsUp can't check this yet." },
+  explanation: "",
+  retryable: false,
+  suggestions: [{ id: "a", name: "Total population (Eurostat)" }],
+} as unknown as ClaimResult;
+
+describe("ClaimCard", () => {
+  it("offers the closest statistics and the full list when it can't check", () => {
+    render(<ClaimCard claim={cantCheck} versions={versions} order={0} />);
+    expect(screen.getByText("Total population (Eurostat)")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: strings.check.seeAll }),
+    ).toHaveAttribute("href", "/indicators");
+    expect(
+      screen.queryByText(strings.check.explanationHeading),
+    ).not.toBeInTheDocument();
+  });
+  it("does not point to the list when the source was only briefly down", () => {
+    render(
+      <ClaimCard
+        claim={{ ...cantCheck, retryable: true } as ClaimResult}
+        versions={versions}
+        order={0}
+      />,
+    );
+    expect(
+      screen.queryByRole("link", { name: strings.check.seeAll }),
+    ).not.toBeInTheDocument();
+  });
+  it("shows Why when there is something to add", () => {
+    render(
+      <ClaimCard
+        claim={
+          {
+            ...claim,
+            claim: { quote: "q" },
+            verdict: { label: "not_supported", reason: "Outside tolerance." },
+            explanation: "Eurostat counts 59 million.",
+          } as unknown as ClaimResult
+        }
+        versions={versions}
+        order={0}
+      />,
+    );
+    expect(screen.getByText("Eurostat counts 59 million.")).toBeInTheDocument();
+  });
+});
+
+describe("CatalogList", () => {
+  it("shows what each statistic measures and where it comes from", () => {
+    render(
+      <CatalogList
+        entries={[
+          {
+            id: "p",
+            name: "Total population",
+            definition: "People resident on 1 January.",
+            unit: "persons",
+            source: "Eurostat",
+            frequency: "annual",
+            first_year: 1960,
+            last_year: null,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Total population")).toBeInTheDocument();
+    expect(
+      screen.getByText(/persons · Eurostat · since 1960/),
+    ).toBeInTheDocument();
   });
 });
