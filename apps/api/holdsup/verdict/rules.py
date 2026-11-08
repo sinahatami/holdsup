@@ -4,7 +4,7 @@ No model is involved. Every comparison is a `Part` with the computed value, the 
 and the tolerance used, so the receipt can show why the label was given.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
 
@@ -305,6 +305,18 @@ class _Rules:
         return parts
 
 
+# How each operation's result is judged against the claim. per_capita and deflate make series
+# for later calls and never decide a claim themselves (plan validation keeps them out of answers).
+_JUDGES: Mapping[str, Callable[[_Rules, OpRecord], Part]] = {
+    "value_at": _Rules.value_at,
+    "change": _Rules.change,
+    "cagr": _Rules.cagr,
+    "trend": _Rules.trend,
+    "compare": _Rules.compare,
+    "rank": _Rules.rank,
+}
+
+
 def _value(r: OpRecord) -> float:
     if r.value is None:
         raise ValueError(f"{r.op} has no value")
@@ -342,8 +354,10 @@ def decide(
     parts: list[Part]
     if first.op == "change" and len(chosen) > 1:
         parts = rules.peers(chosen)
+    elif (judge := _JUDGES.get(first.op)) is not None:
+        parts = [judge(rules, first)]
     else:
-        parts = [getattr(rules, first.op)(first)]
+        return cant_check(f"a {first.op} result cannot decide a claim")
     if first.op == "change":
         parts += rules.levels(first)
 

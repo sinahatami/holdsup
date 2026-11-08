@@ -2,7 +2,7 @@
 
 import json
 from datetime import date
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from pydantic import ValidationError
@@ -13,9 +13,11 @@ from holdsup.ops import AnnualValue, ChangeKind, FlagCode, Frequency
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction
 from holdsup.pipeline.plan import (
     MAX_CALLS,
+    OPERATIONS,
     PLAN_SYSTEM,
     ModelPlan,
     OpCall,
+    OpName,
     PlanContext,
     PlanInvalid,
     SeriesInfo,
@@ -731,3 +733,16 @@ def test_a_level_claim_with_two_values_is_not_turned_into_a_change() -> None:
 def test_one_value_of_a_growth_rate_series_stays_a_value() -> None:
     valid = validate_plan(plan(VALUES[0]), ctx())
     assert [c.op for c in valid.calls] == ["value_at"] and valid.notes == []
+
+
+# --- the operation registry ------------------------------------------------------------------
+
+
+def test_every_operation_name_has_exactly_one_registry_entry() -> None:
+    assert set(OPERATIONS) == set(get_args(OpName))
+
+
+def test_the_prompt_describes_every_operation() -> None:
+    for name, spec in OPERATIONS.items():
+        args = ", ".join(sorted(spec.required))
+        assert f"- {name}(" in PLAN_SYSTEM, f"{name} ({args}) is missing from PLAN_SYSTEM"
