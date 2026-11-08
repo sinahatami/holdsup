@@ -1,0 +1,22 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2013..2025, DE 1995..2025, FR 1995..2025, IT 1995..2025 (30 of 31 EU/EFTA countries have data)
+# Note: A relative measure: it moves with the national median, not with living standards.
+id: at_risk_of_poverty_rate
+source: eurostat
+source_code: "ilc_li02"
+name: "At-risk-of-poverty rate (Eurostat)"
+theme: poverty
+aliases:
+  - "share of people living on less than 60% of the median income"
+  - "percentage of people with income under 60% of the national median"
+  - "percentage of the population below the poverty threshold"
+  - "people at risk of poverty"
+definition: "Share of people whose equivalised disposable income is below 60% of the national median equivalised income, from the EU-SILC household survey."
+unit: "% of population"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1995
+last_year: null # still updated (latest period seen: 2025)
+related: [poverty_rate_national_lines_world, gini_index]
+filters:
+  { statinfo: "MED_EI", unit: "PC", rskpovth: "B_60", sex: "T", age: "TOTAL" }

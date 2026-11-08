@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1961..2025, IT 1961..2025, US 1961..2025, WLD 1961..2025 (all countries listed by the source; years vary by country)
+id: population_growth_world
+source: worldbank
+source_code: "SP.POP.GROW"
+name: "Population growth rate (World Bank)"
+theme: population
+aliases:
+  - "annual percentage growth of a country's population"
+  - "how fast a country's population grows each year"
+  - "exponential growth rate of the mid-year population"
+  - "yearly population growth as a percent"
+definition: "Annual growth rate of the mid-year population, as a percentage: the exponential rate of growth from the previous year, counting all residents regardless of legal status or citizenship."
+unit: "% per year"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1961
+last_year: null # still updated (latest period seen: 2025)
+related: [population_growth, population_total_world]
+filters: {}

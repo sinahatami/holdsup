@@ -6,6 +6,7 @@ id: life_expectancy
 source: worldbank
 source_code: "SP.DYN.LE00.IN"
 name: "Life expectancy at birth"
+theme: health
 aliases:
   - "life expectancy"
   - "how long people live"
@@ -18,5 +19,5 @@ frequency: annual
 geo_coverage: ["All countries", "WLD"]
 first_year: 1960
 last_year: null # still updated
-related: []
+related: [infant_mortality_rate, health_spending]
 filters: {}

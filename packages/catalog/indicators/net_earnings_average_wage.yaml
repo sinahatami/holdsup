@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2013..2025, DE 2000..2025, FR 2000..2025, IT 2000..2025 (30 of 31 EU/EFTA countries have data)
+# Note: A tax-benefit model case (a single full-time worker), not the mean of all earnings.
+id: net_earnings_average_wage
+source: eurostat
+source_code: "earn_nt_net"
+name: "Net annual earnings of a single worker on the average wage"
+theme: work
+aliases:
+  - "take-home pay of an average earner"
+  - "net yearly pay of a single worker on the average wage"
+  - "what an average-wage single person without children earns after deductions"
+definition: "Annual net earnings of a single person without children who earns 100% of the average earning, in euro."
+unit: "euro per year"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 2000
+last_year: null # still updated (latest period seen: 2025)
+related: [minimum_wage_to_average_earnings]
+filters: { estruct: "NET", ecase: "P1_NCH_AW100", currency: "EUR" }

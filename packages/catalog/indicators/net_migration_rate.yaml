@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1961..2025, DE 1960..2025, FR 1998..2025, IT 1960..2025 (31 of 31 EU/EFTA countries have data)
+# Note: A rate per 1,000 inhabitants; the World Bank entry counts persons.
+id: net_migration_rate
+source: eurostat
+source_code: "demo_gind"
+name: "Net migration rate (Eurostat)"
+theme: population
+aliases:
+  - "net migration per 1,000 inhabitants"
+  - "population change left over after births and deaths, per 1,000 people"
+  - "people arriving minus people leaving, per 1,000 inhabitants"
+definition: "Crude rate of net migration plus statistical adjustment: the difference between total population change and natural change (births minus deaths), per 1,000 inhabitants."
+unit: "per 1,000 inhabitants"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [net_migration_world, population_growth]
+filters: { indic_de: "CNMIGRATRT" }

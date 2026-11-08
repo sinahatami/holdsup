@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1994..2025, IT 1983..2025, US 1994..2025 (all countries listed by the source; years vary by country)
+id: neet_rate_world
+source: worldbank
+source_code: "SL.UEM.NEET.ZS"
+name: "Youth not in education, employment or training, ages 15-24 (World Bank)"
+theme: work
+aliases:
+  - "young people aged 15-24 who are neither working nor studying"
+  - "NEET rate for ages 15-24"
+  - "youth who are out of school, jobs and training"
+definition: "Share of persons aged 15 to 24 who are not in education, employment or training, as a percentage of the youth population (the NEET rate)."
+unit: "% of youth population (ages 15-24)"
+frequency: annual
+geo_coverage: ["All countries"]
+first_year: 1970
+last_year: null # still updated (latest period seen: 2025)
+related: [neet_rate, youth_unemployment_rate_monthly]
+filters: {}

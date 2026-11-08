@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1991..2025, IT 1991..2025, US 1991..2025, WLD 1991..2025 (all countries listed by the source; years vary by country)
+id: employment_rate_world
+source: worldbank
+source_code: "SL.EMP.TOTL.SP.ZS"
+name: "Employment rate, ages 15+ (World Bank)"
+theme: work
+aliases:
+  - "share of the population that is employed"
+  - "percentage of people aged 15 and over with a job"
+  - "how much of the population is in work (ILO estimate)"
+definition: "Employment-to-population ratio: the proportion of the population aged 15 and over that is employed, as an ILO modelled estimate."
+unit: "% of population aged 15+"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1991
+last_year: null # still updated (latest period seen: 2025)
+related: [employment_rate_15_64, employment_rate_20_64]
+filters: {}

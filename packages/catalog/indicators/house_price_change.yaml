@@ -1,0 +1,51 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2006..2025, DE 2006..2025, FR 2006..2025, IT 2011..2025 (29 of 31 EU/EFTA countries have data)
+id: house_price_change
+source: eurostat
+source_code: "prc_hpi_a"
+name: "House price change, annual"
+theme: prices
+aliases:
+  - "how much house prices rose or fell over the year"
+  - "yearly percentage change in home prices"
+  - "annual rate of change of residential property prices"
+definition: "Annual average rate of change, in percent, of the index of the prices of dwellings (new and existing) purchased by households."
+unit: "% change on the previous year"
+frequency: annual
+geo_coverage:
+  [
+    "EU27_2020",
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK",
+    "CH",
+    "IS",
+    "NO",
+  ]
+first_year: 2006
+last_year: null # still updated (latest period seen: 2025)
+related: [house_price_index, hicp_inflation_monthly]
+filters: { purchase: "TOTAL", unit: "RCH_A_AVG" }

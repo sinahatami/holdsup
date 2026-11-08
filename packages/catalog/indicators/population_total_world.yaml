@@ -5,6 +5,7 @@ id: population_total_world
 source: worldbank
 source_code: "SP.POP.TOTL"
 name: "Total population (World Bank)"
+theme: population
 aliases:
   - "population of the country"
   - "number of inhabitants worldwide"
@@ -17,5 +18,5 @@ frequency: annual
 geo_coverage: ["All countries", "WLD"]
 first_year: 1960
 last_year: null # still updated
-related: [population_total]
+related: [population_total, population_growth_world]
 filters: {}

@@ -7,6 +7,7 @@ id: live_births
 source: eurostat
 source_code: "demo_gind"
 name: "Live births"
+theme: population
 aliases:
   - "number of births"
   - "babies born per year"

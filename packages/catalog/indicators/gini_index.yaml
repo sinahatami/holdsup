@@ -1,0 +1,19 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 2010..2025, DE 2005..2025, FR 2004..2025, IT 2004..2025 (30 of 31 EU/EFTA countries have data)
+id: gini_index
+source: eurostat
+source_code: "ilc_di12"
+name: "Gini index of income (Eurostat)"
+theme: poverty
+aliases:
+  - "income inequality measured by the Gini coefficient"
+  - "how unequally disposable income is spread"
+  - "Gini coefficient of equivalised disposable income"
+definition: "Gini coefficient of equivalised disposable income, on a scale from 0 (perfect equality) to 100 (perfect inequality), from the EU-SILC household survey."
+unit: "scale 0-100"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 2003
+last_year: null # still updated (latest period seen: 2025)
+related: [gini_index_world, at_risk_of_poverty_rate]
+filters: { statinfo: "GINI_HND", age: "TOTAL" }

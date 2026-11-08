@@ -6,6 +6,7 @@ id: youth_unemployment_rate_monthly
 source: eurostat
 source_code: "une_rt_m"
 name: "Youth unemployment rate (monthly)"
+theme: work
 aliases:
   - "youth unemployment"
   - "jobless rate for under-25s"

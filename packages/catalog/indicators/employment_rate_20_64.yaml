@@ -7,6 +7,7 @@ id: employment_rate_20_64
 source: eurostat
 source_code: "lfsi_emp_a"
 name: "Employment rate, ages 20-64"
+theme: work
 aliases:
   - "employment rate"
   - "share of 20-64 year olds in work"
@@ -19,5 +20,5 @@ frequency: annual
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 2003
 last_year: null # still updated
-related: [employment_persons]
+related: [employment_persons, employment_rate_15_64]
 filters: { indic_em: "EMP_LFS", age: "Y20-64", sex: "T", unit: "PC_POP" }

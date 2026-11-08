@@ -7,6 +7,7 @@ id: unemployment_rate_ilo
 source: worldbank
 source_code: "SL.UEM.TOTL.ZS"
 name: "Unemployment rate (ILO modelled estimate)"
+theme: work
 aliases:
   - "unemployment rate (ILO estimate)"
   - "jobless rate, ILO modelled"

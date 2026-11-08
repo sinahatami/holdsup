@@ -5,6 +5,7 @@ id: population_total
 source: eurostat
 source_code: "demo_pjan"
 name: "Total population (Eurostat)"
+theme: population
 aliases:
   - "population"
   - "number of inhabitants"
@@ -17,5 +18,5 @@ frequency: annual
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1960
 last_year: null # still updated
-related: [population_total_world]
+related: [population_total_world, population_growth]
 filters: { age: "TOTAL", sex: "T", unit: "NR" }

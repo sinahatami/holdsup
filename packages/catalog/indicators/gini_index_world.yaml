@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1977..2023, IT 1977..2023, US 1963..2024 (all countries listed by the source; years vary by country)
+# Note: Survey years only, with gaps; income-based for some countries and consumption-based for others.
+id: gini_index_world
+source: worldbank
+source_code: "SI.POV.GINI"
+name: "Gini index (World Bank)"
+theme: poverty
+aliases:
+  - "how unequal incomes are within a country"
+  - "income or consumption inequality on a 0 to 100 scale"
+  - "deviation of the income distribution from perfect equality"
+definition: "Extent to which the distribution of income (or, in some cases, consumption expenditure) among individuals or households deviates from perfect equality, from 0 (perfect equality) to 100 (perfect inequality)."
+unit: "scale 0-100"
+frequency: annual
+geo_coverage: ["All countries"]
+first_year: 1963
+last_year: null # still updated (latest period seen: 2025)
+related: [gini_index, poverty_rate_national_lines_world]
+filters: {}

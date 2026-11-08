@@ -8,7 +8,7 @@ import yaml
 from pydantic import ValidationError
 
 from holdsup.catalog.load import main as load_main
-from holdsup.catalog.schema import CatalogError, IndicatorSpec, load_catalog
+from holdsup.catalog.schema import CatalogError, IndicatorSpec, Theme, load_catalog
 from tests.catalog.helpers import FIXTURE_CATALOG
 
 VALID = yaml.safe_load((FIXTURE_CATALOG / "indicators" / "unemployment_rate.yaml").read_text())
@@ -32,6 +32,19 @@ def test_real_catalog_is_valid() -> None:
     assert load_catalog(root).version
 
 
+def test_theme_is_required() -> None:
+    without_theme = {k: v for k, v in VALID.items() if k != "theme"}
+    with pytest.raises(ValidationError, match="theme"):
+        IndicatorSpec.model_validate(without_theme)
+
+
+def test_real_catalog_lists_every_theme_and_no_unthemed_entry() -> None:
+    """The /indicators page groups by theme; an empty theme would be a heading with no entries."""
+    root = Path(__file__).resolve().parents[4] / "packages" / "catalog"
+    used = {spec.theme for spec in load_catalog(root).indicators}
+    assert used == set(Theme)
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
@@ -47,6 +60,7 @@ def test_real_catalog_is_valid() -> None:
         ({"definition": "short"}, "at least 10"),
         ({"geo_coverage": []}, "at least 1"),
         ({"surprise": 1}, "Extra inputs"),
+        ({"theme": "sport"}, "population"),
     ],
 )
 def test_invalid_entries(change: dict[str, object], message: str) -> None:

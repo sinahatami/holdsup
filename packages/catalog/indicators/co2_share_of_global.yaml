@@ -6,6 +6,7 @@ id: co2_share_of_global
 source: owid
 source_code: "annual-share-of-co2-emissions"
 name: "Share of global CO2 emissions"
+theme: environment
 aliases:
   - "percentage of the world's CO2 emissions"
   - "share of world carbon emissions"

@@ -1,0 +1,44 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: DE 2015..2026, FR 2009..2026 (22 of 31 EU/EFTA countries have data)
+# Note: The level of the minimum wage in euro is not here: Eurostat publishes it twice a year (earn_mw_cur, periods like 2024-S1), which the pipeline cannot read.
+id: minimum_wage_to_average_earnings
+source: eurostat
+source_code: "earn_mw_avgr2"
+name: "Minimum wage as a share of average earnings"
+theme: work
+aliases:
+  - "minimum wage relative to the average wage"
+  - "how the minimum wage compares with mean monthly earnings"
+  - "minimum pay as a percentage of average pay"
+definition: "Monthly minimum wage as a proportion of the mean gross monthly earnings in industry, construction and services, in percent. Only countries that have a national minimum wage appear."
+unit: "% of mean gross monthly earnings"
+frequency: annual
+geo_coverage:
+  [
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "EE",
+    "ES",
+    "FR",
+    "GR",
+    "HR",
+    "HU",
+    "IE",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SI",
+    "SK",
+  ]
+first_year: 2008
+last_year: null # still updated (latest period seen: 2026)
+related: [net_earnings_average_wage]
+filters: { unit: "PC", nace_r2: "B-S", indic_se: "MMW_MEAN_ME_PP" }
