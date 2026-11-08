@@ -7,6 +7,7 @@ id: cpi_inflation_annual
 source: worldbank
 source_code: "FP.CPI.TOTL.ZG"
 name: "Consumer price inflation (annual, national CPI)"
+theme: prices
 aliases:
   - "inflation rate (annual average, national CPI)"
   - "CPI inflation"

@@ -6,6 +6,7 @@ id: real_gdp_volume
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Real GDP (volume)"
+theme: economy
 aliases:
   - "inflation-adjusted GDP"
   - "size of the economy in real terms"
@@ -17,5 +18,6 @@ frequency: annual
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1975
 last_year: null # still updated
-related: [real_gdp_growth, nominal_gdp_eur, real_gdp_per_capita]
+related:
+  [real_gdp_growth, nominal_gdp_eur, real_gdp_per_capita, population_total]
 filters: { na_item: "B1GQ", unit: "CLV20_MEUR" }

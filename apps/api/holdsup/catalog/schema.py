@@ -24,22 +24,55 @@ class Source(StrEnum):
     OWID = "owid"
     DATACOMMONS = "datacommons"
 
+    @property
+    def label(self) -> str:
+        """The source's name for a reader."""
+        return _SOURCE_LABELS[self]
+
+
+_SOURCE_LABELS = {
+    Source.EUROSTAT: "Eurostat",
+    Source.WORLDBANK: "the World Bank",
+    Source.OWID: "Our World in Data",
+    Source.DATACOMMONS: "Data Commons",
+}
+
+
+class Theme(StrEnum):
+    """The topic an indicator is listed under on the /indicators page, in display order."""
+
+    POPULATION = "population"
+    ECONOMY = "economy"
+    WORK = "work"
+    PRICES = "prices"
+    POVERTY = "poverty"
+    HEALTH = "health"
+    EDUCATION = "education"
+    ENVIRONMENT = "environment"
+    SAFETY = "safety"
+
 
 class Frequency(StrEnum):
     ANNUAL = "annual"
+    SEMIANNUAL = "semiannual"  # two a year, written 2024-S1 (January to June) and 2024-S2
     QUARTERLY = "quarterly"
     MONTHLY = "monthly"
 
 
 # Typical months from the end of a period to its first release, when an entry does not say.
-DEFAULT_LAG = {Frequency.MONTHLY: 1, Frequency.QUARTERLY: 4, Frequency.ANNUAL: 12}
+DEFAULT_LAG = {
+    Frequency.MONTHLY: 1,
+    Frequency.QUARTERLY: 4,
+    Frequency.SEMIANNUAL: 4,
+    Frequency.ANNUAL: 12,
+}
 
 
 class AnnualValue(StrEnum):
-    """How a year's value is made from a monthly or quarterly series."""
+    """How a year's value is made from a monthly, quarterly or half-yearly series."""
 
-    MEAN = "mean"  # the average of the year's months or quarters (rates, shares, yoy growth)
-    END = "end"  # the last month or quarter of the year (stocks such as debt to GDP)
+    MEAN = "mean"  # the average of the year's periods (rates, shares, yoy growth)
+    END = "end"  # the last period of the year (stocks such as debt to GDP)
 
 
 class IndicatorSpec(BaseModel):
@@ -51,6 +84,7 @@ class IndicatorSpec(BaseModel):
     source: Source
     source_code: Text
     name: Text
+    theme: Theme
     aliases: list[Text] = Field(min_length=3, max_length=5)
     definition: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=10, max_length=500)
@@ -63,7 +97,7 @@ class IndicatorSpec(BaseModel):
     related: list[Slug] = Field(default_factory=list)
     # Fixed query filters for the adapter (not geo/time), e.g. Eurostat {sex: T, unit: PC_ACT}.
     filters: dict[str, str | list[str]] = Field(default_factory=dict)
-    # Monthly or quarterly series only: how code makes a year's value for a claim about a whole
+    # Series finer than annual only: how code makes a year's value for a claim about a whole
     # year. Null means no yearly value can be made (e.g. growth on the previous quarter).
     annual_value: AnnualValue | None = None
     # Months from the end of a period to its first release, for checking a dated claim against
@@ -81,7 +115,7 @@ class IndicatorSpec(BaseModel):
         if self.last_year is not None and self.last_year < self.first_year:
             raise ValueError("last_year is before first_year")
         if self.frequency is Frequency.ANNUAL and self.annual_value is not None:
-            raise ValueError("annual_value is only for monthly or quarterly series")
+            raise ValueError("annual_value is only for monthly, quarterly or half-yearly series")
         lowered = [a.lower() for a in self.aliases]
         if len(set(lowered)) != len(lowered):
             raise ValueError("aliases contain duplicates")

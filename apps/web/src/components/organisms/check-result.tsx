@@ -16,6 +16,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           key={c.index}
           claim={c}
           versions={result.versions}
+          sharedModels={result.models}
           order={n}
         />
       ))}

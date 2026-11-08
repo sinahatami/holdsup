@@ -6,6 +6,7 @@ id: real_gdp_growth
 source: eurostat
 source_code: "nama_10_gdp"
 name: "Real GDP growth"
+theme: economy
 aliases:
   - "economic growth"
   - "annual GDP growth"

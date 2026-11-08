@@ -19,6 +19,12 @@ def test_trend_monthly_slope_is_per_year() -> None:
     assert trend(s, "2024-01", "latest").value == pytest.approx(12.0)
 
 
+def test_trend_half_yearly_slope_is_per_year() -> None:
+    values = {f"{y}-S{h}": 3.0 * (y + (h - 1) / 2) for y in (2020, 2021, 2022) for h in (1, 2)}
+    r = trend(Series.from_values("DE", values), "2020-S1", "latest")
+    assert r.value == pytest.approx(3.0) and r.extras["n"] == 6.0
+
+
 def test_trend_noisy_r2() -> None:
     s = Series.from_values("IT", {"2020": 1.0, "2021": 3.0, "2022": 2.0, "2023": 4.0})
     r = trend(s, "2020", "2023")

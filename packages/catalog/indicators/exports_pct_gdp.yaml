@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1991..2025, FR 1975..2025, IT 1995..2025 (30 of 31 EU/EFTA countries have data)
+# Note: Same dataset as nominal_gdp_eur; only na_item and unit differ.
+id: exports_pct_gdp
+source: eurostat
+source_code: "nama_10_gdp"
+name: "Exports of goods and services to GDP (Eurostat)"
+theme: economy
+aliases:
+  - "exports as a share of GDP"
+  - "goods and services sold abroad relative to GDP"
+  - "how much of the economy's output is exported"
+definition: "Value of exports of goods and services (sales to the rest of the world) as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1975
+last_year: null # still updated (latest period seen: 2025)
+related: [exports_pct_gdp_world, nominal_gdp_eur]
+filters: { na_item: "P6", unit: "PC_GDP" }

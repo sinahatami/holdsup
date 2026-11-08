@@ -170,6 +170,14 @@ def _key(text: str) -> str:
 BY_NAME: dict[str, str] = {_key(name): code for code, names in _NAMES.items() for name in names}
 
 
+def place_name(code: str | None) -> str:
+    """How to write a place for a reader: "Italy" for IT; the code itself if there is no name."""
+    if code is None:
+        return "this place"
+    names = _NAMES.get(code)
+    return names[0] if names else code
+
+
 def is_name(text: str) -> bool:
     """True if `text` is a place written as a name, not as a code (so the reading is worth a note)."""
     raw = text.strip().upper()

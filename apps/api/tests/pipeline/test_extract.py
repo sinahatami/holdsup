@@ -221,6 +221,8 @@ def test_normalize_geo(raw: str | None, code: str | None) -> None:
     ("raw", "period"),
     [("2015", "2015"), ("2024-3", "2024-03"), ("2024-03-15", "2024-03"), ("2025 Q2", "2025-Q2"),
      ("Q1 2025", "2025-Q1"), ("2025Q4", "2025-Q4"), ("2024-13", None), ("spring", None),
+     ("2024-S1", "2024-S1"), ("2024 s2", "2024-S2"), ("2024H1", "2024-S1"), ("H2 2023", "2023-S2"),
+     ("s1 2022", "2022-S1"), ("2024-S3", None), ("2024-H0", None),
      ("latest", None), (None, None)],
 )  # fmt: skip
 def test_normalize_period(raw: str | None, period: str | None) -> None:

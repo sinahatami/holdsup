@@ -88,6 +88,11 @@ def test_written_numbers() -> None:
     ]
 
 
+def test_half_year_labels_are_dates_not_numbers() -> None:
+    found = written_numbers("The price was 0.31 in 2024-S1 and 0.29 in S2 2023.")
+    assert [(w.text, w.value) for w in found] == [("0.31", 0.31), ("0.29", 0.29), ("2023", 2023)]
+
+
 def test_allowed_numbers_cover_records_parts_periods_and_the_claim() -> None:
     text = "From 40 to 28.0937, -11.9063 against 12 ± 0.5 (2013 asked, 2015 used, 2020)."
     assert invented_numbers(text, ALLOWED) == []
@@ -179,7 +184,7 @@ async def test_rejected_twice_falls_back_to_the_template() -> None:
                         unit="%")  # fmt: skip
     assert out.source == "template" and out.rejected == [["30"], ["(empty)"]]
     assert len(client.calls) == 2
-    assert out.text.startswith("Supported by the data: Holds within tolerance.")
+    assert "Holds within tolerance" not in out.text  # the page shows the reason above
     assert "the unemployment rate data gives -11.9 against -12 claimed" in out.text
     assert invented_numbers(out.text, ALLOWED) == []
 
@@ -199,7 +204,7 @@ def test_template_passes_the_check_for_every_label() -> None:
         assert (
             invented_numbers(text, allowed_numbers(records + RECORDS, verdict, claim(), "%")) == []
         )
-    assert template_explanation(cant_check("no data for IT"), "x") == "Can't check: no data for IT"
+    assert template_explanation(cant_check("no data for IT"), "x") == ""
 
 
 def test_explain_message() -> None:
@@ -223,4 +228,4 @@ def test_template_skips_parts_without_a_computed_value() -> None:
 
     v = Verdict(label=Label.NOT_SUPPORTED, reason="Outside tolerance.",
                 parts=[Part(name="assertion", holds=False, detail="no value")])  # fmt: skip
-    assert template_explanation(v, "x") == "Not supported by the data: Outside tolerance."
+    assert template_explanation(v, "x") == ""

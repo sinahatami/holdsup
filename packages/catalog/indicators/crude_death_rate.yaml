@@ -7,6 +7,7 @@ id: crude_death_rate
 source: eurostat
 source_code: "demo_gind"
 name: "Crude death rate"
+theme: population
 aliases:
   - "death rate"
   - "deaths per 1,000 people"

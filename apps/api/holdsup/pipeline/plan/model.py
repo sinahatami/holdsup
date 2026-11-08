@@ -24,6 +24,7 @@ PERIOD_ARGS = ("period", "start", "end", "base")
 
 PERIOD_FORMAT = {
     Frequency.ANNUAL: "YYYY",
+    Frequency.SEMIANNUAL: "YYYY-Sn",
     Frequency.QUARTERLY: "YYYY-Qn",
     Frequency.MONTHLY: "YYYY-MM",
 }
@@ -39,7 +40,9 @@ class OpCall(BaseModel):
     geo: str | None = Field(default=None, description="Place code, e.g. IT, EU, WORLD.")
     geo_b: str | None = Field(default=None, description="compare: the second place.")
     geos: list[str] | None = Field(default=None, description="rank: every place to rank.")
-    period: str | None = Field(default=None, description="YYYY, YYYY-Qn, YYYY-MM or latest.")
+    period: str | None = Field(
+        default=None, description="YYYY, YYYY-Sn, YYYY-Qn, YYYY-MM or latest."
+    )
     start: str | None = None
     end: str | None = None
     kind: ChangeKind | None = Field(
@@ -72,7 +75,7 @@ class SeriesInfo:
     geos: frozenset[str]
     first: str | None
     last: str | None
-    annual: AnnualValue | None = None  # monthly or quarterly: how a year's value is made
+    annual: AnnualValue | None = None  # not annual: how a year's value is made
     lag_months: int = 0  # months from the end of a period to its release (dated claims)
 
     @classmethod
@@ -96,7 +99,7 @@ class SeriesInfo:
         """What a whole-year period (YYYY) means on this series."""
         if self.frequency is Frequency.ANNUAL:
             return ""
-        sub = "months" if self.frequency is Frequency.MONTHLY else "quarters"
+        sub = f"{self.frequency.part}s"
         if self.annual is AnnualValue.MEAN:
             return f" A whole year (YYYY) is the average of its {sub}."
         if self.annual is AnnualValue.END:

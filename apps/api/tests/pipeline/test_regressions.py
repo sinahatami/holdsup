@@ -8,6 +8,11 @@ First run:
 - r001 "fell from 11.9% in 2015 to 7.7% in 2023": the plan compared 2015-01 with 2023-12.
 - c004 "In 2011 ... 29%": the monthly youth series was turned down for being monthly;
   "today it is 43.3%" lost its value to start_value.
+Population (2026-11-08):
+- p001 "Italy has 20 millions population in 2022": no population indicator in the catalog.
+Half-yearly series (2026-11-08):
+- minimum_wage_eur and household_electricity_price are published as 2024-S1, 2024-S2; the
+  pipeline could only read years, quarters and months.
 Gallery seeding:
 - c001, c018, c029: "latest" in a dated statement was read as today's latest data.
 - c002: "has been rising for years" was fitted from 1983.
@@ -74,19 +79,23 @@ class RecordedFetcher:
 USED = [
     "unemployment_rate_monthly", "youth_unemployment_rate_monthly", "unemployment_rate_ilo",
     "government_debt_pct_gdp", "government_debt_pct_gdp_quarterly", "greenhouse_gas_emissions",
-    "co2_per_capita",
+    "co2_per_capita", "population_total",
 ]  # fmt: skip
 ORDER = [CATALOG.get(i) for i in USED] + [s for s in CATALOG.indicators if s.id not in USED]
+# A claim phrase that names one of these goes first, so its candidate list holds the entry.
+NAMED_FIRST = {"minimum wage": "minimum_wage_eur", "electricity": "household_electricity_price"}
 
 
 async def search(phrase: str, k: int) -> list[IndicatorHit]:
     """The real catalog, the entries these claims use first (no embedding model in tests):
     the matcher keeps the first 8 that cover the claim's place, and the script picks one."""
+    first = [CATALOG.get(i) for word, i in NAMED_FIRST.items() if word in phrase]
+    ordered = first + [s for s in ORDER if s not in first]
     return [
         IndicatorHit(id=s.id, name=s.name, source=str(s.source), source_code=s.source_code,
                      unit=s.unit, frequency=str(s.frequency), definition=s.definition,
                      score=1 - i / 100)
-        for i, s in enumerate(ORDER[:k])
+        for i, s in enumerate(ordered[:k])
     ]  # fmt: skip
 
 
@@ -191,7 +200,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.name: p.period for p in c.verdict.parts} == {
         "assertion": None, "start value": "2015", "end value": "2023",
     }  # fmt: skip
-    assert out.versions.catalog == "0.4.0" and out.versions.tolerances == 2
+    assert out.versions.catalog == "0.7.0" and out.versions.tolerances == 2
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
@@ -559,11 +568,111 @@ async def test_c007_two_values_for_a_change_claim_become_one_change() -> None:
     assert any("two value_at (2012, 2013) → one change" in n for n in c.notes)
 
 
+ITALY = "Italy has 20 millions population in 2022."
+
+
+async def test_p001_total_population_is_in_the_catalog_and_checks_a_headcount() -> None:
+    script = [
+        extraction(model_claim(ITALY[:-1], "population of Italy", "2022", "2022",
+                               unit="million people", value=20)),
+        match("population_total", ["population_total_world"]),
+        plan({"op": "value_at", "geo": "IT", "period": "2022"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(ITALY, script)
+    [c] = out.claims
+    assert c.indicator is not None and c.indicator.source_code == "demo_pjan"
+    assert inputs(c.operations[0]) == [("2022", 59030133.0)]
+    assert c.verdict.label is Label.NOT_SUPPORTED, c.verdict
+    assert c.extra_sources == []  # a population claim needs no second series
+
+
+async def test_the_population_denominator_is_fetched_and_cited_for_per_capita() -> None:
+    claim_text = "Italy emitted about 6 tonnes of greenhouse gases per person in 2022."
+    script = [
+        extraction(model_claim(claim_text[:-1], "greenhouse gas emissions per person", "2022",
+                               "2022", unit="tonnes", value=6)),
+        match("greenhouse_gas_emissions"),
+        plan({"op": "per_capita", "geo": "IT", "population": "population_total"},
+             {"op": "value_at", "series": "@0", "geo": "IT", "period": "2022"}, answer=[1]),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(claim_text, script)
+    [c] = out.claims
+    assert [o.op for o in c.operations] == ["per_capita", "value_at"]
+    assert c.verdict.label is not Label.CANT_CHECK, c.verdict
+    [extra] = c.extra_sources
+    assert (extra.indicator.id, extra.data.dataset) == ("population_total", "demo_pjan")
+
+
+# --- half-yearly series: periods like 2024-S1 -----------------------------------------------
+
+WAGE = "Germany's minimum wage rose from 1,739 euros a month in 2022 to 2,161 euros in 2025."
+
+
+async def test_a_year_on_a_half_yearly_series_is_its_last_half_year() -> None:
+    script = [
+        extraction(model_claim(WAGE[:-1], "monthly minimum wage in euro", "2022", "2025",
+                               geo="DE", unit="euro", direction="up", start_value=1739,
+                               end_value=2161)),
+        match("minimum_wage_eur", ["minimum_wage_to_average_earnings"]),
+        # What a model writes: the half-years, not the years the claim names.
+        plan({"op": "change", "geo": "DE", "start": "2022-S2", "end": "2025-S2",
+              "kind": "absolute"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(WAGE, script)
+    [c] = out.claims
+
+    [op] = c.operations
+    assert (op.args["start"], op.args["end"]) == ("2022", "2025")
+    assert any("2022-S2 → 2022" in n for n in c.notes)
+    assert inputs(op) == [("2022", 1739.0), ("2025", 2161.0)] and op.value == 422.0
+    assert "its last half-year (end of year)" in flag(op, FlagCode.ANNUAL_VALUE)
+    assert c.verdict.label is Label.SUPPORTED, c.verdict
+
+
+async def test_a_half_year_the_claim_names_is_kept() -> None:
+    text = "In the first half of 2024 Germany's minimum wage was 2,054 euros a month."
+    script = [
+        extraction(model_claim(text[:-1], "monthly minimum wage in euro", "2024-S1", None,
+                               geo="DE", unit="euro", value=2054)),
+        match("minimum_wage_eur"),
+        plan({"op": "value_at", "geo": "DE", "period": "2024-S1"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(text, script)
+    [c] = out.claims
+    assert c.claim.start == "2024-S1"
+    assert inputs(c.operations[0]) == [("2024-S1", 2054.0)]
+    assert FlagCode.ANNUAL_VALUE not in flags(c)
+    assert c.verdict.label is Label.SUPPORTED, c.verdict
+    assert c.verdict.parts[0].period == "2024-S1"
+
+
+async def test_a_year_of_electricity_prices_is_the_mean_of_its_two_half_years() -> None:
+    text = "In 2025 Italian households paid 0.31 euros per kWh for electricity."
+    script = [
+        extraction(model_claim(text[:-1], "household electricity price", "2025", "2025",
+                               unit="euro per kWh", value=0.31)),
+        match("household_electricity_price"),
+        plan({"op": "value_at", "geo": "IT", "period": "2025-S1"}),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(text, script)
+    [c] = out.claims
+    [op] = c.operations
+    assert op.args["period"] == "2025"
+    assert inputs(op) == [("2025", 0.31)]  # (0.3291 + 0.2966) / 2
+    assert "the average of its 2 semiannual values" in flag(op, FlagCode.ANNUAL_VALUE)
+    assert c.verdict.label is Label.SUPPORTED, c.verdict
+
+
 def test_the_smoke_set_names_real_indicators_and_labels() -> None:
     lines = (REPO_ROOT / "eval" / "smoke_claims.jsonl").read_text(encoding="utf-8").splitlines()
     cases = [json.loads(line) for line in lines if line.strip()]
     texts = {c["text"] for c in cases}
-    assert {FALL, YOUTH, C001, C002, C006, C007, C018, C024, C029} <= texts
+    assert {FALL, YOUTH, C001, C002, C006, C007, C018, C024, C029, ITALY} <= texts
     ids = [c["id"] for c in cases]
     assert len(set(ids)) == len(ids)
     for case in cases:

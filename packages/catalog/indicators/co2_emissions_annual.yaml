@@ -6,6 +6,7 @@ id: co2_emissions_annual
 source: owid
 source_code: "annual-co2-emissions-per-country"
 name: "Annual CO2 emissions"
+theme: environment
 aliases:
   - "carbon emissions"
   - "total CO2 emissions in tonnes"
@@ -18,5 +19,11 @@ frequency: annual
 geo_coverage: ["All countries", "OWID_WRL"]
 first_year: 1792
 last_year: null # still updated
-related: [co2_per_capita, co2_share_of_global, greenhouse_gas_emissions]
+related:
+  [
+    co2_per_capita,
+    co2_share_of_global,
+    greenhouse_gas_emissions,
+    population_total,
+  ]
 filters: { column: "emissions_total" }
