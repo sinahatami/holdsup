@@ -10,19 +10,20 @@ from holdsup.catalog.index import IndicatorHit, InMemoryIndex
 from holdsup.catalog.schema import Catalog, load_catalog
 from holdsup.catalog.search import vector_search
 from holdsup.config import REPO_ROOT
-from holdsup.pipeline import match as match_module
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, says_now
 from holdsup.pipeline.match import (
     FINAL_PROMPT,
     MATCH_SYSTEM,
     MAX_TOOL_CALLS,
+    TOOL_REGISTRY,
     TOOLS,
     Matcher,
-    _Run,
+    MatchRun,
     claim_message,
     needs_level_series,
     yearly_note,
 )
+from holdsup.pipeline.match import candidates as match_module
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse, ToolCall
 from tests.catalog.helpers import FIXTURE_CATALOG, HashEmbedder
@@ -301,7 +302,7 @@ async def test_bad_tool_calls_answer_with_an_error(call: tuple[str, str], error:
 
 def test_no_answer_at_all_is_cant_check() -> None:
     m, _ = matcher([])
-    result = m._verdict(_Run(claim()), None, [], [])
+    result = m._verdict(MatchRun(claim()), None, [], [])
     assert (result.status, result.confidence, result.reason) == (
         "cant_check",
         None,
@@ -511,3 +512,13 @@ async def test_no_second_ask_unless_a_present_claim_has_a_more_frequent_same_uni
     m, client = debt_matcher([ChatResponse(content=first)])
     result = await m.match(claim_)
     assert result.status == "matched" and len(client.calls) == 1 and result.notes == []
+
+
+def test_the_router_gets_one_tool_per_registry_entry() -> None:
+    names = [t["function"]["name"] for t in TOOLS if t["type"] == "function"]
+    assert names == list(TOOL_REGISTRY)
+
+
+@pytest.mark.parametrize("name", list(TOOL_REGISTRY))
+def test_the_prompt_names_every_tool(name: str) -> None:
+    assert name in MATCH_SYSTEM

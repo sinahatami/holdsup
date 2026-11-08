@@ -20,7 +20,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from holdsup.db.models import Check, ClaimRow, OperationRow
 from holdsup.pipeline.ledger import LedgerEntry, LedgerStore
-from holdsup.pipeline.run import ClaimResult, ModelUse, Versions
+from holdsup.pipeline.result import ClaimResult, Versions
+from holdsup.pipeline.trace import ModelUse
 from holdsup.problems import Problem
 
 
