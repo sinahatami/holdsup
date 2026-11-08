@@ -3,7 +3,7 @@
 from fastapi.testclient import TestClient
 
 from holdsup.catalog.index import IndicatorHit, InMemoryIndex
-from holdsup.catalog.schema import load_catalog
+from holdsup.catalog.schema import Theme, load_catalog
 from holdsup.main import create_app
 from holdsup.routes.deps import get_catalog_search
 from tests.catalog.helpers import FIXTURE_CATALOG, HashEmbedder
@@ -65,5 +65,6 @@ def test_catalog_lists_everything_a_to_z() -> None:
     assert body["version"] == catalog.version
     assert names == sorted(names, key=str.casefold) and len(names) == len(catalog.indicators)
     assert set(body["indicators"][0]) == {
-        "id", "name", "definition", "unit", "source", "frequency", "first_year", "last_year",
+        "id", "name", "theme", "definition", "unit", "source", "frequency", "first_year", "last_year",
     }  # fmt: skip
+    assert {i["theme"] for i in body["indicators"]} <= {t.value for t in Theme}
