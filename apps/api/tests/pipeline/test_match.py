@@ -8,6 +8,7 @@ import pytest
 
 from holdsup.catalog.index import IndicatorHit, InMemoryIndex
 from holdsup.catalog.schema import Catalog, load_catalog
+from holdsup.catalog.search import vector_search
 from holdsup.config import REPO_ROOT
 from holdsup.pipeline import match as match_module
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, says_now
@@ -20,7 +21,6 @@ from holdsup.pipeline.match import (
     _Run,
     claim_message,
     needs_level_series,
-    vector_search,
     yearly_note,
 )
 from holdsup.router import Router
@@ -307,14 +307,6 @@ def test_no_answer_at_all_is_cant_check() -> None:
         None,
         "No answer from the model.",
     )
-
-
-async def test_vector_search_accepts_an_async_index() -> None:
-    async def search(vector: Sequence[float], k: int) -> list[IndicatorHit]:
-        return INDEX.search(vector, k)
-
-    hits = await vector_search(search, EMBEDDER)("youth unemployment rate", 2)
-    assert hits[0].id == "youth_unemployment_rate" and len(hits) == 2
 
 
 @pytest.mark.parametrize(

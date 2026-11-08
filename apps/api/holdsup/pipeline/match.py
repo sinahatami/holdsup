@@ -7,7 +7,7 @@ claim's place. No pick or low confidence means "can't check".
 
 import json
 import re
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -15,9 +15,9 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolUnio
 from pydantic import BaseModel, Field, ValidationError
 
 from holdsup.catalog.coverage import covers
-from holdsup.catalog.embed import Embedder
 from holdsup.catalog.index import IndicatorHit
 from holdsup.catalog.schema import AnnualValue, Catalog, Frequency, IndicatorSpec
+from holdsup.catalog.search import CatalogSearch
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, says_now
 from holdsup.router import Router, Use
 from holdsup.router.client import ToolCall
@@ -128,22 +128,6 @@ TOOLS: list[ChatCompletionToolUnionParam] = [
         },
     },
 ]
-
-CatalogSearch = Callable[[str, int], Awaitable[list[IndicatorHit]]]
-
-
-def vector_search(
-    index_search: Callable[[Sequence[float], int], Any], embedder: Embedder
-) -> CatalogSearch:
-    """Wrap an index's `search` (sync in memory, async in Postgres) as a phrase search."""
-
-    async def search(phrase: str, k: int) -> list[IndicatorHit]:
-        hits = index_search(embedder.embed([phrase])[0], k)
-        if isinstance(hits, Awaitable):
-            hits = await hits
-        return list(hits)
-
-    return search
 
 
 def yearly_note(spec: IndicatorSpec) -> str:

@@ -1,11 +1,11 @@
-"""GET /v1/indicators?q= with a fake searcher (the real one needs Postgres + the model)."""
+"""GET /v1/indicators?q= with a fake search (the real one needs Postgres + the model)."""
 
 from fastapi.testclient import TestClient
 
 from holdsup.catalog.index import IndicatorHit, InMemoryIndex
 from holdsup.catalog.schema import load_catalog
 from holdsup.main import create_app
-from holdsup.routes.indicators import get_searcher
+from holdsup.routes.deps import get_catalog_search
 from tests.catalog.helpers import FIXTURE_CATALOG, HashEmbedder
 
 
@@ -23,7 +23,7 @@ class FakeSearcher:
 def client() -> tuple[TestClient, FakeSearcher]:
     app = create_app()
     searcher = FakeSearcher()
-    app.dependency_overrides[get_searcher] = lambda: searcher
+    app.dependency_overrides[get_catalog_search] = lambda: searcher.search
     return TestClient(app), searcher
 
 

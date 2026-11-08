@@ -1,30 +1,16 @@
-"""FastAPI app factory. All routes live under /v1."""
+"""FastAPI app factory: settings, logging, error handling, CORS, and the /v1 routes."""
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Literal
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 from holdsup import problems
 from holdsup.config import get_settings
 from holdsup.logs import RequestIdMiddleware, configure_logging
-from holdsup.routes import checks, indicators
+from holdsup.routes import v1
 from holdsup.service.wiring import Built
-
-
-class HealthResponse(BaseModel):
-    status: Literal["ok"]
-
-
-v1 = APIRouter(prefix="/v1")
-
-
-@v1.get("/health", response_model=HealthResponse, tags=["meta"])
-async def health() -> HealthResponse:
-    return HealthResponse(status="ok")
 
 
 @asynccontextmanager
@@ -50,8 +36,6 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(RequestIdMiddleware)
     app.include_router(v1)
-    app.include_router(indicators.router, prefix="/v1")
-    app.include_router(checks.router, prefix="/v1")
     return app
 
 
