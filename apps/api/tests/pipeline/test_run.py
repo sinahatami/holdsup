@@ -5,7 +5,8 @@ from collections.abc import Sequence
 import pytest
 
 from holdsup.adapters.base import SourceNotFound, SourceUnavailable
-from holdsup.pipeline.run import PipelineOutput, Step, StepEvent
+from holdsup.pipeline.result import PipelineOutput
+from holdsup.pipeline.trace import Step, StepEvent
 from holdsup.router import RouterError
 from holdsup.router.client import ChatResponse
 from holdsup.router.errors import ProviderError, ProviderUnavailable
