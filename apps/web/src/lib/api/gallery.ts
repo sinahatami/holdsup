@@ -1,4 +1,10 @@
-import { serverApiUrl, type GalleryItem } from "@/lib/api/client";
+import {
+  createApiClient,
+  serverApiUrl,
+  type GalleryItem,
+} from "@/lib/api/client";
+
+const GALLERY_SIZE = 12;
 
 /**
  * The featured checks, read on the server and shared by every visitor.
@@ -10,10 +16,7 @@ import { serverApiUrl, type GalleryItem } from "@/lib/api/client";
 export async function getGallery(): Promise<GalleryItem[]> {
   "use cache";
   try {
-    const res = await fetch(`${serverApiUrl()}/v1/gallery?limit=12`);
-    if (!res.ok) return [];
-    const body = (await res.json()) as { items: GalleryItem[] };
-    return body.items;
+    return await createApiClient(serverApiUrl()).gallery(GALLERY_SIZE);
   } catch {
     return [];
   }

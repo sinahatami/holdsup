@@ -6,7 +6,11 @@ export const strings = {
   tagline: "Every number has a denominator.",
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
+  errors: {
+    network: "Network error",
+  },
   nav: {
+    main: "Main",
     home: "Home",
     howItWorks: "How it works",
     recent: "Recent checks",
@@ -21,8 +25,10 @@ export const strings = {
     github: "View on GitHub",
     repoUrl: "https://github.com/sinahatami/holdsup",
     note: "Open source. Data from official statistical agencies.",
+    copyright: "© 2026",
   },
   notFound: {
+    code: "404",
     heading: "Page not found",
     body: "That page doesn't exist, but there are plenty of claims left to check.",
   },

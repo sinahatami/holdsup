@@ -1,19 +1,29 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, type RefObject } from "react";
 
 const INTERACTIVE = "a, button, summary, [role='radio'], [data-cursor='hover']";
 const TEXT = "input, textarea, [contenteditable='true']";
+const TRAIL = 0.18; // share of the gap the ring closes each frame
+
+type CursorState = "text" | "link" | "idle";
+
+function stateAt(target: EventTarget | null): CursorState {
+  const el = target instanceof Element ? target : null;
+  if (el?.closest(TEXT)) return "text";
+  if (el?.closest(INTERACTIVE)) return "link";
+  return "idle";
+}
 
 /**
- * A dot that tracks the pointer exactly plus a ring that trails behind it.
- * Only active for fine pointers (mouse/trackpad) and when the user has not
- * asked for reduced motion; otherwise the native cursor is left untouched.
+ * Moves `dot` with the pointer and lets `ring` trail behind it. Only for fine
+ * pointers (mouse/trackpad) when the user has not asked for reduced motion;
+ * otherwise the native cursor is left untouched.
  */
-export function CustomCursor() {
-  const dot = useRef<HTMLDivElement>(null);
-  const ring = useRef<HTMLDivElement>(null);
-
+export function useCustomCursor(
+  dot: RefObject<HTMLElement | null>,
+  ring: RefObject<HTMLElement | null>,
+): void {
   useEffect(() => {
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -32,8 +42,8 @@ export function CustomCursor() {
     let frame = 0;
 
     const tick = () => {
-      rx += (x - rx) * 0.18;
-      ry += (y - ry) * 0.18;
+      rx += (x - rx) * TRAIL;
+      ry += (y - ry) * TRAIL;
       dotEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       ringEl.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
       frame = requestAnimationFrame(tick);
@@ -43,13 +53,7 @@ export function CustomCursor() {
     const onMove = (e: PointerEvent) => {
       x = e.clientX;
       y = e.clientY;
-      const el = e.target instanceof Element ? e.target : null;
-      const state = el?.closest(TEXT)
-        ? "text"
-        : el?.closest(INTERACTIVE)
-          ? "link"
-          : "idle";
-      root.dataset.cursor = state;
+      root.dataset.cursor = stateAt(e.target);
       root.classList.add("cursor-on");
     };
     const onDown = () => root.classList.add("cursor-down");
@@ -70,16 +74,5 @@ export function CustomCursor() {
       root.classList.remove("has-cursor", "cursor-on", "cursor-down");
       delete root.dataset.cursor;
     };
-  }, []);
-
-  return (
-    <div aria-hidden="true" className="pointer-events-none">
-      <div ref={ring} className="cursor-ring">
-        <span />
-      </div>
-      <div ref={dot} className="cursor-dot">
-        <span />
-      </div>
-    </div>
-  );
+  }, [dot, ring]);
 }
