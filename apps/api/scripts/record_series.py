@@ -34,6 +34,8 @@ SERIES = [
     ("co2_per_capita", "US"),  # c024
     ("unemployment_rate_ilo", "ZA"),  # c029
     ("population_total", "IT"),  # p001, and the denominator fetched for c018
+    ("minimum_wage_eur", "DE"),  # half-yearly, a year is its last half-year
+    ("household_electricity_price", "IT"),  # half-yearly, a year is the mean of its two
 ]
 
 

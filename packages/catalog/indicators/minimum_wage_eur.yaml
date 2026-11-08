@@ -1,0 +1,45 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: DE 2015-S1..2026-S2, FR 1999-S1..2026-S2 (22 of 31 EU/EFTA countries have data)
+# Note: Published twice a year (periods 2024-S1, 2024-S2). A claim about a whole year is read as the year's last half-year (annual_value: end), because a minimum wage is a rate in force at a date; the receipt says so.
+id: minimum_wage_eur
+source: eurostat
+source_code: "earn_mw_cur"
+name: "Monthly minimum wage in euro"
+theme: work
+aliases:
+  - "national minimum wage per month in euro"
+  - "monthly minimum wage in force in each half-year"
+  - "minimum wage converted into euro"
+definition: "The national minimum wage per month, in euro, in force in each half-year (S1 is January to June, S2 is July to December). Amounts for countries outside the euro area are converted into euro. Only countries with a national minimum wage appear."
+unit: "euro per month"
+frequency: semiannual
+annual_value: end
+geo_coverage:
+  [
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "EE",
+    "ES",
+    "FR",
+    "GR",
+    "HR",
+    "HU",
+    "IE",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SI",
+    "SK",
+  ]
+first_year: 1999
+last_year: null # still updated (latest period seen: 2026)
+related: [minimum_wage_to_average_earnings]
+filters: { currency: "EUR" }
