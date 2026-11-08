@@ -18,5 +18,5 @@ frequency: annual
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 2009
 last_year: null # still updated
-related: [employment_rate_20_64]
+related: [employment_rate_20_64, population_total]
 filters: { indic_em: "EMP_LFS", age: "Y15-64", sex: "T", unit: "THS_PER" }

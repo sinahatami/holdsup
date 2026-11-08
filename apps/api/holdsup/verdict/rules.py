@@ -21,6 +21,16 @@ OPERATOR_TEXT = {
 
 # Claims no operation answers yet: "the lowest since 1977", "met its target", "rose every month".
 UNSUPPORTED = frozenset({AssertionType.RECORD, AssertionType.TARGET, AssertionType.STREAK})
+# What a reader is told when a claim is of a kind HoldsUp cannot check yet.
+UNSUPPORTED_TEXT = {
+    AssertionType.RECORD: "claims about records (“the highest ever”)",
+    AssertionType.TARGET: "claims about reaching a target",
+    AssertionType.STREAK: "claims about a streak (“for ten years in a row”)",
+}
+
+
+def unsupported_reason(kind: AssertionType) -> str:
+    return f"HoldsUp can't check {UNSUPPORTED_TEXT[kind]} yet."
 
 
 class _Rules:
@@ -250,18 +260,21 @@ def decide(
     """
     a = claim.assertion
     if a.type in UNSUPPORTED:
-        return cant_check(f"{a.type} claims cannot be checked yet")
+        return cant_check(unsupported_reason(a.type))
     if a.value is None and a.direction is None and a.type is not AssertionType.RANK:
-        return cant_check("the claim states neither a value nor a direction")
+        return cant_check(
+            "The claim gives no number and doesn't say whether something rose or fell, "
+            "so there is nothing to compare with the data."
+        )
     if a.type is AssertionType.LEVEL and a.value is None:
-        return cant_check("a level claim without a value")
+        return cant_check("The claim doesn't give the number to compare with the data.")
     chosen = [records[i] for i in answer]
     if not chosen:
-        return cant_check("the plan names no result to check")
+        return cant_check("HoldsUp couldn't find a calculation that answers this claim.")
 
     judge = _JUDGES.get(chosen[0].op)
     if judge is None:
-        return cant_check(f"a {chosen[0].op} result cannot decide a claim")
+        return cant_check("The calculation HoldsUp ran can't settle this kind of claim.")
     parts = judge(_Rules(claim, unit, tolerances), chosen)
 
     held = [p.holds for p in parts]

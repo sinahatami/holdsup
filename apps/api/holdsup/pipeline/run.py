@@ -16,7 +16,7 @@ result and ends the line, or raises `_CantCheck` to stop that claim.
 """
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from typing import Protocol
 
@@ -34,6 +34,7 @@ from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
 from holdsup.pipeline.extract import extract_claims, parse_said_on
 from holdsup.pipeline.match import Matcher
+from holdsup.pipeline.match.model import MatchResult
 from holdsup.pipeline.plan import (
     Execution,
     PlanContext,
@@ -42,22 +43,39 @@ from holdsup.pipeline.plan import (
     execute_plan,
     plan_analysis,
 )
+from holdsup.pipeline.population import population_for, wants_population
 from holdsup.pipeline.result import (
     ClaimResult,
     DataRef,
+    ExtraSource,
     IndicatorRef,
     PipelineOutput,
+    Suggestion,
     Versions,
     app_version,
 )
 from holdsup.pipeline.terms import OfficeTerms
 from holdsup.pipeline.trace import Emit, ModelUse, Step, StepStatus, Trace
+from holdsup.places import place_name
 from holdsup.router import Router, RouterError, Use
 from holdsup.verdict import Label, Tolerances, cant_check, decide
 
 
 class Fetcher(Protocol):
     async def fetch_series(self, source: str, dataset: str, filters: Filters) -> FetchedSeries: ...
+
+
+NO_CLAIM = (
+    "HoldsUp found no claim with a number in it. Try a sentence such as "
+    "“Italy's unemployment rate fell to 7.7% in 2023.”"
+)
+NO_MATCH = "HoldsUp doesn't have a statistic that matches this claim yet."
+NO_PLACE = "The claim doesn't say which country or place it is about."
+MAX_SUGGESTIONS = 3
+
+
+def _cap(text: str) -> str:
+    return text[:1].upper() + text[1:]
 
 
 class _CantCheck(Exception):
@@ -84,6 +102,8 @@ class _ClaimRun:
     index: int
     claim: ClaimSpec
     out: ClaimResult
+    # Series fetched besides the matched one (the population), by indicator id, until a plan uses them.
+    extra: dict[str, ExtraSource] = field(default_factory=dict)
 
     async def start(self, step: Step) -> None:
         await self.trace.start(step, self.index)
@@ -123,8 +143,16 @@ class Pipeline:
         return {"catalog": self.catalog.version, "tolerances": self.tolerances.version}
 
     def _uses(self, step: Step, providers: Sequence[str]) -> list[ModelUse]:
-        models = {p.name: p.model for p in self.router.config.providers}
-        return [ModelUse(step=step, provider=p, model=models.get(p, "?")) for p in providers]
+        known = {p.name: p for p in self.router.config.providers}
+        return [
+            ModelUse(
+                step=step,
+                provider=p,
+                model=known[p].model if p in known else "?",
+                label=(known[p].label or known[p].model) if p in known else "?",
+            )
+            for p in providers
+        ]
 
     async def run(self, text: str, emit: Emit) -> PipelineOutput:
         """Check every claim in `text`. RouterError propagates (see the module docstring)."""
@@ -142,7 +170,9 @@ class Pipeline:
         await trace.done(
             Step.EXTRACT,
             None,
-            f"Found {n} claim{'s' if n != 1 else ''}." if n else "Found no numeric claim.",
+            f"Found {n} claim{'s' if n != 1 else ''}."
+            if n
+            else "Found no claim with a number in it.",
             status="ok" if n else "cant_check",
             models=extract_models,
         )
@@ -155,7 +185,7 @@ class Pipeline:
                 tolerances=self.tolerances.version,
             ),
             models=extract_models,
-            notes=[] if n else ["No numeric claim was found in the text."],
+            notes=[] if n else [NO_CLAIM],
         )
 
     async def _claim(self, trace: Trace, i: int, claim: ClaimSpec) -> ClaimResult:
@@ -164,9 +194,16 @@ class Pipeline:
         try:
             spec = await self._match(c)
             observations, info = await self._fetch(c, spec)
-            ctx = PlanContext(claim=claim, main=info, as_of=self._as_of(claim))
+            data = {spec.id: observations}
+            others = await self._denominator(c, spec, data)
+            ctx = PlanContext(claim=claim, main=info, others=others, as_of=self._as_of(claim))
             plan = await self._plan(c, ctx)
-            execution = await self._execute(c, plan, ctx, {spec.id: observations})
+            c.out.extra_sources = [
+                c.extra[call.population]
+                for call in plan.calls
+                if call.population is not None and call.population in c.extra
+            ]
+            execution = await self._execute(c, plan, ctx, data)
             await self._verdict(c, plan, execution)
             await self._explain(c, spec, execution)
         except _CantCheck as stop:
@@ -186,7 +223,10 @@ class Pipeline:
         c.out.match_reason, c.out.alternatives = match.reason, match.alternatives
         c.out.notes += match.notes
         if match.status == "cant_check" or match.indicator_id is None:
-            reason = match.reason or "No catalog indicator fits the claim."
+            # The model's own reason stays in match_reason (the receipt); the reader gets a
+            # plain sentence, with the closest statistics as suggestions.
+            reason = match.reason if not match.candidates else NO_MATCH
+            c.out.suggestions = self._suggestions(match)
             raise _CantCheck(Step.MATCH, reason, models=models)
         spec = self.catalog.get(match.indicator_id)
         c.out.indicator = IndicatorRef.of(spec)
@@ -195,6 +235,15 @@ class Pipeline:
         )
         return spec
 
+    def _suggestions(self, match: MatchResult) -> list[Suggestion]:
+        """The closest statistics when nothing matched: the ones the model named, then the best
+        search hits, then the hits dropped because they do not cover the place."""
+        ids = [*match.alternatives, *(h.id for h in match.candidates), *match.excluded_by_geo]
+        names = dict.fromkeys(ids)
+        return [
+            Suggestion(id=i, name=self.catalog.get(i).name) for i in list(names)[:MAX_SUGGESTIONS]
+        ]
+
     async def _fetch(
         self, c: _ClaimRun, spec: IndicatorSpec
     ) -> tuple[list[Observation], SeriesInfo]:
@@ -202,29 +251,69 @@ class Pipeline:
         observations = await self._observations(c, spec)
         info = SeriesInfo.from_data(spec, observations)
         if c.claim.geo not in info.geos:
-            raise _CantCheck(Step.FETCH, f"The source has no {spec.name} data for {c.claim.geo}.")
+            raise _CantCheck(
+                Step.FETCH,
+                f"{_cap(spec.source.label)} has no {spec.name} figures for "
+                f"{place_name(c.claim.geo)}.",
+            )
         await c.done(Step.FETCH, f"Fetched {len(observations)} rows, {info.first} to {info.last}.")
         return observations, info
 
     async def _observations(self, c: _ClaimRun, spec: IndicatorSpec) -> list[Observation]:
         """The indicator's series for the claim's place and its peers, in claim codes."""
-        claim = c.claim
+        series, observations = await self._load(c.claim, spec)
+        c.out.data = DataRef.of(series, observations)
+        return observations
+
+    async def _load(
+        self, claim: ClaimSpec, spec: IndicatorSpec
+    ) -> tuple[FetchedSeries, list[Observation]]:
         if claim.geo is None:
-            raise _CantCheck(Step.FETCH, "The claim names no place.")
+            raise _CantCheck(Step.FETCH, NO_PLACE)
         try:
             filters = {**spec.filters, **geo_filter(spec.source, [claim.geo, *claim.peers])}
             series = await self.fetcher.fetch_series(str(spec.source), spec.source_code, filters)
         except UnknownPlace as exc:
-            raise _CantCheck(Step.FETCH, f"{exc}.") from exc
+            raise _CantCheck(
+                Step.FETCH,
+                f"{_cap(spec.source.label)} has no figures for "
+                f"{place_name(exc.place or claim.geo)}.",
+            ) from exc
         except SourceUnavailable as exc:
             raise _CantCheck(
-                Step.FETCH, f"{spec.source} did not answer; try again later.", retryable=True
+                Step.FETCH,
+                f"{_cap(spec.source.label)} didn't answer just now. "
+                "Please try again in a few minutes.",
+                retryable=True,
             ) from exc
         except AdapterError as exc:
-            raise _CantCheck(Step.FETCH, f"{spec.source} could not provide the data.") from exc
-        observations = to_claim_codes(spec.source, series.observations)
-        c.out.data = DataRef.of(series, observations)
-        return observations
+            raise _CantCheck(
+                Step.FETCH, f"{_cap(spec.source.label)} couldn't provide the figures."
+            ) from exc
+        return series, to_claim_codes(spec.source, series.observations)
+
+    async def _denominator(
+        self, c: _ClaimRun, spec: IndicatorSpec, data: dict[str, list[Observation]]
+    ) -> tuple[SeriesInfo, ...]:
+        """The place's total population, so a plan can divide by it (per_capita). Best effort:
+        a claim that needs no population is checked without it."""
+        if not wants_population(spec):
+            return ()
+        population = population_for(self.catalog, c.claim.geo)
+        if population is None:
+            return ()
+        try:
+            series, observations = await self._load(c.claim, population)
+        except _CantCheck:
+            return ()
+        info = SeriesInfo.from_data(population, observations)
+        if c.claim.geo not in info.geos:
+            return ()
+        data[population.id] = observations
+        c.extra[population.id] = ExtraSource(
+            indicator=IndicatorRef.of(population), data=DataRef.of(series, observations)
+        )
+        return (info,)
 
     async def _plan(self, c: _ClaimRun, ctx: PlanContext) -> ValidPlan:
         await c.start(Step.PLAN)
@@ -256,7 +345,10 @@ class Pipeline:
         execution = execute_plan(plan, ctx, data, self.tolerances)
         c.out.operations = execution.records
         if execution.error is not None:
-            raise _CantCheck(Step.EXECUTE, execution.error)
+            raise _CantCheck(
+                Step.EXECUTE,
+                f"HoldsUp found the data but couldn't finish the calculation: {execution.error}.",
+            )
         n = len(execution.records)
         await c.done(Step.EXECUTE, f"Ran {n} operation{'s' if n != 1 else ''}.")
         return execution

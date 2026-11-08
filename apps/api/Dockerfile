@@ -28,6 +28,9 @@ ENV FASTEMBED_CACHE_PATH=/opt/fastembed
 RUN /opt/venv/bin/python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('/opt/fastembed')"
 
 FROM python:3.13-slim AS runtime
+# The commit shown on receipts: --build-arg APP_COMMIT=$(git rev-parse --short HEAD)
+# (on Hugging Face Spaces, set it as a Space variable).
+ARG APP_COMMIT=""
 # Hugging Face Spaces runs containers as uid 1000.
 RUN useradd --create-home --uid 1000 app
 COPY --from=build /opt/venv /opt/venv
@@ -36,7 +39,8 @@ COPY --chown=app:app apps/api/alembic.ini /app/alembic.ini
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     FASTEMBED_CACHE_PATH=/opt/fastembed \
-    PORT=7860
+    PORT=7860 \
+    APP_COMMIT=${APP_COMMIT}
 WORKDIR /app
 USER app
 EXPOSE 7860

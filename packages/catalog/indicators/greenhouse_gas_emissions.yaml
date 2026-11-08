@@ -19,5 +19,5 @@ release_lag_months: 18 # national inventories: April of year+2, Eurostat by June
 geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1990
 last_year: null # still updated
-related: [co2_emissions_annual]
+related: [co2_emissions_annual, population_total]
 filters: { airpol: "GHG", src_crf: "TOTX4_MEMO", unit: "MIO_T" }

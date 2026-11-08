@@ -24,6 +24,19 @@ class Source(StrEnum):
     OWID = "owid"
     DATACOMMONS = "datacommons"
 
+    @property
+    def label(self) -> str:
+        """The source's name for a reader."""
+        return _SOURCE_LABELS[self]
+
+
+_SOURCE_LABELS = {
+    Source.EUROSTAT: "Eurostat",
+    Source.WORLDBANK: "the World Bank",
+    Source.OWID: "Our World in Data",
+    Source.DATACOMMONS: "Data Commons",
+}
+
 
 class Frequency(StrEnum):
     ANNUAL = "annual"
