@@ -88,6 +88,11 @@ def test_written_numbers() -> None:
     ]
 
 
+def test_half_year_labels_are_dates_not_numbers() -> None:
+    found = written_numbers("The price was 0.31 in 2024-S1 and 0.29 in S2 2023.")
+    assert [(w.text, w.value) for w in found] == [("0.31", 0.31), ("0.29", 0.29), ("2023", 2023)]
+
+
 def test_allowed_numbers_cover_records_parts_periods_and_the_claim() -> None:
     text = "From 40 to 28.0937, -11.9063 against 12 ± 0.5 (2013 asked, 2015 used, 2020)."
     assert invented_numbers(text, ALLOWED) == []

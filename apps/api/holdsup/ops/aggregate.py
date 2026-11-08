@@ -1,4 +1,5 @@
-"""Yearly values from a monthly or quarterly series, for claims about a whole year."""
+"""Yearly values from a monthly, quarterly or half-yearly series, for claims about a whole
+year."""
 
 import math
 from enum import StrEnum
@@ -11,12 +12,8 @@ from holdsup.ops.series import Series
 class AnnualValue(StrEnum):
     """How a year's value is made (the catalog's `annual_value`)."""
 
-    MEAN = "mean"  # the average of the year's months or quarters
-    END = "end"  # the year's last month or quarter
-
-
-def _sub(frequency: Frequency) -> str:
-    return "month" if frequency is Frequency.MONTHLY else "quarter"
+    MEAN = "mean"  # the average of the year's months, quarters or half-years
+    END = "end"  # the year's last month, quarter or half-year
 
 
 def annual(series: Series, how: AnnualValue) -> Series:
@@ -44,7 +41,7 @@ def annual_flag(frequency: Frequency, how: AnnualValue, years: list[str]) -> Fla
     if how is AnnualValue.MEAN:
         made = f"the average of its {frequency.per_year} {frequency} values"
     else:
-        made = f"its last {_sub(frequency)} (end of year)"
+        made = f"its last {frequency.part} (end of year)"
     return Flag(
         code=FlagCode.ANNUAL_VALUE,
         detail=f"each year's value is {made}; complete years only ({', '.join(years)})",
@@ -57,7 +54,7 @@ def latest_year_flag(yearly: Series, native: Series) -> Flag:
     return Flag(
         code=FlagCode.LATEST_YEAR,
         detail=f"{yearly.geo}: latest is the last complete year, {yearly.last}; the latest "
-        f"{_sub(native.frequency)} is {native.last}",
+        f"{native.frequency.part} is {native.last}",
         requested="latest",
         used=str(yearly.last),
     )
