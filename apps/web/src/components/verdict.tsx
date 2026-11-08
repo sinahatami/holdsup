@@ -10,43 +10,39 @@ import type { Label } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
 // Each verdict has its own icon and words, so colour is never the only signal.
-const look: Record<
+// Colours come from the --v / --vbg tokens set per [data-verdict] in globals.css.
+export const verdictIcon: Record<
   Label,
-  {
-    Icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-    tone: string;
-  }
+  ComponentType<{ className?: string; "aria-hidden"?: boolean }>
 > = {
-  supported: {
-    Icon: CheckCircle2,
-    tone: "border-emerald-700 bg-emerald-50 text-emerald-950",
-  },
-  supported_framing_matters: {
-    Icon: Scale,
-    tone: "border-amber-700 bg-amber-50 text-amber-950",
-  },
-  partly_supported: {
-    Icon: CircleDot,
-    tone: "border-orange-700 bg-orange-50 text-orange-950",
-  },
-  not_supported: {
-    Icon: CircleSlash,
-    tone: "border-rose-700 bg-rose-50 text-rose-950",
-  },
-  cant_check: {
-    Icon: CircleHelp,
-    tone: "border-slate-600 bg-slate-100 text-slate-900",
-  },
+  supported: CheckCircle2,
+  supported_framing_matters: Scale,
+  partly_supported: CircleDot,
+  not_supported: CircleSlash,
+  cant_check: CircleHelp,
 };
 
-export function VerdictBadge({ label }: { label: Label }) {
-  const { Icon, tone } = look[label];
+export function VerdictBadge({
+  label,
+  large = false,
+}: {
+  label: Label;
+  large?: boolean;
+}) {
+  const Icon = verdictIcon[label];
   return (
     <span
       data-verdict={label}
-      className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-sm font-semibold ${tone}`}
+      style={{
+        color: "var(--v)",
+        background: "var(--vbg)",
+        borderColor: "color-mix(in oklch, var(--v) 30%, transparent)",
+      }}
+      className={`inline-flex items-center gap-2 rounded-full border font-semibold ${
+        large ? "px-4 py-1.5 text-base" : "px-3 py-1 text-sm"
+      }`}
     >
-      <Icon className="size-4" aria-hidden />
+      <Icon className={large ? "size-5" : "size-4"} aria-hidden />
       {strings.verdicts[label]}
     </span>
   );
