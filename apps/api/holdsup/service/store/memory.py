@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field, replace
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from holdsup.pipeline.ledger import LedgerEntry
@@ -48,6 +49,13 @@ class InMemoryCheckStore:
 
     async def set_featured(self, check_id: UUID, featured: bool) -> None:
         self.checks[check_id] = replace(self.checks[check_id], featured=featured)
+
+    async def finished_results(self) -> list[dict[str, Any]]:
+        return [
+            c.result
+            for c in self.checks.values()
+            if c.status is CheckStatus.DONE and c.cached_from is None and c.result is not None
+        ]
 
     # LedgerStore
     def _fresh(self, since: datetime) -> list[LedgerEntry]:

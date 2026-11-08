@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check missing-report
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -97,6 +97,9 @@ embed-model: ## Download the embedding model into .cache/fastembed (needed by te
 
 catalog-check: ## Validate packages/catalog without touching the database
 	cd $(API_DIR) && uv run python -m holdsup.catalog.load --check
+
+missing-report: ## List the topics most often asked about that came back "can't check" (needs DATABASE_URL; read-only)
+	cd $(API_DIR) && uv run python -m scripts.missing_report $(ARGS)
 
 catalog: ## Validate packages/catalog, embed it, and load it into Postgres (needs DATABASE_URL)
 	cd $(API_DIR) && uv run python -m holdsup.catalog.load
