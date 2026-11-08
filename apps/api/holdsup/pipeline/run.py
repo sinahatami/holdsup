@@ -30,12 +30,13 @@ from holdsup.adapters.base import (
     SourceUnavailable,
 )
 from holdsup.catalog.schema import Catalog, IndicatorSpec
+from holdsup.catalog.search import CatalogSearch
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
 from holdsup.pipeline.extract import extract_claims, parse_said_on
-from holdsup.pipeline.match import CatalogSearch, Matcher
+from holdsup.pipeline.match import Matcher
 from holdsup.pipeline.plan import PlanContext, SeriesInfo, execute_plan, plan_analysis
 from holdsup.pipeline.terms import OfficeTerms
 from holdsup.router import Router, RouterError, Use

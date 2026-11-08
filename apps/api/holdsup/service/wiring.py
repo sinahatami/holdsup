@@ -13,10 +13,10 @@ from holdsup.adapters.registry import build_adapters
 from holdsup.catalog.embed import default_embedder
 from holdsup.catalog.index import SqlIndex
 from holdsup.catalog.schema import load_catalog
+from holdsup.catalog.search import vector_search
 from holdsup.config import Settings
 from holdsup.db.session import get_sessionmaker
 from holdsup.pipeline.ledger import Ledger
-from holdsup.pipeline.match import vector_search
 from holdsup.pipeline.run import Pipeline
 from holdsup.router import Router, load_router_config
 from holdsup.router.budgets import SqlUsageStore
