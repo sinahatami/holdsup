@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1993..2011, IT 2003..2021 (all countries listed by the source; years vary by country)
+# Note: Each country sets its own line, so levels are not comparable across countries. Sparse for rich countries.
+id: poverty_rate_national_lines_world
+source: worldbank
+source_code: "SI.POV.NAHC"
+name: "Poverty rate at national poverty lines (World Bank)"
+theme: poverty
+aliases:
+  - "share of people below the national poverty line"
+  - "percentage of the population living in poverty by national standards"
+  - "national poverty headcount ratio"
+definition: "Percentage of the population living below the national poverty line(s), based on population-weighted subgroup estimates from household surveys."
+unit: "% of population"
+frequency: annual
+geo_coverage: ["All countries"]
+first_year: 1985
+last_year: null # still updated (latest period seen: 2025)
+related: [at_risk_of_poverty_rate, gini_index_world]
+filters: {}

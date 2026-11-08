@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: IN 1960..2025, IT 1960..2025, US 1960..2025, WLD 1960..2025 (all countries listed by the source; years vary by country)
+id: net_migration_world
+source: worldbank
+source_code: "SM.POP.NETM"
+name: "Net migration (World Bank)"
+theme: population
+aliases:
+  - "number of immigrants minus emigrants"
+  - "how many more people moved in than moved out"
+  - "net number of people who migrated into a country"
+  - "citizens and noncitizens who arrived minus those who left"
+definition: "Net total of migrants during the year: the number of immigrants minus the number of emigrants, including both citizens and noncitizens."
+unit: "persons"
+frequency: annual
+geo_coverage: ["All countries", "WLD"]
+first_year: 1960
+last_year: null # still updated (latest period seen: 2025)
+related: [net_migration_rate, population_total_world]
+filters: {}

@@ -18,6 +18,7 @@ id: youth_unemployment_rate          # lowercase snake_case; must equal the file
 source: eurostat                     # eurostat | worldbank | owid | datacommons
 source_code: une_rt_a                # dataset code, indicator code, or OWID chart slug
 name: Youth unemployment rate
+theme: work                          # population | economy | work | prices | poverty | health | education | environment | safety
 aliases:                             # 3–5 phrases people actually say; not the name again
   - youth unemployment
   - jobless rate for young people
@@ -38,6 +39,8 @@ Monthly and quarterly entries also set `annual_value`, how code makes a year's v
 
 `filters` (not in the original spec list) holds the fixed query dimensions an adapter needs to get exactly this series: Eurostat dimension codes; for OWID, `column` when a chart has several value columns; empty for most World Bank indicators.
 
-Rules the validator enforces: unknown fields are rejected; 3–5 unique aliases that don't repeat the name; `definition` 10–500 characters; `last_year ≥ first_year`; every `related` id exists and is not the entry itself; no two entries point at the same source series with the same filters.
+`theme` is the topic the /indicators page lists the entry under (the labels and their order are in `apps/web/src/lib/strings.ts`). It is required, and every theme should have at least one entry.
+
+Rules the validator enforces: unknown fields are rejected; `theme` is one of the nine above; 3–5 unique aliases that don't repeat the name; `definition` 10–500 characters; `last_year ≥ first_year`; every `related` id exists and is not the entry itself; no two entries point at the same source series with the same filters.
 
 What gets embedded for search: `"{name}. Also called: {aliases}. {definition}"`.

@@ -1,0 +1,20 @@
+# Verified 2026-11-08 against the live API: one series per geo with these filters.
+#   coverage: EU27_2020 1995..2025, DE 1995..2025, FR 1995..2025, IT 1995..2025 (30 of 31 EU/EFTA countries have data)
+id: tax_revenue
+source: eurostat
+source_code: "gov_10a_taxag"
+name: "Tax revenue to GDP (Eurostat)"
+theme: economy
+aliases:
+  - "taxes collected as a share of GDP"
+  - "tax-to-GDP ratio excluding social contributions"
+  - "government tax receipts relative to GDP"
+  - "taxes on production, imports, income and wealth as a percent of GDP"
+definition: "Total tax receipts of general government (taxes on production and imports, current taxes on income and wealth, and capital taxes), excluding social contributions, as a percentage of GDP."
+unit: "% of GDP"
+frequency: annual
+geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
+first_year: 1995
+last_year: null # still updated (latest period seen: 2025)
+related: [tax_and_social_contributions, tax_revenue_world, government_spending]
+filters: { na_item: "D2_D5_D91", sector: "S13", unit: "PC_GDP" }
