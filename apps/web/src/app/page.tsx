@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import type { CSSProperties } from "react";
+import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
 import { HowItWorks } from "@/components/organisms/how-it-works";
@@ -30,6 +31,9 @@ export default async function Home() {
       </div>
       <div className="reveal">
         <HowItWorks />
+      </div>
+      <div className="reveal">
+        <CanCheck />
       </div>
       <div className="reveal">
         <Gallery items={items} />
