@@ -28,11 +28,13 @@ async function CheckFromParams({
 
 function CheckShell() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-5 py-12 sm:px-6 sm:py-16">
+      <h1 className="text-gradient text-4xl font-bold tracking-tight">
         {strings.check.heading}
       </h1>
-      <p role="status">{strings.check.loading}</p>
+      <p role="status" className="text-muted-foreground animate-pulse">
+        {strings.check.loading}
+      </p>
     </main>
   );
 }

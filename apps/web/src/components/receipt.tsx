@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import type { ClaimResult, CheckResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
@@ -20,33 +21,47 @@ export function Receipt({
   };
   const r = strings.receipt;
   return (
-    <details className="rounded-md border p-4" data-testid="receipt">
-      <summary className="cursor-pointer text-lg font-semibold">
+    <details
+      className="group bg-background/50 rounded-2xl border p-5 open:shadow-(--shadow-soft)"
+      data-testid="receipt"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-lg font-semibold [&::-webkit-details-marker]:hidden">
         {r.heading}
+        <ChevronDown
+          className="text-muted-foreground size-5 transition group-open:rotate-180"
+          aria-hidden
+        />
       </summary>
-      <div className="mt-3 flex flex-col gap-4 text-sm">
+      <div className="mt-4 flex flex-col gap-5 text-sm">
         {claim.indicator && (
           <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[max-content_1fr]">
-            <dt className="font-medium">{r.indicator}</dt>
+            <dt className="text-muted-foreground font-medium">{r.indicator}</dt>
             <dd>{claim.indicator.name}</dd>
-            <dt className="font-medium">{r.definition}</dt>
+            <dt className="text-muted-foreground font-medium">
+              {r.definition}
+            </dt>
             <dd>{claim.indicator.definition}</dd>
           </dl>
         )}
         {claim.data ? (
           <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-[max-content_1fr]">
-            <dt className="font-medium">{r.source}</dt>
+            <dt className="text-muted-foreground font-medium">{r.source}</dt>
             <dd>
-              <a className="underline" href={claim.data.url}>
+              <a
+                className="text-brand font-medium underline underline-offset-4"
+                href={claim.data.url}
+              >
                 {claim.data.source}
               </a>
             </dd>
-            <dt className="font-medium">{r.dataset}</dt>
+            <dt className="text-muted-foreground font-medium">{r.dataset}</dt>
             <dd>{claim.data.dataset}</dd>
-            <dt className="font-medium">{r.retrieved}</dt>
+            <dt className="text-muted-foreground font-medium">{r.retrieved}</dt>
             <dd>{claim.data.retrieved_at}</dd>
-            <dt className="font-medium">{r.fingerprint}</dt>
-            <dd className="font-mono text-xs break-all">
+            <dt className="text-muted-foreground font-medium">
+              {r.fingerprint}
+            </dt>
+            <dd className="bg-muted rounded-md px-2 py-1 font-mono text-xs break-all">
               {claim.data.raw_sha256}
             </dd>
           </dl>
@@ -55,11 +70,13 @@ export function Receipt({
         )}
         {claim.operations.length > 0 && (
           <div>
-            <h3 className="mb-1 font-medium">{r.operations}</h3>
+            <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-widest uppercase">
+              {r.operations}
+            </h3>
             <ol className="flex flex-col gap-2">
               {claim.operations.map((op, i) => (
-                <li key={i} className="rounded border p-2">
-                  <code className="font-mono">
+                <li key={i} className="bg-muted/50 rounded-xl border p-3">
+                  <code className="text-brand font-mono font-medium">
                     {op.op}(
                     {Object.entries(op.args)
                       .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
