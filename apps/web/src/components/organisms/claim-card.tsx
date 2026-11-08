@@ -1,18 +1,50 @@
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Eyebrow } from "@/components/atoms/eyebrow";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import { Receipt } from "@/components/organisms/receipt";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+
+type Models = NonNullable<CheckResult["models"]>;
+
+/** When nothing matched: the nearest statistics, and the way to the whole list. */
+function Suggestions({ claim: c }: { claim: ClaimResult }) {
+  const near = c.suggestions ?? [];
+  if (c.verdict.label !== "cant_check" || c.retryable) return null;
+  return (
+    <section className="flex flex-col gap-2 text-sm">
+      {near.length > 0 && (
+        <>
+          <Eyebrow as="h3">{strings.check.closestHeading}</Eyebrow>
+          <ul className="list-disc ps-5">
+            {near.map((s) => (
+              <li key={s.id}>{s.name}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <Link
+        href={routes.indicators}
+        className="text-brand w-fit font-medium underline underline-offset-4"
+      >
+        {strings.check.seeAll}
+      </Link>
+    </section>
+  );
+}
 
 /** One checked claim: the quote, the verdict, why, and the receipt. */
 export function ClaimCard({
   claim: c,
   versions,
+  sharedModels,
   order,
 }: {
   claim: ClaimResult;
   versions: CheckResult["versions"];
+  sharedModels?: Models;
   /** Position in the list; staggers the entrance animation. */
   order: number;
 }) {
@@ -39,13 +71,19 @@ export function ClaimCard({
         <VerdictBadge label={c.verdict.label} large />
       </div>
       <p className="text-muted-foreground">{c.verdict.reason}</p>
-      <section aria-labelledby={whyId} className="bg-muted/60 rounded-2xl p-5">
-        <Eyebrow id={whyId} className="mb-2">
-          {strings.check.explanationHeading}
-        </Eyebrow>
-        <p className="leading-7">{c.explanation}</p>
-      </section>
-      <Receipt claim={c} versions={versions} />
+      {c.explanation && (
+        <section
+          aria-labelledby={whyId}
+          className="bg-muted/60 rounded-2xl p-5"
+        >
+          <Eyebrow id={whyId} className="mb-2">
+            {strings.check.explanationHeading}
+          </Eyebrow>
+          <p className="leading-7">{c.explanation}</p>
+        </section>
+      )}
+      <Suggestions claim={c} />
+      <Receipt claim={c} versions={versions} sharedModels={sharedModels} />
     </article>
   );
 }

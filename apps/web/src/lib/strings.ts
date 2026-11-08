@@ -13,6 +13,7 @@ export const strings = {
     main: "Main",
     home: "Home",
     howItWorks: "How it works",
+    canCheck: "What it can check",
     recent: "Recent checks",
     theme: "Theme",
     themeLight: "Light",
@@ -78,7 +79,20 @@ export const strings = {
     retryAfter: (s: number) => `Try again in about ${s} seconds.`,
     cached: "Answered from an earlier check of the same claim.",
     back: "Check another claim",
-    noClaims: "No numeric claim was found in this text.",
+    noClaims:
+      "HoldsUp found no claim with a number in it. Try a sentence such as “Italy's unemployment rate fell to 7.7% in 2023.”",
+    closestHeading: "The closest things HoldsUp can check",
+    seeAll: "See everything HoldsUp can check",
+  },
+  indicators: {
+    heading: "What HoldsUp can check",
+    intro:
+      "Each of these comes from an official source. A claim can be checked when it is about one of them.",
+    unavailable:
+      "The list could not be loaded just now. Please try again in a few minutes.",
+    years: (first: number, last: number | null) =>
+      last === null ? `since ${first}` : `${first} to ${last}`,
+    count: (n: number) => `${n} statistics`,
   },
   steps: {
     ledger: "Looking for an earlier check",
@@ -115,6 +129,7 @@ export const strings = {
     asserted: "Claimed",
     versions: "Versions",
     models: "Models used",
+    alsoUsed: "Also used",
     app: "app",
     catalog: "catalog",
     tolerances: "tolerances",
