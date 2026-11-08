@@ -27,7 +27,7 @@ from holdsup.ops import (
 )
 from holdsup.pipeline.claim import Direction
 from holdsup.pipeline.plan.model import OpCall, OpName, PlanContext
-from holdsup.verdict.rules import Tolerances
+from holdsup.verdict.tolerances import Tolerances
 
 SeriesReader = Callable[[str | None, str], Series]
 

@@ -18,7 +18,7 @@ from holdsup.ops import (
 )
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, Operator
 from holdsup.verdict import Label, cant_check, combine, decide, load_tolerances
-from holdsup.verdict.rules import ValueTolerance, half_unit
+from holdsup.verdict.tolerances import ValueTolerance, half_unit
 
 TOL = load_tolerances()
 
