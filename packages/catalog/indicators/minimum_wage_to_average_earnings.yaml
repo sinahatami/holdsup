@@ -1,6 +1,5 @@
 # Verified 2026-11-08 against the live API: one series per geo with these filters.
 #   coverage: DE 2015..2026, FR 2009..2026 (22 of 31 EU/EFTA countries have data)
-# Note: The level of the minimum wage in euro is not here: Eurostat publishes it twice a year (earn_mw_cur, periods like 2024-S1), which the pipeline cannot read.
 id: minimum_wage_to_average_earnings
 source: eurostat
 source_code: "earn_mw_avgr2"
@@ -40,5 +39,5 @@ geo_coverage:
   ]
 first_year: 2008
 last_year: null # still updated (latest period seen: 2026)
-related: [net_earnings_average_wage]
+related: [net_earnings_average_wage, minimum_wage_eur]
 filters: { unit: "PC", nace_r2: "B-S", indic_se: "MMW_MEAN_ME_PP" }
