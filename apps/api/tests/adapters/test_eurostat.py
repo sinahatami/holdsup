@@ -10,6 +10,7 @@ from tenacity import wait_none
 
 from holdsup.adapters.base import SourceFormatError, SourceNotFound, SourceUnavailable
 from holdsup.adapters.eurostat import BASE_URL, EurostatAdapter, build_params
+from holdsup.ops import ChangeKind, Frequency, Series, change, parse_period
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "eurostat"
 Handler = Callable[[httpx.Request], httpx.Response]
@@ -53,6 +54,26 @@ async def test_fetch_series_decodes_and_hashes_raw_response() -> None:
     assert request.url.params.get_list("geo") == ["IT", "DE", "FR"]
     assert request.url.params["format"] == "JSON"
     assert series.url == str(request.url)
+
+
+async def test_half_yearly_periods_are_kept_as_the_source_writes_them() -> None:
+    """Eurostat writes a half-year as 2023-S1; the adapter passes it on, and a Series reads it."""
+    filters = {"geo": ["DE", "FR", "BG"], "currency": "EUR"}
+    fetched = await adapter(serve(fixture("earn_mw_cur_semiannual.json"))).fetch_series(
+        "earn_mw_cur", filters
+    )
+    periods = {o.period for o in fetched.observations}
+    assert periods == {f"{y}-S{h}" for y in range(2022, 2027) for h in (1, 2)}
+    assert fetched.dimension_labels["freq"] == {"S": "Half-yearly, semesterly"}
+
+    de = Series.from_observations(fetched.observations, "DE", "euro per month")
+    assert de.frequency is Frequency.SEMIANNUAL
+    assert (str(de.first), str(de.last)) == ("2022-S1", "2026-S2")
+    assert [de.get(parse_period(p)) for p in ("2022-S1", "2022-S2", "2023-S1")] == [
+        1_634.0, 1_739.0, 1_997.0,
+    ]  # fmt: skip
+    changed = change(de, "2022-S1", "2023-S1", ChangeKind.ABSOLUTE)
+    assert changed.value == 363.0
 
 
 def test_build_params_repeats_list_values_and_sorts_keys() -> None:

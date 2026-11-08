@@ -109,6 +109,19 @@ def test_round_trip_preserves_everything() -> None:
     assert from_cached(entry) == original
 
 
+def test_half_yearly_periods_survive_the_cache() -> None:
+    original = FetchedSeries(
+        source="eurostat",
+        dataset="earn_mw_cur",
+        url="https://example.invalid/earn_mw_cur",
+        retrieved_at=T0,
+        raw_sha256="cd" * 32,
+        observations=[Observation("DE", "2024-S1", 2_054.0), Observation("DE", "2024-S2", 2_161.0)],
+    )
+    entry = to_cached(original, {"geo": ["DE"], "currency": "EUR"})
+    assert [o.period for o in from_cached(entry).observations] == ["2024-S1", "2024-S2"]
+
+
 def test_query_key_ignores_order() -> None:
     assert canonical_filters({"geo": ["IT", "DE"], "a": "x"}) == {"a": ["x"], "geo": ["DE", "IT"]}
     assert query_key({"geo": ["IT", "DE"], "a": "x"}) == query_key(

@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 from holdsup.ops import (
     ChangeKind,
+    Frequency,
     OpRecord,
     Series,
     cagr,
@@ -331,7 +332,7 @@ def test_combine(labels: list[Label], out: Label) -> None:
 
 def test_tolerances_file() -> None:
     assert TOL.values.percentage_points.band(12.0) == 0.5
-    assert TOL.max_period_gap
+    assert set(TOL.max_period_gap) == set(Frequency)  # a missing one would mean no limit
 
 
 # --- bounds: "more than", "at most" ----------------------------------------------------------

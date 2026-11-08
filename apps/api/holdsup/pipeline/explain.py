@@ -33,8 +33,11 @@ _NUMERAL = re.compile(
     rf"(?<![\w.])-?(\d{{1,3}}(?:,\d{{3}})+|\d+)(\.\d+)?(?:\s*({_SCALE_WORDS})s?\b)?",
     re.IGNORECASE,
 )
-# Period labels written as dates, not quantities: "2024-Q1", "Q1 2024", "2024-03", "2015-2020".
-_PERIODS = re.compile(r"\b\d{4}-Q[1-4]\b|\bQ[1-4]\b|\b\d{4}-(?:0[1-9]|1[0-2])\b", re.IGNORECASE)
+# Period labels written as dates, not quantities: "2024-Q1", "Q1 2024", "2024-S1", "2024-03".
+_PERIODS = re.compile(
+    r"\b\d{4}-(?:Q[1-4]|S[12])\b|\b(?:Q[1-4]|S[12])\b|\b\d{4}-(?:0[1-9]|1[0-2])\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
