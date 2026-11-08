@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from holdsup.catalog.index import IndicatorHit
+from holdsup.catalog.schema import Theme
 from holdsup.routes.deps import CatalogDep, Search
 
 router = APIRouter(tags=["catalog"])
@@ -19,6 +20,7 @@ class IndicatorSearchResponse(BaseModel):
 class CatalogEntry(BaseModel):
     id: str
     name: str
+    theme: Theme  # the topic it is listed under; the page names and orders the themes
     definition: str
     unit: str
     source: str
@@ -39,6 +41,7 @@ async def list_catalog(catalog: CatalogDep) -> CatalogResponse:
         CatalogEntry(
             id=s.id,
             name=s.name,
+            theme=s.theme,
             definition=s.definition,
             unit=s.unit,
             source=s.source.label,

@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
@@ -7,7 +13,7 @@ import { ClaimCard } from "@/components/organisms/claim-card";
 import { Receipt } from "@/components/organisms/receipt";
 import { Trace } from "@/components/organisms/trace";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
-import type { ClaimResult } from "@/lib/api/client";
+import type { CatalogEntry, ClaimResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
 const push = vi.fn();
@@ -148,7 +154,7 @@ describe("Receipt", () => {
     render(
       <Receipt
         claim={claim}
-        versions={{ app: "0.0.0+d264e60", catalog: "0.5.0", tolerances: 2 }}
+        versions={{ app: "0.0.0+d264e60", catalog: "0.6.0", tolerances: 2 }}
         sharedModels={[
           { step: "extract", provider: "g", model: "x", label: "GPT-OSS 20B" },
         ]}
@@ -316,26 +322,71 @@ describe("ClaimCard", () => {
 });
 
 describe("CatalogList", () => {
+  const entry = (id: string, name: string, theme: CatalogEntry["theme"]) => ({
+    id,
+    name,
+    theme,
+    definition: "What it measures.",
+    unit: "persons",
+    source: "Eurostat",
+    frequency: "annual",
+    first_year: 1960,
+    last_year: null,
+  });
+
   it("shows what each statistic measures and where it comes from", () => {
     render(
-      <CatalogList
-        entries={[
-          {
-            id: "p",
-            name: "Total population",
-            definition: "People resident on 1 January.",
-            unit: "persons",
-            source: "Eurostat",
-            frequency: "annual",
-            first_year: 1960,
-            last_year: null,
-          },
-        ]}
-      />,
+      <CatalogList entries={[entry("p", "Total population", "population")]} />,
     );
     expect(screen.getByText("Total population")).toBeInTheDocument();
     expect(
       screen.getByText(/persons · Eurostat · since 1960/),
     ).toBeInTheDocument();
+  });
+
+  it("groups by theme in the page's order, with a count for each", () => {
+    render(
+      <CatalogList
+        entries={[
+          entry("a", "Homicide rate", "safety"),
+          entry("b", "Median age", "population"),
+          entry("c", "Total population", "population"),
+        ]}
+      />,
+    );
+    const headings = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.textContent);
+    expect(headings).toEqual(["Population", "Safety"]); // no empty themes
+    const population = screen.getByRole("region", { name: "Population" });
+    expect(
+      within(population)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(["Median age", "Total population"]);
+    expect(within(population).getByText("2 statistics")).toBeInTheDocument();
+    expect(screen.getByText("1 statistic")).toBeInTheDocument();
+    expect(screen.getByText("3 statistics")).toBeInTheDocument();
+  });
+
+  it("links each topic from the jump list", () => {
+    render(
+      <CatalogList
+        entries={[
+          entry("a", "Homicide rate", "safety"),
+          entry("b", "Median age", "population"),
+        ]}
+      />,
+    );
+    const nav = screen.getByRole("navigation", {
+      name: strings.indicators.themesNav,
+    });
+    expect(within(nav).getByRole("link", { name: /Safety/ })).toHaveAttribute(
+      "href",
+      "#theme-safety",
+    );
+    expect(
+      within(nav).getByRole("link", { name: /Population/ }),
+    ).toHaveAttribute("href", "#theme-population");
   });
 });
