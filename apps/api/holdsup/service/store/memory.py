@@ -7,13 +7,20 @@ from uuid import UUID
 
 from holdsup.pipeline.ledger import LedgerEntry
 from holdsup.problems import Problem
-from holdsup.service.store.model import CheckResult, CheckStatus, StoredCheck, add_entry
+from holdsup.service.store.model import (
+    CheckResult,
+    CheckStatus,
+    StoredCheck,
+    StoredReport,
+    add_entry,
+)
 
 
 @dataclass
 class InMemoryCheckStore:
     checks: dict[UUID, StoredCheck] = field(default_factory=dict)
     ledger: dict[UUID, LedgerEntry] = field(default_factory=dict)
+    saved_reports: list[StoredReport] = field(default_factory=list)
 
     async def create(self, check: StoredCheck) -> None:
         self.checks[check.id] = check
@@ -49,6 +56,12 @@ class InMemoryCheckStore:
 
     async def set_featured(self, check_id: UUID, featured: bool) -> None:
         self.checks[check_id] = replace(self.checks[check_id], featured=featured)
+
+    async def add_report(self, report: StoredReport) -> None:
+        self.saved_reports.append(report)
+
+    async def reports(self, limit: int) -> list[StoredReport]:
+        return sorted(self.saved_reports, key=lambda r: r.created_at, reverse=True)[:limit]
 
     async def finished_results(self) -> list[dict[str, Any]]:
         return [

@@ -15,9 +15,10 @@ from holdsup.catalog.schema import Catalog, load_catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
 from holdsup.db.session import get_sessionmaker
+from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckStore, SqlCheckStore
-from holdsup.service.wiring import build_runner
+from holdsup.service.wiring import HOUR_S, build_runner
 
 
 def get_runner(request: Request) -> CheckRunner:
@@ -40,11 +41,18 @@ def get_catalog_search() -> CatalogSearch:  # pragma: no cover (tests override t
 
 
 @lru_cache
+def get_report_limiter() -> RateLimiter:
+    """One limiter for the process, so a client's reports are counted across requests."""
+    return RateLimiter(get_settings().reports_per_hour, HOUR_S)
+
+
+@lru_cache
 def get_catalog() -> Catalog:  # pragma: no cover (tests override this)
     """The curated indicators, read once from the catalog directory."""
     return load_catalog(get_settings().catalog_dir)
 
 
+ReportLimiter = Annotated[RateLimiter, Depends(get_report_limiter)]
 Runner = Annotated[CheckRunner, Depends(get_runner)]
 Store = Annotated[CheckStore, Depends(get_store)]
 Search = Annotated[CatalogSearch, Depends(get_catalog_search)]
