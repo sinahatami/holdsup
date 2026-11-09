@@ -11,6 +11,7 @@ import {
   headlineFigure,
   opGloss,
   sourceLinks,
+  stopCause,
 } from "@/lib/receipt";
 import {
   checkResult,
@@ -402,5 +403,43 @@ describe("windowsCompared", () => {
   it("is false when no verdict compared any", () => {
     expect(windowsCompared(checkResult([unmatchedClaim]))).toBe(false);
     expect(windowsCompared(checkResult([]))).toBe(false);
+  });
+});
+
+describe("stopCause", () => {
+  const stopped = (over: Partial<ClaimResult>): ClaimResult => ({
+    ...unmatchedClaim,
+    ...over,
+  });
+
+  it("is null for a claim that was checked", () => {
+    expect(stopCause(holdingClaim)).toBeNull();
+  });
+
+  it.each([
+    ["match", "no_series"],
+    ["fetch", "no_figures"],
+    ["plan", "unsupported"],
+    ["execute", "unsupported"],
+    ["verdict", "unsupported"],
+  ] as const)("reads a stop at %s as %s", (step, cause) => {
+    expect(stopCause(stopped({ stopped_at: step }))).toBe(cause);
+  });
+
+  it("puts a briefly failed claim first, wherever it stopped", () => {
+    expect(stopCause(stopped({ stopped_at: "fetch", retryable: true }))).toBe(
+      "temporary",
+    );
+  });
+
+  it("falls back to what a result stored earlier still shows", () => {
+    expect(stopCause(stopped({ stopped_at: null, indicator: null }))).toBe(
+      "no_series",
+    );
+    expect(
+      stopCause(
+        stopped({ stopped_at: undefined, indicator: holdingClaim.indicator }),
+      ),
+    ).toBe("unknown");
   });
 });

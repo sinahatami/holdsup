@@ -384,3 +384,29 @@ export function headlineFigure(c: ClaimResult): PartView | null {
   const byName = (name: string) => figures.find((p) => p.name === name);
   return byName("assertion") ?? byName("end value") ?? null;
 }
+
+/**
+ * Why a claim could not be checked, for the help under its verdict: no statistic fits it, the
+ * source has no figures for its place, or this kind of claim cannot be recomputed yet. A claim
+ * that failed because something was briefly down is `temporary`; a result stored before the
+ * step was recorded falls back to what the claim still shows. Null when it was checked.
+ */
+export type StopCause =
+  "no_series" | "no_figures" | "unsupported" | "temporary" | "unknown";
+
+export function stopCause(c: ClaimResult): StopCause | null {
+  if (c.verdict.label !== "cant_check") return null;
+  if (c.retryable) return "temporary";
+  switch (c.stopped_at) {
+    case "match":
+      return "no_series";
+    case "fetch":
+      return "no_figures";
+    case "plan":
+    case "execute":
+    case "verdict":
+      return "unsupported";
+    default:
+      return c.indicator ? "unknown" : "no_series";
+  }
+}

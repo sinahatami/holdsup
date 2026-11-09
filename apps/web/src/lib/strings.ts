@@ -192,6 +192,26 @@ export const strings = {
     // The page title and the shared preview: how it came out, then what was said.
     metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
+  cantCheck: {
+    heading: "What you can do",
+    cause: {
+      no_series: "HoldsUp has no statistic that fits what this claim measures.",
+      no_figures: (name: string) =>
+        `HoldsUp has ${name}, but its source has no figures for the place or the years in this claim.`,
+      unsupported: (name: string) =>
+        `HoldsUp found ${name}, but it cannot recompute this kind of claim yet.`,
+      unknown: "HoldsUp could not check this claim.",
+    },
+    tipsHeading: "Try saying it differently",
+    tips: [
+      "Say what is measured in everyday words, such as “unemployment rate” or “public debt as a share of GDP”.",
+      "Name the place and the years.",
+      "Put one figure in each sentence.",
+    ],
+    coverage: (name: string) => `See which places and years ${name} covers`,
+    cannotLink: "What HoldsUp cannot check",
+    rewordLabel: "Reword the claim",
+  },
   indicators: {
     heading: "What HoldsUp can check",
     intro:
