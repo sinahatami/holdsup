@@ -127,6 +127,31 @@ test.describe("a check's permanent link", () => {
   });
 });
 
+test.describe("sharing a check", () => {
+  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+
+  test("copies the link, and a summary with the claim, the verdict and the link", async ({
+    page,
+  }) => {
+    await page.goto(`/check/${DONE_ID}`);
+    const share = page.getByRole("region", { name: "Share this check" });
+    const clipboard = () => page.evaluate(() => navigator.clipboard.readText());
+
+    await share.getByRole("button", { name: "Copy link" }).click();
+    await expect(share.getByRole("status")).toHaveText("Link copied.");
+    expect(await clipboard()).toBe(page.url());
+
+    await share.getByRole("button", { name: "Copy summary" }).click();
+    await expect(share.getByRole("status")).toHaveText("Summary copied.");
+    const summary = await clipboard();
+    expect(summary).toContain(
+      "“Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.”",
+    );
+    expect(summary).toContain("Holds up");
+    expect(summary.endsWith(page.url())).toBe(true);
+  });
+});
+
 test("home page has no accessibility violations", async ({ page }) => {
   await page.goto("/");
   const { violations } = await new AxeBuilder({ page })
