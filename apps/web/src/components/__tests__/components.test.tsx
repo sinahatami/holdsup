@@ -173,6 +173,33 @@ describe("GalleryCard", () => {
     expect(screen.getByText(strings.home.card.noFigure)).toBeInTheDocument();
   });
 
+  it("names each claim and summarises when there are several", () => {
+    render(
+      <GalleryCard
+        item={item(
+          [
+            { quote: "Debt is 133% of GDP.", label: "supported" },
+            { quote: "Growth was 3% in 2023.", label: "not_supported" },
+          ],
+          "Debt is 133% of GDP and growth was 3% in 2023.",
+        )}
+      />,
+    );
+    expect(screen.getByText("1 of 2 claims hold up")).toBeInTheDocument();
+    const rows = screen.getAllByRole("listitem");
+    // Each badge sits in a row with the claim it belongs to.
+    const row = (quote: string) =>
+      rows.find((r) => within(r).queryByText(quote) && !r.querySelector("ul"))!;
+    expect(
+      within(row("Debt is 133% of GDP.")).getByText(strings.verdicts.supported),
+    ).toBeInTheDocument();
+    expect(
+      within(row("Growth was 3% in 2023.")).getByText(
+        strings.verdicts.not_supported,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("still shows the verdicts when the API sent no per-claim data", () => {
     render(
       <GalleryCard

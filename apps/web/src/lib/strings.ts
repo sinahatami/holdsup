@@ -94,6 +94,8 @@ export const strings = {
       official: "official",
       checkedAgainst: (indicator: string) => `Checked against ${indicator}`,
       noFigure: "No official figure to compare.",
+      summary: (holds: number, total: number) =>
+        `${holds} of ${total} claims hold up`,
     },
     maxChars: 2000,
     tooLong: "Please keep the text under 2,000 characters.",
