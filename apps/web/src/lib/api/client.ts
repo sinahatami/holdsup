@@ -3,6 +3,11 @@ import type { components } from "./schema";
 
 export type CheckResult = components["schemas"]["CheckResult"];
 export type ClaimResult = components["schemas"]["ClaimResult"];
+export type ClaimSpec = components["schemas"]["ClaimSpec"];
+/** One calculation a claim's receipt lists. */
+export type Operation = NonNullable<ClaimResult["operations"]>[number];
+/** One checked piece of a claim: the figures a verdict compared. */
+export type Part = NonNullable<ClaimResult["verdict"]["parts"]>[number];
 export type CheckView = components["schemas"]["CheckView"];
 export type CheckAccepted = components["schemas"]["CheckAccepted"];
 export type CatalogResponse = components["schemas"]["CatalogResponse"];

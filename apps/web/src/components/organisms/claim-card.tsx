@@ -42,12 +42,15 @@ export function ClaimCard({
   versions,
   sharedModels,
   order,
+  total,
 }: {
   claim: ClaimResult;
   versions: CheckResult["versions"];
   sharedModels?: Models;
   /** Position in the list; staggers the entrance animation. */
   order: number;
+  /** How many claims the check has, so each can be named "Claim 2 of 3". */
+  total: number;
 }) {
   const whyId = `why-${c.index}`;
   return (
@@ -62,6 +65,7 @@ export function ClaimCard({
         className="absolute inset-x-0 top-0 h-1.5"
         style={{ background: "var(--v)" }}
       />
+      <h2 className="sr-only">{strings.check.claimOf(order + 1, total)}</h2>
       <blockquote
         className="border-s-4 ps-4 text-xl leading-8 font-medium text-balance"
         style={{ borderColor: "var(--v)" }}
@@ -78,7 +82,7 @@ export function ClaimCard({
           aria-labelledby={whyId}
           className="bg-muted/60 rounded-2xl p-5"
         >
-          <Eyebrow id={whyId} className="mb-2">
+          <Eyebrow as="h3" id={whyId} className="mb-2">
             {strings.check.explanationHeading}
           </Eyebrow>
           <p className="leading-7">{c.explanation}</p>
