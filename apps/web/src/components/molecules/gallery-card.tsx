@@ -3,6 +3,7 @@ import Link from "next/link";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import type { GalleryClaim, GalleryItem } from "@/lib/api/client";
 import { formatFigures, sourceName } from "@/lib/format";
+import { countHolding } from "@/lib/gallery";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
@@ -48,10 +49,13 @@ function Figures({ claim: c }: { claim: GalleryClaim }) {
 
 /**
  * A featured check: its text (the whole card is the link), then each claim with
- * its own verdict and numbers.
+ * its own verdict and numbers. With several claims, each is named by its quote
+ * and a summary says how many hold up, so no badge stands alone.
  */
 export function GalleryCard({ item }: { item: GalleryItem }) {
   const claims = item.claims ?? [];
+  const several = claims.length > 1;
+  const { holds, total } = countHolding(claims);
   return (
     <li className="glass group hover:border-brand/50 relative flex flex-col gap-4 rounded-2xl p-5 transition hover:-translate-y-1 hover:shadow-(--shadow-lift)">
       <Link
@@ -64,6 +68,9 @@ export function GalleryCard({ item }: { item: GalleryItem }) {
           aria-hidden
         />
       </Link>
+      {several && (
+        <p className="text-sm font-semibold">{t.summary(holds, total)}</p>
+      )}
       {claims.length === 0 ? (
         // An API that predates per-claim data: the verdicts alone.
         <div className="flex flex-wrap gap-2">
@@ -76,6 +83,11 @@ export function GalleryCard({ item }: { item: GalleryItem }) {
           {claims.map((c, i) => (
             <li key={i} className="flex flex-col items-start gap-2">
               <VerdictBadge label={c.label} />
+              {several && (
+                <q className="line-clamp-2 text-[0.9375rem] leading-6">
+                  {c.quote}
+                </q>
+              )}
               <Figures claim={c} />
             </li>
           ))}
