@@ -9,13 +9,15 @@ export function HowItWorks() {
       title={strings.home.howHeading}
       className="scroll-mt-24"
     >
-      <ol className="grid gap-4 sm:grid-cols-3">
+      <ol className="grid gap-4 md:grid-cols-3">
         {strings.home.how.map((step, i) => (
           <StepCard
             key={step.title}
             number={i + 1}
             title={step.title}
             body={step.body}
+            exampleLabel={strings.home.howExampleLabel}
+            example={step.example}
           />
         ))}
       </ol>
