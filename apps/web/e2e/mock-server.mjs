@@ -3,6 +3,7 @@
 // on the server, where page.route cannot reach. It answers only what such a page reads:
 // one check by id. Node runs the .ts imports as they are (it strips the types).
 import { createServer } from "node:http";
+import { setTimeout as sleep } from "node:timers/promises";
 import {
   catalogEntry,
   checkResult,
@@ -40,9 +41,14 @@ const featured = Array.from({ length: 14 }, (_, i) =>
   }),
 );
 
+// How long a stored check takes to come back (milliseconds). Zero for the e2e tests; the
+// Lighthouse run sets some, because the real API is not instant and a page that streams a
+// check in shows its loading frame for that long (which is when a layout shift can happen).
+const CHECK_DELAY_MS = Number(process.env.CHECK_DELAY_MS ?? 0);
+
 const problem = (status, title) => ({ type: "about:blank", title, status });
 
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
   const { pathname, searchParams } = new URL(
     req.url ?? "/",
     "http://localhost",
@@ -98,6 +104,7 @@ const server = createServer((req, res) => {
   const match = pathname.match(/^\/v1\/checks\/([^/]+)$/);
   if (!match) return send(res, 404, problem(404, "Not found"));
   const id = match[1];
+  if (CHECK_DELAY_MS > 0) await sleep(CHECK_DELAY_MS);
 
   if (id === CHECK_ID) {
     return send(res, 200, checkView({ id, status: "running" }));
