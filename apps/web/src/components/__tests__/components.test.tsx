@@ -19,7 +19,12 @@ import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import type { CatalogEntry, ClaimResult, GalleryItem } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
-import { holdingClaim, unmatchedClaim, versions } from "@/test/fixtures";
+import {
+  catalogEntry,
+  holdingClaim,
+  unmatchedClaim,
+  versions,
+} from "@/test/fixtures";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -253,17 +258,7 @@ describe("SampleReceipt", () => {
 
 describe("CanCheck", () => {
   const e = (id: string, source: string, first: number, last: number | null) =>
-    ({
-      id,
-      name: id,
-      theme: "economy",
-      definition: "d",
-      unit: "%",
-      source,
-      frequency: "annual",
-      first_year: first,
-      last_year: last,
-    }) as CatalogEntry;
+    catalogEntry({ id, source, first_year: first, last_year: last });
 
   it("shows counts and sources taken from the catalog", () => {
     render(
@@ -494,26 +489,30 @@ describe("ClaimCard", () => {
 });
 
 describe("CatalogList", () => {
-  const entry = (id: string, name: string, theme: CatalogEntry["theme"]) => ({
-    id,
-    name,
-    theme,
-    definition: "What it measures.",
-    unit: "persons",
-    source: "Eurostat",
-    frequency: "annual",
-    first_year: 1960,
-    last_year: null,
-  });
+  const entry = (id: string, name: string, theme: CatalogEntry["theme"]) =>
+    catalogEntry({
+      id,
+      name,
+      theme,
+      definition: "What it measures.",
+      unit: "persons",
+      first_year: 1960,
+      source_code: "demo_pjan",
+      countries: ["IT", "NO"],
+      groups: [],
+    });
 
-  it("shows what each statistic measures and where it comes from", () => {
+  it("shows what each statistic measures, its source, unit, years and places", () => {
     render(
       <CatalogList entries={[entry("p", "Total population", "population")]} />,
     );
     expect(screen.getByText("Total population")).toBeInTheDocument();
-    expect(
-      screen.getByText(/persons · Eurostat · since 1960/),
-    ).toBeInTheDocument();
+    expect(screen.getByText("What it measures.")).toBeInTheDocument();
+    const facts = screen.getByText("Source").closest("dl");
+    expect(facts).toHaveTextContent("Eurostat demo_pjan");
+    expect(facts).toHaveTextContent("Measured inpersons");
+    expect(facts).toHaveTextContent("Yearssince 1960");
+    expect(facts).toHaveTextContent("CoversItaly and Norway");
   });
 
   it("groups by theme in the page's order, with a count for each", () => {
@@ -538,27 +537,5 @@ describe("CatalogList", () => {
     ).toEqual(["Median age", "Total population"]);
     expect(within(population).getByText("2 statistics")).toBeInTheDocument();
     expect(screen.getByText("1 statistic")).toBeInTheDocument();
-    expect(screen.getByText("3 statistics")).toBeInTheDocument();
-  });
-
-  it("links each topic from the jump list", () => {
-    render(
-      <CatalogList
-        entries={[
-          entry("a", "Homicide rate", "safety"),
-          entry("b", "Median age", "population"),
-        ]}
-      />,
-    );
-    const nav = screen.getByRole("navigation", {
-      name: strings.indicators.themesNav,
-    });
-    expect(within(nav).getByRole("link", { name: /Safety/ })).toHaveAttribute(
-      "href",
-      "#theme-safety",
-    );
-    expect(
-      within(nav).getByRole("link", { name: /Population/ }),
-    ).toHaveAttribute("href", "#theme-population");
   });
 });

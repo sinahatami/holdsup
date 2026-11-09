@@ -227,6 +227,16 @@ export interface components {
       first_year: number;
       /** Last Year */
       last_year: number | null;
+      /** Source Code */
+      source_code: string;
+      /** Aliases */
+      aliases: string[];
+      /** Countries */
+      countries: string[];
+      /** Groups */
+      groups: string[];
+      /** All Countries */
+      all_countries: boolean;
     };
     /** CatalogResponse */
     CatalogResponse: {

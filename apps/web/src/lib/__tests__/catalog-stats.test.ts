@@ -1,20 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogEntry } from "@/lib/api/client";
 import { coverage } from "@/lib/catalog-stats";
+import { catalogEntry } from "@/test/fixtures";
 
 const entry = (
   over: Partial<CatalogEntry> & Pick<CatalogEntry, "id">,
-): CatalogEntry => ({
-  name: over.id,
-  theme: "economy",
-  definition: "d",
-  unit: "%",
-  source: "Eurostat",
-  frequency: "annual",
-  first_year: 2000,
-  last_year: null,
-  ...over,
-});
+): CatalogEntry => catalogEntry({ source: "Eurostat", ...over });
 
 describe("coverage", () => {
   it("is null for an empty catalog", () => {
