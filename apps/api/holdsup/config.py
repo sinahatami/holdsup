@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     fastembed_cache_path: str | None = None
     # New (not cached) checks per client address per hour.
     checks_per_hour: int = 10
+    # Reports of a wrong match per client address per hour.
+    reports_per_hour: int = 20
     # Proxies in front of the API that append to X-Forwarded-For (0 = use the socket address).
     trusted_proxies: int = 0
     log_level: str = "INFO"

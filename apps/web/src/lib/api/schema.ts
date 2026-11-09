@@ -129,6 +129,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/checks/{check_id}/reports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Report Check
+     * @description Record that a check went wrong. No account is needed; the sender's address is only
+     *     counted in memory, to limit how many reports it can send in an hour.
+     */
+    post: operations["report_check_v1_checks__check_id__reports_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -654,6 +675,35 @@ export interface components {
           }[]
         | null;
     };
+    /** ReportAccepted */
+    ReportAccepted: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+    };
+    /**
+     * ReportKind
+     * @description What a reader says is wrong with a check.
+     * @enum {string}
+     */
+    ReportKind: "wrong_series" | "wrong_reading" | "other";
+    /** ReportRequest */
+    ReportRequest: {
+      kind: components["schemas"]["ReportKind"];
+      /**
+       * Claim Index
+       * @description Which claim of the check the report is about, counting from 0; null for the check as a whole.
+       */
+      claim_index?: number | null;
+      /**
+       * Note
+       * @description What looks wrong, in the reader's words (optional).
+       * @default
+       */
+      note: string;
+    };
     /**
      * Step
      * @enum {string}
@@ -967,6 +1017,62 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  report_check_v1_checks__check_id__reports_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        check_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReportRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportAccepted"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
         };
       };
     };

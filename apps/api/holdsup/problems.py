@@ -56,6 +56,25 @@ def rate_limited(wait_s: float) -> Problem:
     )
 
 
+def reports_limited(wait_s: float) -> Problem:
+    return Problem(
+        type="/problems/rate-limited",
+        title="Too many reports",
+        status=429,
+        detail="This address has sent too many reports this hour. Please try again later.",
+        retry_after=_seconds(wait_s),
+    )
+
+
+def unknown_claim(index: int) -> Problem:
+    return Problem(
+        type="/problems/unknown-claim",
+        title="Unknown claim",
+        status=422,
+        detail=f"This check has no claim {index + 1}.",
+    )
+
+
 def at_capacity(wait_s: float | None) -> Problem:
     wait = _seconds(wait_s)
     minutes = f" Try again in about {math.ceil(wait / 60)} minutes." if wait else ""
