@@ -85,13 +85,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     fireEvent.click(toggle());
     const menu = within(panel());
-    for (const label of [
-      t.howItWorks,
-      t.canCheck,
-      t.recent,
-      t.methodology,
-      t.about,
-    ])
+    for (const label of [t.canCheck, t.recent, t.methodology, t.about])
       expect(menu.getByRole("link", { name: label })).toBeInTheDocument();
     expect(menu.getByRole("link", { name: t.recent })).toHaveAttribute(
       "href",

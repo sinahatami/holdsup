@@ -2,7 +2,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const PAGES = [
-  { name: "How it works", url: /\/#how$/ },
   { name: "What it can check", url: /\/indicators$/ },
   { name: "Recent checks", url: /\/recent$/ },
   { name: "Methodology", url: /\/methodology$/ },
@@ -38,7 +37,7 @@ test.describe("the menu on a phone", () => {
   test("reaches Recent checks and Methodology, which the header row never shows on a phone", async ({
     page,
   }) => {
-    for (const { name, url } of PAGES.slice(2, 4)) {
+    for (const { name, url } of PAGES.slice(1, 3)) {
       await page.goto("/");
       await page.getByRole("button", { name: "Open the menu" }).click();
       await page
@@ -90,7 +89,7 @@ test("on a desktop the header shows the pages and no menu button", async ({
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
   const main = page.getByRole("navigation", { name: "Main" });
-  for (const { name } of PAGES.slice(0, 4))
+  for (const { name } of PAGES.slice(0, 3))
     await expect(main.getByRole("link", { name })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Open the menu" }),

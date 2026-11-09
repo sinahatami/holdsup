@@ -9,7 +9,6 @@ import { strings } from "@/lib/strings";
 
 // The pages shown across the header from 768px up.
 const links = [
-  { href: routes.howItWorks, label: strings.nav.howItWorks },
   { href: routes.indicators, label: strings.nav.canCheck },
   { href: routes.recent, label: strings.nav.recent },
   { href: routes.methodology, label: strings.nav.methodology },
