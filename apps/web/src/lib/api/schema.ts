@@ -391,6 +391,7 @@ export interface components {
        * @default false
        */
       retryable: boolean;
+      stopped_at?: components["schemas"]["Step"] | null;
     };
     /**
      * ClaimSpec

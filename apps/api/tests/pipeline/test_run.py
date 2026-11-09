@@ -70,6 +70,7 @@ async def test_a_supported_claim_runs_every_step() -> None:
 
     [c] = out.claims
     assert c.verdict.label is Label.SUPPORTED
+    assert c.stopped_at is None
     assert c.explanation == EXPLANATION and c.explanation_source == "model"
     assert c.indicator is not None and c.indicator.id == "unemployment_rate"
     assert c.alternatives == ["youth_unemployment_rate"]
@@ -128,6 +129,7 @@ async def test_no_match_stops_the_claim() -> None:
     [c] = out.claims
     assert c.verdict.label is Label.CANT_CHECK and c.indicator is None
     assert done(events)[-1] == ("match", "cant_check")
+    assert c.stopped_at is Step.MATCH
     assert c.verdict.reason == NO_MATCH
     assert c.explanation == ""  # the page already shows the reason; "Why" has nothing to add
     assert 1 <= len(c.suggestions) <= 3 and all(s.name for s in c.suggestions)
@@ -137,6 +139,7 @@ async def test_no_match_stops_the_claim() -> None:
 async def test_a_claim_with_no_place_cannot_be_fetched() -> None:
     out, events, _, fetcher = await run([extraction(claim_json(geo=None)), match_answer()])
     assert out.claims[0].verdict.reason == NO_PLACE
+    assert out.claims[0].stopped_at is Step.FETCH
     assert done(events)[-1] == ("fetch", "cant_check") and fetcher.calls == []
 
 
@@ -203,6 +206,7 @@ async def test_an_unsupported_claim_type_is_not_retryable() -> None:
     [c] = out.claims
     assert c.verdict.reason == unsupported_reason(AssertionType.RECORD)
     assert not c.retryable and calls == 2  # no plan call
+    assert c.stopped_at is Step.PLAN
     assert events[-1].models == []
 
 
