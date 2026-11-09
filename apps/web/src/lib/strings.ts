@@ -114,6 +114,10 @@ export const strings = {
       summary: (holds: number, total: number) =>
         `${holds} of ${total} claims hold up`,
     },
+    neutrality: {
+      text: "A verdict is about the number, not about the person who said it.",
+      link: "How HoldsUp judges a claim",
+    },
     maxChars: 2000,
     tooLong: "Please keep the text under 2,000 characters.",
   },

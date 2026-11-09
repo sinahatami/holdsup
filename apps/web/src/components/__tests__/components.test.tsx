@@ -18,6 +18,7 @@ import { Receipt } from "@/components/organisms/receipt";
 import { Trace } from "@/components/organisms/trace";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import type { CatalogEntry, ClaimResult, GalleryItem } from "@/lib/api/client";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
 const push = vi.fn();
@@ -88,6 +89,16 @@ describe("Gallery", () => {
       "href",
       "/check/abc",
     );
+  });
+
+  it("says a verdict is about the number, not the speaker, and links the method", () => {
+    render(<Gallery items={[]} />);
+    expect(
+      screen.getByRole("link", { name: strings.home.neutrality.link }),
+    ).toHaveAttribute("href", routes.methodology);
+    expect(
+      screen.getByText(/not about the person who said it/),
+    ).toBeInTheDocument();
   });
 });
 
@@ -565,6 +576,30 @@ describe("ClaimCard", () => {
     );
     expect(
       screen.queryByRole("link", { name: strings.check.seeAll }),
+    ).not.toBeInTheDocument();
+  });
+  it("says the verdict is about the number when a person is quoted", () => {
+    const quoted = {
+      ...claim,
+      claim: { quote: "q", speaker: "A. Minister" },
+      verdict: { label: "not_supported", reason: "Outside tolerance." },
+      explanation: "",
+    } as unknown as ClaimResult;
+    const { rerender } = render(
+      <ClaimCard claim={quoted} versions={versions} order={0} />,
+    );
+    expect(
+      screen.getByRole("link", { name: strings.home.neutrality.link }),
+    ).toHaveAttribute("href", routes.methodology);
+    rerender(
+      <ClaimCard
+        claim={{ ...quoted, claim: { quote: "q" } } as ClaimResult}
+        versions={versions}
+        order={0}
+      />,
+    );
+    expect(
+      screen.queryByRole("link", { name: strings.home.neutrality.link }),
     ).not.toBeInTheDocument();
   });
   it("shows Why when there is something to add", () => {
