@@ -89,8 +89,19 @@ export const strings = {
     ],
     canCheckHeading: "What HoldsUp can check",
     canCheckBody:
-      "Every claim is matched to an official statistic. Browse the full list to see which topics, countries and years are covered.",
+      "Every claim is matched to an official statistic. Browse the full list to see which topics, sources and years are covered.",
     canCheckLink: "See everything HoldsUp can check",
+    coverage: {
+      intro:
+        "Every claim is matched to an official statistic. This is what is covered today.",
+      statistics: (n: number) => (n === 1 ? "statistic" : "statistics"),
+      topics: (n: number) => (n === 1 ? "topic" : "topics"),
+      sources: (n: number) => (n === 1 ? "source" : "sources"),
+      years: "oldest series to now",
+      yearRange: (first: number, last: number | null) =>
+        last === null ? `${first}–now` : `${first}–${last}`,
+      sourcesHeading: "Data comes from",
+    },
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",
     card: {

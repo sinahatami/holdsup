@@ -6,6 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
@@ -235,6 +236,52 @@ describe("SampleReceipt", () => {
     expect(
       screen.getByRole("link", { name: strings.home.sample.open }),
     ).toHaveAttribute("href", "/check/abc");
+  });
+});
+
+describe("CanCheck", () => {
+  const e = (id: string, source: string, first: number, last: number | null) =>
+    ({
+      id,
+      name: id,
+      theme: "economy",
+      definition: "d",
+      unit: "%",
+      source,
+      frequency: "annual",
+      first_year: first,
+      last_year: last,
+    }) as CatalogEntry;
+
+  it("shows counts and sources taken from the catalog", () => {
+    render(
+      <CanCheck
+        entries={[
+          e("a", "Eurostat", 1983, null),
+          e("b", "Eurostat", 1990, null),
+          e("c", "the World Bank", 1960, null),
+        ]}
+      />,
+    );
+    const stat = (label: string) =>
+      screen.getByText(label).nextElementSibling?.textContent;
+    expect(stat("statistics")).toBe("3");
+    expect(stat("topic")).toBe("1");
+    expect(stat("sources")).toBe("2");
+    expect(stat(strings.home.coverage.years)).toBe("1960–now");
+    expect(screen.getByText("World Bank")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: strings.home.canCheckLink }),
+    ).toHaveAttribute("href", "/indicators");
+  });
+
+  it("falls back to a plain pointer when there is no catalog", () => {
+    render(<CanCheck />);
+    expect(screen.getByText(strings.home.canCheckBody)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: strings.home.canCheckLink }),
+    ).toHaveAttribute("href", "/indicators");
+    expect(screen.queryByText("statistics")).not.toBeInTheDocument();
   });
 });
 
