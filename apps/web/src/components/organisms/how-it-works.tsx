@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { StepCard } from "@/components/molecules/step-card";
 import { TitledSection } from "@/components/molecules/titled-section";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
 export function HowItWorks() {
@@ -21,6 +23,14 @@ export function HowItWorks() {
           />
         ))}
       </ol>
+      <p>
+        <Link
+          href={routes.methodology}
+          className="text-brand font-medium underline underline-offset-4"
+        >
+          {strings.home.howMore}
+        </Link>
+      </p>
     </TitledSection>
   );
 }

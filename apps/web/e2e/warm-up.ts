@@ -11,6 +11,7 @@ export default async function warmUp(config: FullConfig) {
   for (const path of [
     "/",
     "/indicators",
+    "/methodology",
     `/check/${DONE_ID}`,
     "/check/not-an-id",
   ]) {

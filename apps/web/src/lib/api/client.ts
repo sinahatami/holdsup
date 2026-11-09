@@ -17,6 +17,8 @@ export type GalleryClaim = components["schemas"]["GalleryClaim"];
 export type ReportKind = components["schemas"]["ReportKind"];
 export type ReportRequest = components["schemas"]["ReportRequest"];
 export type ReportAccepted = components["schemas"]["ReportAccepted"];
+export type Tolerances = components["schemas"]["Tolerances"];
+export type ValueTolerance = components["schemas"]["ValueTolerance"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
@@ -132,6 +134,8 @@ export function createApiClient(baseUrl: string) {
         body: JSON.stringify(report),
       }),
     catalog: () => request<CatalogResponse>("/catalog"),
+    /** The allowed gaps and thresholds every verdict is judged by. */
+    tolerances: () => request<Tolerances>("/tolerances"),
     getCheck: (id: string, init?: RequestInit) =>
       request<CheckView>(`/checks/${id}`, init),
     gallery: async (limit: number) =>

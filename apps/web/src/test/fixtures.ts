@@ -3,6 +3,7 @@ import type {
   CheckResult,
   CheckView,
   ClaimResult,
+  Tolerances,
 } from "@/lib/api/client";
 
 /**
@@ -333,3 +334,31 @@ export function catalogEntry(
     ...over,
   };
 }
+
+/** The allowed gaps as `tolerances.yaml` sets them (version 2), as the API serves them. */
+export const tolerances: Tolerances = {
+  version: 2,
+  framing_threshold: 0.7,
+  values: {
+    level: { relative: 0, absolute: 0, rounding: true, plus_relative: 0.01 },
+    level_rate: {
+      relative: 0,
+      absolute: 0,
+      rounding: true,
+      plus_relative: 0.01,
+    },
+    absolute: { relative: 0.05, absolute: 0, rounding: true, plus_relative: 0 },
+    percent: { relative: 0.05, absolute: 0, rounding: true, plus_relative: 0 },
+    percentage_points: {
+      relative: 0,
+      absolute: 0.5,
+      rounding: true,
+      plus_relative: 0,
+    },
+    ratio: { relative: 0.05, absolute: 0, rounding: false, plus_relative: 0 },
+    rank: { relative: 0, absolute: 0, rounding: false, plus_relative: 0 },
+  },
+  flat_relative: 0.02,
+  trend_min_r2: 0.5,
+  max_period_gap: { annual: 1, semiannual: 1, quarterly: 2, monthly: 3 },
+};
