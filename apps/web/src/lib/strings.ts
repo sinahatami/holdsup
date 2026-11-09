@@ -363,7 +363,7 @@ export const strings = {
     },
     open: {
       heading: "Open source",
-      body: "The code and the catalog of statistics are open, so anyone can read how a check works, repeat it, or improve it.",
+      body: "The code and the catalog of statistics are open under the MIT license, so anyone can read how a check works, repeat it, or improve it.",
       repo: "View HoldsUp on GitHub",
     },
     contribute: {
