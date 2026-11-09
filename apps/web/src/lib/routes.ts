@@ -3,6 +3,7 @@ export const routes = {
   home: "/",
   howItWorks: "/#how",
   methodology: "/methodology",
+  about: "/about",
   indicators: "/indicators",
   recent: "/recent",
   check: (id: string) => `/check/${id}`,

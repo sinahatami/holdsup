@@ -36,6 +36,7 @@ export const strings = {
     howItWorks: "How it works",
     canCheck: "What it can check",
     methodology: "Methodology",
+    about: "About",
     recent: "Recent checks",
     theme: "Theme",
     themeLight: "Light",
@@ -314,6 +315,91 @@ export const strings = {
     meta: {
       description:
         "Checks of numeric claims against official statistics, each with its receipt.",
+    },
+  },
+  about: {
+    heading: "About HoldsUp",
+    intro:
+      "HoldsUp checks numbers. Paste a sentence with a number in it, and it finds the official statistic the number is about, recomputes the claim from that statistic's own data, and gives a verdict with a receipt you can follow.",
+    what: {
+      heading: "What it is",
+      body: [
+        "Every number has a denominator: a place, a period, a population it is measured against. A claim can leave one out, or start at a convenient year. HoldsUp puts the number back next to the data it came from.",
+        "It is not a search engine and it does not weigh opinions. It compares a figure with an official statistic, using plain code for the arithmetic, and shows its working. A verdict is about the number, never about the person who said it.",
+      ],
+      method: "How a verdict is reached",
+    },
+    who: {
+      heading: "Who it is for",
+      items: [
+        "Journalists and fact-checkers who want to check a figure before they print it.",
+        "Teachers and students who want to see how a claim stands up against the data.",
+        "Writers who quote numbers, and readers who wonder about them.",
+        "Anyone who wants a link that settles an argument: every check has its own page.",
+      ],
+    },
+    data: {
+      heading: "Where the figures come from",
+      body: "All figures come from official statistical agencies and public data projects. HoldsUp does not publish statistics of its own. Each receipt names the source and its code for the series, links to it, and says when HoldsUp fetched it.",
+      statistics: (n: number) => (n === 1 ? "1 statistic" : `${n} statistics`),
+      sources: [
+        {
+          name: "Eurostat",
+          url: "https://ec.europa.eu/eurostat",
+          body: "The statistical office of the European Union, covering the EU and the EFTA countries.",
+        },
+        {
+          name: "World Bank",
+          url: "https://data.worldbank.org",
+          body: "Development indicators for countries around the world.",
+        },
+        {
+          name: "Our World in Data",
+          url: "https://ourworldindata.org",
+          body: "Curated long-run series on emissions, energy, health and poverty.",
+        },
+      ],
+      all: "See every statistic HoldsUp can check",
+    },
+    open: {
+      heading: "Open source",
+      body: "The code and the catalog of statistics are open, so anyone can read how a check works, repeat it, or improve it.",
+      repo: "View HoldsUp on GitHub",
+    },
+    contribute: {
+      heading: "Add a statistic",
+      intro:
+        "The catalog is a folder of small text files, one for each statistic. Adding one is a change to that folder.",
+      steps: [
+        {
+          title: "Find the series.",
+          body: "It has to come from Eurostat, the World Bank or Our World in Data. Note its code at the source.",
+        },
+        {
+          title: "Describe it in a new file.",
+          body: "Name it, give three to five phrases people really use for it, one sentence saying exactly what it measures (age range and unit included), its unit, how often it is published, the places and years it covers, and the code from the first step.",
+          code: "packages/catalog/indicators/<id>.yaml",
+        },
+        {
+          title: "Check it.",
+          body: "This reads every file and rejects one that is incomplete or inconsistent. It needs no database.",
+          code: "make catalog-check",
+        },
+        {
+          title: "Raise the catalog version and propose the change.",
+          body: "Every receipt records the catalog version, so changes to the catalog raise it.",
+          code: "packages/catalog/VERSION",
+        },
+      ],
+      newSource:
+        "A source that is not on the list needs a small adapter that fetches its series and turns them into rows of place, period and value. Open an issue on GitHub that names the source and the series you have in mind, before writing one.",
+      mistakes:
+        "Found a statistic that was matched wrongly, or a figure that looks off? Use “Report a wrong match” on the claim's receipt, or open an issue.",
+    },
+    meta: {
+      title: "About",
+      description:
+        "What HoldsUp is, who it is for, where its figures come from, and how to add a statistic to its open catalog.",
     },
   },
   methodology: {
