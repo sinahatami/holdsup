@@ -6,14 +6,15 @@ import { Gallery } from "@/components/organisms/gallery";
 import { HowItWorks } from "@/components/organisms/how-it-works";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
 import { PageShell } from "@/components/templates/page-shell";
+import { getCatalog } from "@/lib/api/catalog";
 import { getGallery } from "@/lib/api/gallery";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
-// Prerendered: the gallery read is cached (see getGallery), so the page still
-// renders when the API is stopped.
+// Prerendered: the gallery and catalog reads are cached (see getGallery,
+// getCatalog), so the page still renders when the API is stopped.
 export default async function Home() {
-  const items = await getGallery();
+  const [items, catalog] = await Promise.all([getGallery(), getCatalog()]);
   // The sample receipt opens a real receipt when the gallery has a check of the same claim.
   const real = items.find((it) => it.text === strings.home.sample.claim);
   return (
@@ -39,7 +40,7 @@ export default async function Home() {
         <HowItWorks />
       </div>
       <div className="reveal">
-        <CanCheck />
+        <CanCheck entries={catalog?.indicators} />
       </div>
       <div className="reveal">
         <Gallery items={items} />
