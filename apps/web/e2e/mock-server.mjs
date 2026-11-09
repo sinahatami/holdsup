@@ -7,6 +7,8 @@ import {
   catalogEntry,
   checkResult,
   checkView,
+  galleryClaim,
+  galleryItem,
   holdingClaim,
   tolerances,
 } from "../src/test/fixtures.ts";
@@ -19,11 +21,38 @@ function send(res, status, body, type = "application/json") {
   res.end(typeof body === "string" ? body : JSON.stringify(body));
 }
 
+// Fourteen featured checks, so the list needs a second page: verdicts, places and topics
+// take turns, and the quote says which is which.
+const VERDICTS = ["supported", "not_supported", "partly_supported"];
+const PLACES = ["IT", "FR", "DE"];
+const THEMES = ["work", "health", "economy"];
+const featured = Array.from({ length: 14 }, (_, i) =>
+  galleryItem({
+    id: `ffffffff-ffff-4fff-8fff-${String(i).padStart(12, "0")}`,
+    claims: [
+      galleryClaim({
+        quote: `Featured claim ${i + 1}`,
+        label: VERDICTS[i % 3],
+        geo: PLACES[i % 3],
+        theme: THEMES[i % 3],
+      }),
+    ],
+  }),
+);
+
 const problem = (status, title) => ({ type: "about:blank", title, status });
 
 const server = createServer((req, res) => {
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
+  const { pathname, searchParams } = new URL(
+    req.url ?? "/",
+    "http://localhost",
+  );
   if (pathname === "/") return send(res, 200, "ok", "text/plain");
+
+  if (pathname === "/v1/gallery") {
+    const limit = Number(searchParams.get("limit") ?? 12);
+    return send(res, 200, { items: featured.slice(0, limit) });
+  }
 
   if (pathname === "/v1/tolerances") return send(res, 200, tolerances);
 
