@@ -7,6 +7,7 @@ import {
   decidingOp,
   framingPercent,
   hasMoreThanQuotes,
+  headlineFigure,
   opGloss,
   sourceLinks,
 } from "@/lib/receipt";
@@ -366,5 +367,25 @@ describe("framingPercent", () => {
   });
   it("is null when no claim has one", () => {
     expect(framingPercent(checkResult([unmatchedClaim]))).toBeNull();
+  });
+});
+
+describe("headlineFigure", () => {
+  it("is the claim's own figure when it states one", () => {
+    expect(headlineFigure(partlyClaim)).toMatchObject({
+      name: "assertion",
+      claimed: "-12 points",
+      official: "-10.7 points",
+    });
+  });
+  it("is the end value when the claim only says which way it went", () => {
+    expect(headlineFigure(holdingClaim)).toMatchObject({
+      name: "end value",
+      claimed: "7.7%",
+      official: "7.68%",
+    });
+  });
+  it("is none when nothing could be compared", () => {
+    expect(headlineFigure(unmatchedClaim)).toBeNull();
   });
 });

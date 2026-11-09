@@ -225,6 +225,13 @@ export const strings = {
     item: (n: number, claim: string, verdict: string) =>
       `${n}. “${claim}” — ${verdict}`,
   },
+  // The picture a chat or social app shows for a shared check.
+  og: {
+    alt: "A claim, how it came out, and the figure it was checked against",
+    claimed: "Claimed",
+    official: "Official",
+    source: (name: string) => `Checked against ${name}`,
+  },
   legend: {
     heading: "What the verdicts mean",
     onThisPage: "On this page",

@@ -17,7 +17,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Shared links need absolute addresses for their pictures. On Vercel they are worked out
+// from the deployment; elsewhere set NEXT_PUBLIC_SITE_URL to the site's public address.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: strings.appName,
   description: strings.metaDescription,
 };
