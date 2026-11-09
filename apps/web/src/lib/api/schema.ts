@@ -21,6 +21,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/tolerances": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Tolerances
+     * @description What every verdict is judged by, as one version: the methodology page prints it, so
+     *     the page cannot drift from the rules the checks used.
+     */
+    get: operations["tolerances_v1_tolerances_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/catalog": {
     parameters: {
       query?: never;
@@ -485,6 +506,11 @@ export interface components {
       | "as_of"
       | "assumed_window";
     /**
+     * Frequency
+     * @enum {string}
+     */
+    Frequency: "annual" | "semiannual" | "quarterly" | "monthly";
+    /**
      * GalleryClaim
      * @description One claim of a featured check, with the two numbers a card compares.
      */
@@ -752,6 +778,22 @@ export interface components {
       | "education"
       | "environment"
       | "safety";
+    /** Tolerances */
+    Tolerances: {
+      /** Version */
+      version: number;
+      /** Framing Threshold */
+      framing_threshold: number;
+      values: components["schemas"]["ValueTolerances"];
+      /** Flat Relative */
+      flat_relative: number;
+      /** Trend Min R2 */
+      trend_min_r2: number;
+      /** Max Period Gap */
+      max_period_gap: {
+        [key: string]: number;
+      };
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -764,6 +806,36 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** ValueTolerance */
+    ValueTolerance: {
+      /**
+       * Relative
+       * @default 0
+       */
+      relative: number;
+      /**
+       * Absolute
+       * @default 0
+       */
+      absolute: number;
+      /** Rounding */
+      rounding: boolean;
+      /**
+       * Plus Relative
+       * @default 0
+       */
+      plus_relative: number;
+    };
+    /** ValueTolerances */
+    ValueTolerances: {
+      level: components["schemas"]["ValueTolerance"];
+      level_rate: components["schemas"]["ValueTolerance"];
+      absolute: components["schemas"]["ValueTolerance"];
+      percent: components["schemas"]["ValueTolerance"];
+      percentage_points: components["schemas"]["ValueTolerance"];
+      ratio: components["schemas"]["ValueTolerance"];
+      rank: components["schemas"]["ValueTolerance"];
     };
     /** Verdict */
     Verdict: {
@@ -815,6 +887,26 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HealthResponse"];
+        };
+      };
+    };
+  };
+  tolerances_v1_tolerances_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Tolerances"];
         };
       };
     };

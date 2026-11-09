@@ -35,6 +35,7 @@ export const strings = {
     home: "Home",
     howItWorks: "How it works",
     canCheck: "What it can check",
+    methodology: "Methodology",
     recent: "Recent checks",
     theme: "Theme",
     themeLight: "Light",
@@ -57,6 +58,7 @@ export const strings = {
   home: {
     howHeading: "How it works",
     howExampleLabel: "In the sample above",
+    howMore: "Read the full method",
     how: [
       {
         title: "Paste a claim",
@@ -285,20 +287,240 @@ export const strings = {
     official: "Official",
     source: (name: string) => `Checked against ${name}`,
   },
+  methodology: {
+    heading: "How HoldsUp judges a claim",
+    intro:
+      "HoldsUp compares a number in a sentence with the official statistic it is about. Language models help to read the sentence and to find the statistic. They never produce a number you see: the arithmetic is done by code, and every figure comes with a receipt so that you can check it.",
+    onThisPage: "On this page",
+    sections: {
+      steps: "From a sentence to a verdict",
+      ops: "The calculations",
+      match: "What counts as a match",
+      verdicts: "The five verdicts",
+      cannot: "What HoldsUp cannot check",
+      limits: "Known limitations",
+      verify: "Check our work",
+    },
+    by: {
+      code: "Code",
+      model: "Language model",
+      both: "Code and a language model",
+    },
+    stepsIntro:
+      "Every check runs these steps in order, and the live view shows each one as it happens. The tag says who does the work.",
+    steps: [
+      {
+        title: "It looks for an earlier check",
+        by: "code",
+        body: "If the same claim was checked before, and the catalog and the allowed gaps have not changed since, the stored check is shown again and nothing is recomputed.",
+      },
+      {
+        title: "It reads the claims",
+        by: "model",
+        body: "A language model finds each claim in the text and writes it down in a fixed form: the statistic it is about, the place, the period, and what is asserted, such as a figure, a direction or a position in a ranking. The pasted text is only read. Nothing in it can make HoldsUp do anything.",
+      },
+      {
+        title: "It finds the official statistic",
+        by: "both",
+        body: "The catalog is searched for the statistics closest to the claim. Those with no data for the claim's place are dropped, and a language model chooses among the few that remain, or none. With no confident choice the answer is “Can't check”, never a guess.",
+      },
+      {
+        title: "It fetches the data",
+        by: "code",
+        body: "The series comes from the source's own service: Eurostat, the World Bank or Our World in Data. The receipt keeps a fingerprint of what came back, so a later change in the data can be seen.",
+      },
+      {
+        title: "It plans the calculation",
+        by: "model",
+        body: "A language model chooses calculations from the fixed list below and says what to run them on. It writes no numbers, and code checks the plan before anything runs.",
+      },
+      {
+        title: "It runs the calculation",
+        by: "code",
+        body: "Plain code does the arithmetic. Each calculation is recorded with its inputs and its result: that record is the receipt.",
+      },
+      {
+        title: "It decides the verdict",
+        by: "code",
+        body: "Fixed rules compare each computed figure with the one claimed, within the allowed gaps below. No model is involved.",
+      },
+      {
+        title: "It explains",
+        by: "model",
+        body: "A language model writes two or three sentences from the computed results only. If its text contains a number that is not among the results, the text is thrown away and code writes a plainer explanation from the figures instead.",
+      },
+    ],
+    opsIntro:
+      "A model can only choose from these. Each one is a plain function with its own tests.",
+    ops: [
+      {
+        name: "Value at a date",
+        body: "The official figure for one place and period. If that period has no value, the nearest one within a set distance is used, and the receipt says so.",
+      },
+      {
+        name: "Change between two periods",
+        body: "As an amount, as a percentage, in percentage points, or as a multiple (“halved”, “doubled”).",
+      },
+      {
+        name: "Average yearly growth",
+        body: "The steady yearly rate that would take the start value to the end value.",
+      },
+      {
+        name: "Trend",
+        body: "The slope of a straight line through the period, and how much of the movement that line explains.",
+      },
+      {
+        name: "Comparison of two places",
+        body: "The difference and the ratio between them for one period.",
+      },
+      {
+        name: "Position in a list",
+        body: "Where a place stands among the others for one period.",
+      },
+      {
+        name: "Per person",
+        body: "A series divided by the population, so that places of different sizes can be compared.",
+      },
+      {
+        name: "Adjusted for inflation",
+        body: "A series divided by a price index, to the prices of one base year.",
+      },
+    ],
+    gaps: {
+      intro: (version: number) =>
+        `A claim holds when the official figure is within an allowed gap of the figure claimed. The gap depends on the kind of figure. The numbers below are the ones the checks use now (version ${version}), and each receipt lists the gap used for each of its figures.`,
+      kindsHeading: "By kind of figure",
+      kinds: {
+        level: {
+          label: "A level",
+          example: "“debt of 2.9 trillion euros”",
+        },
+        level_rate: {
+          label: "A rate or share, stated as a level",
+          example: "“youth unemployment is 20%”",
+        },
+        absolute: {
+          label: "A change in an amount",
+          example: "“grew by 116 billion euros”",
+        },
+        percent: {
+          label: "A percentage change",
+          example: "“down 23%”, also a growth rate",
+        },
+        percentage_points: {
+          label: "A change in percentage points",
+          example: "“fallen 12 points”",
+        },
+        ratio: {
+          label: "A multiple",
+          example: "“halved”, “doubled”",
+        },
+        rank: {
+          label: "A position",
+          example: "“the lowest in the EU”",
+        },
+      },
+      // The unit a fixed gap is written in, where the figure's own unit would be unclear.
+      units: { percentage_points: "points" } as Record<string, string>,
+      // "the largest of A, B and C", then what is added on top.
+      largest: (list: string) => `The largest of ${list}.`,
+      relative: (share: string) => `${share} of the claimed figure`,
+      absolute: (n: number, unit: string) =>
+        unit ? `${n} ${unit}` : `${n} in the figure's own unit`,
+      rounding: "half a unit of the last digit written (“2.3” allows 0.05)",
+      plus: (share: string) =>
+        `Then ${share} of the claimed figure is added, to allow for data revised since the claim was made.`,
+      exact: "No gap: the position has to be exactly right.",
+      othersHeading: "Other rules",
+      flat: (share: string) =>
+        `“Flat” or “stable” holds when the end value is within ${share} of the start value.`,
+      trend: (share: string) =>
+        `“Rising” or “falling” also needs the straight line to explain at least ${share} of the ups and downs.`,
+      periodGap: (parts: string) =>
+        `When the period named has no value, the nearest one is used if it is close enough, and the receipt says so. “Close enough” is ${parts}. Farther away, the claim can't be checked.`,
+      periodUnit: {
+        annual: (n: number) => (n === 1 ? "1 year" : `${n} years`),
+        semiannual: (n: number) =>
+          n === 1 ? "1 half-year" : `${n} half-years`,
+        quarterly: (n: number) => (n === 1 ? "1 quarter" : `${n} quarters`),
+        monthly: (n: number) => (n === 1 ? "1 month" : `${n} months`),
+      } as Record<string, (n: number) => string>,
+      periodFor: (unit: string, kind: string) => `${unit} for ${kind} series`,
+      periodKind: {
+        annual: "yearly",
+        semiannual: "half-yearly",
+        quarterly: "quarterly",
+        monthly: "monthly",
+      } as Record<string, string>,
+      unavailable:
+        "The allowed gaps could not be loaded just now. Each receipt lists the gap used for each figure.",
+    },
+    verdictsIntro:
+      "Each verdict is set by a rule, never by a person's judgement of the claim.",
+    cannotIntro: "In these cases the answer is “Can't check”, with the reason.",
+    cannot: [
+      "Claims about records, targets or streaks: “the highest ever”, “met its target”, “for ten years in a row”.",
+      "Claims that give neither a figure nor a direction, such as “things are getting worse”.",
+      "Anything that is not about a number: opinions, quotes and events.",
+      "Survey and poll results.",
+      "A place or a period that the source has no data for.",
+    ],
+    cannotCatalog: {
+      before: "Statistics that are not in the catalog. ",
+      link: "See what can be checked",
+      after: ".",
+    },
+    limits: [
+      {
+        title: "The statistic may be close, not identical.",
+        body: "Statistics differ in age range, definition, unit or place. The receipt names the series that was used and its definition, so that you can see whether it is the one meant. If it is not, say so with “Report a wrong match” on that claim.",
+      },
+      {
+        title: "Language models can misread a sentence.",
+        body: "Reading the claim and choosing the statistic are done by language models, and they can be wrong. Everything after that is code, and the receipt shows how the claim was read.",
+      },
+      {
+        title: "Data gets revised.",
+        body: "A check uses the data as it was when the check ran, with its date and fingerprint. A claim made years ago may have been right for the figures of its day.",
+      },
+      {
+        title: "A true figure can still mislead.",
+        body: "A claim can be right for the years it names and still give a wrong picture, for example by starting at a peak. HoldsUp does not yet compare other time windows, nor look at per-person or inflation-adjusted views. “Holds up” means that the figures match the official statistic, not that the choice of years is fair.",
+      },
+      {
+        title: "A verdict is about the number.",
+        body: "It says what the data shows. It is not a judgement of the person who said it.",
+      },
+    ],
+    verify: {
+      body: "The code and the catalog are open. Each receipt links to the source and lists every calculation, so that anyone can repeat it.",
+      link: "Read the code on GitHub",
+    },
+    meta: {
+      title: "Methodology",
+      description:
+        "How HoldsUp reads a claim, finds the official statistic, recomputes it with code, and decides a verdict.",
+    },
+  },
   legend: {
     heading: "What the verdicts mean",
     onThisPage: "On this page",
     // The framing threshold comes with each result; without one the rule is said without a number.
-    holds: (pct: number | null) =>
-      `Every figure in the claim is within the allowed gap of the official figure, and the claim holds ${
-        pct === null
-          ? "across most comparable time windows"
-          : `in at least ${pct}% of comparable time windows`
-      }.`,
-    framing: (pct: number | null) =>
-      `The figures are within the allowed gap, but the claim holds in ${
-        pct === null ? "too few" : `fewer than ${pct}% of`
-      } comparable time windows, or fails a check for misleading framing.`,
+    // `windows` is whether this page's verdicts compared other time windows at all.
+    holds: (pct: number | null, windows: boolean) =>
+      windows
+        ? `Every figure in the claim is within the allowed gap of the official figure, and the claim holds ${
+            pct === null
+              ? "across most comparable time windows"
+              : `in at least ${pct}% of comparable time windows`
+          }.`
+        : "Every figure in the claim is within the allowed gap of the official figure. Other time windows are not compared yet.",
+    framing: (pct: number | null, windows: boolean) =>
+      windows
+        ? `The figures are within the allowed gap, but the claim holds in ${
+            pct === null ? "too few" : `fewer than ${pct}% of`
+          } comparable time windows, or fails a check for misleading framing.`
+        : "The figures are within the allowed gap, but the claim fails a check for misleading framing.",
     partly:
       "The claim has several parts, and some are within the allowed gap while others are not.",
     fails:

@@ -366,6 +366,14 @@ export function framingPercent(result: CheckResult): number | null {
   return share === undefined || share === null ? null : Math.round(share * 100);
 }
 
+/** True when any claim's verdict compared other time windows (not every check does yet). */
+export function windowsCompared(result: CheckResult): boolean {
+  return result.claims.some(
+    (c) =>
+      c.verdict.window_share !== null && c.verdict.window_share !== undefined,
+  );
+}
+
 /**
  * The one comparison a card or an image can state: the claim's own figure
  * ("fell 12 points") or, failing that, the end value it gives ("to 7.7%"), as
