@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
+import { HistoryList } from "@/components/organisms/history-list";
 import { HowItWorks } from "@/components/organisms/how-it-works";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
 import { PageShell } from "@/components/templates/page-shell";
@@ -36,6 +37,7 @@ export default async function Home() {
           <SampleReceipt href={real && routes.check(real.id)} />
         </CheckForm>
       </div>
+      <HistoryList />
       <div className="reveal">
         <HowItWorks />
       </div>

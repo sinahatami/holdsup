@@ -8,6 +8,7 @@ import {
   toProblem,
   type ApiClient,
 } from "@/lib/api/client";
+import { historyStore } from "@/lib/history";
 import { routes } from "@/lib/routes";
 
 /** Sends a text to be checked and opens its live page; keeps the busy and error state. */
@@ -22,6 +23,7 @@ export function useSubmitCheck(api: ApiClient = browserApi) {
     setError(null);
     try {
       const accepted = await api.submitCheck(text);
+      historyStore.add(accepted.id, text);
       router.push(routes.check(accepted.id));
     } catch (err) {
       setBusy(false);
