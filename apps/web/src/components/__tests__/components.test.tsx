@@ -9,12 +9,13 @@ import { describe, expect, it, vi } from "vitest";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
+import { GalleryCard } from "@/components/molecules/gallery-card";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { ClaimCard } from "@/components/organisms/claim-card";
 import { Receipt } from "@/components/organisms/receipt";
 import { Trace } from "@/components/organisms/trace";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
-import type { CatalogEntry, ClaimResult } from "@/lib/api/client";
+import type { CatalogEntry, ClaimResult, GalleryItem } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
 const push = vi.fn();
@@ -85,6 +86,110 @@ describe("Gallery", () => {
       "href",
       "/check/abc",
     );
+  });
+});
+
+const item = (
+  claims: GalleryItem["claims"],
+  text = "Some text.",
+): GalleryItem => ({
+  id: "x",
+  text,
+  created_at: "",
+  verdicts: claims.map((c) => c.label),
+  indicators: [],
+  claims,
+});
+
+describe("GalleryCard", () => {
+  it("shows the claimed figure beside the official one, with source and year", () => {
+    render(
+      <GalleryCard
+        item={item([
+          {
+            quote: "Debt is 133.6% of GDP.",
+            label: "supported",
+            claimed: 133.6,
+            official: 132.6,
+            unit: "% of GDP",
+            indicator: "Government debt",
+            source: "eurostat",
+            period: "2024",
+          },
+        ])}
+      />,
+    );
+    const line = screen.getByText(/Claimed/).closest("p")!;
+    expect(line).toHaveTextContent(/Claimed 133\.6% official 132\.6%/);
+    expect(line).toHaveTextContent("Eurostat, 2024");
+    // One claim: no summary, and the quote is not repeated under the text.
+    expect(screen.queryByText(/claims hold up/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Debt is 133.6% of GDP."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("says a long unit once, after the official figure", () => {
+    render(
+      <GalleryCard
+        item={item([
+          {
+            quote: "q",
+            label: "supported",
+            claimed: 1.18,
+            official: 1.18,
+            unit: "live births per woman",
+            source: "eurostat",
+            period: "2024",
+          },
+        ])}
+      />,
+    );
+    expect(screen.getByText(/Claimed/).closest("p")).toHaveTextContent(
+      /Claimed 1\.18 official 1\.18 live births per woman/,
+    );
+  });
+
+  it("falls back to what it was checked against when there is no figure", () => {
+    render(
+      <GalleryCard
+        item={item([
+          {
+            quote: "q",
+            label: "supported",
+            indicator: "Unemployment rate",
+            source: "eurostat",
+          },
+        ])}
+      />,
+    );
+    expect(
+      screen.getByText("Checked against Unemployment rate (Eurostat)"),
+    ).toBeInTheDocument();
+  });
+
+  it("says so when nothing could be compared", () => {
+    render(<GalleryCard item={item([{ quote: "q", label: "cant_check" }])} />);
+    expect(screen.getByText(strings.home.card.noFigure)).toBeInTheDocument();
+  });
+
+  it("still shows the verdicts when the API sent no per-claim data", () => {
+    render(
+      <GalleryCard
+        item={
+          {
+            id: "x",
+            text: "t",
+            created_at: "",
+            verdicts: ["partly_supported"],
+            indicators: [],
+          } as unknown as GalleryItem
+        }
+      />,
+    );
+    expect(
+      screen.getByText(strings.verdicts.partly_supported),
+    ).toBeInTheDocument();
   });
 });
 
