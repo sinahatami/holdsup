@@ -15,6 +15,21 @@ export const strings = {
     worldbank: "World Bank",
     owid: "Our World in Data",
   },
+  // The claim spec's place codes that are not countries; the browser names the countries.
+  places: {
+    EU: "European Union",
+    EA: "Euro area",
+    WORLD: "World",
+    G7: "G7",
+    G20: "G20",
+    OECD: "OECD",
+  },
+  periods: {
+    latest: "the latest period",
+    quarter: (q: string, year: string) => `Q${q} ${year}`,
+    half: (h: string, year: string) =>
+      h === "1" ? `the first half of ${year}` : `the second half of ${year}`,
+  },
   nav: {
     main: "Main",
     home: "Home",
@@ -124,7 +139,10 @@ export const strings = {
   check: {
     heading: "Check",
     traceHeading: "What HoldsUp is doing",
-    claimHeading: "Claim",
+    // Names each claim's section for a screen reader; "Claim" alone when there is one.
+    claimOf: (n: number, total: number) =>
+      total > 1 ? `Claim ${n} of ${total}` : "Claim",
+    originalHeading: "The text you checked",
     explanationHeading: "Why",
     loading: "Loading the check…",
     connectionLost:
@@ -132,6 +150,7 @@ export const strings = {
     errorHeading: "This check could not be completed",
     retryAfter: (s: number) => `Try again in about ${s} seconds.`,
     cached: "Answered from an earlier check of the same claim.",
+    cachedLink: "See that check",
     back: "Check another claim",
     noClaims:
       "HoldsUp found no claim with a number in it. Try a sentence such as “Italy's unemployment rate fell to 7.7% in 2023.”",
@@ -191,23 +210,151 @@ export const strings = {
   },
   receipt: {
     heading: "Receipt",
-    indicator: "Indicator",
-    definition: "Definition",
-    source: "Source",
-    dataset: "Dataset",
-    retrieved: "Retrieved",
-    fingerprint: "Data fingerprint (SHA-256)",
-    operations: "Calculations",
-    computed: "Computed",
-    asserted: "Claimed",
-    versions: "Versions",
-    models: "Models used",
-    alsoUsed: "Also used",
-    app: "app",
-    catalog: "catalog",
-    tolerances: "tolerances",
-    noData: "No data was fetched for this claim.",
-    result: "result",
-    note: "Note",
+    intro: "Everything behind this verdict, so you can check it yourself.",
+    opensInNewTab: "(opens in a new tab)",
+    reading: {
+      heading: "How HoldsUp read the claim",
+      statistic: "Statistic",
+      place: "Place",
+      comparedWith: "Compared with",
+      period: "Period",
+      periodRange: (from: string, to: string) => `${from} to ${to}`,
+      periodFrom: (from: string) => `from ${from}`,
+      kind: "Kind of claim",
+      direction: "Direction",
+      figure: "Figure stated",
+      range: "From, to",
+      startsAt: "Starts at",
+      endsAt: "Ends at",
+      saidBy: "Said by",
+      start: "start",
+      end: "end",
+      // How a value came to be, when it was not simply written in the claim.
+      basis: {
+        inferred: "inferred from the context",
+        lookback: "counted back from when it was said",
+        office: "taken from the speaker's term of office",
+        assumed: "assumed, because the claim says “for years” or “recently”",
+      },
+      kinds: {
+        level: "A stated level",
+        absolute: "A change in amount",
+        percent: "A percentage change",
+        percentage_points: "A change in percentage points",
+        ratio: "A ratio, such as “halved”",
+        trend: "A trend",
+        record: "A record",
+        rank: "A rank",
+        compare: "A comparison with other places",
+        target: "A target",
+        streak: "A streak",
+      },
+      directions: { up: "Up", down: "Down", flat: "Flat" },
+      operators: {
+        about: "",
+        more_than: "more than",
+        less_than: "less than",
+        at_least: "at least",
+        at_most: "at most",
+      },
+    },
+    series: {
+      heading: "The official series",
+      statistic: "Statistic",
+      measures: "What it measures",
+      unit: "Unit",
+      frequency: "Frequency",
+      publisher: "Published by",
+      dataset: "Dataset",
+      data: "Raw data",
+      openData: "Open the data",
+      updated: "Last updated by the source",
+      retrieved: "Retrieved by HoldsUp",
+      citation: "Cite as",
+      whyMatched: "Why this series",
+      alsoConsidered: "Also considered",
+      alsoUsed: "Also used",
+      noData: "No data was fetched for this claim.",
+    },
+    recompute: {
+      heading: "How it was recomputed",
+      valuesFrom: "The figures in these steps come from",
+      step: (n: number) => `Step ${n}`,
+      decides: "Decides the verdict",
+      figuresUsed: "Figures used",
+      result: "Result",
+      note: "Note",
+      // What each calculation does, in words. Keys are the API's operation names.
+      ops: {
+        value_at: (place: string, when: string) =>
+          `Look up the value for ${place} in ${when}.`,
+        change: {
+          absolute: (from: string, to: string) =>
+            `Take the value for ${from} away from the value for ${to}.`,
+          percent: (from: string, to: string) =>
+            `Take the value for ${from} away from the value for ${to}, divide by the value for ${from}, and multiply by 100.`,
+          percentage_points: (from: string, to: string) =>
+            `Take the rate for ${from} away from the rate for ${to}.`,
+          ratio: (from: string, to: string) =>
+            `Divide the value for ${to} by the value for ${from}.`,
+        },
+        cagr: (from: string, to: string) =>
+          `Work out the yearly growth rate that takes the value from ${from} to ${to}.`,
+        trend: (from: string, to: string) =>
+          `Fit a straight line through the values from ${from} to ${to} and read its slope per year.`,
+        compare: (place: string, other: string, when: string) =>
+          `Take the value for ${other} away from the value for ${place} in ${when}.`,
+        rank: (place: string, when: string) =>
+          `Order the places by their value in ${when} and find the position of ${place}.`,
+        per_capita: "Divide each value by the population for the same period.",
+        deflate: (base: string) =>
+          `Restate each value in the prices of ${base}, using the price index.`,
+      },
+    },
+    compared: {
+      heading: "What the verdict compared",
+      intro:
+        "The figure in the claim beside the official figure, and how far apart they may be and still count as a match.",
+      claimed: "Claimed",
+      official: "Official",
+      gap: "Allowed gap",
+      holds: "Holds",
+      fails: "Does not hold",
+      directionOnly: "Only the direction is compared.",
+      directions: { up: "up", down: "down", flat: "flat" },
+      // The names the API gives each compared part ("assertion", "start value", "vs FR").
+      parts: {
+        assertion: "The claim itself",
+        "start value": "Start value",
+        "end value": "End value",
+        against: (place: string) => `Against ${place}`,
+      },
+    },
+    verify: {
+      heading: "How to verify it yourself",
+      open: "Open the data.",
+      openBody:
+        "It is the exact request HoldsUp made, so it returns the same series.",
+      find: "Find the figures.",
+      findBody:
+        "Look up each place and period listed under “How it was recomputed” and check the values match.",
+      revised: (source: string, date: string) =>
+        `If ${source} has revised the series since ${date}, small differences are expected.`,
+      repeat: "Repeat the calculation.",
+      repeatBody:
+        "Each step says what to do; a calculator or a spreadsheet is enough.",
+      compare: "Compare with the claim.",
+      compareBody: "The result should fall within the allowed gap shown above.",
+    },
+    technical: {
+      heading: "Technical details",
+      fingerprint: "Data fingerprint (SHA-256)",
+      observations: "Observations with a value",
+      models: "Models used",
+      versions: "Versions",
+      app: "app",
+      catalog: "catalog",
+      tolerances: "tolerances",
+    },
   },
 } as const;

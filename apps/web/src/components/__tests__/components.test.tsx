@@ -14,12 +14,12 @@ import { CharCounter } from "@/components/molecules/char-counter";
 import { GalleryCard } from "@/components/molecules/gallery-card";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { ClaimCard } from "@/components/organisms/claim-card";
-import { Receipt } from "@/components/organisms/receipt";
 import { Trace } from "@/components/organisms/trace";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import type { CatalogEntry, ClaimResult, GalleryItem } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { holdingClaim, unmatchedClaim, versions } from "@/test/fixtures";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -317,136 +317,6 @@ describe("CharCounter", () => {
   });
 });
 
-const claim = {
-  index: 0,
-  indicator: {
-    id: "i",
-    name: "Unemployment rate",
-    source: "eurostat",
-    source_code: "x",
-    unit: "%",
-    frequency: "A",
-    definition: "Share unemployed",
-  },
-  data: {
-    source: "Eurostat",
-    dataset: "une_rt_a",
-    url: "https://e.u",
-    retrieved_at: "2026-11-07",
-    raw_sha256: "ab12",
-    label: "",
-    places: [],
-    rows: 2,
-  },
-  operations: [
-    {
-      op: "change",
-      args: { start: "2015", end: "2023" },
-      inputs: [{ geo: "IT", period: "2015", value: 11.9 }],
-      value: -4.2,
-      extras: {},
-      series: null,
-      unit: "pp",
-      flags: [],
-    },
-  ],
-  models: [
-    {
-      step: "match",
-      provider: "g",
-      model: "gpt-oss-120b",
-      label: "GPT-OSS 120B",
-    },
-    {
-      step: "match",
-      provider: "g",
-      model: "gpt-oss-120b",
-      label: "GPT-OSS 120B",
-    },
-    { step: "plan", provider: "g", model: "old-id", label: "" },
-  ],
-} as unknown as ClaimResult;
-
-describe("Receipt", () => {
-  it("shows source, fingerprint, operations and versions", () => {
-    render(
-      <Receipt
-        claim={claim}
-        versions={{ app: "0.1.0", catalog: "0.2.0", tolerances: 1 }}
-      />,
-    );
-    expect(screen.getByText("Unemployment rate")).toBeInTheDocument();
-    expect(screen.getByText("ab12")).toBeInTheDocument();
-    expect(screen.getByText(/change\(/)).toBeInTheDocument();
-    expect(screen.getByText(/catalog 0.2.0/)).toBeInTheDocument();
-    expect(screen.queryByTestId("op-notes")).not.toBeInTheDocument();
-  });
-  it("lists each step once with a readable model name", () => {
-    render(
-      <Receipt
-        claim={claim}
-        versions={{ app: "0.0.0+d264e60", catalog: "0.6.0", tolerances: 2 }}
-        sharedModels={[
-          { step: "extract", provider: "g", model: "x", label: "GPT-OSS 20B" },
-        ]}
-      />,
-    );
-    const names = (label: string) =>
-      screen.getByText(label).nextElementSibling?.textContent;
-    expect(names(strings.steps.extract)).toBe("GPT-OSS 20B");
-    expect(names(strings.steps.match)).toBe("GPT-OSS 120B");
-    expect(names(strings.steps.plan)).toBe("old-id");
-    expect(screen.getAllByText("GPT-OSS 120B")).toHaveLength(1);
-    expect(screen.getByText(/app 0.0.0\+d264e60/)).toBeInTheDocument();
-  });
-  it("cites a second series used, such as the population", () => {
-    const extra = {
-      indicator: { ...claim.indicator!, name: "Total population (Eurostat)" },
-      data: { ...claim.data!, dataset: "demo_pjan" },
-    };
-    render(
-      <Receipt
-        claim={{ ...claim, extra_sources: [extra] } as ClaimResult}
-        versions={{ app: "a", catalog: "c", tolerances: 1 }}
-      />,
-    );
-    expect(screen.getByText(strings.receipt.alsoUsed)).toBeInTheDocument();
-    expect(screen.getByText("demo_pjan")).toBeInTheDocument();
-  });
-  it("shows each calculation's notes, such as how a year's value was made", () => {
-    const detail =
-      "each year's value is the average of its 12 monthly values; complete years only (2015, 2023)";
-    const op = {
-      ...claim.operations![0],
-      flags: [{ code: "annual_value", detail, items: [] }],
-    };
-    render(
-      <Receipt
-        claim={{ ...claim, operations: [op] } as ClaimResult}
-        versions={{ app: "a", catalog: "0.3.0", tolerances: 1 }}
-      />,
-    );
-    expect(screen.getByTestId("op-notes")).toHaveTextContent(
-      `${strings.receipt.note}: ${detail}`,
-    );
-  });
-  it("says so when no data was fetched", () => {
-    render(
-      <Receipt
-        claim={{
-          ...claim,
-          data: null,
-          indicator: null,
-          operations: [],
-          models: [],
-        }}
-        versions={{ app: "a", catalog: "c", tolerances: 1 }}
-      />,
-    );
-    expect(screen.getByText(strings.receipt.noData)).toBeInTheDocument();
-  });
-});
-
 describe("CheckForm", () => {
   it("fills the box from an example and posts it", async () => {
     const fetchMock = vi
@@ -545,19 +415,14 @@ describe("CheckForm", () => {
   });
 });
 
-const versions = { app: "a", catalog: "c", tolerances: 1 };
-const cantCheck = {
-  ...claim,
-  claim: { quote: "Italy has 20 millions population in 2022" },
-  verdict: { label: "cant_check", reason: "HoldsUp can't check this yet." },
-  explanation: "",
-  retryable: false,
-  suggestions: [{ id: "a", name: "Total population (Eurostat)" }],
-} as unknown as ClaimResult;
+const card = (claim: ClaimResult, order = 0, total = 1) =>
+  render(
+    <ClaimCard claim={claim} versions={versions} order={order} total={total} />,
+  );
 
 describe("ClaimCard", () => {
   it("offers the closest statistics and the full list when it can't check", () => {
-    render(<ClaimCard claim={cantCheck} versions={versions} order={0} />);
+    card(unmatchedClaim);
     expect(screen.getByText("Total population (Eurostat)")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: strings.check.seeAll }),
@@ -567,35 +432,26 @@ describe("ClaimCard", () => {
     ).not.toBeInTheDocument();
   });
   it("does not point to the list when the source was only briefly down", () => {
-    render(
-      <ClaimCard
-        claim={{ ...cantCheck, retryable: true } as ClaimResult}
-        versions={versions}
-        order={0}
-      />,
-    );
+    card({ ...unmatchedClaim, retryable: true });
     expect(
       screen.queryByRole("link", { name: strings.check.seeAll }),
     ).not.toBeInTheDocument();
   });
   it("says the verdict is about the number when a person is quoted", () => {
     const quoted = {
-      ...claim,
-      claim: { quote: "q", speaker: "A. Minister" },
-      verdict: { label: "not_supported", reason: "Outside tolerance." },
-      explanation: "",
-    } as unknown as ClaimResult;
-    const { rerender } = render(
-      <ClaimCard claim={quoted} versions={versions} order={0} />,
-    );
+      ...holdingClaim,
+      claim: { ...holdingClaim.claim, speaker: "A. Minister" },
+    };
+    const { rerender } = card(quoted);
     expect(
       screen.getByRole("link", { name: strings.home.neutrality.link }),
     ).toHaveAttribute("href", routes.methodology);
     rerender(
       <ClaimCard
-        claim={{ ...quoted, claim: { quote: "q" } } as ClaimResult}
+        claim={holdingClaim}
         versions={versions}
         order={0}
+        total={1}
       />,
     );
     expect(
@@ -603,21 +459,30 @@ describe("ClaimCard", () => {
     ).not.toBeInTheDocument();
   });
   it("shows Why when there is something to add", () => {
-    render(
-      <ClaimCard
-        claim={
-          {
-            ...claim,
-            claim: { quote: "q" },
-            verdict: { label: "not_supported", reason: "Outside tolerance." },
-            explanation: "Eurostat counts 59 million.",
-          } as unknown as ClaimResult
-        }
-        versions={versions}
-        order={0}
-      />,
-    );
-    expect(screen.getByText("Eurostat counts 59 million.")).toBeInTheDocument();
+    card(holdingClaim);
+    expect(screen.getByText(holdingClaim.explanation)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: strings.check.explanationHeading,
+      }),
+    ).toBeInTheDocument();
+  });
+  it("names each claim for a screen reader, by its place among them", () => {
+    card(holdingClaim, 1, 3);
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Claim 2 of 3" }),
+    ).toBeInTheDocument();
+  });
+  it("calls a lone claim just a claim", () => {
+    card(holdingClaim);
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Claim" }),
+    ).toBeInTheDocument();
+  });
+  it("lays the receipt open on the page", () => {
+    card(holdingClaim);
+    expect(screen.getByTestId("receipt")).toBeVisible();
   });
 });
 
