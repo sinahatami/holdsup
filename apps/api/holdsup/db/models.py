@@ -139,3 +139,20 @@ class OperationRow(Base):
     name: Mapped[str] = mapped_column(String(40), nullable=False)
     inputs: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)  # args + data points
     output: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)  # value, series, flags
+
+
+class ReportRow(Base):
+    """A reader's note that a check went wrong (a wrong match, a wrong reading). No account and
+    no address is stored with it."""
+
+    __tablename__ = "reports"
+    __table_args__ = (Index("ix_reports_created_at", "created_at"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    check_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("checks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    claim_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
