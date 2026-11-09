@@ -21,6 +21,7 @@ const row = (over: Partial<TraceRow>): TraceRow => ({
 
 const state = (over: Partial<CheckState>): CheckState => ({
   loading: false,
+  text: null,
   trace: [],
   result: null,
   error: null,

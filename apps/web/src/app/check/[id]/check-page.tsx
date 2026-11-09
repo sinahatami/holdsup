@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/molecules/back-link";
 import { ProblemAlert } from "@/components/molecules/problem-alert";
+import { RetryButton } from "@/components/molecules/retry-button";
 import { CheckResultView } from "@/components/organisms/check-result";
 import { CheckTemplate } from "@/components/templates/check-template";
 import { readCheck } from "@/lib/api/check";
+import { isRetryable } from "@/lib/api/client";
 import { CheckLive } from "./check-live";
 
 /**
@@ -17,7 +19,7 @@ export async function CheckPage({ id }: { id: string }) {
   if (found.kind === "missing") notFound();
   if (found.kind === "unavailable") return <CheckLive id={id} />;
 
-  const { result, error, status } = found.view;
+  const { result, error, status, text } = found.view;
   if (result) {
     return (
       <CheckTemplate actions={<BackLink />}>
@@ -28,7 +30,14 @@ export async function CheckPage({ id }: { id: string }) {
   if (status === "failed" && error) {
     return (
       <CheckTemplate actions={<BackLink />}>
-        <ProblemAlert problem={error} />
+        <ProblemAlert
+          problem={error}
+          action={
+            isRetryable(error) ? (
+              <RetryButton text={text} retryAfter={error.retry_after} />
+            ) : undefined
+          }
+        />
       </CheckTemplate>
     );
   }

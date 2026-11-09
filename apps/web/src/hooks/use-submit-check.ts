@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   browserApi,
-  problemMessage,
+  problemText,
   toProblem,
   type ApiClient,
 } from "@/lib/api/client";
@@ -25,7 +25,7 @@ export function useSubmitCheck(api: ApiClient = browserApi) {
       router.push(routes.check(accepted.id));
     } catch (err) {
       setBusy(false);
-      setError(problemMessage(toProblem(err)));
+      setError(problemText(toProblem(err)));
     }
   }
 

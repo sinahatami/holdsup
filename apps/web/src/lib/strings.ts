@@ -7,7 +7,30 @@ export const strings = {
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
   errors: {
-    network: "Network error",
+    network:
+      "HoldsUp could not be reached. Check your connection and try again.",
+    timeout: "HoldsUp took too long to answer. Please try again.",
+  },
+  problem: {
+    heading: {
+      network: "Could not reach HoldsUp",
+      timeout: "HoldsUp took too long",
+      rate_limited: "Too many checks for now",
+      unavailable: "HoldsUp could not finish this check",
+      other: "This check could not be completed",
+    },
+    retry: "Try again",
+    retryIn: (s: number) => `Try again in ${s} s`,
+    offline: {
+      heading: "You are offline",
+      body: "Pages and checks that need HoldsUp will not load until your connection is back.",
+    },
+    reconnect: "Reconnect",
+  },
+  error: {
+    heading: "Something went wrong",
+    body: "HoldsUp hit an unexpected problem. Trying again often fixes it.",
+    retry: "Try again",
   },
   // Display names for the API's source ids; an unknown id is shown as it is.
   sources: {
@@ -174,9 +197,7 @@ export const strings = {
     originalHeading: "The text you checked",
     explanationHeading: "Why",
     loading: "Loading the check…",
-    connectionLost:
-      "Lost the connection to the live trace. Reload to try again.",
-    errorHeading: "This check could not be completed",
+    connectionLost: "Lost the connection to the live trace.",
     retryAfter: (s: number) => `Try again in about ${s} seconds.`,
     cached: "Answered from an earlier check of the same claim.",
     cachedLink: "See that check",
