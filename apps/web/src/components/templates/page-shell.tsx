@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 const shell = cva("mx-auto flex w-full flex-1 flex-col", {
   variants: {
     layout: {
-      /** The landing page: roomy top and bottom. */
-      home: "max-w-3xl gap-14 px-5 pt-16 pb-24 sm:px-6 sm:pt-24",
+      /** The landing page: the sample receipt must show above the fold on a desktop, so the top is tight. */
+      home: "max-w-3xl gap-12 px-5 pt-10 pb-24 sm:px-6 sm:pt-14",
       /** A content page such as a check. */
       content: "max-w-3xl gap-8 px-5 py-12 sm:px-6 sm:py-16",
       /** A short centred message, such as 404. */

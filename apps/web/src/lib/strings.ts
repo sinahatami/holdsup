@@ -56,6 +56,21 @@ export const strings = {
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",
     submitting: "Sending…",
+    sample: {
+      heading: "A sample receipt",
+      open: "Open the full receipt",
+      claimLabel: "Claim",
+      claim:
+        "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
+      seriesLabel: "Official series",
+      series: "Unemployment rate (monthly)",
+      source: "Eurostat · une_rt_m",
+      recomputedLabel: "Recomputed",
+      recomputed: "12.02% → 7.68%",
+      recomputedNote: "Down 4.34 points (yearly averages)",
+      verdictLabel: "Verdict",
+      verdict: "supported",
+    },
     examplesHeading: "Try an example",
     examples: [
       "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
