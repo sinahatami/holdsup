@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  defaultSpeechLanguage,
   recognitionCtor,
   speechProblem,
   transcriptOf,
@@ -47,20 +46,6 @@ describe("withSpoken", () => {
   it("is just the speech when the box was empty, and just the text when nothing was said", () => {
     expect(withSpoken("", "debt is 133%")).toBe("debt is 133%");
     expect(withSpoken("Italy", "")).toBe("Italy");
-  });
-});
-
-describe("defaultSpeechLanguage", () => {
-  it("listens in the visitor's language when HoldsUp offers it", () => {
-    expect(defaultSpeechLanguage("it")).toBe("it-IT");
-    expect(defaultSpeechLanguage("it-CH")).toBe("it-IT");
-    expect(defaultSpeechLanguage("IT-it")).toBe("it-IT");
-  });
-
-  it("falls back to English", () => {
-    expect(defaultSpeechLanguage("fa-IR")).toBe("en-US");
-    expect(defaultSpeechLanguage("en-GB")).toBe("en-US");
-    expect(defaultSpeechLanguage(undefined)).toBe("en-US");
   });
 });
 

@@ -16,7 +16,7 @@ import { VoiceInput } from "@/components/molecules/voice-input";
 import { useDictation } from "@/hooks/use-dictation";
 import { useModifierKey } from "@/hooks/use-modifier-key";
 import { useSubmitCheck } from "@/hooks/use-submit-check";
-import { defaultSpeechLanguage, withSpoken } from "@/lib/speech";
+import { withSpoken } from "@/lib/speech";
 import { strings } from "@/lib/strings";
 
 const kbd =
@@ -44,6 +44,7 @@ export function CheckForm({
   const BOX_ID = idPrefix;
   const ERROR_ID = `${idPrefix}-error`;
   const HINT_ID = `${idPrefix}-hint`;
+  const LANG_ID = `${idPrefix}-english`;
   const [text, setText] = useState(initialText);
   const { submit, busy, error } = useSubmitCheck();
   const modifier = useModifierKey();
@@ -52,13 +53,8 @@ export function CheckForm({
 
   // Speech is added after what was already in the box when listening began.
   const typedBefore = useRef("");
-  const [language, setLanguage] = useState(() =>
-    defaultSpeechLanguage(
-      typeof navigator === "undefined" ? undefined : navigator.language,
-    ),
-  );
   const voice = useDictation({
-    lang: language,
+    lang: v.lang,
     onText: (spoken) => setText(withSpoken(typedBefore.current, spoken)),
   });
 
@@ -103,6 +99,12 @@ export function CheckForm({
         >
           {label ?? t.inputLabel}
         </label>
+        <p
+          id={LANG_ID}
+          className="text-muted-foreground -mt-1 px-1 text-sm leading-5"
+        >
+          {t.englishOnly}
+        </p>
         <textarea
           id={BOX_ID}
           value={text}
@@ -111,7 +113,11 @@ export function CheckForm({
           placeholder={t.placeholder}
           rows={3}
           className="placeholder:text-muted-foreground/85 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
-          aria-describedby={message ? `${HINT_ID} ${ERROR_ID}` : HINT_ID}
+          aria-describedby={
+            message
+              ? `${LANG_ID} ${HINT_ID} ${ERROR_ID}`
+              : `${LANG_ID} ${HINT_ID}`
+          }
           aria-keyshortcuts="Control+Enter Meta+Enter"
         />
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -119,8 +125,6 @@ export function CheckForm({
             {voice.supported && (
               <VoiceInput
                 listening={voice.listening}
-                language={language}
-                onLanguage={setLanguage}
                 onToggle={onVoiceToggle}
               />
             )}

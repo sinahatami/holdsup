@@ -56,16 +56,13 @@ export const strings = {
   voice: {
     start: "Speak",
     stop: "Stop",
-    language: "Language you speak",
-    listening: "Listening. Say the claim.",
+    /** The one language it listens for. */
+    lang: "en-US",
+    listening: "Listening. Say the claim in English.",
     privacy:
       "Your browser's speech service turns your voice into text and may send the audio to its provider. HoldsUp only receives the text you submit.",
     review: (submit: string) =>
       `Check that every figure was heard correctly, then press “${submit}”.`,
-    languages: [
-      { code: "en-US", label: "English" },
-      { code: "it-IT", label: "Italiano" },
-    ],
     problems: {
       denied:
         "The microphone is blocked. Allow it for this site in your browser's settings, or type the claim.",
@@ -139,6 +136,8 @@ export const strings = {
     intro:
       "Paste a sentence with a number in it. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
     inputLabel: "The claim to check",
+    englishOnly:
+      "Write or type the claim in English. HoldsUp reads English only.",
     placeholder:
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",

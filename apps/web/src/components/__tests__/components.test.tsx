@@ -313,6 +313,15 @@ describe("CharCounter", () => {
 });
 
 describe("CheckForm", () => {
+  it("tells people to write in English, and ties that to the box", () => {
+    render(<CheckForm />);
+    const note = screen.getByText(strings.home.englishOnly);
+    expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
+      expect.stringContaining(strings.home.englishOnly),
+    );
+    expect(note).toBeVisible();
+  });
+
   it("fills the box from an example and posts it", async () => {
     const fetchMock = vi
       .fn()

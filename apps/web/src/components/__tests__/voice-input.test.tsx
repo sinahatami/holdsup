@@ -191,16 +191,12 @@ describe("voice input in the claim box", () => {
     expect(status()).toBeEmptyDOMElement();
   });
 
-  it("listens in the visitor's language when it is offered, and the menu can change it", () => {
+  it("always listens for English, and offers no other language", () => {
     vi.spyOn(navigator, "language", "get").mockReturnValue("it-IT");
     render(<CheckForm />);
-    const menu = screen.getByRole("combobox", { name: t.language });
-    expect(menu).toHaveValue("it-IT");
-    fireEvent.change(menu, { target: { value: "en-US" } });
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     fireEvent.click(speak());
     expect(latest().lang).toBe("en-US");
-    // It cannot change in the middle of a listen.
-    expect(menu).toBeDisabled();
   });
 
   it("stops listening when the component goes away", () => {
