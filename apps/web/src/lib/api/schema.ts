@@ -530,6 +530,9 @@ export interface components {
       source?: string | null;
       /** Period */
       period?: string | null;
+      /** Geo */
+      geo?: string | null;
+      theme?: components["schemas"]["Theme"] | null;
     };
     /** GalleryItem */
     GalleryItem: {

@@ -12,18 +12,19 @@ from fastapi.testclient import TestClient
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from holdsup.catalog.schema import Theme
 from holdsup.db.models import Check
 from holdsup.db.url import to_async_url
 from holdsup.main import create_app
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
-from holdsup.routes.deps import get_runner, get_store
+from holdsup.routes.deps import get_catalog, get_runner, get_store
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
 from holdsup.verdict import Part
 from tests.router.fakes import FakeClient
-from tests.service.fakes import TEXT, happy_script, make_runner
+from tests.service.fakes import CATALOG, TEXT, happy_script, make_runner
 
 WEB = "http://localhost:3000"
 
@@ -34,6 +35,7 @@ def api() -> Iterator[tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckSt
     app = create_app()
     app.dependency_overrides[get_runner] = lambda: runner
     app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_catalog] = lambda: CATALOG
     # The context manager keeps one event loop alive, so background checks can finish.
     with TestClient(app) as http:
         yield http, runner, client, store
@@ -204,12 +206,14 @@ def test_gallery_lists_featured_checks(
                     "label": "supported", "claimed": -4.0, "official": -4.2,
                     "unit": "percentage points", "indicator": "Unemployment rate",
                     "source": "eurostat", "period": "2015–2023",
+                    "geo": "IT", "theme": "work",
                 }
             ],
         }
     ]  # fmt: skip
     assert http.get("/v1/gallery", params={"limit": 0}).status_code == 422
-    assert http.get("/v1/gallery", params={"limit": 25}).status_code == 422
+    assert http.get("/v1/gallery", params={"limit": 100}).status_code == 200
+    assert http.get("/v1/gallery", params={"limit": 101}).status_code == 422
 
 
 def test_gallery_claim_states_a_figure_only_when_there_is_one_to_compare(
@@ -232,6 +236,16 @@ def test_gallery_claim_states_a_figure_only_when_there_is_one_to_compare(
 
     def no_figure(card: GalleryClaim) -> bool:
         return (card.claimed, card.official, card.unit, card.period) == (None, None, None, None)
+
+    # The place comes from the claim; the topic only from a catalog that knows the statistic.
+    assert _gallery_claim(claim).geo == "IT"
+    assert _gallery_claim(claim).theme is None
+    assert _gallery_claim(claim, {claim.indicator.id: Theme.WORK}).theme is Theme.WORK
+    assert _gallery_claim(claim, {"another_id": Theme.WORK}).theme is None
+    assert (
+        _gallery_claim(claim.model_copy(update={"indicator": None}), {"x": Theme.WORK}).theme
+        is None
+    )
 
     # The main figure, in the unit of the operation that decided it.
     main = _gallery_claim(claim)

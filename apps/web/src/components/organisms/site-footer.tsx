@@ -34,6 +34,11 @@ export function SiteFooter() {
             </Link>
           </li>
           <li>
+            <Link href={routes.recent} className={footerLink}>
+              {strings.nav.recent}
+            </Link>
+          </li>
+          <li>
             <Link href={routes.methodology} className={footerLink}>
               {strings.nav.methodology}
             </Link>

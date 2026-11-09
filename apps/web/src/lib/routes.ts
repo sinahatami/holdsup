@@ -4,5 +4,6 @@ export const routes = {
   howItWorks: "/#how",
   methodology: "/methodology",
   indicators: "/indicators",
+  recent: "/recent",
   check: (id: string) => `/check/${id}`,
 } as const;

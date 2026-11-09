@@ -3,6 +3,8 @@ import type {
   CheckResult,
   CheckView,
   ClaimResult,
+  GalleryClaim,
+  GalleryItem,
   Tolerances,
 } from "@/lib/api/client";
 
@@ -362,3 +364,35 @@ export const tolerances: Tolerances = {
   trend_min_r2: 0.5,
   max_period_gap: { annual: 1, semiannual: 1, quarterly: 2, monthly: 3 },
 };
+
+/** One claim of a featured check, as the gallery lists it. */
+export function galleryClaim(over: Partial<GalleryClaim> = {}): GalleryClaim {
+  return {
+    quote: "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
+    label: "supported",
+    claimed: 7.7,
+    official: 7.68,
+    unit: "%",
+    indicator: "Unemployment rate",
+    source: "eurostat",
+    period: "2023",
+    geo: "IT",
+    theme: "work",
+    ...over,
+  };
+}
+
+/** One featured check as the gallery lists it; a test overrides only what it is about. */
+export function galleryItem(
+  over: Partial<GalleryItem> & Pick<GalleryItem, "id">,
+): GalleryItem {
+  const claims = over.claims ?? [galleryClaim()];
+  return {
+    text: claims.map((c) => c.quote).join(" "),
+    created_at: "2026-11-07T10:00:00Z",
+    verdicts: claims.map((c) => c.label),
+    indicators: claims.flatMap((c) => (c.indicator ? [c.indicator] : [])),
+    claims,
+    ...over,
+  };
+}
