@@ -75,6 +75,7 @@ describe("Gallery", () => {
             created_at: "",
             verdicts: ["supported"],
             indicators: [],
+            claims: [{ quote: "A claim", label: "supported" }],
           },
         ]}
       />,
