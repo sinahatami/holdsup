@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Eyebrow } from "@/components/atoms/eyebrow";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
+import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { Receipt } from "@/components/organisms/receipt";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
@@ -70,6 +71,7 @@ export function ClaimCard({
       <div>
         <VerdictBadge label={c.verdict.label} large />
       </div>
+      {c.claim.speaker && <NeutralityNote />}
       <p className="text-muted-foreground">{c.verdict.reason}</p>
       {c.explanation && (
         <section
