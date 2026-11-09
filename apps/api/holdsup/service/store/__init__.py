@@ -9,7 +9,9 @@ from holdsup.service.store.model import (
     CheckResult,
     CheckStatus,
     CheckStore,
+    ReportKind,
     StoredCheck,
+    StoredReport,
     add_entry,
 )
 from holdsup.service.store.sql import SqlCheckStore
@@ -19,7 +21,9 @@ __all__ = [
     "CheckStatus",
     "CheckStore",
     "InMemoryCheckStore",
+    "ReportKind",
     "SqlCheckStore",
     "StoredCheck",
+    "StoredReport",
     "add_entry",
 ]

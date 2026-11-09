@@ -2,6 +2,7 @@
   "name": "holdsup",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=26 <27",

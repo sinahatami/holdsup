@@ -66,5 +66,23 @@ def test_catalog_lists_everything_a_to_z() -> None:
     assert names == sorted(names, key=str.casefold) and len(names) == len(catalog.indicators)
     assert set(body["indicators"][0]) == {
         "id", "name", "theme", "definition", "unit", "source", "frequency", "first_year", "last_year",
+        "source_code", "aliases", "countries", "groups", "all_countries",
     }  # fmt: skip
     assert {i["theme"] for i in body["indicators"]} <= {t.value for t in Theme}
+
+
+def test_catalog_says_which_places_each_entry_covers() -> None:
+    from holdsup.routes.deps import get_catalog
+
+    app = create_app()
+    catalog = load_catalog(FIXTURE_CATALOG)
+    app.dependency_overrides[get_catalog] = lambda: catalog
+    body = TestClient(app).get("/v1/catalog").json()
+    by_id = {i["id"]: i for i in body["indicators"]}
+    for spec in catalog.indicators:
+        entry = by_id[spec.id]
+        assert entry["source_code"] == spec.source_code
+        assert entry["aliases"] == list(spec.aliases)
+        # Countries are ISO codes; the groups are never mistaken for countries.
+        assert all(len(c) == 2 and c not in {"EU", "EA"} for c in entry["countries"])
+        assert set(entry["groups"]) <= {"EU", "EA", "WORLD"}

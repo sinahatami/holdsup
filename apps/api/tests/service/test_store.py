@@ -20,8 +20,10 @@ from holdsup.service.store import (
     CheckStatus,
     CheckStore,
     InMemoryCheckStore,
+    ReportKind,
     SqlCheckStore,
     StoredCheck,
+    StoredReport,
 )
 from tests.service.fakes import EMBEDDER, TEXT, happy_script, make_pipeline
 
@@ -158,6 +160,18 @@ async def test_finished_results_are_the_computed_ones(store: CheckStore) -> None
     )  # fmt: skip
     got = await store.finished_results()
     assert [CheckResult.model_validate(r).id for r in got] == [done]
+
+
+async def test_reports_are_kept_newest_first(store: CheckStore) -> None:
+    check_id = uuid4()
+    await store.create(StoredCheck(check_id, TEXT, CheckStatus.QUEUED, T0))
+    assert await store.reports(10) == []
+    older = StoredReport(uuid4(), check_id, 0, ReportKind.WRONG_SERIES, "wrong series", T0)
+    newer = StoredReport(uuid4(), check_id, None, ReportKind.OTHER, "", T0 + timedelta(minutes=5))
+    await store.add_report(older)
+    await store.add_report(newer)
+    assert await store.reports(10) == [newer, older]
+    assert await store.reports(1) == [newer]
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="TEST_DATABASE_URL not set")

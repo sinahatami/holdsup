@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
+import { checkResult, checkView, holdingClaim } from "../src/test/fixtures";
+import { CHECK_ID } from "./ids";
 
-export const CHECK_ID = "11111111-1111-4111-8111-111111111111";
 const API = "http://api.test";
 const CORS = {
   "access-control-allow-origin": "*",
@@ -18,98 +19,8 @@ const step = (event: string, step: string, extra: object = {}) => ({
   ...extra,
 });
 
-export const result = {
-  id: CHECK_ID,
-  text: "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
-  created_at: "2026-11-07T10:00:00Z",
-  finished_at: "2026-11-07T10:00:06Z",
-  cached_from: null,
-  claims: [
-    {
-      index: 0,
-      claim: {
-        quote:
-          "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
-        indicator_phrase: "unemployment rate",
-        geo: "IT",
-        peers: [],
-        start: "2015",
-        end: "2023",
-        assertion: {
-          type: "percentage_points",
-          value: -4.2,
-          direction: "down",
-          unit: "pp",
-        },
-        notes: [],
-      },
-      indicator: {
-        id: "eurostat-une-rt-a",
-        name: "Unemployment rate, annual",
-        source: "eurostat",
-        source_code: "une_rt_a",
-        unit: "%",
-        frequency: "annual",
-        definition: "Unemployed persons as a share of the labour force.",
-      },
-      alternatives: [],
-      match_reason: "Clear match.",
-      data: {
-        source: "Eurostat",
-        dataset: "une_rt_a",
-        url: "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/une_rt_a",
-        retrieved_at: "2026-11-07T10:00:03Z",
-        raw_sha256: "9f2c0de1",
-        label: "Unemployment",
-        places: ["IT"],
-        rows: 9,
-      },
-      operations: [
-        {
-          op: "change",
-          args: {
-            geo: "IT",
-            start: "2015",
-            end: "2023",
-            kind: "percentage_points",
-          },
-          inputs: [
-            { geo: "IT", period: "2015", value: 11.9 },
-            { geo: "IT", period: "2023", value: 7.7 },
-          ],
-          value: -4.2,
-          extras: {},
-          series: null,
-          unit: "pp",
-          flags: [],
-        },
-      ],
-      answer: [0],
-      verdict: {
-        label: "supported",
-        reason: "The change matches the claim within tolerance.",
-        parts: [],
-        distortions: [],
-      },
-      explanation:
-        "Italy's unemployment rate went from 11.9% in 2015 to 7.7% in 2023, a fall of 4.2 points.",
-      explanation_source: "model",
-      models: [
-        {
-          step: "explain",
-          provider: "groq",
-          model: "gpt-oss-20b",
-          label: "GPT-OSS 20B (Groq)",
-        },
-      ],
-      notes: [],
-      retryable: false,
-    },
-  ],
-  versions: { app: "0.1.0", catalog: "0.2.0", tolerances: 1 },
-  models: [],
-  notes: [],
-};
+/** What the live check ends with: the sample claim holds. */
+export const result = checkResult([holdingClaim], { id: CHECK_ID });
 
 const sse = (events: [string, object][]) =>
   events
@@ -187,17 +98,47 @@ export async function mockApi(
       return route.fulfill({
         status: 200,
         headers: { ...CORS, "content-type": "application/json" },
-        body: JSON.stringify({
-          id: CHECK_ID,
-          text: result.text,
-          status: "running",
-          created_at: result.created_at,
-          finished_at: null,
-          result: null,
-          error: null,
-        }),
+        body: JSON.stringify(
+          checkView({ id: CHECK_ID, status: "running", text: result.text }),
+        ),
       });
     }
     return route.fulfill({ status: 404, headers: CORS, body: "{}" });
   });
+}
+
+/**
+ * Mocks the browser's call that reports a wrong match. Returns the bodies it was sent, so a
+ * test can check what the form posted.
+ */
+export async function mockReports(
+  page: Page,
+  outcome: "recorded" | "refused" = "recorded",
+) {
+  const sent: unknown[] = [];
+  await page.route(`${API}/v1/checks/*/reports`, async (route) => {
+    const req = route.request();
+    if (req.method() === "OPTIONS")
+      return route.fulfill({ status: 204, headers: CORS });
+    sent.push(req.postDataJSON());
+    if (outcome === "refused") {
+      return route.fulfill({
+        status: 429,
+        headers: { ...CORS, "content-type": "application/problem+json" },
+        body: JSON.stringify({
+          type: "/problems/rate-limited",
+          title: "Too many reports",
+          status: 429,
+          detail:
+            "This address has sent too many reports this hour. Please try again later.",
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 201,
+      headers: { ...CORS, "content-type": "application/json" },
+      body: JSON.stringify({ id: "44444444-4444-4444-8444-444444444444" }),
+    });
+  });
+  return sent;
 }

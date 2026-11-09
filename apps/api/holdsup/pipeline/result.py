@@ -13,7 +13,7 @@ from holdsup.catalog.schema import IndicatorSpec
 from holdsup.config import get_settings
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
-from holdsup.pipeline.trace import ModelUse
+from holdsup.pipeline.trace import ModelUse, Step
 from holdsup.verdict import Verdict
 
 
@@ -103,6 +103,9 @@ class ClaimResult(BaseModel):
     notes: list[str] = Field(default_factory=list)  # what code dropped, fixed or rejected
     # cant_check because something was briefly unavailable: worth checking again later.
     retryable: bool = False
+    # cant_check: the step the claim stopped at, so a reader can be told why (no statistic
+    # matched, the source has no figures, the kind of claim cannot be recomputed).
+    stopped_at: Step | None = None
 
 
 class Versions(BaseModel):

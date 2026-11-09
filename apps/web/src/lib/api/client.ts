@@ -3,11 +3,22 @@ import type { components } from "./schema";
 
 export type CheckResult = components["schemas"]["CheckResult"];
 export type ClaimResult = components["schemas"]["ClaimResult"];
+export type ClaimSpec = components["schemas"]["ClaimSpec"];
+/** One calculation a claim's receipt lists. */
+export type Operation = NonNullable<ClaimResult["operations"]>[number];
+/** One checked piece of a claim: the figures a verdict compared. */
+export type Part = NonNullable<ClaimResult["verdict"]["parts"]>[number];
 export type CheckView = components["schemas"]["CheckView"];
 export type CheckAccepted = components["schemas"]["CheckAccepted"];
 export type CatalogResponse = components["schemas"]["CatalogResponse"];
 export type CatalogEntry = components["schemas"]["CatalogEntry"];
 export type GalleryItem = components["schemas"]["GalleryItem"];
+export type GalleryClaim = components["schemas"]["GalleryClaim"];
+export type ReportKind = components["schemas"]["ReportKind"];
+export type ReportRequest = components["schemas"]["ReportRequest"];
+export type ReportAccepted = components["schemas"]["ReportAccepted"];
+export type Tolerances = components["schemas"]["Tolerances"];
+export type ValueTolerance = components["schemas"]["ValueTolerance"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
@@ -51,19 +62,56 @@ export class ApiError extends Error {
   }
 }
 
+/** How long a request waits for the API before it gives up. */
+export const REQUEST_TIMEOUT_MS = 20_000;
+
+const TIMEOUT_TYPE = "/problems/timeout";
+
 /** The problem shown when the API could not be reached at all. */
 export function networkProblem(): Problem {
   return { type: "about:blank", title: strings.errors.network, status: 0 };
 }
 
-/** Any thrown value as a problem: the API's own, or a network failure. */
+/** The problem shown when the API did not answer in time. */
+export function timeoutProblem(): Problem {
+  return { type: TIMEOUT_TYPE, title: strings.errors.timeout, status: 0 };
+}
+
+/** Any thrown value as a problem: the API's own, a timeout, or a network failure. */
 export function toProblem(err: unknown): Problem {
-  return err instanceof ApiError ? err.problem : networkProblem();
+  if (err instanceof ApiError) return err.problem;
+  if (err instanceof DOMException && err.name === "TimeoutError")
+    return timeoutProblem();
+  return networkProblem();
+}
+
+/** What kind of failure it is, which decides the wording and whether trying again can help. */
+export type ProblemKind =
+  "network" | "timeout" | "rate_limited" | "unavailable" | "other";
+
+export function problemKind(problem: Problem): ProblemKind {
+  if (problem.type === TIMEOUT_TYPE) return "timeout";
+  if (problem.status === 0) return "network";
+  if (problem.status === 429) return "rate_limited";
+  if (problem.status >= 500) return "unavailable";
+  return "other";
+}
+
+/** Whether sending the same text again could work: not for a text the API refused as it is. */
+export function isRetryable(problem: Problem): boolean {
+  return problemKind(problem) !== "other";
 }
 
 /** The one line a person should read about a problem. */
 export function problemMessage(problem: Problem): string {
   return problem.detail ?? problem.title;
+}
+
+/** The message, and when the API says when to try again, that too. */
+export function problemText(problem: Problem): string {
+  return problem.retry_after
+    ? `${problemMessage(problem)} ${strings.check.retryAfter(problem.retry_after)}`
+    : problemMessage(problem);
 }
 
 async function problemFrom(res: Response): Promise<Problem> {
@@ -103,7 +151,10 @@ export function createApiClient(baseUrl: string) {
   const url = (path: string) => `${baseUrl}/v1${path}`;
 
   async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(url(path), init);
+    const res = await fetch(url(path), {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      ...init,
+    });
     if (!res.ok) throw new ApiError(await problemFrom(res));
     return (await res.json()) as T;
   }
@@ -115,8 +166,18 @@ export function createApiClient(baseUrl: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       }),
+    /** Tells the maintainers a check matched the wrong statistic or read a claim wrongly. */
+    reportCheck: (id: string, report: ReportRequest) =>
+      request<ReportAccepted>(`/checks/${id}/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(report),
+      }),
     catalog: () => request<CatalogResponse>("/catalog"),
-    getCheck: (id: string) => request<CheckView>(`/checks/${id}`),
+    /** The allowed gaps and thresholds every verdict is judged by. */
+    tolerances: () => request<Tolerances>("/tolerances"),
+    getCheck: (id: string, init?: RequestInit) =>
+      request<CheckView>(`/checks/${id}`, init),
     gallery: async (limit: number) =>
       (await request<{ items: GalleryItem[] }>(`/gallery?limit=${limit}`))
         .items,
