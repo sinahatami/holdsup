@@ -2,7 +2,9 @@
 
 import { ArrowRight, Loader2 } from "lucide-react";
 import {
+  useRef,
   useState,
+  type ChangeEvent,
   type KeyboardEvent,
   type ReactNode,
   type SubmitEvent,
@@ -10,8 +12,11 @@ import {
 import { pill } from "@/components/atoms/pill";
 import { CharCounter } from "@/components/molecules/char-counter";
 import { ExampleList } from "@/components/molecules/example-list";
+import { VoiceInput } from "@/components/molecules/voice-input";
+import { useDictation } from "@/hooks/use-dictation";
 import { useModifierKey } from "@/hooks/use-modifier-key";
 import { useSubmitCheck } from "@/hooks/use-submit-check";
+import { defaultSpeechLanguage, withSpoken } from "@/lib/speech";
 import { strings } from "@/lib/strings";
 
 const ERROR_ID = "claim-error";
@@ -29,14 +34,42 @@ export function CheckForm({ children }: { children?: ReactNode }) {
   const { submit, busy, error } = useSubmitCheck();
   const modifier = useModifierKey();
   const t = strings.home;
+  const v = strings.voice;
+
+  // Speech is added after what was already in the box when listening began.
+  const typedBefore = useRef("");
+  const [language, setLanguage] = useState(() =>
+    defaultSpeechLanguage(
+      typeof navigator === "undefined" ? undefined : navigator.language,
+    ),
+  );
+  const voice = useDictation({
+    lang: language,
+    onText: (spoken) => setText(withSpoken(typedBefore.current, spoken)),
+  });
+
   const tooLong = text.length > t.maxChars;
   const empty = !text.trim();
-  const message = tooLong ? t.tooLong : error;
+  const spokenProblem = voice.problem ? v.problems[voice.problem] : null;
+  const message = tooLong ? t.tooLong : (error ?? spokenProblem);
 
   function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || empty || tooLong) return;
+    voice.cancel();
     void submit(text.trim());
+  }
+
+  // Typing takes over from listening, so late words never overwrite what was typed.
+  function onChange(e: ChangeEvent<HTMLTextAreaElement>) {
+    voice.cancel();
+    setText(e.target.value);
+  }
+
+  function onVoiceToggle() {
+    if (voice.listening) return voice.stop();
+    typedBefore.current = text;
+    voice.start();
   }
 
   // Cmd+Enter on a Mac, Ctrl+Enter elsewhere; either works on any device.
@@ -59,7 +92,7 @@ export function CheckForm({ children }: { children?: ReactNode }) {
         <textarea
           id="claim"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={onChange}
           onKeyDown={onKeyDown}
           placeholder={t.placeholder}
           rows={3}
@@ -68,7 +101,17 @@ export function CheckForm({ children }: { children?: ReactNode }) {
           aria-keyshortcuts="Control+Enter Meta+Enter"
         />
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <CharCounter count={text.length} max={t.maxChars} />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {voice.supported && (
+              <VoiceInput
+                listening={voice.listening}
+                language={language}
+                onLanguage={setLanguage}
+                onToggle={onVoiceToggle}
+              />
+            )}
+            <CharCounter count={text.length} max={t.maxChars} />
+          </div>
           <div className="ms-auto flex items-center gap-4">
             <span
               id={HINT_ID}
@@ -92,6 +135,16 @@ export function CheckForm({ children }: { children?: ReactNode }) {
             </button>
           </div>
         </div>
+        {voice.supported && (
+          <p
+            role="status"
+            className="text-muted-foreground px-1 text-xs leading-5 empty:hidden"
+          >
+            {voice.listening
+              ? `${v.listening} ${v.privacy}`
+              : voice.heard && !voice.problem && v.review(t.submit)}
+          </p>
+        )}
       </div>
       {message && (
         <p

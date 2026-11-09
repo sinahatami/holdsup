@@ -30,6 +30,29 @@ export const strings = {
     half: (h: string, year: string) =>
       h === "1" ? `the first half of ${year}` : `the second half of ${year}`,
   },
+  voice: {
+    start: "Speak",
+    stop: "Stop",
+    language: "Language you speak",
+    listening: "Listening. Say the claim.",
+    privacy:
+      "Your browser's speech service turns your voice into text and may send the audio to its provider. HoldsUp only receives the text you submit.",
+    review: (submit: string) =>
+      `Check that every figure was heard correctly, then press “${submit}”.`,
+    languages: [
+      { code: "en-US", label: "English" },
+      { code: "it-IT", label: "Italiano" },
+    ],
+    problems: {
+      denied:
+        "The microphone is blocked. Allow it for this site in your browser's settings, or type the claim.",
+      silent: "Nothing was heard. Press Speak and try again.",
+      noMic: "No microphone was found. Type the claim instead.",
+      offline:
+        "Voice input needs a connection to your browser's speech service. Type the claim instead.",
+      other: "Voice input did not work. Type the claim instead.",
+    },
+  },
   nav: {
     main: "Main",
     home: "Home",
