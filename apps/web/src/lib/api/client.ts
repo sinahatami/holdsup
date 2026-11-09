@@ -117,7 +117,8 @@ export function createApiClient(baseUrl: string) {
         body: JSON.stringify({ text }),
       }),
     catalog: () => request<CatalogResponse>("/catalog"),
-    getCheck: (id: string) => request<CheckView>(`/checks/${id}`),
+    getCheck: (id: string, init?: RequestInit) =>
+      request<CheckView>(`/checks/${id}`, init),
     gallery: async (limit: number) =>
       (await request<{ items: GalleryItem[] }>(`/gallery?limit=${limit}`))
         .items,
