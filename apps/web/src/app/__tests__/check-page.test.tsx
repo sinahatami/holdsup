@@ -108,6 +108,7 @@ describe("check page metadata", () => {
     );
     expect(m.description).toBe(partlyClaim.explanation);
     expect(m.robots).toEqual({ index: false });
+    expect(m.twitter).toMatchObject({ card: "summary_large_image" });
     expect(m.openGraph).toMatchObject({
       siteName: "HoldsUp",
       title: `Partly holds up · “${partlyClaim.claim.quote}”`,

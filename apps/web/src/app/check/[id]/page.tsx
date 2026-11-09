@@ -33,6 +33,8 @@ export async function generateMetadata({
       title,
       description,
     },
+    // The picture comes from opengraph-image.tsx; this asks for it at full width.
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

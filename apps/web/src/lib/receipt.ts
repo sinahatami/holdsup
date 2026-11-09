@@ -126,6 +126,8 @@ export function claimReading(spec: ClaimSpec): ReadingRow[] {
 
 /** One compared part of a verdict, ready to show. */
 export interface PartView {
+  /** The API's name for the part: "assertion", "start value", "end value", "vs FR". */
+  name: string;
   label: string;
   /** The period the official figure is for, in words. */
   period: string | null;
@@ -171,6 +173,7 @@ const HAS_GAP = new Set(["about", "at_least", "at_most"]);
 function partView(c: ClaimResult, p: Part): PartView {
   const unit = partUnit(c, p.name);
   const base = {
+    name: p.name,
     label: partLabel(p.name),
     period: p.period ? formatPeriod(p.period) : null,
     holds: p.holds,
@@ -361,4 +364,15 @@ export function framingPercent(result: CheckResult): number | null {
     .map((c) => c.verdict.framing_threshold)
     .find((x) => x !== null && x !== undefined);
   return share === undefined || share === null ? null : Math.round(share * 100);
+}
+
+/**
+ * The one comparison a card or an image can state: the claim's own figure
+ * ("fell 12 points") or, failing that, the end value it gives ("to 7.7%"), as
+ * the gallery picks it. A claim with only a direction, a bound or no data has none.
+ */
+export function headlineFigure(c: ClaimResult): PartView | null {
+  const figures = comparison(c).filter((p) => p.note === null);
+  const byName = (name: string) => figures.find((p) => p.name === name);
+  return byName("assertion") ?? byName("end value") ?? null;
 }

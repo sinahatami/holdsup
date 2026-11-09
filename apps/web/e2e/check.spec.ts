@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "@playwright/test";
 import { CHECK_ID, DONE_ID, MISSING_ID } from "./ids";
 import { mockApi } from "./mock-api";
 
@@ -124,6 +124,49 @@ test.describe("a check's permanent link", () => {
         page.getByRole("link", { name: "Check another claim" }).last(),
       ).toBeVisible();
     }
+  });
+});
+
+test.describe("the picture a shared link shows", () => {
+  const png = async (res: Awaited<ReturnType<APIRequestContext["get"]>>) => {
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toBe("image/png");
+    const bytes = await res.body();
+    // The PNG signature, then the width and height in the first (IHDR) chunk.
+    expect([...bytes.subarray(0, 8)]).toEqual([
+      137, 80, 78, 71, 13, 10, 26, 10,
+    ]);
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  };
+
+  test("is a 1200 by 630 PNG of the check, and the page offers it to chat and social apps", async ({
+    page,
+    request,
+  }) => {
+    expect(
+      await png(await request.get(`/check/${DONE_ID}/opengraph-image`)),
+    ).toEqual({ width: 1200, height: 630 });
+
+    await page.goto(`/check/${DONE_ID}`);
+    const image = new RegExp(`/check/${DONE_ID}/opengraph-image`);
+    for (const tag of [
+      'meta[property="og:image"]',
+      'meta[name="twitter:image"]',
+    ]) {
+      await expect(page.locator(tag)).toHaveAttribute("content", image);
+    }
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      "content",
+      "summary_large_image",
+    );
+  });
+
+  test("is still a picture, the plain one, for a check that is not there", async ({
+    request,
+  }) => {
+    expect(
+      await png(await request.get(`/check/${MISSING_ID}/opengraph-image`)),
+    ).toEqual({ width: 1200, height: 630 });
   });
 });
 
