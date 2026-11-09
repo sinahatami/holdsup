@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { fieldControl } from "@/components/atoms/field-control";
-import { pill } from "@/components/atoms/pill";
+import { FilterButton } from "@/components/atoms/filter-button";
 import { Field } from "@/components/molecules/field";
 import type { CatalogEntry } from "@/lib/api/client";
 import {
@@ -113,29 +113,25 @@ export function CatalogFilters({
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium">{t.topic}</legend>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            aria-pressed={filter.theme === null}
+          <FilterButton
+            pressed={filter.theme === null}
+            count={total}
             onClick={() => onChange({ theme: null })}
-            className={topicButton}
           >
             {t.allTopics}
-            <span className="opacity-80">{total}</span>
-          </button>
+          </FilterButton>
           {themeOrder.map((theme) => {
             const pressed = filter.theme === theme;
             return (
-              <button
+              <FilterButton
                 key={theme}
-                type="button"
-                aria-pressed={pressed}
+                pressed={pressed}
+                count={themeCounts[theme]}
                 disabled={themeCounts[theme] === 0 && !pressed}
                 onClick={() => onChange({ theme: pressed ? null : theme })}
-                className={topicButton}
               >
                 {t.themes[theme]}
-                <span className="opacity-80">{themeCounts[theme]}</span>
-              </button>
+              </FilterButton>
             );
           })}
         </div>
@@ -214,5 +210,3 @@ export function CatalogFilters({
     </form>
   );
 }
-
-const topicButton = `${pill({ tone: "glass" })} aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary focus-visible:ring-ring/50 outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`;

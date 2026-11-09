@@ -287,6 +287,35 @@ export const strings = {
     official: "Official",
     source: (name: string) => `Checked against ${name}`,
   },
+  recent: {
+    heading: "Recent checks",
+    intro:
+      "Checks that have been picked to show how HoldsUp works. Open one to see its receipt.",
+    filtersHeading: "Filter the checks",
+    verdict: "Verdict",
+    allVerdicts: "All verdicts",
+    topic: "Topic",
+    allTopics: "All topics",
+    place: "Place",
+    anyPlace: "Anywhere",
+    shown: (shown: number, matching: number, total: number) =>
+      matching === total
+        ? `Showing ${shown} of ${total} checks`
+        : `Showing ${shown} of ${matching} matching checks (${total} in all)`,
+    showMore: "Show more checks",
+    clear: "Clear filters",
+    none: "No check matches these filters.",
+    noneHint: "Try another verdict, topic or place, or clear the filters.",
+    empty:
+      "There are no checks to show yet. Paste a claim on the home page to make the first.",
+    unavailable:
+      "The checks could not be loaded just now. Please try again in a few minutes.",
+    seeAll: "See all recent checks",
+    meta: {
+      description:
+        "Checks of numeric claims against official statistics, each with its receipt.",
+    },
+  },
   methodology: {
     heading: "How HoldsUp judges a claim",
     intro:

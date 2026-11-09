@@ -1,6 +1,6 @@
 """Checks: submit text, follow the live trace, read the result; and the gallery."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
@@ -9,17 +9,18 @@ from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, StringConstraints
 
+from holdsup.catalog.schema import Theme
 from holdsup.config import get_settings
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
 from holdsup.problems import Problem, ProblemError, not_found
-from holdsup.routes.deps import Runner, Store
+from holdsup.routes.deps import CatalogDep, Runner, Store
 from holdsup.service.ratelimit import client_ip
 from holdsup.service.store import CheckResult, CheckStatus
 from holdsup.verdict import Label, Part
 
 MAX_TEXT = 2_000  # characters, after trimming whitespace
-GALLERY_MAX = 24
+GALLERY_MAX = 100  # the home page asks for a dozen; the recent-checks page for them all
 
 router = APIRouter(tags=["checks"])
 
@@ -63,6 +64,8 @@ class GalleryClaim(BaseModel):
     indicator: str | None = None  # the matched statistic's name
     source: str | None = None  # who publishes the series, as a source id ("eurostat")
     period: str | None = None  # the period the official figure is for
+    geo: str | None = None  # the place the claim is about, as a code ("IT", "EU")
+    theme: Theme | None = None  # the topic of the matched statistic, as the catalog lists it
 
 
 class GalleryItem(BaseModel):
@@ -180,7 +183,7 @@ def _gallery_figure(c: ClaimResult) -> tuple[Part, str | None] | None:
     return None
 
 
-def _gallery_claim(c: ClaimResult) -> GalleryClaim:
+def _gallery_claim(c: ClaimResult, themes: Mapping[str, Theme] | None = None) -> GalleryClaim:
     figure = _gallery_figure(c)
     part, unit = figure if figure else (None, None)
     return GalleryClaim(
@@ -192,10 +195,12 @@ def _gallery_claim(c: ClaimResult) -> GalleryClaim:
         indicator=c.indicator.name if c.indicator else None,
         source=c.data.source if c.data else None,
         period=_gallery_period(c, part.period) if part else None,
+        geo=c.claim.geo,
+        theme=(themes or {}).get(c.indicator.id) if c.indicator else None,
     )
 
 
-def _gallery_item(result: dict[str, Any]) -> GalleryItem:
+def _gallery_item(result: dict[str, Any], themes: Mapping[str, Theme]) -> GalleryItem:
     r = CheckResult.model_validate(result)
     return GalleryItem(
         id=r.id,
@@ -203,13 +208,15 @@ def _gallery_item(result: dict[str, Any]) -> GalleryItem:
         created_at=r.created_at,
         verdicts=[c.verdict.label for c in r.claims],
         indicators=[c.indicator.name for c in r.claims if c.indicator],
-        claims=[_gallery_claim(c) for c in r.claims],
+        claims=[_gallery_claim(c, themes) for c in r.claims],
     )
 
 
 @router.get("/gallery", response_model=GalleryResponse)
 async def gallery(
-    store: Store, limit: Annotated[int, Query(ge=1, le=GALLERY_MAX)] = 12
+    store: Store, catalog: CatalogDep, limit: Annotated[int, Query(ge=1, le=GALLERY_MAX)] = 12
 ) -> GalleryResponse:
+    # A result stores the matched statistic's id but not its topic: the catalog knows it.
+    themes = {i.id: i.theme for i in catalog.indicators}
     checks = await store.gallery(limit)
-    return GalleryResponse(items=[_gallery_item(c.result) for c in checks if c.result])
+    return GalleryResponse(items=[_gallery_item(c.result, themes) for c in checks if c.result])
