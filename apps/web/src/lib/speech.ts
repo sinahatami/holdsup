@@ -49,18 +49,6 @@ export function withSpoken(base: string, spoken: string): string {
   return [base.trimEnd(), spoken.trim()].filter(Boolean).join(" ");
 }
 
-/** The language to listen for: the visitor's own when HoldsUp offers it, English otherwise. */
-export function defaultSpeechLanguage(
-  browserLanguage: string | undefined,
-): string {
-  const languages = strings.voice.languages;
-  const own = browserLanguage?.toLowerCase().split("-")[0];
-  return (
-    languages.find((l) => l.code.toLowerCase().split("-")[0] === own) ??
-    languages[0]
-  ).code;
-}
-
 export type SpeechProblem = keyof typeof strings.voice.problems;
 
 /** What went wrong, from the browser's error code; null for "aborted", which is not a failure. */
