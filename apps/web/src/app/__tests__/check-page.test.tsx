@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckPage } from "@/app/check/[id]/check-page";
 import { generateMetadata } from "@/app/check/[id]/page";
@@ -40,7 +40,10 @@ describe("CheckPage", () => {
     expect(
       screen.getByRole("article", { name: holdingClaim.claim.quote }),
     ).toBeInTheDocument();
-    expect(screen.getByText(strings.verdicts.supported)).toBeInTheDocument();
+    // The legend names every verdict too, so look inside the claim's own article.
+    expect(
+      within(screen.getByRole("article")).getByText(strings.verdicts.supported),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/following/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: strings.check.back }),

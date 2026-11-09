@@ -208,6 +208,30 @@ export const strings = {
     partly_supported: "Partly holds up",
     cant_check: "Can't check",
   },
+  legend: {
+    heading: "What the verdicts mean",
+    onThisPage: "On this page",
+    // The framing threshold comes with each result; without one the rule is said without a number.
+    holds: (pct: number | null) =>
+      `Every figure in the claim is within the allowed gap of the official figure, and the claim holds ${
+        pct === null
+          ? "across most comparable time windows"
+          : `in at least ${pct}% of comparable time windows`
+      }.`,
+    framing: (pct: number | null) =>
+      `The figures are within the allowed gap, but the claim holds in ${
+        pct === null ? "too few" : `fewer than ${pct}% of`
+      } comparable time windows, or fails a check for misleading framing.`,
+    partly:
+      "The claim has several parts, and some are within the allowed gap while others are not.",
+    fails:
+      "The figures are outside the allowed gap for the period the claim names.",
+    cant: "There is no confident match to an official statistic, no data for the place or period, or the claim is not one HoldsUp can check yet.",
+    gapHeading: "The allowed gap",
+    gap: "How far the official figure may be from the one claimed and still count as a match. It depends on the kind of claim: a figure stated as a level allows for rounding and a small margin for later data revisions, a change allows a few per cent, and a position in a ranking allows none. Each figure's own gap is listed in its receipt above.",
+    version: (n: number) => `Tolerances version ${n}.`,
+    method: "How HoldsUp judges a claim",
+  },
   receipt: {
     heading: "Receipt",
     intro: "Everything behind this verdict, so you can check it yourself.",

@@ -1,4 +1,10 @@
-import type { ClaimResult, ClaimSpec, Operation, Part } from "@/lib/api/client";
+import type {
+  CheckResult,
+  ClaimResult,
+  ClaimSpec,
+  Operation,
+  Part,
+} from "@/lib/api/client";
 import {
   formatAmount,
   formatFigures,
@@ -343,4 +349,16 @@ export function hasMoreThanQuotes(
   if (quotes.length === 0) return false;
   const squash = (s: string) => s.replace(/\s+/g, " ").trim();
   return quotes.length > 1 || squash(text) !== squash(quotes[0]);
+}
+
+/**
+ * The share of comparable time windows a claim must hold in to be "supported",
+ * as the result recorded it (null if no claim carries one, as when nothing
+ * could be checked). It is a whole percent, for the legend to say.
+ */
+export function framingPercent(result: CheckResult): number | null {
+  const share = result.claims
+    .map((c) => c.verdict.framing_threshold)
+    .find((x) => x !== null && x !== undefined);
+  return share === undefined || share === null ? null : Math.round(share * 100);
 }

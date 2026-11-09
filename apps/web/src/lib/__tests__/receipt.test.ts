@@ -5,11 +5,17 @@ import {
   claimReading,
   comparison,
   decidingOp,
+  framingPercent,
   hasMoreThanQuotes,
   opGloss,
   sourceLinks,
 } from "@/lib/receipt";
-import { holdingClaim, partlyClaim, unmatchedClaim } from "@/test/fixtures";
+import {
+  checkResult,
+  holdingClaim,
+  partlyClaim,
+  unmatchedClaim,
+} from "@/test/fixtures";
 
 const rows = (c: ClaimResult) =>
   Object.fromEntries(claimReading(c.claim).map((r) => [r.label, r]));
@@ -346,5 +352,19 @@ describe("hasMoreThanQuotes", () => {
   });
   it("is false when there is no claim", () => {
     expect(hasMoreThanQuotes("nothing", [])).toBe(false);
+  });
+});
+
+describe("framingPercent", () => {
+  it("is the threshold the result recorded, as a whole percent", () => {
+    expect(framingPercent(checkResult([holdingClaim]))).toBe(70);
+  });
+  it("looks past a claim that could not be checked", () => {
+    expect(framingPercent(checkResult([unmatchedClaim, holdingClaim]))).toBe(
+      70,
+    );
+  });
+  it("is null when no claim has one", () => {
+    expect(framingPercent(checkResult([unmatchedClaim]))).toBeNull();
   });
 });
