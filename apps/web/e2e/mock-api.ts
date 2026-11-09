@@ -106,3 +106,39 @@ export async function mockApi(
     return route.fulfill({ status: 404, headers: CORS, body: "{}" });
   });
 }
+
+/**
+ * Mocks the browser's call that reports a wrong match. Returns the bodies it was sent, so a
+ * test can check what the form posted.
+ */
+export async function mockReports(
+  page: Page,
+  outcome: "recorded" | "refused" = "recorded",
+) {
+  const sent: unknown[] = [];
+  await page.route(`${API}/v1/checks/*/reports`, async (route) => {
+    const req = route.request();
+    if (req.method() === "OPTIONS")
+      return route.fulfill({ status: 204, headers: CORS });
+    sent.push(req.postDataJSON());
+    if (outcome === "refused") {
+      return route.fulfill({
+        status: 429,
+        headers: { ...CORS, "content-type": "application/problem+json" },
+        body: JSON.stringify({
+          type: "/problems/rate-limited",
+          title: "Too many reports",
+          status: 429,
+          detail:
+            "This address has sent too many reports this hour. Please try again later.",
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 201,
+      headers: { ...CORS, "content-type": "application/json" },
+      body: JSON.stringify({ id: "44444444-4444-4444-8444-444444444444" }),
+    });
+  });
+  return sent;
+}
