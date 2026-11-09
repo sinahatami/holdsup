@@ -19,18 +19,32 @@ import { useSubmitCheck } from "@/hooks/use-submit-check";
 import { defaultSpeechLanguage, withSpoken } from "@/lib/speech";
 import { strings } from "@/lib/strings";
 
-const ERROR_ID = "claim-error";
-const HINT_ID = "claim-hint";
-
 const kbd =
   "bg-muted rounded-md border px-1.5 py-0.5 font-mono text-[0.6875rem] font-medium";
 
 /**
  * The claim box, its submit button and the examples. `children` is a slot under
  * the box and above the examples: the home page puts the sample receipt there.
+ * A receipt uses it to reword one claim: `initialText` fills the box, `examples` is
+ * off, `label` names the box, and `idPrefix` keeps its ids apart from the home page's.
  */
-export function CheckForm({ children }: { children?: ReactNode }) {
-  const [text, setText] = useState("");
+export function CheckForm({
+  children,
+  initialText = "",
+  examples = true,
+  label,
+  idPrefix = "claim",
+}: {
+  children?: ReactNode;
+  initialText?: string;
+  examples?: boolean;
+  label?: string;
+  idPrefix?: string;
+}) {
+  const BOX_ID = idPrefix;
+  const ERROR_ID = `${idPrefix}-error`;
+  const HINT_ID = `${idPrefix}-hint`;
+  const [text, setText] = useState(initialText);
   const { submit, busy, error } = useSubmitCheck();
   const modifier = useModifierKey();
   const t = strings.home;
@@ -84,13 +98,13 @@ export function CheckForm({ children }: { children?: ReactNode }) {
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
       <div className="glass focus-within:ring-ring/40 focus-within:border-ring flex flex-col gap-2 rounded-3xl p-4 shadow-(--shadow-lift) transition focus-within:ring-4">
         <label
-          htmlFor="claim"
+          htmlFor={BOX_ID}
           className="text-muted-foreground px-1 text-sm font-medium"
         >
-          {t.inputLabel}
+          {label ?? t.inputLabel}
         </label>
         <textarea
-          id="claim"
+          id={BOX_ID}
           value={text}
           onChange={onChange}
           onKeyDown={onKeyDown}
@@ -156,11 +170,13 @@ export function CheckForm({ children }: { children?: ReactNode }) {
         </p>
       )}
       {children}
-      <ExampleList
-        heading={t.examplesHeading}
-        examples={t.examples}
-        onPick={setText}
-      />
+      {examples && (
+        <ExampleList
+          heading={t.examplesHeading}
+          examples={t.examples}
+          onPick={setText}
+        />
+      )}
     </form>
   );
 }
