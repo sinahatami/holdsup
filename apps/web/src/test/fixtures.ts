@@ -1,4 +1,9 @@
-import type { CheckResult, CheckView, ClaimResult } from "@/lib/api/client";
+import type {
+  CatalogEntry,
+  CheckResult,
+  CheckView,
+  ClaimResult,
+} from "@/lib/api/client";
 
 /**
  * Complete, typed results for tests, shaped like what the API stores. A schema change
@@ -303,6 +308,28 @@ export function checkView(
     finished_at: null,
     result: null,
     error: null,
+    ...over,
+  };
+}
+
+/** One catalog entry as the API lists it; a test overrides only what it is about. */
+export function catalogEntry(
+  over: Partial<CatalogEntry> & Pick<CatalogEntry, "id">,
+): CatalogEntry {
+  return {
+    name: over.id,
+    theme: "economy",
+    definition: "What it measures.",
+    unit: "%",
+    source: "Eurostat",
+    frequency: "annual",
+    first_year: 2000,
+    last_year: null,
+    source_code: "abc_123",
+    aliases: [],
+    countries: ["DE", "FR", "IT"],
+    groups: ["EU"],
+    all_countries: false,
     ...over,
   };
 }

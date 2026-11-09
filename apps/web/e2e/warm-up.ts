@@ -8,7 +8,12 @@ import { DONE_ID } from "./ids";
 export default async function warmUp(config: FullConfig) {
   const base = config.projects[0].use.baseURL;
   if (!base) return;
-  for (const path of ["/", `/check/${DONE_ID}`, "/check/not-an-id"]) {
+  for (const path of [
+    "/",
+    "/indicators",
+    `/check/${DONE_ID}`,
+    "/check/not-an-id",
+  ]) {
     await fetch(new URL(path, base));
   }
 }

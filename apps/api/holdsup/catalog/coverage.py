@@ -56,3 +56,16 @@ def covers(labels: Iterable[str], geo: str | None) -> bool:
     codes = covered_codes(labels)
     is_country = _COUNTRY.fullmatch(geo) is not None and geo not in AGGREGATES
     return geo in codes or ("*" in codes and is_country)
+
+
+def places(labels: Iterable[str]) -> tuple[list[str], list[str], bool]:
+    """What a `geo_coverage` list covers, for a page that filters by place.
+
+    Returns the countries named, the groups named (EU, EA, WORLD), and whether every country
+    is covered. The labels are expanded here so no reader has to know what "EFTA countries" means.
+    """
+    codes = covered_codes(labels)
+    named = sorted(c for c in codes if c != "*")
+    countries = [c for c in named if c not in AGGREGATES]
+    groups = [c for c in named if c in AGGREGATES]
+    return countries, groups, "*" in codes
