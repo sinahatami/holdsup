@@ -6,8 +6,17 @@ import type { GalleryItem } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
-/** The recent checks; `items` is null when they could not be loaded, as opposed to none yet. */
-export function Gallery({ items }: { items: GalleryItem[] | null }) {
+/** How many cards the home page shows; the Recent checks page lists them all, with filters. */
+export const HOME_CARDS = 4;
+
+/** The latest checks; `items` is null when they could not be loaded, as opposed to none yet. */
+export function Gallery({
+  items,
+  limit = HOME_CARDS,
+}: {
+  items: GalleryItem[] | null;
+  limit?: number;
+}) {
   return (
     <TitledSection id="gallery" title={strings.home.galleryHeading}>
       <NeutralityNote />
@@ -20,7 +29,7 @@ export function Gallery({ items }: { items: GalleryItem[] | null }) {
       ) : (
         <>
           <ul className="grid gap-4 sm:grid-cols-2">
-            {items.map((it) => (
+            {items.slice(0, limit).map((it) => (
               <GalleryCard key={it.id} item={it} />
             ))}
           </ul>
