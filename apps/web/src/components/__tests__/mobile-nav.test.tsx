@@ -4,6 +4,7 @@ import { MobileNav } from "@/components/molecules/mobile-nav";
 import { SiteHeader } from "@/components/organisms/site-header";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { externalLink } from "@/test/external";
 
 const path = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => path.current }));
@@ -91,5 +92,10 @@ describe("SiteHeader", () => {
       "href",
       routes.recent,
     );
+  });
+
+  it("opens the repository from the header in a new tab", () => {
+    render(<SiteHeader />);
+    externalLink(strings.footer.github, strings.footer.repoUrl);
   });
 });

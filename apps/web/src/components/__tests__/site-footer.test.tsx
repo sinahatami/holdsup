@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { SiteFooter } from "@/components/organisms/site-footer";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { externalLink } from "@/test/external";
 
 const t = strings.footer;
 
@@ -26,18 +27,9 @@ describe("SiteFooter", () => {
 
   it("links to the repository, the issues and the licence", () => {
     render(<SiteFooter />);
-    expect(screen.getByRole("link", { name: t.github })).toHaveAttribute(
-      "href",
-      t.repoUrl,
-    );
-    expect(screen.getByRole("link", { name: t.report })).toHaveAttribute(
-      "href",
-      t.issuesUrl,
-    );
-    expect(screen.getByRole("link", { name: t.license })).toHaveAttribute(
-      "href",
-      t.licenseUrl,
-    );
+    externalLink(t.github, t.repoUrl);
+    externalLink(t.report, t.issuesUrl);
+    externalLink(t.license, t.licenseUrl);
   });
 
   it("does not repeat Home, which the logo already is", () => {

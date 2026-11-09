@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ExternalLink } from "@/components/atoms/external-link";
 import { GithubMark } from "@/components/atoms/github-mark";
 import { Logo } from "@/components/atoms/logo";
 import { routes } from "@/lib/routes";
@@ -62,23 +63,24 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <a
+              <ExternalLink
+                plain
                 href={t.repoUrl}
                 className={`${footerLink} flex items-center gap-2`}
               >
                 <GithubMark className="size-4" />
                 {t.github}
-              </a>
+              </ExternalLink>
             </li>
             <li>
-              <a href={t.issuesUrl} className={footerLink}>
+              <ExternalLink plain href={t.issuesUrl} className={footerLink}>
                 {t.report}
-              </a>
+              </ExternalLink>
             </li>
             <li>
-              <a href={t.licenseUrl} className={footerLink}>
+              <ExternalLink plain href={t.licenseUrl} className={footerLink}>
                 {t.license}
-              </a>
+              </ExternalLink>
             </li>
           </LinkGroup>
         </div>
