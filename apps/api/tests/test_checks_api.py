@@ -15,10 +15,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from holdsup.db.models import Check
 from holdsup.db.url import to_async_url
 from holdsup.main import create_app
-from holdsup.routes.checks import MAX_TEXT
+from holdsup.pipeline.claim import LATEST, AssertionType, Operator
+from holdsup.pipeline.result import ClaimResult
+from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
 from holdsup.routes.deps import get_runner, get_store
 from holdsup.service.runner import CheckRunner
-from holdsup.service.store import InMemoryCheckStore, SqlCheckStore
+from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
+from holdsup.verdict import Part
 from tests.router.fakes import FakeClient
 from tests.service.fakes import TEXT, happy_script, make_runner
 
@@ -195,10 +198,89 @@ def test_gallery_lists_featured_checks(
         {
             "id": check_id, "text": TEXT, "created_at": items[0]["created_at"],
             "verdicts": ["supported"], "indicators": ["Unemployment rate"],
+            "claims": [
+                {
+                    "quote": "Italy's unemployment rate fell 4 points between 2015 and 2023",
+                    "label": "supported", "claimed": -4.0, "official": -4.2,
+                    "unit": "percentage points", "indicator": "Unemployment rate",
+                    "source": "eurostat", "period": "2015–2023",
+                }
+            ],
         }
     ]  # fmt: skip
     assert http.get("/v1/gallery", params={"limit": 0}).status_code == 422
     assert http.get("/v1/gallery", params={"limit": 25}).status_code == 422
+
+
+def test_gallery_claim_states_a_figure_only_when_there_is_one_to_compare(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, _, _, store = api
+    check_id = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    stream(http, check_id)
+    stored = http.portal.call(store.get, UUID(check_id))  # type: ignore[union-attr]
+    claim = CheckResult.model_validate(stored.result).claims[0]  # type: ignore[union-attr]
+    assert claim.indicator is not None
+    part = claim.verdict.parts[0]  # the main assertion: -4 points against -4.2
+
+    def with_parts(*parts: Part, **changes: Any) -> ClaimResult:
+        verdict = claim.verdict.model_copy(update={"parts": list(parts)})
+        return claim.model_copy(update={"verdict": verdict, **changes})
+
+    def with_part(**changes: Any) -> ClaimResult:
+        return with_parts(part.model_copy(update=changes))
+
+    def no_figure(card: GalleryClaim) -> bool:
+        return (card.claimed, card.official, card.unit, card.period) == (None, None, None, None)
+
+    # The main figure, in the unit of the operation that decided it.
+    main = _gallery_claim(claim)
+    assert (main.claimed, main.official, main.unit) == (-4.0, -4.2, "percentage points")
+    # A bound ("more than 4 points") is not a figure to put next to the official one.
+    bound = _gallery_claim(with_part(operator=Operator.MORE_THAN))
+    assert no_figure(bound)
+    assert bound.label == "supported" and bound.source == "eurostat"
+    # A direction with no number (a trend) has nothing to compare.
+    assert no_figure(_gallery_claim(with_part(asserted=None)))
+    # The figure's own period wins over the claim's window.
+    assert _gallery_claim(with_part(period="2023")).period == "2023"
+    # A window that ends "latest" names no year; a single year is named once.
+    latest = claim.claim.model_copy(update={"end": LATEST})
+    assert _gallery_claim(claim.model_copy(update={"claim": latest})).period is None
+    one_year = claim.claim.model_copy(update={"start": "2023", "end": "2023"})
+    assert _gallery_claim(claim.model_copy(update={"claim": one_year})).period == "2023"
+
+    # Without a main figure, the end value the claim states stands in, in the series' own unit
+    # (not the unit of the change that was computed) and for its own period.
+    end_value = Part(
+        name="end value", holds=True, computed=7.68, asserted=7.7, period="2023", detail=""
+    )
+    ended = _gallery_claim(with_parts(part.model_copy(update={"asserted": None}), end_value))
+    assert (ended.claimed, ended.official, ended.period) == (7.7, 7.68, "2023")
+    assert ended.unit == claim.indicator.unit != "percentage points"
+    # But a stated start value alone is not offered.
+    assert no_figure(
+        _gallery_claim(with_parts(end_value.model_copy(update={"name": "start value"})))
+    )
+
+    # A ratio ("doubled") has no unit but is a multiple; any other unit-less result (a rank) is
+    # not a quantity a card can label.
+    unitless = claim.operations[0].model_copy(update={"unit": None})
+    ratio_claim = claim.claim.model_copy(
+        update={"assertion": claim.claim.assertion.model_copy(update={"type": AssertionType.RATIO})}
+    )
+    assert (
+        _gallery_claim(
+            claim.model_copy(update={"operations": [unitless], "claim": ratio_claim})
+        ).unit
+        == "×"
+    )
+    assert no_figure(_gallery_claim(claim.model_copy(update={"operations": [unitless]})))
+
+    # Without a matched series or data the card still has the quote and verdict.
+    bare = _gallery_claim(claim.model_copy(update={"data": None, "operations": [], "answer": []}))
+    assert bare.source is None and bare.indicator == "Unemployment rate"
+    assert bare.unit == claim.indicator.unit  # no operation: the series' unit
 
 
 def test_cors_allows_only_the_web_origin(

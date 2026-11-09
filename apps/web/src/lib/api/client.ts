@@ -8,6 +8,7 @@ export type CheckAccepted = components["schemas"]["CheckAccepted"];
 export type CatalogResponse = components["schemas"]["CatalogResponse"];
 export type CatalogEntry = components["schemas"]["CatalogEntry"];
 export type GalleryItem = components["schemas"]["GalleryItem"];
+export type GalleryClaim = components["schemas"]["GalleryClaim"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
