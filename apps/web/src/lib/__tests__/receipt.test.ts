@@ -6,6 +6,7 @@ import {
   comparison,
   decidingOp,
   framingPercent,
+  windowsCompared,
   hasMoreThanQuotes,
   headlineFigure,
   opGloss,
@@ -387,5 +388,19 @@ describe("headlineFigure", () => {
   });
   it("is none when nothing could be compared", () => {
     expect(headlineFigure(unmatchedClaim)).toBeNull();
+  });
+});
+
+describe("windowsCompared", () => {
+  it("is true when a claim's verdict says how many time windows it held in", () => {
+    expect(holdingClaim.verdict.window_share).not.toBeNull();
+    expect(windowsCompared(checkResult([unmatchedClaim, holdingClaim]))).toBe(
+      true,
+    );
+  });
+
+  it("is false when no verdict compared any", () => {
+    expect(windowsCompared(checkResult([unmatchedClaim]))).toBe(false);
+    expect(windowsCompared(checkResult([]))).toBe(false);
   });
 });

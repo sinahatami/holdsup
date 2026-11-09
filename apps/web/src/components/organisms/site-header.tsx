@@ -26,6 +26,12 @@ export function SiteHeader() {
           >
             {strings.nav.canCheck}
           </Link>
+          <Link
+            href={routes.methodology}
+            className="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium transition sm:block"
+          >
+            {strings.nav.methodology}
+          </Link>
           <a
             href={strings.footer.repoUrl}
             aria-label={strings.footer.github}

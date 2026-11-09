@@ -19,6 +19,7 @@ from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckStore, SqlCheckStore
 from holdsup.service.wiring import HOUR_S, build_runner
+from holdsup.verdict import Tolerances, load_tolerances
 
 
 def get_runner(request: Request) -> CheckRunner:
@@ -52,8 +53,15 @@ def get_catalog() -> Catalog:  # pragma: no cover (tests override this)
     return load_catalog(get_settings().catalog_dir)
 
 
+@lru_cache
+def get_tolerances() -> Tolerances:
+    """The tolerances verdicts are judged by, read once from `tolerances.yaml`."""
+    return load_tolerances()
+
+
 ReportLimiter = Annotated[RateLimiter, Depends(get_report_limiter)]
 Runner = Annotated[CheckRunner, Depends(get_runner)]
 Store = Annotated[CheckStore, Depends(get_store)]
 Search = Annotated[CatalogSearch, Depends(get_catalog_search)]
 CatalogDep = Annotated[Catalog, Depends(get_catalog)]
+TolerancesDep = Annotated[Tolerances, Depends(get_tolerances)]

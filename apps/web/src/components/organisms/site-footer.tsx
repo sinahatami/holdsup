@@ -34,6 +34,11 @@ export function SiteFooter() {
             </Link>
           </li>
           <li>
+            <Link href={routes.methodology} className={footerLink}>
+              {strings.nav.methodology}
+            </Link>
+          </li>
+          <li>
             <a
               href={strings.footer.repoUrl}
               className={pill({ tone: "glass" })}

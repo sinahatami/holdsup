@@ -334,6 +334,7 @@ describe("VerdictLegend", () => {
       <VerdictLegend
         present={["supported"]}
         threshold={70}
+        windows
         tolerancesVersion={2}
         {...props}
       />,
@@ -374,6 +375,19 @@ describe("VerdictLegend", () => {
       screen.getByText(/across most comparable time windows/),
     ).toBeInTheDocument();
     expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
+  });
+
+  it("does not claim time windows were compared when the page's verdicts did not", () => {
+    legend({ windows: false });
+    expect(
+      screen.getByText(/Other time windows are not compared yet\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/in at least 70% of comparable time windows/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/but the claim fails a check for misleading framing\./),
+    ).toBeInTheDocument();
   });
 
   it("marks, in words, the verdicts this page uses", () => {

@@ -8,6 +8,7 @@ import {
   checkResult,
   checkView,
   holdingClaim,
+  tolerances,
 } from "../src/test/fixtures.ts";
 import { CHECK_ID, DONE_ID } from "./ids.ts";
 
@@ -23,6 +24,8 @@ const problem = (status, title) => ({ type: "about:blank", title, status });
 const server = createServer((req, res) => {
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === "/") return send(res, 200, "ok", "text/plain");
+
+  if (pathname === "/v1/tolerances") return send(res, 200, tolerances);
 
   if (pathname === "/v1/catalog") {
     return send(res, 200, {
