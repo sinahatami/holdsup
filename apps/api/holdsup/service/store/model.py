@@ -27,6 +27,27 @@ class CheckStatus(StrEnum):
     FAILED = "failed"
 
 
+class ReportKind(StrEnum):
+    """What a reader says is wrong with a check."""
+
+    WRONG_SERIES = "wrong_series"  # the statistic it was matched to is not what the claim is about
+    WRONG_READING = "wrong_reading"  # the claim was read wrongly: its place, period or figure
+    OTHER = "other"
+
+
+@dataclass(frozen=True)
+class StoredReport:
+    """A reader's note that a check went wrong. It holds no one's identity: reports need no
+    account, and the address that sent one is only counted in memory to limit abuse."""
+
+    id: UUID
+    check_id: UUID
+    claim_index: int | None  # which claim (0-based); None = the check as a whole
+    kind: ReportKind
+    note: str  # free text from a stranger: shown only to maintainers, as text
+    created_at: datetime
+
+
 class CheckResult(BaseModel):
     """A finished check: what `GET /v1/checks/{id}` returns and the ledger stores."""
 
@@ -72,6 +93,12 @@ class CheckStore(LedgerStore, Protocol):
     async def gallery(self, limit: int) -> list[StoredCheck]: ...
 
     async def set_featured(self, check_id: UUID, featured: bool) -> None: ...
+
+    async def add_report(self, report: StoredReport) -> None: ...
+
+    async def reports(self, limit: int) -> list[StoredReport]:
+        """The newest reports first."""
+        ...
 
     async def finished_results(self) -> list[dict[str, Any]]:
         """The result (CheckResult as JSON) of every finished check that was computed, not copied

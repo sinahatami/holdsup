@@ -21,6 +21,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/tolerances": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Tolerances
+     * @description What every verdict is judged by, as one version: the methodology page prints it, so
+     *     the page cannot drift from the rules the checks used.
+     */
+    get: operations["tolerances_v1_tolerances_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/catalog": {
     parameters: {
       query?: never;
@@ -129,6 +150,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/checks/{check_id}/reports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Report Check
+     * @description Record that a check went wrong. No account is needed; the sender's address is only
+     *     counted in memory, to limit how many reports it can send in an hour.
+     */
+    post: operations["report_check_v1_checks__check_id__reports_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -206,6 +248,16 @@ export interface components {
       first_year: number;
       /** Last Year */
       last_year: number | null;
+      /** Source Code */
+      source_code: string;
+      /** Aliases */
+      aliases: string[];
+      /** Countries */
+      countries: string[];
+      /** Groups */
+      groups: string[];
+      /** All Countries */
+      all_countries: boolean;
     };
     /** CatalogResponse */
     CatalogResponse: {
@@ -339,6 +391,7 @@ export interface components {
        * @default false
        */
       retryable: boolean;
+      stopped_at?: components["schemas"]["Step"] | null;
     };
     /**
      * ClaimSpec
@@ -453,6 +506,35 @@ export interface components {
       | "latest_year"
       | "as_of"
       | "assumed_window";
+    /**
+     * Frequency
+     * @enum {string}
+     */
+    Frequency: "annual" | "semiannual" | "quarterly" | "monthly";
+    /**
+     * GalleryClaim
+     * @description One claim of a featured check, with the two numbers a card compares.
+     */
+    GalleryClaim: {
+      /** Quote */
+      quote: string;
+      label: components["schemas"]["Label"];
+      /** Claimed */
+      claimed?: number | null;
+      /** Official */
+      official?: number | null;
+      /** Unit */
+      unit?: string | null;
+      /** Indicator */
+      indicator?: string | null;
+      /** Source */
+      source?: string | null;
+      /** Period */
+      period?: string | null;
+      /** Geo */
+      geo?: string | null;
+      theme?: components["schemas"]["Theme"] | null;
+    };
     /** GalleryItem */
     GalleryItem: {
       /**
@@ -471,6 +553,8 @@ export interface components {
       verdicts: components["schemas"]["Label"][];
       /** Indicators */
       indicators: string[];
+      /** Claims */
+      claims: components["schemas"]["GalleryClaim"][];
     };
     /** GalleryResponse */
     GalleryResponse: {
@@ -631,6 +715,35 @@ export interface components {
           }[]
         | null;
     };
+    /** ReportAccepted */
+    ReportAccepted: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+    };
+    /**
+     * ReportKind
+     * @description What a reader says is wrong with a check.
+     * @enum {string}
+     */
+    ReportKind: "wrong_series" | "wrong_reading" | "other";
+    /** ReportRequest */
+    ReportRequest: {
+      kind: components["schemas"]["ReportKind"];
+      /**
+       * Claim Index
+       * @description Which claim of the check the report is about, counting from 0; null for the check as a whole.
+       */
+      claim_index?: number | null;
+      /**
+       * Note
+       * @description What looks wrong, in the reader's words (optional).
+       * @default
+       */
+      note: string;
+    };
     /**
      * Step
      * @enum {string}
@@ -669,6 +782,22 @@ export interface components {
       | "education"
       | "environment"
       | "safety";
+    /** Tolerances */
+    Tolerances: {
+      /** Version */
+      version: number;
+      /** Framing Threshold */
+      framing_threshold: number;
+      values: components["schemas"]["ValueTolerances"];
+      /** Flat Relative */
+      flat_relative: number;
+      /** Trend Min R2 */
+      trend_min_r2: number;
+      /** Max Period Gap */
+      max_period_gap: {
+        [key: string]: number;
+      };
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -681,6 +810,36 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** ValueTolerance */
+    ValueTolerance: {
+      /**
+       * Relative
+       * @default 0
+       */
+      relative: number;
+      /**
+       * Absolute
+       * @default 0
+       */
+      absolute: number;
+      /** Rounding */
+      rounding: boolean;
+      /**
+       * Plus Relative
+       * @default 0
+       */
+      plus_relative: number;
+    };
+    /** ValueTolerances */
+    ValueTolerances: {
+      level: components["schemas"]["ValueTolerance"];
+      level_rate: components["schemas"]["ValueTolerance"];
+      absolute: components["schemas"]["ValueTolerance"];
+      percent: components["schemas"]["ValueTolerance"];
+      percentage_points: components["schemas"]["ValueTolerance"];
+      ratio: components["schemas"]["ValueTolerance"];
+      rank: components["schemas"]["ValueTolerance"];
     };
     /** Verdict */
     Verdict: {
@@ -732,6 +891,26 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HealthResponse"];
+        };
+      };
+    };
+  };
+  tolerances_v1_tolerances_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Tolerances"];
         };
       };
     };
@@ -944,6 +1123,62 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  report_check_v1_checks__check_id__reports_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        check_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReportRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportAccepted"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
         };
       };
     };

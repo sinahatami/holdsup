@@ -1,4 +1,4 @@
-"""The check store in Postgres: `checks`, `claims` and `operations`."""
+"""The check store in Postgres: `checks`, `claims`, `operations` and `reports`."""
 
 from collections.abc import Sequence
 from datetime import datetime
@@ -8,10 +8,17 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from holdsup.db.models import Check, ClaimRow, OperationRow
+from holdsup.db.models import Check, ClaimRow, OperationRow, ReportRow
 from holdsup.pipeline.ledger import LedgerEntry
 from holdsup.problems import Problem
-from holdsup.service.store.model import CheckResult, CheckStatus, StoredCheck, add_entry
+from holdsup.service.store.model import (
+    CheckResult,
+    CheckStatus,
+    ReportKind,
+    StoredCheck,
+    StoredReport,
+    add_entry,
+)
 
 
 def _stored(row: Check) -> StoredCheck:
@@ -148,6 +155,35 @@ class SqlCheckStore:
             await session.execute(
                 update(Check).where(Check.id == check_id).values(featured=featured)
             )
+
+    async def add_report(self, report: StoredReport) -> None:
+        async with self._sessionmaker() as session, session.begin():
+            session.add(
+                ReportRow(
+                    id=report.id,
+                    check_id=report.check_id,
+                    claim_index=report.claim_index,
+                    kind=str(report.kind),
+                    note=report.note,
+                    created_at=report.created_at,
+                )
+            )
+
+    async def reports(self, limit: int) -> list[StoredReport]:
+        stmt = select(ReportRow).order_by(ReportRow.created_at.desc()).limit(limit)
+        async with self._sessionmaker() as session:
+            rows = (await session.scalars(stmt)).all()
+        return [
+            StoredReport(
+                id=r.id,
+                check_id=r.check_id,
+                claim_index=r.claim_index,
+                kind=ReportKind(r.kind),
+                note=r.note,
+                created_at=r.created_at,
+            )
+            for r in rows
+        ]
 
     async def finished_results(self) -> list[dict[str, Any]]:
         stmt = select(Check.result).where(

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CustomCursor } from "@/components/atoms/custom-cursor";
 import { SiteFooter } from "@/components/organisms/site-footer";
 import { SiteHeader } from "@/components/organisms/site-header";
+import { OfflineNotice } from "@/components/molecules/offline-notice";
 import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
@@ -17,7 +18,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Shared links need absolute addresses for their pictures. On Vercel they are worked out
+// from the deployment; elsewhere set NEXT_PUBLIC_SITE_URL to the site's public address.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: strings.appName,
   description: strings.metaDescription,
 };
@@ -45,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         <div aria-hidden="true" className="scroll-progress" />
         <SiteHeader />
+        <OfflineNotice />
         {children}
         <SiteFooter />
         <CustomCursor />

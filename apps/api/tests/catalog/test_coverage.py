@@ -2,7 +2,7 @@
 
 import pytest
 
-from holdsup.catalog.coverage import UnknownCoverageLabel, covered_codes, covers
+from holdsup.catalog.coverage import UnknownCoverageLabel, covered_codes, covers, places
 from holdsup.catalog.schema import load_catalog
 from holdsup.config import get_settings
 
@@ -31,3 +31,16 @@ def test_every_label_in_the_catalog_is_known() -> None:
     catalog = load_catalog(get_settings().catalog_dir)
     for spec in catalog.indicators:
         assert covered_codes(spec.geo_coverage), spec.id
+
+
+def test_places_splits_countries_from_groups() -> None:
+    countries, groups, every = places(["EU27_2020", "EU member states", "CH", "IS", "NO"])
+    assert groups == ["EU"]
+    assert "IT" in countries and "NO" in countries and "EU" not in countries
+    assert countries == sorted(countries) and len(countries) == 27 + 3
+    assert every is False
+
+
+def test_places_for_a_worldwide_series() -> None:
+    assert places(["All countries", "WLD"]) == ([], ["WORLD"], True)
+    assert places(["EA", "EU27_2020", "EFTA countries"])[1] == ["EA", "EU"]

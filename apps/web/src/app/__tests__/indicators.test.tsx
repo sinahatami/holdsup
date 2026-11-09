@@ -2,23 +2,24 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Page from "@/app/indicators/page";
 import { strings } from "@/lib/strings";
+import { catalogEntry } from "@/test/fixtures";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 describe("Indicators page", () => {
   it("lists what HoldsUp can check", async () => {
     const indicators = [
-      {
+      catalogEntry({
         id: "p",
         name: "Total population (Eurostat)",
         theme: "population",
         definition: "People resident on 1 January.",
         unit: "persons",
-        source: "Eurostat",
-        frequency: "annual",
         first_year: 1960,
-        last_year: null,
-      },
+      }),
     ];
     vi.stubGlobal(
       "fetch",

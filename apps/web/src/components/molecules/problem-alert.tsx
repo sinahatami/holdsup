@@ -1,9 +1,19 @@
 import { OctagonAlert } from "lucide-react";
-import { problemMessage, type Problem } from "@/lib/api/client";
+import type { ReactNode } from "react";
+import { problemKind, problemMessage, type Problem } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
-/** A failed check: what went wrong and, when rate limited, when to try again. */
-export function ProblemAlert({ problem }: { problem: Problem }) {
+/**
+ * A failed check: what went wrong, in words that fit the kind of failure, and when the API
+ * says to wait, how long. `action` is what the reader can do about it, such as trying again.
+ */
+export function ProblemAlert({
+  problem,
+  action,
+}: {
+  problem: Problem;
+  action?: ReactNode;
+}) {
   return (
     <div
       role="alert"
@@ -16,14 +26,19 @@ export function ProblemAlert({ problem }: { problem: Problem }) {
         style={{ color: "var(--v)" }}
         aria-hidden
       />
-      <div>
-        <h2 className="font-semibold">{strings.check.errorHeading}</h2>
-        <p className="text-muted-foreground">{problemMessage(problem)}</p>
-        {problem.retry_after ? (
-          <p className="text-muted-foreground">
-            {strings.check.retryAfter(problem.retry_after)}
-          </p>
-        ) : null}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold">
+            {strings.problem.heading[problemKind(problem)]}
+          </h2>
+          <p className="text-muted-foreground">{problemMessage(problem)}</p>
+          {problem.retry_after ? (
+            <p className="text-muted-foreground">
+              {strings.check.retryAfter(problem.retry_after)}
+            </p>
+          ) : null}
+        </div>
+        {action}
       </div>
     </div>
   );
