@@ -1,3 +1,4 @@
+import { ExternalLink } from "@/components/atoms/external-link";
 import { GithubMark } from "@/components/atoms/github-mark";
 import { Logo } from "@/components/atoms/logo";
 import { MobileNav } from "@/components/molecules/mobile-nav";
@@ -36,13 +37,14 @@ export function SiteHeader() {
                 {label}
               </Link>
             ))}
-            <a
+            <ExternalLink
+              plain
               href={strings.footer.repoUrl}
-              aria-label={strings.footer.github}
               className="text-muted-foreground hover:text-foreground rounded-full p-2 transition"
             >
               <GithubMark className="size-5" />
-            </a>
+              <span className="sr-only">{strings.footer.github}</span>
+            </ExternalLink>
             <ThemeToggle />
           </nav>
           {/* It reads the page address, which a page such as a receipt only knows at request time. */}

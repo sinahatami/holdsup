@@ -91,10 +91,14 @@ export default async function Page() {
       <TitledSection id="open" title={t.open.heading}>
         <p className="leading-7">{t.open.body}</p>
         <p>
-          <a href={strings.footer.repoUrl} className={pill({ tone: "glass" })}>
+          <ExternalLink
+            plain
+            href={strings.footer.repoUrl}
+            className={pill({ tone: "glass" })}
+          >
             <GithubMark className="size-4" />
             {t.open.repo}
-          </a>
+          </ExternalLink>
         </p>
       </TitledSection>
 

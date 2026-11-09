@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import Page from "@/app/about/page";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { externalLink } from "@/test/external";
 import { catalogEntry } from "@/test/fixtures";
 
 const t = strings.about;
@@ -88,10 +89,7 @@ describe("About page", () => {
   it("links to the repository, the method and the list of statistics", async () => {
     api([]);
     render(await Page());
-    expect(screen.getByRole("link", { name: t.open.repo })).toHaveAttribute(
-      "href",
-      strings.footer.repoUrl,
-    );
+    externalLink(t.open.repo, strings.footer.repoUrl);
     expect(screen.getByRole("link", { name: t.what.method })).toHaveAttribute(
       "href",
       routes.methodology,
