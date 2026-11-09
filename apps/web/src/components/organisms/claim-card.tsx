@@ -4,6 +4,7 @@ import { Eyebrow } from "@/components/atoms/eyebrow";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { Receipt } from "@/components/organisms/receipt";
+import { ReportMatch } from "@/components/organisms/report-match";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
@@ -43,6 +44,7 @@ export function ClaimCard({
   sharedModels,
   order,
   total,
+  checkId,
 }: {
   claim: ClaimResult;
   versions: CheckResult["versions"];
@@ -51,6 +53,8 @@ export function ClaimCard({
   order: number;
   /** How many claims the check has, so each can be named "Claim 2 of 3". */
   total: number;
+  /** The check this claim belongs to, which a report about it is sent against. */
+  checkId: string;
 }) {
   const whyId = `why-${c.index}`;
   return (
@@ -90,6 +94,7 @@ export function ClaimCard({
       )}
       <Suggestions claim={c} />
       <Receipt claim={c} versions={versions} sharedModels={sharedModels} />
+      <ReportMatch checkId={checkId} claimIndex={c.index} />
     </article>
   );
 }

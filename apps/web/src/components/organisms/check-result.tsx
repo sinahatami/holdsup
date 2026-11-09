@@ -41,6 +41,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           sharedModels={result.models}
           order={n}
           total={claims.length}
+          checkId={result.id}
         />
       ))}
       <VerdictLegend

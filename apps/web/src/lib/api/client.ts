@@ -14,6 +14,9 @@ export type CatalogResponse = components["schemas"]["CatalogResponse"];
 export type CatalogEntry = components["schemas"]["CatalogEntry"];
 export type GalleryItem = components["schemas"]["GalleryItem"];
 export type GalleryClaim = components["schemas"]["GalleryClaim"];
+export type ReportKind = components["schemas"]["ReportKind"];
+export type ReportRequest = components["schemas"]["ReportRequest"];
+export type ReportAccepted = components["schemas"]["ReportAccepted"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
@@ -120,6 +123,13 @@ export function createApiClient(baseUrl: string) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
+      }),
+    /** Tells the maintainers a check matched the wrong statistic or read a claim wrongly. */
+    reportCheck: (id: string, report: ReportRequest) =>
+      request<ReportAccepted>(`/checks/${id}/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(report),
       }),
     catalog: () => request<CatalogResponse>("/catalog"),
     getCheck: (id: string, init?: RequestInit) =>
