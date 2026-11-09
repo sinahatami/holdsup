@@ -8,6 +8,7 @@ import {
 import { describe, expect, it, vi } from "vitest";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
+import { SampleReceipt } from "@/components/organisms/sample-receipt";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { ClaimCard } from "@/components/organisms/claim-card";
 import { Receipt } from "@/components/organisms/receipt";
@@ -84,6 +85,24 @@ describe("Gallery", () => {
       "href",
       "/check/abc",
     );
+  });
+});
+
+describe("SampleReceipt", () => {
+  it("walks from the claim to the verdict", () => {
+    render(<SampleReceipt />);
+    const s = strings.home.sample;
+    for (const text of [s.claim, s.series, s.source, s.recomputed]) {
+      expect(screen.getByText(text)).toBeInTheDocument();
+    }
+    expect(screen.getByText(strings.verdicts.supported)).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+  it("opens a real receipt when given one", () => {
+    render(<SampleReceipt href="/check/abc" />);
+    expect(
+      screen.getByRole("link", { name: strings.home.sample.open }),
+    ).toHaveAttribute("href", "/check/abc");
   });
 });
 

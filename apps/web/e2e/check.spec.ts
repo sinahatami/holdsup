@@ -15,7 +15,11 @@ test("submit → trace → result", async ({ page }) => {
 
   await expect(page).toHaveURL(new RegExp(`/check/${CHECK_ID}$`));
   await expect(page.getByText("Reading the claims")).toBeVisible();
-  await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
+  // The home page stays in the DOM, hidden, after the navigation and its sample
+  // receipt carries the same badge, so look inside the result's own article.
+  await expect(
+    page.getByRole("article").getByText("Holds up", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/a fall of 4.2 points/)).toBeVisible();
 
   await page.getByText("Receipt", { exact: true }).click();
