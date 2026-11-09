@@ -12,6 +12,8 @@ import { applyStep, type TraceRow } from "@/lib/trace";
 
 export interface CheckState {
   loading: boolean;
+  /** The text that was checked, to send again if the check failed. */
+  text: string | null;
   trace: TraceRow[];
   result: CheckResult | null;
   error: Problem | null;
@@ -20,15 +22,20 @@ export interface CheckState {
 
 const initial: CheckState = {
   loading: true,
+  text: null,
   trace: [],
   result: null,
   error: null,
   connectionLost: false,
 };
 
-/** Loads a check, and follows its live trace while it is still running. */
-export function useCheck(id: string, api: ApiClient = browserApi): CheckState {
+/**
+ * Loads a check, and follows its live trace while it is still running. `reconnect` starts
+ * again from the check as the server has it, for when the live connection was lost.
+ */
+export function useCheck(id: string, api: ApiClient = browserApi) {
   const [state, setState] = useState<CheckState>(initial);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let stop: (() => void) | undefined;
@@ -43,6 +50,7 @@ export function useCheck(id: string, api: ApiClient = browserApi): CheckState {
       .getCheck(id)
       .then((view) => {
         if (cancelled) return;
+        patch({ text: view.text });
         if (view.result) return patch({ loading: false, result: view.result });
         if (view.status === "failed" && view.error) return fail(view.error);
 
@@ -63,7 +71,12 @@ export function useCheck(id: string, api: ApiClient = browserApi): CheckState {
       cancelled = true;
       stop?.();
     };
-  }, [id, api]);
+  }, [id, api, attempt]);
 
-  return state;
+  function reconnect() {
+    setState(initial);
+    setAttempt((n) => n + 1);
+  }
+
+  return { state, reconnect };
 }

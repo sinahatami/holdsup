@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CustomCursor } from "@/components/atoms/custom-cursor";
 import { SiteFooter } from "@/components/organisms/site-footer";
 import { SiteHeader } from "@/components/organisms/site-header";
+import { OfflineNotice } from "@/components/molecules/offline-notice";
 import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         <div aria-hidden="true" className="scroll-progress" />
         <SiteHeader />
+        <OfflineNotice />
         {children}
         <SiteFooter />
         <CustomCursor />
