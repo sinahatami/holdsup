@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { BackLink } from "@/components/molecules/back-link";
+import { CatalogExplorer } from "@/components/organisms/catalog-explorer";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { PageShell } from "@/components/templates/page-shell";
 import { getCatalog } from "@/lib/api/catalog";
@@ -21,7 +23,10 @@ export default async function Page() {
         {strings.indicators.intro}
       </p>
       {catalog ? (
-        <CatalogList entries={catalog.indicators} />
+        // The filters read the address, so the page shows the whole list until the browser has.
+        <Suspense fallback={<CatalogList entries={catalog.indicators} />}>
+          <CatalogExplorer entries={catalog.indicators} />
+        </Suspense>
       ) : (
         <p className="glass rounded-2xl p-5">
           {strings.indicators.unavailable}
