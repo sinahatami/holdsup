@@ -21,6 +21,15 @@ test("submit → trace → result", async ({ page }) => {
 
   await expect(page).toHaveURL(new RegExp(`/check/${CHECK_ID}$`));
   await expect(page.getByText("Reading the claims")).toBeVisible();
+  // The stages follow the trace; the mock answers from an earlier check, so only the first ran.
+  const progress = page.getByRole("region", { name: "Progress" });
+  await expect(progress.getByRole("listitem")).toHaveCount(5);
+  await expect(progress.getByRole("listitem").first()).toContainText(
+    "Finding the series (done)",
+  );
+  await expect(progress.getByRole("listitem").last()).toContainText(
+    "Done (done)",
+  );
   // The home page stays in the DOM, hidden, after the navigation and its sample
   // receipt carries the same badge, so look inside the result's own article.
   await expect(
@@ -301,6 +310,28 @@ test("a link to no check has no accessibility violations", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "No check at this link" }),
   ).toBeVisible();
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+    .analyze();
+  expect(violations).toEqual([]);
+});
+
+test("the progress of a live check fits a 360px screen and passes the accessibility scan", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await mockApi(page);
+  await page.goto(`/check/${CHECK_ID}`);
+  await expect(
+    page.getByRole("region", { name: "Progress" }).getByRole("listitem").last(),
+  ).toContainText("Done (done)");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  // Sections fade in as they scroll into view, so one below the fold reads lighter than
+  // it will; reduced motion turns that off, and the colours are the real ones.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
