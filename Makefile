@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -56,6 +56,12 @@ test-web:
 
 e2e: ## Playwright against a mocked API (incl. axe accessibility checks)
 	pnpm --filter @holdsup/web e2e
+
+lighthouse: ## Production build against the mock API, then the Lighthouse CI budget (home and a result page)
+	pnpm --filter @holdsup/web lighthouse
+
+analyze: ## Bundle analyzer (Turbopack): an interactive treemap of every route's JS
+	pnpm --filter @holdsup/web analyze
 
 types: ## Regenerate apps/web/src/lib/api/schema.ts from FastAPI's OpenAPI schema
 	cd $(API_DIR) && uv run python -m scripts.export_openapi $(CURDIR)/.cache/openapi.json

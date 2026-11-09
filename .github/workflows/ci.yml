@@ -87,3 +87,26 @@ jobs:
           HOLDSUP_API_URL: http://127.0.0.1:9
       - run: pnpm --filter @holdsup/web exec playwright install --with-deps chromium
       - run: make e2e
+
+  lighthouse:
+    name: Lighthouse budget (home and a result page)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Builds against the e2e mock API, serves the production build and fails when a
+      # budget in apps/web/lighthouserc.json is broken. Chrome is on the runner image.
+      - name: Lighthouse CI
+        run: make lighthouse
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse
+          path: apps/web/.lighthouseci/
+          if-no-files-found: warn
