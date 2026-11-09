@@ -23,9 +23,9 @@ test("submit → trace → result", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText(/a fall of 4.34 points/)).toBeVisible();
 
-  await page.getByText("Receipt", { exact: true }).click();
-  await expect(page.getByText("4f556131ab70")).toBeVisible();
   await expect(page.getByText(/change\(/)).toBeVisible();
+  await page.getByText("Technical details").click();
+  await expect(page.getByText("4f556131ab70")).toBeVisible();
 });
 
 test("a failed check shows the problem and when to retry", async ({ page }) => {
@@ -67,6 +67,27 @@ test.describe("a check's permanent link", () => {
     ).toBeVisible();
     await expect(page.getByText(/a fall of 4.34 points/)).toBeVisible();
     await expect(page.getByText("Reading the claims")).toHaveCount(0);
+  });
+
+  test("shows the whole receipt open, from how the claim was read to how to verify it", async ({
+    page,
+  }) => {
+    await page.goto(`/check/${DONE_ID}`);
+    for (const name of [
+      "How HoldsUp read the claim",
+      "The official series",
+      "How it was recomputed",
+      "What the verdict compared",
+      "How to verify it yourself",
+    ]) {
+      await expect(page.getByRole("heading", { level: 4, name })).toBeVisible();
+    }
+    // Every figure leads to the data: the link opens the source in a new tab.
+    const data = page.getByRole("link", { name: /Open the data/ });
+    await expect(data).toHaveAttribute("href", /ec\.europa\.eu\/eurostat/);
+    await expect(data).toHaveAttribute("target", "_blank");
+    // Claimed beside official, with the gap allowed.
+    await expect(page.getByText("±0.17%")).toBeVisible();
   });
 
   test("names the claim and verdict for a shared link, and stays out of search", async ({
@@ -111,7 +132,7 @@ test("result page has no accessibility violations", async ({ page }) => {
   await mockApi(page);
   await page.goto(`/check/${CHECK_ID}`);
   await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
-  await page.getByText("Receipt", { exact: true }).click();
+  await page.getByText("Technical details").click();
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
@@ -123,7 +144,7 @@ test("a receipt opened from its link has no accessibility violations", async ({
 }) => {
   await page.goto(`/check/${DONE_ID}`);
   await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
-  await page.getByText("Receipt", { exact: true }).click();
+  await page.getByText("Technical details").click();
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
