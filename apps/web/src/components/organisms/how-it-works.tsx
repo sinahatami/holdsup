@@ -4,6 +4,7 @@ import { TitledSection } from "@/components/molecules/titled-section";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
+/** Three steps in a line; the methodology page has the full account. */
 export function HowItWorks() {
   return (
     <TitledSection
@@ -11,15 +12,13 @@ export function HowItWorks() {
       title={strings.home.howHeading}
       className="scroll-mt-24"
     >
-      <ol className="grid gap-4 md:grid-cols-3">
+      <ol className="glass grid gap-5 rounded-2xl p-5 md:grid-cols-3">
         {strings.home.how.map((step, i) => (
           <StepCard
             key={step.title}
             number={i + 1}
             title={step.title}
             body={step.body}
-            exampleLabel={strings.home.howExampleLabel}
-            example={step.example}
           />
         ))}
       </ol>

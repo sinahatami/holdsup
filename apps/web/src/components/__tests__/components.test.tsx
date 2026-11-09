@@ -96,6 +96,27 @@ describe("Gallery", () => {
     );
   });
 
+  it("shows only the latest few, and points to the page with all of them", () => {
+    const many = Array.from({ length: 7 }, (_, i) => ({
+      id: `c${i}`,
+      text: `Claim number ${i}`,
+      created_at: "",
+      verdicts: ["supported" as const],
+      indicators: [],
+      claims: [{ quote: `Claim number ${i}`, label: "supported" as const }],
+    }));
+    render(<Gallery items={many} />);
+    expect(
+      screen
+        .getAllByRole("link")
+        .filter((l) => l.getAttribute("href")?.startsWith("/check/")),
+    ).toHaveLength(4);
+    expect(screen.queryByText("Claim number 4")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: strings.recent.seeAll }),
+    ).toHaveAttribute("href", routes.recent);
+  });
+
   it("says a verdict is about the number, not the speaker, and links the method", () => {
     render(<Gallery items={[]} />);
     expect(
@@ -260,7 +281,7 @@ describe("CanCheck", () => {
   const e = (id: string, source: string, first: number, last: number | null) =>
     catalogEntry({ id, source, first_year: first, last_year: last });
 
-  it("shows counts and sources taken from the catalog", () => {
+  it("says in one line what the catalog covers, counted from the catalog itself", () => {
     render(
       <CanCheck
         entries={[
@@ -270,13 +291,11 @@ describe("CanCheck", () => {
         ]}
       />,
     );
-    const stat = (label: string) =>
-      screen.getByText(label).nextElementSibling?.textContent;
-    expect(stat("statistics")).toBe("3");
-    expect(stat("topic")).toBe("1");
-    expect(stat("sources")).toBe("2");
-    expect(stat(strings.home.coverage.years)).toBe("1960–now");
-    expect(screen.getByText("World Bank")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "3 official statistics on 1 topic, from Eurostat and World Bank, 1960 to now.",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: strings.home.canCheckLink }),
     ).toHaveAttribute("href", "/indicators");
@@ -288,7 +307,9 @@ describe("CanCheck", () => {
     expect(
       screen.getByRole("link", { name: strings.home.canCheckLink }),
     ).toHaveAttribute("href", "/indicators");
-    expect(screen.queryByText("statistics")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/ on \d+ topics?, from /),
+    ).not.toBeInTheDocument();
   });
 });
 

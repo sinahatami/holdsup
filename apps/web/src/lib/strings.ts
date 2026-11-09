@@ -76,7 +76,6 @@ export const strings = {
   nav: {
     main: "Main",
     home: "Home",
-    howItWorks: "How it works",
     canCheck: "What it can check",
     methodology: "Methodology",
     about: "About",
@@ -114,23 +113,20 @@ export const strings = {
   },
   home: {
     howHeading: "How it works",
-    howExampleLabel: "In the sample above",
     howMore: "Read the full method",
+    // Short on purpose: the sample receipt shows the figures, the methodology page the detail.
     how: [
       {
         title: "Paste a claim",
-        body: "Any sentence with a number in it. HoldsUp picks out each claim: the place, the period and the figure.",
-        example: "Italy, 2015 to 2023, from 11.9% to 7.7%",
+        body: "Any sentence with a number in it. HoldsUp picks out the place, the period and the figure.",
       },
       {
-        title: "We match it to an official series",
-        body: "Each claim is matched to one published statistic, and its data is fetched from the source, such as Eurostat or the World Bank.",
-        example: "Unemployment rate (monthly), Eurostat",
+        title: "We match an official series",
+        body: "Each claim is matched to one published statistic, such as Eurostat's.",
       },
       {
-        title: "We recompute it, you check our work",
-        body: "Plain code, not a language model, does the arithmetic. The receipt lists every figure, calculation, source link and data fingerprint.",
-        example: "12.02% to 7.68%, down 4.34 points",
+        title: "We recompute it, you check",
+        body: "Plain code does the arithmetic. The receipt lists every source and step.",
       },
     ],
     intro:
@@ -170,15 +166,16 @@ export const strings = {
       "Every claim is matched to an official statistic. Browse the full list to see which topics, sources and years are covered.",
     canCheckLink: "See everything HoldsUp can check",
     coverage: {
-      intro:
-        "Every claim is matched to an official statistic. This is what is covered today.",
-      statistics: (n: number) => (n === 1 ? "statistic" : "statistics"),
-      topics: (n: number) => (n === 1 ? "topic" : "topics"),
-      sources: (n: number) => (n === 1 ? "source" : "sources"),
-      years: "oldest series to now",
+      // One line; the catalog page has the full list, filters and sources.
+      line: (
+        statistics: number,
+        topics: number,
+        sources: string,
+        years: string,
+      ) =>
+        `${statistics.toLocaleString()} official ${statistics === 1 ? "statistic" : "statistics"} on ${topics.toLocaleString()} ${topics === 1 ? "topic" : "topics"}, from ${sources}, ${years}.`,
       yearRange: (first: number, last: number | null) =>
-        last === null ? `${first}–now` : `${first}–${last}`,
-      sourcesHeading: "Data comes from",
+        last === null ? `${first} to now` : `${first} to ${last}`,
     },
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",

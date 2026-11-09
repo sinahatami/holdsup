@@ -69,9 +69,9 @@ describe("Home page", () => {
       })),
     );
     render(await Home());
-    expect(screen.getByText("statistics").nextElementSibling).toHaveTextContent(
-      "2",
-    );
+    expect(
+      screen.getByText(/2 official statistics on 1 topic, from Eurostat/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: strings.home.sample.open }),
     ).toHaveAttribute("href", "/check/real-1");

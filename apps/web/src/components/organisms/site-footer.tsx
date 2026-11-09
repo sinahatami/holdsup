@@ -24,11 +24,6 @@ export function SiteFooter() {
             </Link>
           </li>
           <li>
-            <Link href={routes.howItWorks} className={footerLink}>
-              {strings.nav.howItWorks}
-            </Link>
-          </li>
-          <li>
             <Link href={routes.indicators} className={footerLink}>
               {strings.nav.canCheck}
             </Link>
