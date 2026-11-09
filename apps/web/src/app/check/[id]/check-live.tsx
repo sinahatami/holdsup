@@ -7,10 +7,10 @@ import { useCheck } from "@/hooks/use-check";
 
 /** Binds the live check (data) to the check template (presentation). */
 export function CheckLive({ id }: { id: string }) {
-  const state = useCheck(id);
+  const { state, reconnect } = useCheck(id);
   return (
     <CheckTemplate actions={<BackLink />}>
-      <CheckReport state={state} />
+      <CheckReport state={state} onReconnect={reconnect} />
     </CheckTemplate>
   );
 }

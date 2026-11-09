@@ -16,6 +16,7 @@ vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NEXT_HTTP_ERROR_FALLBACK;404");
   },
+  useRouter: () => ({ push: vi.fn() }),
 }));
 // The live follower is a client component with its own tests; here it only has to be chosen.
 vi.mock("@/app/check/[id]/check-live", () => ({
@@ -66,6 +67,23 @@ describe("CheckPage", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "All model providers are busy.",
     );
+    // A failure that trying again can fix offers to send the same text again.
+    expect(
+      screen.getByRole("button", { name: strings.problem.retry }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no retry for a text the API refused as it is", async () => {
+    found(
+      checkView({
+        status: "failed",
+        error: { type: "about:blank", title: "Unprocessable", status: 422 },
+      }),
+    );
+    render(await CheckPage({ id: "c1" }));
+    expect(
+      screen.queryByRole("button", { name: strings.problem.retry }),
+    ).not.toBeInTheDocument();
   });
 
   it.each(["queued", "running"] as const)(
