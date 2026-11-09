@@ -8,6 +8,7 @@ import {
   type CheckResult,
   type Problem,
 } from "@/lib/api/client";
+import { historyStore } from "@/lib/history";
 import { applyStep, type TraceRow } from "@/lib/trace";
 
 export interface CheckState {
@@ -43,6 +44,14 @@ export function useCheck(id: string, api: ApiClient = browserApi) {
 
     const patch = (part: Partial<CheckState>) =>
       setState((s) => ({ ...s, ...part }));
+    // A check this browser sent remembers how it came out.
+    const finish = (result: CheckResult) => {
+      historyStore.finish(
+        id,
+        result.claims.map((c) => c.verdict.label),
+      );
+      patch({ loading: false, result });
+    };
     const fail = (problem: Problem) =>
       patch({ loading: false, error: problem });
 
@@ -51,14 +60,14 @@ export function useCheck(id: string, api: ApiClient = browserApi) {
       .then((view) => {
         if (cancelled) return;
         patch({ text: view.text });
-        if (view.result) return patch({ loading: false, result: view.result });
+        if (view.result) return finish(view.result);
         if (view.status === "failed" && view.error) return fail(view.error);
 
         patch({ loading: false });
         stop = api.follow(id, {
           onStep: (e) =>
             setState((s) => ({ ...s, trace: applyStep(s.trace, e) })),
-          onResult: (result) => patch({ result }),
+          onResult: finish,
           onProblem: fail,
           onConnectionLost: () => patch({ connectionLost: true }),
         });

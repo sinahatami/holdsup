@@ -138,3 +138,15 @@ export function placeName(code: string): string {
     return code; // not a region code at all
   }
 }
+
+const localMoment = new Intl.DateTimeFormat(strings.locale, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+/** A moment in the reader's own time zone, "Nov 7, 04:45 PM". For things only this browser knows about. */
+export function formatLocalMoment(epochMs: number): string {
+  return localMoment.format(new Date(epochMs));
+}

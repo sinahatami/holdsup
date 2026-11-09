@@ -106,6 +106,15 @@ export const strings = {
     body: "That page doesn't exist, but there are plenty of claims left to check.",
     orTry: "Or look at",
   },
+  history: {
+    heading: "Your recent checks",
+    note: "Kept in this browser only. Clearing your browser data removes them.",
+    clear: "Clear the list",
+    remove: (text: string) => `Remove from your list: ${text}`,
+    summary: (holds: number, total: number) =>
+      `${holds} of ${total} claims hold up`,
+    running: "Result not seen yet",
+  },
   home: {
     howHeading: "How it works",
     howExampleLabel: "In the sample above",
