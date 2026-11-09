@@ -137,6 +137,12 @@ export const strings = {
       "HoldsUp found no claim with a number in it. Try a sentence such as “Italy's unemployment rate fell to 7.7% in 2023.”",
     closestHeading: "The closest things HoldsUp can check",
     seeAll: "See everything HoldsUp can check",
+    missing: {
+      heading: "No check at this link",
+      body: "The link may be wrong or cut short. Every check has its own full link; if you have the claim, you can check it again.",
+    },
+    // The page title and the shared preview: how it came out, then what was said.
+    metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
   indicators: {
     heading: "What HoldsUp can check",

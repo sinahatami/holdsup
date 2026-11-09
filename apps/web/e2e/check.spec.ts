@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { CHECK_ID, mockApi } from "./mock-api";
+import { CHECK_ID, DONE_ID, MISSING_ID } from "./ids";
+import { mockApi } from "./mock-api";
 
 test("submit → trace → result", async ({ page }) => {
   await mockApi(page);
@@ -20,10 +21,10 @@ test("submit → trace → result", async ({ page }) => {
   await expect(
     page.getByRole("article").getByText("Holds up", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText(/a fall of 4.2 points/)).toBeVisible();
+  await expect(page.getByText(/a fall of 4.34 points/)).toBeVisible();
 
   await page.getByText("Receipt", { exact: true }).click();
-  await expect(page.getByText("9f2c0de1")).toBeVisible();
+  await expect(page.getByText("4f556131ab70")).toBeVisible();
   await expect(page.getByText(/change\(/)).toBeVisible();
 });
 
@@ -50,6 +51,54 @@ test("a refused submission shows the reason on the home page", async ({
   ).toContainText("hourly limit");
 });
 
+test.describe("a check's permanent link", () => {
+  test("is the receipt in the page itself, not a result fetched by the browser", async ({
+    page,
+    request,
+  }) => {
+    // No browser mock here: the server has to read the check from the API on its own.
+    const html = await (await request.get(`/check/${DONE_ID}`)).text();
+    expect(html).toContain("a fall of 4.34 points");
+    expect(html).toContain("4f556131ab70");
+
+    await page.goto(`/check/${DONE_ID}`);
+    await expect(
+      page.getByRole("article").getByText("Holds up", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/a fall of 4.34 points/)).toBeVisible();
+    await expect(page.getByText("Reading the claims")).toHaveCount(0);
+  });
+
+  test("names the claim and verdict for a shared link, and stays out of search", async ({
+    page,
+  }) => {
+    await page.goto(`/check/${DONE_ID}`);
+    await expect(page).toHaveTitle(
+      /^Holds up · “Italy's unemployment rate fell from 11\.9% in 2015 to 7\.7% in 2023\.” · HoldsUp$/,
+    );
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex",
+    );
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      "content",
+      /^Holds up · /,
+    );
+  });
+
+  test("says so when it points at no check", async ({ page }) => {
+    for (const id of [MISSING_ID, "not-an-id"]) {
+      await page.goto(`/check/${id}`);
+      await expect(
+        page.getByRole("heading", { level: 1, name: "No check at this link" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "Check another claim" }).last(),
+      ).toBeVisible();
+    }
+  });
+});
+
 test("home page has no accessibility violations", async ({ page }) => {
   await page.goto("/");
   const { violations } = await new AxeBuilder({ page })
@@ -63,6 +112,29 @@ test("result page has no accessibility violations", async ({ page }) => {
   await page.goto(`/check/${CHECK_ID}`);
   await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
   await page.getByText("Receipt", { exact: true }).click();
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+    .analyze();
+  expect(violations).toEqual([]);
+});
+
+test("a receipt opened from its link has no accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(`/check/${DONE_ID}`);
+  await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
+  await page.getByText("Receipt", { exact: true }).click();
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+    .analyze();
+  expect(violations).toEqual([]);
+});
+
+test("a link to no check has no accessibility violations", async ({ page }) => {
+  await page.goto(`/check/${MISSING_ID}`);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "No check at this link" }),
+  ).toBeVisible();
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
