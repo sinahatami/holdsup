@@ -104,6 +104,7 @@ export const strings = {
     code: "404",
     heading: "Page not found",
     body: "That page doesn't exist, but there are plenty of claims left to check.",
+    orTry: "Or look at",
   },
   home: {
     howHeading: "How it works",
@@ -173,6 +174,8 @@ export const strings = {
     },
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",
+    galleryUnavailable:
+      "Recent checks could not be loaded just now. Please try again in a few minutes.",
     card: {
       claimed: "Claimed",
       official: "official",
