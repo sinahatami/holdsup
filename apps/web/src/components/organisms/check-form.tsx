@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useState, type SubmitEvent } from "react";
+import { useState, type ReactNode, type SubmitEvent } from "react";
 import { pill } from "@/components/atoms/pill";
 import { CharCounter } from "@/components/molecules/char-counter";
 import { ExampleList } from "@/components/molecules/example-list";
@@ -10,7 +10,11 @@ import { strings } from "@/lib/strings";
 
 const ERROR_ID = "claim-error";
 
-export function CheckForm() {
+/**
+ * The claim box, its submit button and the examples. `children` is a slot under
+ * the box and above the examples: the home page puts the sample receipt there.
+ */
+export function CheckForm({ children }: { children?: ReactNode }) {
   const [text, setText] = useState("");
   const { submit, busy, error } = useSubmitCheck();
   const t = strings.home;
@@ -38,7 +42,7 @@ export function CheckForm() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={t.placeholder}
-          rows={4}
+          rows={3}
           className="placeholder:text-muted-foreground/70 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
           aria-describedby={message ? ERROR_ID : undefined}
         />
@@ -67,6 +71,7 @@ export function CheckForm() {
           {message}
         </p>
       )}
+      {children}
       <ExampleList
         heading={t.examplesHeading}
         examples={t.examples}
