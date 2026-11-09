@@ -27,6 +27,12 @@ export function SiteHeader() {
             {strings.nav.canCheck}
           </Link>
           <Link
+            href={routes.recent}
+            className="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium transition md:block"
+          >
+            {strings.nav.recent}
+          </Link>
+          <Link
             href={routes.methodology}
             className="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium transition sm:block"
           >
