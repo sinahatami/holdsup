@@ -93,16 +93,14 @@ test.describe("speaking a claim", () => {
     ).toBeEnabled();
   });
 
-  test("listens in the language picked in the menu", async ({ page }) => {
+  test("listens for English, with no language menu", async ({ page }) => {
     await withFakeSpeech(page);
     await page.goto("/");
-    await page
-      .getByRole("combobox", { name: "Language you speak" })
-      .selectOption("it-IT");
+    await expect(page.getByRole("combobox")).toHaveCount(0);
     await page.getByRole("button", { name: "Speak" }).click();
     await expect
       .poll(() => page.evaluate(() => window.__speech.last?.lang))
-      .toBe("it-IT");
+      .toBe("en-US");
   });
 
   test("explains a blocked microphone, and typing still works", async ({
@@ -132,9 +130,6 @@ test.describe("speaking a claim", () => {
     await page.goto("/");
     await expect(page.getByLabel("The claim to check")).toBeVisible();
     await expect(page.getByRole("button", { name: "Speak" })).toHaveCount(0);
-    await expect(
-      page.getByRole("combobox", { name: "Language you speak" }),
-    ).toHaveCount(0);
   });
 
   test("works from the keyboard", async ({ page }) => {
