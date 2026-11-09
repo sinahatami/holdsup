@@ -10,6 +10,7 @@ import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
 import { Gallery } from "@/components/organisms/gallery";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
+import { CharCounter } from "@/components/molecules/char-counter";
 import { GalleryCard } from "@/components/molecules/gallery-card";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { ClaimCard } from "@/components/organisms/claim-card";
@@ -285,6 +286,26 @@ describe("CanCheck", () => {
   });
 });
 
+describe("CharCounter", () => {
+  it("is quiet until it nears the limit", () => {
+    render(<CharCounter count={100} max={2000} />);
+    expect(screen.getByText("100 / 2,000")).toHaveClass(
+      "text-muted-foreground",
+    );
+  });
+  it("warns, and says how many are left, near the limit", () => {
+    render(<CharCounter count={1850} max={2000} />);
+    const el = screen.getByText(/1,850 \/ 2,000/);
+    expect(el).toHaveTextContent("150 left");
+    expect(el).toHaveClass("font-semibold");
+    expect(el).not.toHaveClass("text-destructive");
+  });
+  it("turns red over the limit", () => {
+    render(<CharCounter count={2001} max={2000} />);
+    expect(screen.getByText(/2,001/)).toHaveClass("text-destructive");
+  });
+});
+
 const claim = {
   index: 0,
   indicator: {
@@ -453,6 +474,51 @@ describe("CheckForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: strings.home.submit }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Slow down.");
+    vi.unstubAllGlobals();
+  });
+
+  it("is disabled while the box is empty, and says how to submit from the keyboard", () => {
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    const button = screen.getByRole("button", { name: strings.home.submit });
+    expect(button).toBeDisabled();
+    fireEvent.change(box, { target: { value: "   " } });
+    expect(button).toBeDisabled(); // whitespace is empty
+    fireEvent.change(box, { target: { value: "claim" } });
+    expect(button).toBeEnabled();
+    expect(screen.getByText(strings.home.shortcut)).toBeInTheDocument();
+    expect(box).toHaveAttribute(
+      "aria-keyshortcuts",
+      "Control+Enter Meta+Enter",
+    );
+  });
+
+  it.each([
+    ["Ctrl", { ctrlKey: true }],
+    ["Cmd", { metaKey: true }],
+  ])("submits on %s+Enter", async (_name, mods) => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ id: "kb-id" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    fireEvent.change(box, { target: { value: "Debt is 133% of GDP." } });
+    fireEvent.keyDown(box, { key: "Enter", ...mods });
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/check/kb-id"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
+
+  it("does not submit on a plain Enter, or on the shortcut with nothing to check", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    fireEvent.keyDown(box, { key: "Enter", ctrlKey: true }); // empty
+    fireEvent.change(box, { target: { value: "claim" } });
+    fireEvent.keyDown(box, { key: "Enter" }); // plain Enter: a new line
+    expect(fetchMock).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 

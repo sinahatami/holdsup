@@ -66,6 +66,8 @@ export const strings = {
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",
     submitting: "Sending…",
+    shortcut: "to check",
+    charsLeft: (n: string) => `${n} left`,
     sample: {
       heading: "A sample receipt",
       open: "Open the full receipt",
