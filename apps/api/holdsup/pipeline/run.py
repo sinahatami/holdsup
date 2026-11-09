@@ -209,6 +209,7 @@ class Pipeline:
         except _CantCheck as stop:
             await c.done(stop.step, stop.reason, status="cant_check", models=stop.models)
             out.verdict, out.retryable = cant_check(stop.reason), stop.retryable
+            out.stopped_at = stop.step
             out.explanation = template_explanation(out.verdict, _name(out))
         return out
 
