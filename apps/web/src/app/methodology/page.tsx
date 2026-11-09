@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "@/components/atoms/external-link";
 import { BackLink } from "@/components/molecules/back-link";
 import { TitledSection } from "@/components/molecules/titled-section";
 import { AllowedGaps } from "@/components/organisms/allowed-gaps";
@@ -135,9 +136,9 @@ export default async function Page() {
       >
         <p className="leading-7">
           {t.verify.body}{" "}
-          <a href={strings.footer.repoUrl} className={link}>
+          <ExternalLink plain href={strings.footer.repoUrl} className={link}>
             {t.verify.link}
-          </a>
+          </ExternalLink>
           .
         </p>
       </TitledSection>
