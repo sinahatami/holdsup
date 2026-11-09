@@ -3,7 +3,12 @@
 // on the server, where page.route cannot reach. It answers only what such a page reads:
 // one check by id. Node runs the .ts imports as they are (it strips the types).
 import { createServer } from "node:http";
-import { checkResult, checkView, holdingClaim } from "../src/test/fixtures.ts";
+import {
+  catalogEntry,
+  checkResult,
+  checkView,
+  holdingClaim,
+} from "../src/test/fixtures.ts";
 import { CHECK_ID, DONE_ID } from "./ids.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,6 +23,45 @@ const problem = (status, title) => ({ type: "about:blank", title, status });
 const server = createServer((req, res) => {
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === "/") return send(res, 200, "ok", "text/plain");
+
+  if (pathname === "/v1/catalog") {
+    return send(res, 200, {
+      version: "0.7.0",
+      indicators: [
+        catalogEntry({
+          id: "rent",
+          name: "Rent prices (Eurostat)",
+          theme: "prices",
+          definition: "How much tenants pay for a home.",
+          source_code: "prc_hicp_aind",
+          aliases: ["cost of renting a home"],
+          first_year: 2005,
+          last_year: 2022,
+        }),
+        catalogEntry({
+          id: "unemployment",
+          name: "Unemployment rate (World Bank)",
+          theme: "work",
+          definition: "Share of the labour force without a job.",
+          source: "the World Bank",
+          source_code: "SL.UEM.TOTL.ZS",
+          countries: [],
+          groups: ["WORLD"],
+          all_countries: true,
+          first_year: 1991,
+        }),
+        catalogEntry({
+          id: "poverty",
+          name: "At-risk-of-poverty rate (Eurostat)",
+          theme: "poverty",
+          definition: "Share of people below 60% of the median income.",
+          source_code: "ilc_li02",
+          countries: ["IT", "NO"],
+          first_year: 1995,
+        }),
+      ],
+    });
+  }
 
   const match = pathname.match(/^\/v1\/checks\/([^/]+)$/);
   if (!match) return send(res, 404, problem(404, "Not found"));

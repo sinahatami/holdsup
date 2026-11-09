@@ -172,7 +172,44 @@ export const strings = {
     years: (first: number, last: number | null) =>
       last === null ? `since ${first}` : `${first} to ${last}`,
     count: (n: number) => (n === 1 ? "1 statistic" : `${n} statistics`),
-    themesNav: "Jump to a topic",
+    filtersHeading: "Find a statistic",
+    search: "Search",
+    searchPlaceholder: "A word or two, such as rent or unemployment",
+    topic: "Topic",
+    allTopics: "All topics",
+    place: "Place",
+    anyPlace: "Anywhere",
+    placeGroups: "Groups",
+    placeCountries: "Countries",
+    placeNote:
+      "Statistics that cover every country also match a country that is not in this list.",
+    yearsLegend: "Years the statistic covers",
+    fromYear: "From year",
+    toYear: "To year",
+    yearHint: "Four digits, such as 2015",
+    yearsBackwards: "The first year comes after the last year.",
+    shown: (shown: number, total: number) =>
+      shown === total
+        ? `${total} statistics`
+        : `${shown} of ${total} statistics`,
+    clear: "Clear filters",
+    none: "No statistic matches these filters.",
+    noneHint:
+      "Try fewer words, another topic or a wider range of years. A claim about a statistic that is not on this list cannot be checked yet.",
+    source: "Source",
+    unitLabel: "Measured in",
+    yearsLabel: "Years",
+    coverageLabel: "Covers",
+    coverage: {
+      everyCountry: "every country",
+      countries: (n: number) => (n === 1 ? "1 country" : `${n} countries`),
+      // How a place that is not a country is named in "Covers ...".
+      group: {
+        EU: "the EU as a whole",
+        EA: "the euro area as a whole",
+        WORLD: "the world as a whole",
+      } as Record<string, string>,
+    },
     // Listed in this order on the page. Keys are the API's `theme` values.
     themes: {
       population: "Population",
