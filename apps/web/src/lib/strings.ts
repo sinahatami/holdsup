@@ -503,15 +503,35 @@ export const strings = {
   methodology: {
     heading: "How HoldsUp judges a claim",
     intro:
-      "HoldsUp compares a number in a sentence with the official statistic it is about. Language models help to read the sentence and to find the statistic. They never produce a number you see: the arithmetic is done by code, and every figure comes with a receipt so that you can check it.",
+      "HoldsUp compares a number in a sentence with the official statistic it is about. This page says how it decides, and where it can be wrong.",
+    glanceLabel: "In short",
+    glance: [
+      {
+        title: "Language models only read.",
+        body: "They find the claim and choose the statistic. They never produce a number you see.",
+      },
+      {
+        title: "Code does the arithmetic.",
+        body: "Plain code recomputes the figure from the official data, and fixed rules set the verdict.",
+      },
+      {
+        title: "Every check keeps a receipt.",
+        body: "The source, each calculation and the gap allowed, so that anyone can repeat it.",
+      },
+      {
+        title: "No confident match, no verdict.",
+        body: "The answer is “Can't check”, never a guess.",
+      },
+    ],
     onThisPage: "On this page",
+    // In page order: what you get, what it cannot do, then the working shown in full.
     sections: {
-      steps: "From a sentence to a verdict",
-      ops: "The calculations",
-      match: "What counts as a match",
       verdicts: "The five verdicts",
       cannot: "What HoldsUp cannot check",
       limits: "Known limitations",
+      steps: "From a sentence to a verdict",
+      ops: "The calculations",
+      match: "What counts as a match",
       verify: "Check our work",
     },
     by: {
@@ -520,51 +540,51 @@ export const strings = {
       both: "Code and a language model",
     },
     stepsIntro:
-      "Every check runs these steps in order, and the live view shows each one as it happens. The tag says who does the work.",
+      "Every check runs these steps in order. The tag says who does the work.",
     steps: [
       {
         title: "It looks for an earlier check",
         by: "code",
-        body: "If the same claim was checked before, and the catalog and the allowed gaps have not changed since, the stored check is shown again and nothing is recomputed.",
+        body: "If the same claim was checked before, and neither the catalog nor the allowed gaps have changed, the stored check is shown again.",
       },
       {
         title: "It reads the claims",
         by: "model",
-        body: "A language model finds each claim in the text and writes it down in a fixed form: the statistic it is about, the place, the period, and what is asserted, such as a figure, a direction or a position in a ranking. The pasted text is only read. Nothing in it can make HoldsUp do anything.",
+        body: "A language model finds each claim and writes it in a fixed form: the statistic, the place, the period, and what is asserted (a figure, a direction or a rank). The pasted text is only read. Nothing in it can make HoldsUp do anything.",
       },
       {
         title: "It finds the official statistic",
         by: "both",
-        body: "The catalog is searched for the statistics closest to the claim. Those with no data for the claim's place are dropped, and a language model chooses among the few that remain, or none. With no confident choice the answer is “Can't check”, never a guess.",
+        body: "The catalog is searched for the closest statistics. Those with no data for the claim's place are dropped, and a language model chooses one of the rest, or none. With no confident choice the answer is “Can't check”.",
       },
       {
         title: "It fetches the data",
         by: "code",
-        body: "The series comes from the source's own service: Eurostat, the World Bank or Our World in Data. The receipt keeps a fingerprint of what came back, so a later change in the data can be seen.",
+        body: "The series comes from the source's own service: Eurostat, the World Bank or Our World in Data. The receipt keeps a fingerprint of the data, so a later change can be seen.",
       },
       {
         title: "It plans the calculation",
         by: "model",
-        body: "A language model chooses calculations from the fixed list below and says what to run them on. It writes no numbers, and code checks the plan before anything runs.",
+        body: "A language model chooses calculations from the fixed list below and says what to run them on. It writes no numbers, and code checks the plan first.",
       },
       {
         title: "It runs the calculation",
         by: "code",
-        body: "Plain code does the arithmetic. Each calculation is recorded with its inputs and its result: that record is the receipt.",
+        body: "Plain code does the arithmetic and records each calculation with its inputs and result. That record is the receipt.",
       },
       {
         title: "It decides the verdict",
         by: "code",
-        body: "Fixed rules compare each computed figure with the one claimed, within the allowed gaps below. No model is involved.",
+        body: "Fixed rules compare each computed figure with the claimed one, within the allowed gaps. No model is involved.",
       },
       {
         title: "It explains",
         by: "model",
-        body: "A language model writes two or three sentences from the computed results only. If its text contains a number that is not among the results, the text is thrown away and code writes a plainer explanation from the figures instead.",
+        body: "A language model writes two or three sentences from the computed results only. If they contain a number that is not among the results, they are thrown away and code writes a plainer explanation.",
       },
     ],
     opsIntro:
-      "A model can only choose from these. Each one is a plain function with its own tests.",
+      "A model can only choose from these eight. Each is a plain function with its own tests.",
     ops: [
       {
         name: "Value at a date",
