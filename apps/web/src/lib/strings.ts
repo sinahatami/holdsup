@@ -262,6 +262,23 @@ export const strings = {
     verdict: "Weighing the result",
     explain: "Writing the explanation",
   },
+  progress: {
+    heading: "Progress",
+    stages: {
+      find: "Finding the series",
+      fetch: "Fetching the data",
+      recompute: "Recomputing",
+      explain: "Writing the explanation",
+      done: "Done",
+    },
+    state: {
+      pending: "waiting",
+      running: "in progress",
+      done: "done",
+      stopped: "stopped",
+      skipped: "not needed",
+    },
+  },
   stepState: {
     running: "running",
     ok: "done",
