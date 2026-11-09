@@ -41,18 +41,22 @@ export const strings = {
   },
   home: {
     howHeading: "How it works",
+    howExampleLabel: "In the sample above",
     how: [
       {
         title: "Paste a claim",
-        body: "Any sentence with a number in it: a rate, a change, a share.",
+        body: "Any sentence with a number in it. HoldsUp picks out each claim: the place, the period and the figure.",
+        example: "Italy, 2015 to 2023, from 11.9% to 7.7%",
       },
       {
-        title: "We find the data",
-        body: "HoldsUp matches it to an official series and fetches the figures.",
+        title: "We match it to an official series",
+        body: "Each claim is matched to one published statistic, and its data is fetched from the source, such as Eurostat or the World Bank.",
+        example: "Unemployment rate (monthly), Eurostat",
       },
       {
-        title: "See the receipt",
-        body: "Every calculation, source and fingerprint is shown, so you can verify it yourself.",
+        title: "We recompute it, you check our work",
+        body: "Plain code, not a language model, does the arithmetic. The receipt lists every figure, calculation, source link and data fingerprint.",
+        example: "12.02% to 7.68%, down 4.34 points",
       },
     ],
     intro:
