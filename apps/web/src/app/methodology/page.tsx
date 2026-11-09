@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "@/components/atoms/external-link";
 import { BackLink } from "@/components/molecules/back-link";
+import { Disclosure } from "@/components/molecules/disclosure";
 import { TitledSection } from "@/components/molecules/titled-section";
 import { AllowedGaps } from "@/components/organisms/allowed-gaps";
 import { MethodSteps } from "@/components/organisms/method-steps";
@@ -22,7 +23,7 @@ const link = "text-brand font-medium underline underline-offset-4";
 
 const sectionKeys = Object.keys(t.sections) as (keyof typeof t.sections)[];
 
-/** How a verdict is reached: the steps, the calculations, the allowed gaps, and what is not covered. */
+/** How a verdict is reached: what it means and cannot cover first, then the working, folded away. */
 export default async function Page() {
   const tolerances = await getTolerances();
   return (
@@ -30,6 +31,20 @@ export default async function Page() {
       <BackLink />
       <h1 className="text-4xl font-bold tracking-tight">{t.heading}</h1>
       <p className="text-muted-foreground leading-7">{t.intro}</p>
+
+      <ul
+        aria-label={t.glanceLabel}
+        className="glass grid gap-4 rounded-2xl p-5 sm:grid-cols-2"
+      >
+        {t.glance.map((item) => (
+          <li key={item.title} className="flex flex-col gap-1">
+            <span className="font-semibold">{item.title}</span>
+            <span className="text-muted-foreground text-sm leading-6">
+              {item.body}
+            </span>
+          </li>
+        ))}
+      </ul>
 
       <nav aria-label={t.onThisPage}>
         <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
@@ -42,41 +57,6 @@ export default async function Page() {
           ))}
         </ul>
       </nav>
-
-      <TitledSection
-        id="steps"
-        title={t.sections.steps}
-        className="scroll-mt-24"
-      >
-        <p className="text-muted-foreground leading-7">{t.stepsIntro}</p>
-        <MethodSteps />
-      </TitledSection>
-
-      <TitledSection id="ops" title={t.sections.ops} className="scroll-mt-24">
-        <p className="text-muted-foreground leading-7">{t.opsIntro}</p>
-        <dl className="grid gap-3 sm:grid-cols-2">
-          {t.ops.map((op) => (
-            <div key={op.name} className="glass rounded-2xl p-4">
-              <dt className="font-medium">{op.name}</dt>
-              <dd className="text-muted-foreground mt-1 text-sm leading-6">
-                {op.body}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </TitledSection>
-
-      <TitledSection
-        id="match"
-        title={t.sections.match}
-        className="scroll-mt-24"
-      >
-        {tolerances ? (
-          <AllowedGaps tolerances={tolerances} />
-        ) : (
-          <p className="glass rounded-2xl p-5">{t.gaps.unavailable}</p>
-        )}
-      </TitledSection>
 
       <TitledSection
         id="verdicts"
@@ -128,6 +108,33 @@ export default async function Page() {
           ))}
         </ul>
       </TitledSection>
+
+      <Disclosure id="steps" title={t.sections.steps} className="scroll-mt-24">
+        <p className="text-muted-foreground leading-7">{t.stepsIntro}</p>
+        <MethodSteps />
+      </Disclosure>
+
+      <Disclosure id="ops" title={t.sections.ops} className="scroll-mt-24">
+        <p className="text-muted-foreground leading-7">{t.opsIntro}</p>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          {t.ops.map((op) => (
+            <div key={op.name} className="glass rounded-2xl p-4">
+              <dt className="font-medium">{op.name}</dt>
+              <dd className="text-muted-foreground mt-1 text-sm leading-6">
+                {op.body}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Disclosure>
+
+      <Disclosure id="match" title={t.sections.match} className="scroll-mt-24">
+        {tolerances ? (
+          <AllowedGaps tolerances={tolerances} />
+        ) : (
+          <p className="glass rounded-2xl p-5">{t.gaps.unavailable}</p>
+        )}
+      </Disclosure>
 
       <TitledSection
         id="verify"

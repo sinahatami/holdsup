@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Page from "@/app/methodology/page";
 import { AllowedGaps } from "@/components/organisms/allowed-gaps";
@@ -10,7 +10,10 @@ import { tolerances } from "@/test/fixtures";
 
 const t = strings.methodology;
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  window.location.hash = "";
+});
 
 describe("AllowedGaps", () => {
   const gapOf = (label: string) => screen.getByText(label).closest("div");
@@ -106,6 +109,48 @@ describe("Methodology page", () => {
     expect(
       within(nav).getByRole("link", { name: t.sections.limits }),
     ).toHaveAttribute("href", "#limits");
+  });
+
+  it("opens with a short summary, and folds the working away", async () => {
+    api(tolerances);
+    render(await Page());
+    const summary = screen.getByRole("list", { name: t.glanceLabel });
+    expect(within(summary).getAllByRole("listitem")).toHaveLength(
+      t.glance.length,
+    );
+    const folded = (name: string) =>
+      screen.getByRole("heading", { level: 2, name }).closest("details");
+    for (const name of [t.sections.steps, t.sections.ops, t.sections.match]) {
+      expect(folded(name)).not.toBeNull();
+      expect(folded(name)).not.toHaveAttribute("open");
+    }
+    // What a verdict means and what it cannot do stay in view.
+    for (const name of [
+      t.sections.verdicts,
+      t.sections.cannot,
+      t.sections.limits,
+    ]) {
+      expect(folded(name)).toBeNull();
+    }
+  });
+
+  it("opens a folded section when its link is followed, on arrival or later", async () => {
+    api(tolerances);
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#ops";
+    render(await Page());
+    const details = (name: string) =>
+      screen.getByRole("heading", { level: 2, name }).closest("details");
+    expect(details(t.sections.ops)).toHaveAttribute("open");
+    expect(details(t.sections.steps)).not.toHaveAttribute("open");
+    expect(scrollIntoView).toHaveBeenCalled();
+
+    act(() => {
+      window.location.hash = "#match";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(details(t.sections.match)).toHaveAttribute("open");
   });
 
   it("prints the allowed gaps it was given", async () => {
