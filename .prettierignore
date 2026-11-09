@@ -8,3 +8,4 @@ coverage/
 docs/
 *.md
 apps/api/tests/fixtures/
+.lighthouseci/

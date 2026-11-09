@@ -45,7 +45,12 @@ export default function Page({ params }: PageProps<"/check/[id]">) {
     <Suspense
       fallback={
         <CheckTemplate>
-          <StatusText>{strings.check.loading}</StatusText>
+          {/* A screen tall, so the footer is below the fold until the check streams in:
+              a short page would show it, and it would jump when the receipt arrives
+              (a layout shift of about 0.5 in Lighthouse). */}
+          <div className="min-h-svh">
+            <StatusText>{strings.check.loading}</StatusText>
+          </div>
         </CheckTemplate>
       }
     >
