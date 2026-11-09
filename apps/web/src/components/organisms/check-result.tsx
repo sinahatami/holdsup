@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { ShareActions } from "@/components/molecules/share-actions";
 import { ClaimCard } from "@/components/organisms/claim-card";
 import { OriginalText } from "@/components/organisms/original-text";
 import { VerdictLegend } from "@/components/organisms/verdict-legend";
 import type { CheckResult } from "@/lib/api/client";
+import { receiptTitle } from "@/lib/receipt-meta";
 import { framingPercent, hasMoreThanQuotes } from "@/lib/receipt";
+import { shareText } from "@/lib/share";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
@@ -25,6 +28,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           </Link>
         </p>
       )}
+      <ShareActions title={receiptTitle(result)} text={shareText(result)} />
       {hasMoreThanQuotes(
         result.text,
         claims.map((c) => c.claim.quote),

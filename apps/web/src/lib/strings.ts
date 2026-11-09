@@ -208,6 +208,23 @@ export const strings = {
     partly_supported: "Partly holds up",
     cant_check: "Can't check",
   },
+  share: {
+    heading: "Share this check",
+    copyLink: "Copy link",
+    copySummary: "Copy summary",
+    native: "Share",
+    linkCopied: "Link copied.",
+    summaryCopied: "Summary copied.",
+    failed:
+      "Could not copy. You can copy the address from your browser's address bar instead.",
+    // The text that is copied or shared: the claim, how it came out, and where.
+    one: (claim: string, verdict: string, source: string | null) =>
+      `“${claim}”\n${verdict}. Checked with HoldsUp${source ? `, against ${source}` : ""}.`,
+    many: (count: number, summary: string) =>
+      `HoldsUp checked ${count} claims: ${summary}.`,
+    item: (n: number, claim: string, verdict: string) =>
+      `${n}. “${claim}” — ${verdict}`,
+  },
   legend: {
     heading: "What the verdicts mean",
     onThisPage: "On this page",
