@@ -88,6 +88,13 @@ test.describe("a check's permanent link", () => {
     await expect(data).toHaveAttribute("target", "_blank");
     // Claimed beside official, with the gap allowed.
     await expect(page.getByText("±0.17%")).toBeVisible();
+    // What each verdict means, with the threshold the result recorded.
+    await expect(
+      page.getByRole("heading", { level: 2, name: "What the verdicts mean" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/in at least 70% of comparable time windows/),
+    ).toBeVisible();
   });
 
   test("names the claim and verdict for a shared link, and stays out of search", async ({
@@ -131,7 +138,9 @@ test("home page has no accessibility violations", async ({ page }) => {
 test("result page has no accessibility violations", async ({ page }) => {
   await mockApi(page);
   await page.goto(`/check/${CHECK_ID}`);
-  await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("article").getByText("Holds up", { exact: true }),
+  ).toBeVisible();
   await page.getByText("Technical details").click();
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
@@ -143,7 +152,9 @@ test("a receipt opened from its link has no accessibility violations", async ({
   page,
 }) => {
   await page.goto(`/check/${DONE_ID}`);
-  await expect(page.getByText("Holds up", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("article").getByText("Holds up", { exact: true }),
+  ).toBeVisible();
   await page.getByText("Technical details").click();
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
