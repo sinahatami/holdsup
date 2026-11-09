@@ -16,7 +16,13 @@ describe("Home page", () => {
     for (const ex of strings.home.examples) {
       expect(screen.getByRole("button", { name: ex })).toBeInTheDocument();
     }
-    expect(screen.getByText(strings.home.galleryEmpty)).toBeInTheDocument();
+    // Down is not the same as "none featured": the page says it could not load them.
+    expect(
+      screen.getByText(strings.home.galleryUnavailable),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(strings.home.galleryEmpty),
+    ).not.toBeInTheDocument();
     // The sample receipt is static, so it is there too.
     expect(
       within(
@@ -69,6 +75,21 @@ describe("Home page", () => {
     expect(
       screen.getByRole("link", { name: strings.home.sample.open }),
     ).toHaveAttribute("href", "/check/real-1");
+    vi.unstubAllGlobals();
+  });
+
+  it("says none are featured yet when the API answers with an empty list", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, json: async () => ({ items: [] }) }),
+    );
+    render(await Home());
+    expect(screen.getByText(strings.home.galleryEmpty)).toBeInTheDocument();
+    expect(
+      screen.queryByText(strings.home.galleryUnavailable),
+    ).not.toBeInTheDocument();
     vi.unstubAllGlobals();
   });
 

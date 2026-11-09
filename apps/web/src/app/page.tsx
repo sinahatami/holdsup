@@ -16,7 +16,7 @@ import { strings } from "@/lib/strings";
 export default async function Home() {
   const [items, catalog] = await Promise.all([getGallery(), getCatalog()]);
   // The sample receipt opens a real receipt when the gallery has a check of the same claim.
-  const real = items.find((it) => it.text === strings.home.sample.claim);
+  const real = items?.find((it) => it.text === strings.home.sample.claim);
   return (
     <PageShell layout="home">
       <header className="rise flex flex-col items-center gap-4 text-center">
