@@ -2,7 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CheckResultView } from "@/components/organisms/check-result";
 import { Receipt } from "@/components/organisms/receipt";
+import { VerdictLegend } from "@/components/organisms/verdict-legend";
 import type { ClaimResult } from "@/lib/api/client";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import {
   checkResult,
@@ -323,5 +325,84 @@ describe("CheckResultView", () => {
   it("says so when no claim with a number was found", () => {
     render(<CheckResultView result={checkResult([])} />);
     expect(screen.getByText(strings.check.noClaims)).toBeInTheDocument();
+  });
+});
+
+describe("VerdictLegend", () => {
+  const legend = (props: Partial<Parameters<typeof VerdictLegend>[0]> = {}) =>
+    render(
+      <VerdictLegend
+        present={["supported"]}
+        threshold={70}
+        tolerancesVersion={2}
+        {...props}
+      />,
+    );
+
+  it("explains all five verdicts, in words, from the best to can't check", () => {
+    legend();
+    const region = within(
+      screen.getByRole("region", { name: strings.legend.heading }),
+    );
+    expect(
+      region
+        .getAllByRole("term")
+        .map((t) => t.textContent?.replace(/On this page$/, "")),
+    ).toEqual([
+      strings.verdicts.supported,
+      strings.verdicts.supported_framing_matters,
+      strings.verdicts.partly_supported,
+      strings.verdicts.not_supported,
+      strings.verdicts.cant_check,
+    ]);
+    expect(region.getAllByRole("definition")).toHaveLength(5);
+  });
+
+  it("says the share of time windows a claim must hold in, from the result", () => {
+    legend({ threshold: 70 });
+    expect(
+      screen.getByText(/in at least 70% of comparable time windows/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/fewer than 70% of comparable time windows/),
+    ).toBeInTheDocument();
+  });
+
+  it("says the rule without a number when the result recorded none", () => {
+    legend({ threshold: null });
+    expect(
+      screen.getByText(/across most comparable time windows/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
+  });
+
+  it("marks, in words, the verdicts this page uses", () => {
+    legend({ present: ["supported", "not_supported"] });
+    expect(screen.getAllByText(strings.legend.onThisPage)).toHaveLength(2);
+    const term = screen
+      .getByText(strings.verdicts.partly_supported)
+      .closest("dt");
+    expect(term).not.toHaveTextContent(strings.legend.onThisPage);
+  });
+
+  it("explains the allowed gap, names the tolerances version and links the method", () => {
+    legend({ tolerancesVersion: 3 });
+    expect(screen.getByText(strings.legend.gap)).toBeInTheDocument();
+    expect(screen.getByText(/Tolerances version 3\./)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: strings.legend.method }),
+    ).toHaveAttribute("href", routes.methodology);
+  });
+
+  it("appears once on a page, however many claims it has", () => {
+    render(
+      <CheckResultView
+        result={checkResult([holdingClaim, { ...partlyClaim, index: 1 }])}
+      />,
+    );
+    expect(
+      screen.getAllByRole("region", { name: strings.legend.heading }),
+    ).toHaveLength(1);
+    expect(screen.getAllByText(strings.legend.onThisPage)).toHaveLength(2);
   });
 });

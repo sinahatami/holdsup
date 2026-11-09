@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ClaimCard } from "@/components/organisms/claim-card";
 import { OriginalText } from "@/components/organisms/original-text";
+import { VerdictLegend } from "@/components/organisms/verdict-legend";
 import type { CheckResult } from "@/lib/api/client";
-import { hasMoreThanQuotes } from "@/lib/receipt";
+import { framingPercent, hasMoreThanQuotes } from "@/lib/receipt";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
@@ -38,6 +39,11 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           total={claims.length}
         />
       ))}
+      <VerdictLegend
+        present={claims.map((c) => c.verdict.label)}
+        threshold={framingPercent(result)}
+        tolerancesVersion={result.versions.tolerances}
+      />
     </div>
   );
 }
