@@ -6,13 +6,16 @@ import type { GalleryItem } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
-export function Gallery({ items }: { items: GalleryItem[] }) {
+/** The recent checks; `items` is null when they could not be loaded, as opposed to none yet. */
+export function Gallery({ items }: { items: GalleryItem[] | null }) {
   return (
     <TitledSection id="gallery" title={strings.home.galleryHeading}>
       <NeutralityNote />
-      {items.length === 0 ? (
+      {items === null || items.length === 0 ? (
         <p className="glass text-muted-foreground rounded-2xl border-dashed p-6 text-center text-sm">
-          {strings.home.galleryEmpty}
+          {items === null
+            ? strings.home.galleryUnavailable
+            : strings.home.galleryEmpty}
         </p>
       ) : (
         <>

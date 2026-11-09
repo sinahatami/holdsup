@@ -101,4 +101,14 @@ describe("About page", () => {
       routes.indicators,
     );
   });
+
+  it("still reads in full, with no counts, when the catalog cannot be loaded", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    render(await Page());
+    expect(
+      screen.getByRole("heading", { level: 1, name: t.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Eurostat/ })).toBeInTheDocument();
+    expect(screen.queryByText(/\d+ statistics?/)).not.toBeInTheDocument();
+  });
 });

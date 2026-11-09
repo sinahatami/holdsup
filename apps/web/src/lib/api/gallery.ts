@@ -13,14 +13,14 @@ const RECENT_SIZE = 100;
  *
  * Cached with the default profile (revalidated every 15 minutes), so the home
  * page is prerendered at build time and picks up a newly seeded gallery
- * without a redeploy. Empty when the API is down.
+ * without a redeploy. Null when the API is down, so the page can tell that from "none yet".
  */
-export async function getGallery(): Promise<GalleryItem[]> {
+export async function getGallery(): Promise<GalleryItem[] | null> {
   "use cache";
   try {
     return await createApiClient(serverApiUrl()).gallery(GALLERY_SIZE);
   } catch {
-    return [];
+    return null;
   }
 }
 
