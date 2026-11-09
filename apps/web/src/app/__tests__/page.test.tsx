@@ -23,10 +23,22 @@ describe("Home page", () => {
         screen.getByRole("region", { name: strings.home.sample.heading }),
       ).getByText(strings.home.sample.claim),
     ).toBeInTheDocument();
+    expect(screen.getByText(strings.home.canCheckBody)).toBeInTheDocument();
     vi.unstubAllGlobals();
   });
 
-  it("opens a real receipt for the sample when the gallery has the same claim", async () => {
+  it("counts what it can check from the catalog and opens a real receipt for the sample", async () => {
+    const entry = (id: string, source: string) => ({
+      id,
+      name: id,
+      theme: "work",
+      definition: "d",
+      unit: "%",
+      source,
+      frequency: "annual",
+      first_year: 1983,
+      last_year: null,
+    });
     const gallery = [
       {
         id: "real-1",
@@ -39,12 +51,21 @@ describe("Home page", () => {
     ];
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
+      vi.fn().mockImplementation(async (url: string) => ({
         ok: true,
-        json: async () => ({ items: gallery }),
-      }),
+        json: async () =>
+          url.includes("/catalog")
+            ? {
+                version: "1",
+                indicators: [entry("a", "Eurostat"), entry("b", "Eurostat")],
+              }
+            : { items: gallery },
+      })),
     );
     render(await Home());
+    expect(screen.getByText("statistics").nextElementSibling).toHaveTextContent(
+      "2",
+    );
     expect(
       screen.getByRole("link", { name: strings.home.sample.open }),
     ).toHaveAttribute("href", "/check/real-1");
