@@ -28,6 +28,7 @@ describe("Home page", () => {
         created_at: "",
         verdicts: ["not_supported"],
         indicators: [],
+        claims: [{ quote: "Debt is 133% of GDP.", label: "not_supported" }],
       },
     ];
     vi.stubGlobal(

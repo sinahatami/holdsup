@@ -453,6 +453,27 @@ export interface components {
       | "latest_year"
       | "as_of"
       | "assumed_window";
+    /**
+     * GalleryClaim
+     * @description One claim of a featured check, with the two numbers a card compares.
+     */
+    GalleryClaim: {
+      /** Quote */
+      quote: string;
+      label: components["schemas"]["Label"];
+      /** Claimed */
+      claimed?: number | null;
+      /** Official */
+      official?: number | null;
+      /** Unit */
+      unit?: string | null;
+      /** Indicator */
+      indicator?: string | null;
+      /** Source */
+      source?: string | null;
+      /** Period */
+      period?: string | null;
+    };
     /** GalleryItem */
     GalleryItem: {
       /**
@@ -471,6 +492,8 @@ export interface components {
       verdicts: components["schemas"]["Label"][];
       /** Indicators */
       indicators: string[];
+      /** Claims */
+      claims: components["schemas"]["GalleryClaim"][];
     };
     /** GalleryResponse */
     GalleryResponse: {
