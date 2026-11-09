@@ -1,6 +1,7 @@
 import { ExternalLink } from "@/components/atoms/external-link";
 import { GithubMark } from "@/components/atoms/github-mark";
 import { Logo } from "@/components/atoms/logo";
+import { HeaderLinks } from "@/components/molecules/header-links";
 import { MobileNav } from "@/components/molecules/mobile-nav";
 import { ThemeToggle } from "@/components/molecules/theme-toggle";
 import Link from "next/link";
@@ -28,15 +29,19 @@ export function SiteHeader() {
             aria-label={strings.nav.main}
             className="flex items-center gap-2 sm:gap-4"
           >
-            {links.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium transition md:block"
-              >
-                {label}
-              </Link>
-            ))}
+            <Suspense
+              fallback={links.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="text-muted-foreground hover:text-foreground hover:bg-foreground/5 hidden rounded-full px-3 py-1.5 text-sm font-medium transition md:block"
+                >
+                  {label}
+                </Link>
+              ))}
+            >
+              <HeaderLinks links={links} />
+            </Suspense>
             <ExternalLink
               plain
               href={strings.footer.repoUrl}
