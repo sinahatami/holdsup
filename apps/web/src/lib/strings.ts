@@ -9,6 +9,12 @@ export const strings = {
   errors: {
     network: "Network error",
   },
+  // Display names for the API's source ids; an unknown id is shown as it is.
+  sources: {
+    eurostat: "Eurostat",
+    worldbank: "World Bank",
+    owid: "Our World in Data",
+  },
   nav: {
     main: "Main",
     home: "Home",
@@ -83,6 +89,12 @@ export const strings = {
     canCheckLink: "See everything HoldsUp can check",
     galleryHeading: "Recent checks",
     galleryEmpty: "No checks have been featured yet.",
+    card: {
+      claimed: "Claimed",
+      official: "official",
+      checkedAgainst: (indicator: string) => `Checked against ${indicator}`,
+      noFigure: "No official figure to compare.",
+    },
     maxChars: 2000,
     tooLong: "Please keep the text under 2,000 characters.",
   },
