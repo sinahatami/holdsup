@@ -43,7 +43,7 @@ export function CheckForm({ children }: { children?: ReactNode }) {
           onChange={(e) => setText(e.target.value)}
           placeholder={t.placeholder}
           rows={3}
-          className="placeholder:text-muted-foreground/70 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
+          className="placeholder:text-muted-foreground/85 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
           aria-describedby={message ? ERROR_ID : undefined}
         />
         <div className="flex items-center justify-between gap-3">
