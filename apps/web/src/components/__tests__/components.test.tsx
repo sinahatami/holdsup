@@ -417,7 +417,13 @@ describe("CheckForm", () => {
 
 const card = (claim: ClaimResult, order = 0, total = 1) =>
   render(
-    <ClaimCard claim={claim} versions={versions} order={order} total={total} />,
+    <ClaimCard
+      claim={claim}
+      versions={versions}
+      order={order}
+      total={total}
+      checkId="c1"
+    />,
   );
 
 describe("ClaimCard", () => {
@@ -452,6 +458,7 @@ describe("ClaimCard", () => {
         versions={versions}
         order={0}
         total={1}
+        checkId="c1"
       />,
     );
     expect(

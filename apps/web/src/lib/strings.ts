@@ -225,6 +225,22 @@ export const strings = {
     item: (n: number, claim: string, verdict: string) =>
       `${n}. “${claim}” — ${verdict}`,
   },
+  report: {
+    open: "Report a wrong match",
+    heading: "What looks wrong?",
+    kinds: {
+      wrong_series: "It is checked against the wrong statistic",
+      wrong_reading: "The claim was read wrongly (place, period or figure)",
+      other: "Something else",
+    },
+    noteLabel: "Add a note (optional)",
+    anonymous: "Reports are anonymous. Please do not include personal details.",
+    send: "Send report",
+    sending: "Sending…",
+    cancel: "Cancel",
+    thanks: "Thank you. Your report was recorded.",
+    maxNote: 500,
+  },
   // The picture a chat or social app shows for a shared check.
   og: {
     alt: "A claim, how it came out, and the figure it was checked against",

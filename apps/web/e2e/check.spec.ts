@@ -1,7 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+} from "@playwright/test";
 import { CHECK_ID, DONE_ID, MISSING_ID } from "./ids";
-import { mockApi } from "./mock-api";
+import { mockApi, mockReports } from "./mock-api";
 
 test("submit → trace → result", async ({ page }) => {
   await mockApi(page);
@@ -192,6 +197,67 @@ test.describe("sharing a check", () => {
     );
     expect(summary).toContain("Holds up");
     expect(summary.endsWith(page.url())).toBe(true);
+  });
+});
+
+test.describe("reporting a wrong match", () => {
+  const open = async (page: Page) => {
+    await page.goto(`/check/${DONE_ID}`);
+    await page.getByRole("button", { name: "Report a wrong match" }).click();
+  };
+
+  test("sends the choice, the claim and the note, with no account, and says it was recorded", async ({
+    page,
+  }) => {
+    const sent = await mockReports(page);
+    await open(page);
+    await page.getByRole("radio", { name: /read wrongly/ }).check();
+    await page
+      .getByLabel("Add a note (optional)")
+      .fill("The period should be 2020.");
+    await page.getByRole("button", { name: "Send report" }).click();
+
+    await expect(
+      page.getByText("Thank you. Your report was recorded."),
+    ).toBeVisible();
+    expect(sent).toEqual([
+      {
+        kind: "wrong_reading",
+        claim_index: 0,
+        note: "The period should be 2020.",
+      },
+    ]);
+    // Done: the form is gone.
+    await expect(page.getByRole("button", { name: "Send report" })).toHaveCount(
+      0,
+    );
+  });
+
+  test("shows why a report was refused and keeps the form", async ({
+    page,
+  }) => {
+    await mockReports(page, "refused");
+    await open(page);
+    await page.getByRole("button", { name: "Send report" }).click();
+    await expect(
+      page.locator("[role=alert]:not(#__next-route-announcer__)"),
+    ).toContainText("too many reports this hour");
+    await expect(
+      page.getByRole("button", { name: "Send report" }),
+    ).toBeEnabled();
+  });
+
+  test("has no accessibility violations with the form open", async ({
+    page,
+  }) => {
+    await open(page);
+    await expect(
+      page.getByRole("group", { name: "What looks wrong?" }),
+    ).toBeVisible();
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+      .analyze();
+    expect(violations).toEqual([]);
   });
 });
 
