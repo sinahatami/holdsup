@@ -18,6 +18,7 @@ from holdsup.verdict.rules import unsupported_reason
 from tests.service.fakes import (
     EXPLANATION,
     TEXT,
+    UNEMPLOYMENT_IT,
     FakeFetcher,
     claim_json,
     explain_answer,
@@ -79,6 +80,9 @@ async def test_a_supported_claim_runs_every_step() -> None:
     assert c.notes == []
     assert [r.op for r in c.operations] == ["change"] and c.answer == [0]
     assert c.operations[0].value == pytest.approx(-4.2)
+    # The chart's series is the one the change read: the claim's place, every year.
+    assert c.series is not None and (c.series.geo, c.series.frequency) == ("IT", "annual")
+    assert {p.period: p.value for p in c.series.points} == UNEMPLOYMENT_IT
     assert [str(m.step) for m in c.models] == ["match", "plan", "explain"]
     assert [m.provider + "/" + m.model for m in out.models] == ["fake/fake-model"]
     assert not out.retryable
