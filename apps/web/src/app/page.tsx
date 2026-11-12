@@ -28,7 +28,7 @@ export default async function Home() {
         <h1 className="text-foreground text-5xl font-bold tracking-tight sm:text-6xl">
           {strings.appName}
         </h1>
-        <p className="text-foreground/80 max-w-xl text-lg leading-8 text-balance sm:text-xl sm:leading-9">
+        <p className="text-foreground/80 max-w-xl text-lg leading-7 text-balance sm:text-xl sm:leading-8">
           {strings.home.intro}
         </p>
       </header>
