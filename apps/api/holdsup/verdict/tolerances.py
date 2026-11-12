@@ -42,11 +42,21 @@ class ValueTolerances(BaseModel):
     rank: ValueTolerance
 
 
+class SweepTolerances(BaseModel):
+    """Which time windows the cherry-pick sweep counts (D023)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reach: int = Field(ge=1)  # years a nearby window's start or end may move
+    min_years: float = Field(ge=0)  # the shortest claim window that gets a share
+
+
 class Tolerances(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int
     framing_threshold: float = Field(ge=0, le=1)
+    sweep: SweepTolerances
     values: ValueTolerances
     flat_relative: float = Field(ge=0)
     trend_min_r2: float = Field(ge=0, le=1)

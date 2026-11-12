@@ -243,6 +243,34 @@ def _value(r: OpRecord) -> float:
     return r.value
 
 
+def direction_judge(
+    claim: ClaimSpec, *, unit: str | None, tolerances: Tolerances
+) -> Callable[[OpRecord], bool]:
+    """Whether a `change`, `cagr` or `trend` record moves the way the claim says, its number
+    aside: what the cherry-pick sweep asks of every time window (D023). The same rules as the
+    verdict, with the asserted value, bound and stated levels removed."""
+    a = claim.assertion
+    if a.direction is None:
+        raise ValueError("a claim without a direction has nothing to sweep")
+    bare = a.model_copy(
+        update={"value": None, "operator": Operator.ABOUT, "start_value": None, "end_value": None}
+    )
+    rules = _Rules(claim.model_copy(update={"assertion": bare}), unit, tolerances)
+
+    def holds(record: OpRecord) -> bool:
+        return all(p.holds for p in _JUDGES[record.op](rules, [record]))
+
+    return holds
+
+
+# How the framing reason names what the sweep looked for in each window.
+_SHOWS = {
+    Direction.UP: "the rise shows",
+    Direction.DOWN: "the fall shows",
+    Direction.FLAT: "it stays flat",
+}
+
+
 def decide(
     claim: ClaimSpec,
     records: Sequence[OpRecord],
@@ -280,7 +308,8 @@ def decide(
     held = [p.holds for p in parts]
     framing = list(distortions)
     if window_share is not None and window_share < tolerances.framing_threshold:
-        framing.insert(0, f"holds in {window_share:.0%} of time windows")
+        shows = _SHOWS[a.direction] if a.direction else "it holds"
+        framing.insert(0, f"{shows} in only {window_share:.0%} of nearby time windows")
     if all(held):
         label = Label.SUPPORTED_FRAMING_MATTERS if framing else Label.SUPPORTED
         reason = "Holds within tolerance" + (f", but {'; '.join(framing)}." if framing else ".")

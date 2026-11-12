@@ -508,6 +508,11 @@ def test_whole_years_run_on_yearly_averages() -> None:
     [r] = run.records
     assert [(i.period, round(i.value, 3)) for i in r.inputs] == [("2015", 15.065), ("2016", 16.065)]
     assert [f.code for f in r.flags] == [FlagCode.ANNUAL_VALUE]
+    # The series the call read is the yearly one (the cherry-pick sweep reruns the call on it).
+    [read] = run.series
+    assert read.frequency is Frequency.ANNUAL and [str(q) for q, _ in read.points] == [
+        "2015", "2016"
+    ]  # fmt: skip
 
 
 def test_latest_among_whole_years_is_the_last_complete_year() -> None:
@@ -660,8 +665,10 @@ def test_latest_for_a_dated_claim_is_the_last_period_out_by_then() -> None:
         plan_message(c)
     )
     p = validate_plan(plan({"op": "value_at", "geo": "IT", "period": "latest"}), c)
-    [r] = execute_plan(p, c, MONTHLY_DATA, TOL).records
+    run = execute_plan(p, c, MONTHLY_DATA, TOL)
+    [r] = run.records
     assert [(i.period, i.value) for i in r.inputs] == [("2016-05", 16.05)]
+    assert str(run.series[0].last) == "2016-05"  # the series as of the claim date
     [note] = r.flags
     assert (note.code, note.used) == (FlagCode.AS_OF, "2016-05")
     assert note.detail.startswith(

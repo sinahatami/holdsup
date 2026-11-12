@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
+from holdsup.checks import Sweep
 from holdsup.config import get_settings
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
@@ -96,6 +97,9 @@ class ClaimResult(BaseModel):
     plan_reason: str | None = None
     operations: list[OpRecord] = Field(default_factory=list)
     answer: list[int] = Field(default_factory=list)  # which operations decide the claim
+    # The claim's direction over every time window (the cherry-pick sweep); None when the
+    # claim picked no window (a level, a rank, a comparison, no direction).
+    sweep: Sweep | None = None
     verdict: Verdict
     explanation: str
     explanation_source: Literal["model", "template"] = "template"
