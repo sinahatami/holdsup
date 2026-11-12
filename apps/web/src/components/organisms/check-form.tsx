@@ -113,7 +113,7 @@ export function CheckForm({
           id={LANG_ID}
           className="text-muted-foreground -mt-1 px-1 text-sm leading-5"
         >
-          {t.englishOnly}
+          {voice.supported ? t.helperVoice : t.helper}
         </p>
         <textarea
           ref={box}

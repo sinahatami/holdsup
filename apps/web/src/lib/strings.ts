@@ -138,8 +138,9 @@ export const strings = {
     intro:
       "Paste a sentence with a number in it. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
     inputLabel: "The claim to check",
-    englishOnly:
-      "Write or type the claim in English. HoldsUp reads English only.",
+    // One short line under the label. It says "speak" only where the Speak button is shown.
+    helper: "Type a claim. English only for now.",
+    helperVoice: "Type or speak a claim. English only for now.",
     placeholder:
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",
