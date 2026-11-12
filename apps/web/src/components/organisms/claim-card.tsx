@@ -5,12 +5,13 @@ import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
 import { Receipt } from "@/components/organisms/receipt";
 import { ReportMatch } from "@/components/organisms/report-match";
+import { WindowHeatmap } from "@/components/organisms/window-heatmap";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
 type Models = NonNullable<CheckResult["models"]>;
 
-/** One checked claim: the quote, the verdict, why, and the receipt. */
+/** One checked claim: the quote, the verdict, why, other time windows, and the receipt. */
 export function ClaimCard({
   claim: c,
   versions,
@@ -64,6 +65,13 @@ export function ClaimCard({
           </Eyebrow>
           <p className="leading-7">{c.explanation}</p>
         </section>
+      )}
+      {c.sweep && c.verdict.label !== "cant_check" && (
+        <WindowHeatmap
+          sweep={c.sweep}
+          direction={c.claim.assertion.direction ?? null}
+          threshold={c.verdict.framing_threshold}
+        />
       )}
       <CantCheckHelp claim={c} />
       <Receipt claim={c} versions={versions} sharedModels={sharedModels} />
