@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CheckResultView } from "@/components/organisms/check-result";
 import { Receipt } from "@/components/organisms/receipt";
 import { notebookUrl } from "@/lib/api/client";
@@ -14,6 +14,9 @@ import {
   unmatchedClaim,
   versions,
 } from "@/test/fixtures";
+
+// A checked claim offers re-checks, which open the new check with the router.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const t = strings.receipt;
 

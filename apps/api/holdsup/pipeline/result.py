@@ -72,7 +72,8 @@ class DataRef(BaseModel):
 
 
 class Suggestion(BaseModel):
-    """A statistic HoldsUp has that is close to what a claim talks about."""
+    """A statistic HoldsUp has that is close to what a claim talks about: one a reader can
+    re-check the claim with."""
 
     id: str
     name: str
@@ -116,7 +117,8 @@ class ClaimResult(BaseModel):
     claim: ClaimSpec
     indicator: IndicatorRef | None = None
     alternatives: list[str] = Field(default_factory=list)
-    suggestions: list[Suggestion] = Field(default_factory=list)  # when no statistic matched
+    # Statistics to re-check with: the match's alternatives, or the closest when none matched.
+    suggestions: list[Suggestion] = Field(default_factory=list)
     match_reason: str = ""
     data: DataRef | None = None
     extra_sources: list[ExtraSource] = Field(default_factory=list)

@@ -32,7 +32,25 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           </Link>
         </p>
       )}
-      <ShareActions title={receiptTitle(result)} text={shareText(result)} />
+      {result.recheck_of && (
+        <p className="text-muted-foreground text-sm">
+          {strings.recheck.of(result.recheck_of.replaced?.name ?? null)}{" "}
+          <Link
+            href={routes.check(result.recheck_of.check_id)}
+            className="text-brand font-medium underline underline-offset-4"
+          >
+            {strings.recheck.back}
+          </Link>
+        </p>
+      )}
+      <ShareActions
+        title={receiptTitle(result)}
+        text={shareText(result)}
+        image={{
+          href: routes.checkImage(result.id),
+          name: strings.share.imageName(result.id),
+        }}
+      />
       {hasMoreThanQuotes(
         result.text,
         claims.map((c) => c.claim.quote),

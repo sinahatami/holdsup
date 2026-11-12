@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { checkResult, checkView, holdingClaim } from "../src/test/fixtures";
-import { CHECK_ID } from "./ids";
+import { CHECK_ID, RECHECK_ID } from "./ids";
 
 const API = "http://api.test";
 const CORS = {
@@ -138,6 +138,32 @@ export async function mockReports(
       status: 201,
       headers: { ...CORS, "content-type": "application/json" },
       body: JSON.stringify({ id: "44444444-4444-4444-8444-444444444444" }),
+    });
+  });
+  return sent;
+}
+
+/**
+ * Mocks the browser's call that re-checks a claim with another statistic: it starts
+ * RECHECK_ID, which the mock server holds finished. Returns the bodies it was sent.
+ */
+export async function mockRecheck(page: Page) {
+  const sent: unknown[] = [];
+  await page.route(`${API}/v1/checks/*/claims/*/recheck`, async (route) => {
+    const req = route.request();
+    if (req.method() === "OPTIONS")
+      return route.fulfill({ status: 204, headers: CORS });
+    sent.push({ path: new URL(req.url()).pathname, body: req.postDataJSON() });
+    return route.fulfill({
+      status: 202,
+      headers: { ...CORS, "content-type": "application/json" },
+      body: JSON.stringify({
+        id: RECHECK_ID,
+        status: "queued",
+        cached: false,
+        stream_url: `/v1/checks/${RECHECK_ID}/stream`,
+        result_url: `/v1/checks/${RECHECK_ID}`,
+      }),
     });
   });
   return sent;

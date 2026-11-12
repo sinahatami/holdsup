@@ -5,6 +5,7 @@ import type {
   ClaimResult,
   GalleryClaim,
   GalleryItem,
+  StatusResponse,
   Tolerances,
 } from "@/lib/api/client";
 
@@ -126,8 +127,14 @@ export const holdingClaim: ClaimResult = {
     notes: [],
   },
   indicator,
-  alternatives: [],
-  suggestions: [],
+  alternatives: ["unemployment_rate_ilo"],
+  // The match's alternative, offered for a one-click re-check.
+  suggestions: [
+    {
+      id: "unemployment_rate_ilo",
+      name: "Unemployment rate (ILO modelled estimate)",
+    },
+  ],
   match_reason: "Matches the exact definition: the monthly unemployment rate.",
   data,
   extra_sources: [],
@@ -497,3 +504,40 @@ export function galleryItem(
     ...over,
   };
 }
+
+/** The router's providers as `GET /v1/status` gives them: one of each state that ends. */
+export const statusResponse: StatusResponse = {
+  checked_at: "2026-11-12T21:40:00Z",
+  providers: [
+    {
+      name: "groq",
+      label: "GPT-OSS 120B (Groq)",
+      model: "openai/gpt-oss-120b",
+      state: "ready",
+      wait_s: 0,
+      remaining_today: 812,
+      daily_cap: 900,
+      steps: ["extract", "match", "plan", "explain"],
+    },
+    {
+      name: "mistral",
+      label: "Mistral Small",
+      model: "mistral-small-latest",
+      state: "cooling_down",
+      wait_s: 14.2,
+      remaining_today: null,
+      daily_cap: null,
+      steps: ["extract", "plan"],
+    },
+    {
+      name: "openrouter",
+      label: "Llama 3.3 70B (OpenRouter)",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
+      state: "out_of_budget",
+      wait_s: 7900,
+      remaining_today: 0,
+      daily_cap: 45,
+      steps: ["explain"],
+    },
+  ],
+};

@@ -18,6 +18,7 @@ describe("SiteFooter", () => {
       routes.indicators,
       routes.recent,
       routes.methodology,
+      routes.status,
     ]);
     const project = screen.getByRole("navigation", { name: t.project });
     expect(

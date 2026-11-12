@@ -19,6 +19,7 @@ from holdsup.db.url import to_async_url
 from holdsup.main import create_app
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
+from holdsup.pipeline.run import REUSED
 from holdsup.receipt.notebook import Notebook
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
 from holdsup.routes.deps import get_catalog, get_runner, get_store
@@ -27,7 +28,15 @@ from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
 from holdsup.verdict import Part
 from tests.receipt.run import execute_standalone
 from tests.router.fakes import FakeClient
-from tests.service.fakes import CATALOG, TEXT, happy_script, make_runner
+from tests.service.fakes import (
+    CATALOG,
+    QUOTE,
+    TEXT,
+    explain_answer,
+    happy_script,
+    make_runner,
+    plan_answer,
+)
 
 WEB = "http://localhost:3000"
 
@@ -337,13 +346,91 @@ def test_the_notebook_of_a_finished_check_runs(
     assert printed.endswith("figures match the receipt.\n")
 
 
+@pytest.fixture
+def recheck_api() -> Iterator[tuple[TestClient, InMemoryCheckStore]]:
+    """A check, then one re-check: a plan and an explanation, no extract or match call."""
+    runner, _, store = make_runner([*happy_script(), plan_answer(), explain_answer()], limit=3)
+    app = create_app()
+    app.dependency_overrides[get_runner] = lambda: runner
+    app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_catalog] = lambda: CATALOG
+    with TestClient(app) as http:
+        yield http, store
+
+
+def test_a_claim_is_rechecked_with_a_statistic_it_offers(
+    recheck_api: tuple[TestClient, InMemoryCheckStore],
+) -> None:
+    http, _ = recheck_api
+    first = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    stream(http, first)
+    [claim] = http.get(f"/v1/checks/{first}").json()["result"]["claims"]
+    youth = CATALOG.get("youth_unemployment_rate").name
+    assert claim["suggestions"] == [{"id": "youth_unemployment_rate", "name": youth}]
+
+    r = http.post(
+        f"/v1/checks/{first}/claims/0/recheck", json={"indicator_id": "youth_unemployment_rate"}
+    )
+    assert r.status_code == 202
+    again = r.json()
+    assert again["cached"] is False and r.headers["location"] == f"/v1/checks/{again['id']}"
+    events = stream(http, again["id"])
+    summaries = [e["data"]["summary"] for e in events if e["event"] == "step_done"]
+    assert summaries[:2] == ["A re-check with another statistic.", REUSED]
+    result = events[-1]["data"]
+    assert result["text"] == QUOTE
+    assert result["recheck_of"] == {
+        "check_id": first, "claim_index": 0,
+        "replaced": {"id": "unemployment_rate", "name": CATALOG.get("unemployment_rate").name},
+    }  # fmt: skip
+    [rechecked] = result["claims"]
+    assert rechecked["indicator"]["id"] == "youth_unemployment_rate"
+    assert [s["id"] for s in rechecked["suggestions"]] == ["unemployment_rate"]
+
+    # A plain check of the same words is answered by the first check, never the reader's pick.
+    cached = http.post("/v1/checks", json={"text": QUOTE}).json()
+    assert cached["cached"] is True
+    assert http.get(f"/v1/checks/{cached['id']}").json()["result"]["cached_from"] == first
+
+
+def test_a_recheck_needs_a_finished_check_a_claim_and_a_statistic_it_offers(
+    recheck_api: tuple[TestClient, InMemoryCheckStore],
+) -> None:
+    http, _ = recheck_api
+    first = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    stream(http, first)
+    youth = {"indicator_id": "youth_unemployment_rate"}
+    r = http.post(f"/v1/checks/{uuid4()}/claims/0/recheck", json=youth)
+    assert r.status_code == 404
+    r = http.post(f"/v1/checks/{first}/claims/1/recheck", json=youth)
+    assert (r.status_code, r.json()["type"]) == (422, "/problems/unknown-claim")
+    r = http.post(f"/v1/checks/{first}/claims/0/recheck", json={"indicator_id": "gdp_per_capita"})
+    assert (r.status_code, r.json()["type"]) == (422, "/problems/not-offered")
+    r = http.post(f"/v1/checks/{first}/claims/0/recheck", json={})
+    assert r.status_code == 422
+
+
+def test_status_shows_the_router_now(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, *_ = api
+    r = http.get("/v1/status")
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    [fake] = r.json()["providers"]
+    assert {k: fake[k] for k in ("name", "state", "wait_s", "remaining_today", "steps")} == {
+        "name": "fake", "state": "ready", "wait_s": 0.0, "remaining_today": None,
+        "steps": ["extract", "match", "plan", "explain"],
+    }  # fmt: skip
+
+
 def test_openapi_documents_the_routes(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
     http, *_ = api
     paths = http.get("/openapi.json").json()["paths"]
     assert {"/v1/checks", "/v1/checks/{check_id}", "/v1/checks/{check_id}/stream",
-            "/v1/checks/{check_id}/notebook", "/v1/gallery"} <= set(paths)  # fmt: skip
+            "/v1/checks/{check_id}/notebook", "/v1/checks/{check_id}/claims/{index}/recheck",
+            "/v1/gallery"} <= set(paths)  # fmt: skip
     assert (
         "application/x-ipynb+json"
         in paths["/v1/checks/{check_id}/notebook"]["get"]["responses"]["200"]["content"]

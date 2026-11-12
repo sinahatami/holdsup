@@ -134,6 +134,20 @@ class _ClaimRun:
         await self.trace.done(step, self.index, summary, status=status, models=models)
 
 
+@dataclass(frozen=True)
+class Choice:
+    """A reader's pick for a re-check: the statistic to use, and the others offered (the first
+    check's own statistic among them), which the new result offers in turn."""
+
+    indicator_id: str
+    others: tuple[str, ...] = ()
+
+
+REUSED = "Using the claim as the earlier check read it."
+CHOSEN = "Chosen by the reader instead of the statistic the first check matched."
+GONE = "That statistic is no longer in the catalog."
+
+
 @dataclass
 class Pipeline:
     router: Router
@@ -205,11 +219,28 @@ class Pipeline:
             notes=[] if n else [NO_CLAIM],
         )
 
-    async def _claim(self, trace: Trace, i: int, claim: ClaimSpec) -> ClaimResult:
+    async def recheck(self, claim: ClaimSpec, choice: Choice, emit: Emit) -> PipelineOutput:
+        """Check one claim again, as an earlier check read it, with the statistic a reader
+        chose instead of the one matched: no extract or match model call."""
+        trace = Trace(emit)
+        await trace.start(Step.EXTRACT)
+        await trace.done(Step.EXTRACT, None, REUSED)
+        out = await self._claim(trace, 0, claim, choice)
+        return PipelineOutput(
+            claims=[out],
+            versions=Versions(
+                app=app_version(), catalog=self.catalog.version, tolerances=self.tolerances.version
+            ),
+            models=[],
+        )
+
+    async def _claim(
+        self, trace: Trace, i: int, claim: ClaimSpec, choice: Choice | None = None
+    ) -> ClaimResult:
         out = ClaimResult(index=i, claim=claim, verdict=cant_check(""), explanation="")
         c = _ClaimRun(trace, i, claim, out)
         try:
-            spec = await self._match(c)
+            spec = await self._match(c) if choice is None else await self._chosen(c, choice)
             observations, info = await self._fetch(c, spec)
             data = {spec.id: observations}
             others = await self._denominator(c, spec, data)
@@ -248,19 +279,40 @@ class Pipeline:
             raise _CantCheck(Step.MATCH, reason, models=models)
         spec = self.catalog.get(match.indicator_id)
         c.out.indicator = IndicatorRef.of(spec)
+        # What a reader can re-check the claim with: the other statistics the model named.
+        c.out.suggestions = self._named([a for a in match.alternatives if a != spec.id])
         await c.done(
             Step.MATCH, f"Matched {spec.name} ({spec.source} {spec.source_code}).", models=models
         )
         return spec
 
+    async def _chosen(self, c: _ClaimRun, choice: Choice) -> IndicatorSpec:
+        """The statistic a reader picked for a re-check: no model call."""
+        await c.start(Step.MATCH)
+        try:
+            spec = self.catalog.get(choice.indicator_id)
+        except KeyError:
+            raise _CantCheck(Step.MATCH, GONE) from None
+        c.out.indicator = IndicatorRef.of(spec)
+        c.out.match_reason = CHOSEN
+        others = [i for i in choice.others if i != spec.id]
+        c.out.alternatives = others
+        c.out.suggestions = self._named(others)
+        await c.done(
+            Step.MATCH, f"Using {spec.name} ({spec.source} {spec.source_code}), as chosen."
+        )
+        return spec
+
+    def _named(self, ids: Sequence[str]) -> list[Suggestion]:
+        """Statistics by id, with their names; ids no longer in the catalog are left out."""
+        known = {s.id: s for s in self.catalog.indicators}
+        return [Suggestion(id=i, name=known[i].name) for i in dict.fromkeys(ids) if i in known]
+
     def _suggestions(self, match: MatchResult) -> list[Suggestion]:
         """The closest statistics when nothing matched: the ones the model named, then the best
         search hits, then the hits dropped because they do not cover the place."""
         ids = [*match.alternatives, *(h.id for h in match.candidates), *match.excluded_by_geo]
-        names = dict.fromkeys(ids)
-        return [
-            Suggestion(id=i, name=self.catalog.get(i).name) for i in list(names)[:MAX_SUGGESTIONS]
-        ]
+        return self._named(ids)[:MAX_SUGGESTIONS]
 
     async def _fetch(
         self, c: _ClaimRun, spec: IndicatorSpec
