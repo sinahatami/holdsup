@@ -59,6 +59,7 @@ from holdsup.pipeline.plan import (
 from holdsup.pipeline.population import population_for, wants_population
 from holdsup.pipeline.prices import real_terms_source
 from holdsup.pipeline.result import (
+    ChartSeries,
     ClaimResult,
     DataRef,
     ExtraSource,
@@ -367,6 +368,9 @@ class Pipeline:
                 Step.EXECUTE,
                 f"HoldsUp found the data but couldn't finish the calculation: {execution.error}.",
             )
+        first = plan.answer[0]
+        if first < len(execution.series):
+            c.out.series = ChartSeries.of(execution.series[first])
         c.out.sweep = self._sweep(c.claim, plan, execution)
         c.out.changepoints = self._change_points(c.claim, plan, execution)
         checks = await self._distortions(c, spec, plan, execution, data)

@@ -233,6 +233,42 @@ export const strings = {
     // The page title and the shared preview: how it came out, then what was said.
     metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
+  // The series chart (P3.5): the data the check read, the claim's window, and the values the
+  // check used and the claim stated. Every number on it comes from the API.
+  chart: {
+    heading: "The data over time",
+    summary: (place: string, first: string, last: string, unit: string) =>
+      `${place}, ${first} to ${last}, in ${unit}.`,
+    window: (start: string, end: string) =>
+      `The shaded band is the claim's window, ${start} to ${end}.`,
+    asRead:
+      "These are the values as the check read them: yearly figures made from months, or the data published by the claim's date, as the receipt says.",
+    noUnit: "the series' own unit",
+    chartLabel: "Data chart",
+    keys: "Use the left and right arrow keys to move between values. Home and End go to the first and the last.",
+    point: (period: string, value: string) => `${period}: ${value}.`,
+    notes: {
+      windowStart: "Start of the claim's window.",
+      windowEnd: "End of the claim's window.",
+      inWindow: "In the claim's window.",
+      used: "The check used this value.",
+      fit: (value: string) => `The fitted trend is at ${value}.`,
+      claimed: (value: string, gap: string | null, holds: boolean) =>
+        `The claim says ${value}${gap ? ` (allowed gap ${gap})` : ""}, which ${holds ? "holds" : "does not hold"}.`,
+    },
+    legend: {
+      line: "The data",
+      window: "The claim's window",
+      used: "A value the check used",
+      claimed: "A value the claim states, with its allowed gap",
+      fit: "The fitted trend",
+    },
+    showTable: "Show as table",
+    hideTable: "Hide table",
+    tableLabel: "Data table",
+    tableCaption: (unit: string) => `Every value, in ${unit}.`,
+    columns: { period: "Period", value: "Value", notes: "Notes" },
+  },
   // The distortion checks (P3.4): the claim read in other fair ways, each passed or flagged.
   // Each line comes from the API, written by code with the numbers it computed.
   framing: {

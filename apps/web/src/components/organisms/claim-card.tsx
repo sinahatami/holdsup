@@ -6,13 +6,15 @@ import { CantCheckHelp } from "@/components/organisms/cant-check-help";
 import { FramingChecks } from "@/components/organisms/framing-checks";
 import { Receipt } from "@/components/organisms/receipt";
 import { ReportMatch } from "@/components/organisms/report-match";
+import { SeriesChart } from "@/components/organisms/series-chart";
 import { WindowHeatmap } from "@/components/organisms/window-heatmap";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
+import { chartOf } from "@/lib/series-chart";
 import { strings } from "@/lib/strings";
 
 type Models = NonNullable<CheckResult["models"]>;
 
-/** One checked claim: the quote, the verdict, why, other time windows, and the receipt. */
+/** One checked claim: the quote, the verdict, why, the data, other time windows, the framing checks, and the receipt. */
 export function ClaimCard({
   claim: c,
   versions,
@@ -32,6 +34,7 @@ export function ClaimCard({
   checkId: string;
 }) {
   const whyId = `why-${c.index}`;
+  const chart = c.verdict.label === "cant_check" ? null : chartOf(c);
   return (
     <article
       data-verdict={c.verdict.label}
@@ -67,6 +70,7 @@ export function ClaimCard({
           <p className="leading-7">{c.explanation}</p>
         </section>
       )}
+      {chart && <SeriesChart chart={chart} />}
       {c.sweep && c.verdict.label !== "cant_check" && (
         <WindowHeatmap
           sweep={c.sweep}

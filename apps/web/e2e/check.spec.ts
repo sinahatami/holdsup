@@ -281,11 +281,17 @@ test("result page has no accessibility violations", async ({ page }) => {
     page.getByRole("article").getByText("Holds up", { exact: true }),
   ).toBeVisible();
   await page.getByText("Technical details").click();
-  // The time-window heatmap's table only exists once it is open.
-  await page.getByRole("button", { name: "Show as table" }).click();
-  await expect(
-    page.getByRole("region", { name: "Time windows table" }),
-  ).toBeVisible();
+  // A chart's table only exists once it is open: open the data's and the heatmap's.
+  for (const [chart, table] of [
+    ["The data over time", "Data table"],
+    ["Other time windows", "Time windows table"],
+  ]) {
+    await page
+      .getByRole("region", { name: chart })
+      .getByRole("button", { name: "Show as table" })
+      .click();
+    await expect(page.getByRole("region", { name: table })).toBeVisible();
+  }
   const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });

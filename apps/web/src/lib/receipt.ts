@@ -170,6 +170,15 @@ function partUnit(c: ClaimResult, name: string): string | null {
 // A bound ("more than 18%") has no gap: it holds or it does not.
 const HAS_GAP = new Set(["about", "at_least", "at_most"]);
 
+/** The gap a part allows either side of the claimed figure, or null for a bound. */
+export function allowedGap(p: Part): number | null {
+  return p.tolerance != null && HAS_GAP.has(p.operator) ? p.tolerance : null;
+}
+
+function gapText(gap: number | null, unit: string | null): string | null {
+  return gap === null ? null : `±${formatFigures(gap, gap, unit).official}`;
+}
+
 function partView(c: ClaimResult, p: Part): PartView {
   const unit = partUnit(c, p.name);
   const base = {
@@ -185,10 +194,7 @@ function partView(c: ClaimResult, p: Part): PartView {
       ...base,
       claimed: word ? `${word} ${f.claimed}` : f.claimed,
       official: f.official,
-      gap:
-        p.tolerance != null && HAS_GAP.has(p.operator)
-          ? `±${formatFigures(p.tolerance, p.tolerance, unit).official}`
-          : null,
+      gap: gapText(allowedGap(p), unit),
       note: null,
     };
   }
