@@ -133,6 +133,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/checks/{check_id}/notebook": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Notebook
+     * @description The receipt as a Jupyter notebook that replays every calculation from the values it
+     *     read, and stops if a number differs.
+     */
+    get: operations["get_notebook_v1_checks__check_id__notebook_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/gallery": {
     parameters: {
       query?: never;
@@ -463,6 +484,28 @@ export interface components {
       /** Notes */
       notes?: string[];
     };
+    /** CodeCell */
+    CodeCell: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      cell_type: "code";
+      /** Id */
+      id: string;
+      /** Metadata */
+      metadata?: {
+        [key: string]: string;
+      };
+      /** Source */
+      source: string[];
+      /** Execution Count */
+      execution_count?: null;
+      /** Outputs */
+      outputs?: {
+        [key: string]: string;
+      }[];
+    };
     /** DataPoint */
     DataPoint: {
       /** Geo */
@@ -709,6 +752,24 @@ export interface components {
       /** Results */
       results: components["schemas"]["IndicatorHit"][];
     };
+    /** KernelSpec */
+    KernelSpec: {
+      /**
+       * Display Name
+       * @default Python 3
+       */
+      display_name: string;
+      /**
+       * Language
+       * @default python
+       */
+      language: string;
+      /**
+       * Name
+       * @default python3
+       */
+      name: string;
+    };
     /**
      * Label
      * @enum {string}
@@ -719,6 +780,30 @@ export interface components {
       | "not_supported"
       | "partly_supported"
       | "cant_check";
+    /** LanguageInfo */
+    LanguageInfo: {
+      /**
+       * Name
+       * @default python
+       */
+      name: string;
+    };
+    /** MarkdownCell */
+    MarkdownCell: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      cell_type: "markdown";
+      /** Id */
+      id: string;
+      /** Metadata */
+      metadata?: {
+        [key: string]: string;
+      };
+      /** Source */
+      source: string[];
+    };
     /** ModelUse */
     ModelUse: {
       step: components["schemas"]["Step"];
@@ -731,6 +816,35 @@ export interface components {
        * @default
        */
       label: string;
+    };
+    /**
+     * Notebook
+     * @description A Jupyter notebook, nbformat 4.5.
+     */
+    Notebook: {
+      /**
+       * Nbformat
+       * @default 4
+       * @constant
+       */
+      nbformat: 4;
+      /**
+       * Nbformat Minor
+       * @default 5
+       * @constant
+       */
+      nbformat_minor: 5;
+      metadata?: components["schemas"]["NotebookMetadata"];
+      /** Cells */
+      cells: (
+        | components["schemas"]["MarkdownCell"]
+        | components["schemas"]["CodeCell"]
+      )[];
+    };
+    /** NotebookMetadata */
+    NotebookMetadata: {
+      kernelspec?: components["schemas"]["KernelSpec"];
+      language_info?: components["schemas"]["LanguageInfo"];
     };
     /** OpRecord */
     OpRecord: {
@@ -1229,6 +1343,47 @@ export interface operations {
         content: {
           "application/problem+json": unknown;
           "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_notebook_v1_checks__check_id__notebook_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        check_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/x-ipynb+json": components["schemas"]["Notebook"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/x-ipynb+json": components["schemas"]["Problem"];
         };
       };
       /** @description Validation Error */

@@ -4,6 +4,7 @@ fake providers, a fake data source and the in-memory store."""
 import json
 import os
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -18,11 +19,13 @@ from holdsup.db.url import to_async_url
 from holdsup.main import create_app
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
+from holdsup.receipt.notebook import Notebook
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
 from holdsup.routes.deps import get_catalog, get_runner, get_store
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
 from holdsup.verdict import Part
+from tests.receipt.run import execute_standalone
 from tests.router.fakes import FakeClient
 from tests.service.fakes import CATALOG, TEXT, happy_script, make_runner
 
@@ -164,7 +167,11 @@ def test_unknown_and_malformed_ids(
 ) -> None:
     http, *_ = api
     missing = uuid4()
-    for path in (f"/v1/checks/{missing}", f"/v1/checks/{missing}/stream"):
+    for path in (
+        f"/v1/checks/{missing}",
+        f"/v1/checks/{missing}/stream",
+        f"/v1/checks/{missing}/notebook",
+    ):
         r = http.get(path)
         assert r.status_code == 404
         assert r.json()["type"] == "/problems/not-found" and r.json()["instance"] == path
@@ -184,6 +191,9 @@ def test_a_failed_check_shows_its_problem(
     body = http.get(f"/v1/checks/{check_id}").json()
     assert body["status"] == "failed" and body["result"] is None
     assert body["error"]["type"] == "/problems/at-capacity"
+    # No result, so no notebook.
+    r = http.get(f"/v1/checks/{check_id}/notebook")
+    assert r.status_code == 404 and r.json()["detail"] == f"Check {check_id} has no result yet."
 
 
 def test_gallery_lists_featured_checks(
@@ -313,13 +323,31 @@ def test_cors_allows_only_the_web_origin(
     assert "access-control-allow-origin" not in simple.headers
 
 
+def test_the_notebook_of_a_finished_check_runs(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore], tmp_path: Path
+) -> None:
+    http, *_ = api
+    check_id = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    stream(http, check_id)
+    r = http.get(f"/v1/checks/{check_id}/notebook")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/x-ipynb+json"
+    assert r.headers["content-disposition"] == (f'attachment; filename="holdsup-{check_id}.ipynb"')
+    printed = execute_standalone(Notebook.model_validate(r.json()), tmp_path)
+    assert printed.endswith("figures match the receipt.\n")
+
+
 def test_openapi_documents_the_routes(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
     http, *_ = api
     paths = http.get("/openapi.json").json()["paths"]
     assert {"/v1/checks", "/v1/checks/{check_id}", "/v1/checks/{check_id}/stream",
-            "/v1/gallery"} <= set(paths)  # fmt: skip
+            "/v1/checks/{check_id}/notebook", "/v1/gallery"} <= set(paths)  # fmt: skip
+    assert (
+        "application/x-ipynb+json"
+        in paths["/v1/checks/{check_id}/notebook"]["get"]["responses"]["200"]["content"]
+    )
     assert (
         "text/event-stream"
         in paths["/v1/checks/{check_id}/stream"]["get"]["responses"]["200"]["content"]

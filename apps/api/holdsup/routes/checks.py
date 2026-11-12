@@ -6,6 +6,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, StringConstraints
 
@@ -14,6 +15,7 @@ from holdsup.config import get_settings
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
 from holdsup.problems import Problem, ProblemError, not_found
+from holdsup.receipt.notebook import Notebook, notebook
 from holdsup.routes.deps import CatalogDep, Runner, Store
 from holdsup.service.ratelimit import client_ip
 from holdsup.service.store import CheckResult, CheckStatus
@@ -147,6 +149,28 @@ async def get_check(check_id: UUID, store: Store) -> CheckView:
         result=CheckResult.model_validate(stored.result) if stored.result else None,
         error=Problem.model_validate(stored.error) if stored.error else None,
     )
+
+
+class NotebookResponse(JSONResponse):
+    media_type = "application/x-ipynb+json"
+
+
+@router.get(
+    "/checks/{check_id}/notebook",
+    response_model=Notebook,
+    response_class=NotebookResponse,
+    responses={404: PROBLEM},
+)
+async def get_notebook(check_id: UUID, store: Store, response: Response) -> Notebook:
+    """The receipt as a Jupyter notebook that replays every calculation from the values it
+    read, and stops if a number differs."""
+    stored = await store.get(check_id)
+    if stored is None:
+        raise ProblemError(not_found(f"No check {check_id}."))
+    if not stored.result:
+        raise ProblemError(not_found(f"Check {check_id} has no result yet."))
+    response.headers["Content-Disposition"] = f'attachment; filename="holdsup-{check_id}.ipynb"'
+    return notebook(CheckResult.model_validate(stored.result))
 
 
 def _gallery_period(c: ClaimResult, stated: str | None) -> str | None:
