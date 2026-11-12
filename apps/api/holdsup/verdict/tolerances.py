@@ -59,6 +59,14 @@ class ChangePointTolerances(BaseModel):
     shrink: float = Field(gt=0, le=1)  # the share the change may lose before it is flagged
 
 
+class DistortionTolerances(BaseModel):
+    """When a distortion check flags a claim (D026)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    stale_years: int = Field(ge=1)  # a "now" claim's latest figure at least this old is stale
+
+
 class Tolerances(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -66,6 +74,7 @@ class Tolerances(BaseModel):
     framing_threshold: float = Field(ge=0, le=1)
     sweep: SweepTolerances
     changepoints: ChangePointTolerances
+    distortions: DistortionTolerances
     values: ValueTolerances
     flat_relative: float = Field(ge=0)
     trend_min_r2: float = Field(ge=0, le=1)

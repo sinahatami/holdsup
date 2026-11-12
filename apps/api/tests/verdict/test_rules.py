@@ -77,7 +77,7 @@ def test_supported() -> None:
     assert v.label is Label.SUPPORTED
     [part] = v.parts
     assert (part.computed, part.asserted, part.tolerance) == (-12.0, -12.0, 0.5)
-    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (4, 0.7, 0.9)
+    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (5, 0.7, 0.9)
 
 
 def test_the_sweep_judges_direction_only_and_needs_one() -> None:
