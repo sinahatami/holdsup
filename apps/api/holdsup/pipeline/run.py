@@ -29,7 +29,7 @@ from holdsup.adapters.base import (
 )
 from holdsup.catalog.schema import Catalog, IndicatorSpec
 from holdsup.catalog.search import CatalogSearch
-from holdsup.checks import Sweep, sweep
+from holdsup.checks import ChangePoints, Sweep, change_points, flag_text, sweep
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
@@ -352,6 +352,7 @@ class Pipeline:
                 f"HoldsUp found the data but couldn't finish the calculation: {execution.error}.",
             )
         c.out.sweep = self._sweep(c.claim, plan, execution)
+        c.out.changepoints = self._change_points(c.claim, plan, execution)
         n = len(execution.records)
         summary = f"Ran {n} operation{'s' if n != 1 else ''}"
         if c.out.sweep is not None:
@@ -373,6 +374,18 @@ class Pipeline:
             tolerances=self.tolerances,
         )
 
+    def _change_points(
+        self, claim: ClaimSpec, plan: ValidPlan, execution: Execution
+    ) -> ChangePoints | None:
+        """Breaks in the trend of the series the claim's one answer read, and the claim's
+        start or end leaning on one (P3.3)."""
+        if len(plan.answer) != 1:
+            return None
+        i = plan.answer[0]
+        return change_points(
+            claim, execution.records[i], execution.series[i], tolerances=self.tolerances
+        )
+
     async def _verdict(self, c: _ClaimRun, plan: ValidPlan, execution: Execution) -> None:
         await c.start(Step.VERDICT)
         verdict = decide(
@@ -382,6 +395,10 @@ class Pipeline:
             unit=execution.unit,
             tolerances=self.tolerances,
             window_share=c.out.sweep.share if c.out.sweep else None,
+            distortions=[
+                flag_text(f, execution.records[plan.answer[0]].unit)
+                for f in (c.out.changepoints.flags if c.out.changepoints else [])
+            ],
         )
         c.out.verdict = verdict
         status: StepStatus = "cant_check" if verdict.label is Label.CANT_CHECK else "ok"

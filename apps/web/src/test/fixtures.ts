@@ -163,6 +163,8 @@ export const holdingClaim: ClaimResult = {
   ],
   answer: [0],
   sweep: holdingSweep,
+  // From the API's own find_breaks on the sweep's yearly values: the trend turns in 2014.
+  changepoints: { breaks: ["2014"], flags: [] },
   verdict: {
     label: "supported",
     reason: "Holds within tolerance.",
@@ -212,7 +214,8 @@ export const holdingClaim: ClaimResult = {
 export const partlyClaim: ClaimResult = {
   ...holdingClaim,
   index: 0,
-  sweep: null, // its own sweep is not part of the fixture
+  sweep: null, // its own sweep and change points are not part of the fixture
+  changepoints: null,
   claim: {
     quote: "youth unemployment has fallen 12 points, from 44% to 32%.",
     indicator_phrase: "youth unemployment rate",
@@ -388,11 +391,12 @@ export function catalogEntry(
   };
 }
 
-/** The allowed gaps as `tolerances.yaml` sets them (version 3), as the API serves them. */
+/** The allowed gaps as `tolerances.yaml` sets them (version 4), as the API serves them. */
 export const tolerances: Tolerances = {
-  version: 3,
+  version: 4,
   framing_threshold: 0.7,
   sweep: { reach: 2, min_years: 2 },
+  changepoints: { shrink: 0.25 },
   values: {
     level: { relative: 0, absolute: 0, rounding: true, plus_relative: 0.01 },
     level_rate: {
