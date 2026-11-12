@@ -67,6 +67,13 @@ export function AllowedGaps({ tolerances: tol }: { tolerances: Tolerances }) {
         <ul className="list-disc ps-5 text-sm leading-6">
           <li>{g.flat(percentText(tol.flat_relative))}</li>
           <li>{g.trend(percentText(tol.trend_min_r2))}</li>
+          <li>
+            {g.windows(
+              tol.sweep.reach,
+              tol.sweep.min_years,
+              percentText(tol.framing_threshold),
+            )}
+          </li>
           <li>{g.periodGap(periodGap(tol.max_period_gap))}</li>
         </ul>
       </section>

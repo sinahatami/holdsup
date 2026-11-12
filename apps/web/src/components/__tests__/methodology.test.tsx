@@ -67,6 +67,11 @@ describe("AllowedGaps", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
+        /over at least 2 years is also redone with its start moved up to 2 years either way and its end up to 2 years earlier\. To hold up, it has to go the same way in at least 70% of those time windows/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
         /1 year for yearly series, 1 half-year for half-yearly series, 2 quarters for quarterly series, and 3 months for monthly series/,
       ),
     ).toBeInTheDocument();
@@ -159,15 +164,19 @@ describe("Methodology page", () => {
     expect(screen.getByText(/\(version 5\)/)).toBeInTheDocument();
   });
 
-  it("does not say other time windows are compared", async () => {
+  it("says other time windows are compared, and what is not yet", async () => {
     api(tolerances);
     render(await Page());
     expect(
-      screen.getByText(/Other time windows are not compared yet\./),
+      screen.getByText(/holds in at least 70% of comparable time windows\./),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/does not yet compare other time windows/),
+      screen.getByText(/start and end moved by a few years/),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/does not yet look at per-person or inflation-adjusted/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/not compared yet/)).toBeNull();
   });
 
   it("says so, and still explains the rest, when the API is down", async () => {

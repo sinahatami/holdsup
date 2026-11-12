@@ -675,6 +675,9 @@ export const strings = {
         `“Flat” or “stable” holds when the end value is within ${share} of the start value.`,
       trend: (share: string) =>
         `“Rising” or “falling” also needs the straight line to explain at least ${share} of the ups and downs.`,
+      // The cherry-pick sweep: `reach` and `minYears` in years, `share` the framing threshold.
+      windows: (reach: number, minYears: number, share: string) =>
+        `A claim that something rose, fell or stayed flat over at least ${minYears === 1 ? "1 year" : `${minYears} years`} is also redone with its start moved up to ${reach === 1 ? "1 year" : `${reach} years`} either way and its end up to ${reach === 1 ? "1 year" : `${reach} years`} earlier. To hold up, it has to go the same way in at least ${share} of those time windows; otherwise the framing matters.`,
       periodGap: (parts: string) =>
         `When the period named has no value, the nearest one is used if it is close enough, and the receipt says so. “Close enough” is ${parts}. Farther away, the claim can't be checked.`,
       periodUnit: {
@@ -724,7 +727,7 @@ export const strings = {
       },
       {
         title: "A true figure can still mislead.",
-        body: "A claim can be right for the years it names and still give a wrong picture, for example by starting at a peak. HoldsUp does not yet compare other time windows, nor look at per-person or inflation-adjusted views. “Holds up” means that the figures match the official statistic, not that the choice of years is fair.",
+        body: "A claim can be right for the years it names and still give a wrong picture, for example by starting at a peak. For a claim that something rose, fell or stayed flat, HoldsUp redoes the calculation with the start and end moved by a few years, and says the framing matters when the claim goes the same way in too few of them. It does not yet look at per-person or inflation-adjusted views.",
       },
       {
         title: "A verdict is about the number.",
@@ -748,7 +751,7 @@ export const strings = {
     // `windows` is whether this page's verdicts compared other time windows at all.
     holds: (pct: number | null, windows: boolean) =>
       windows
-        ? `Every figure in the claim is within the allowed gap of the official figure, and the claim holds ${
+        ? `Every figure in the claim is within the allowed gap of the official figure, and a claim about a change over several years holds ${
             pct === null
               ? "across most comparable time windows"
               : `in at least ${pct}% of comparable time windows`
