@@ -23,6 +23,11 @@ export type ValueTolerance = components["schemas"]["ValueTolerance"];
 export type Problem = components["schemas"]["Problem"];
 export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
+export type Suggestion = components["schemas"]["Suggestion"];
+export type RecheckOf = components["schemas"]["RecheckOf"];
+export type StatusResponse = components["schemas"]["StatusResponse"];
+export type ProviderStatus = components["schemas"]["ProviderStatus"];
+export type ProviderState = components["schemas"]["ProviderState"];
 
 /** One line of the live trace (the `step_started` / `step_done` event data). */
 export interface StepEvent {
@@ -179,6 +184,15 @@ export function createApiClient(baseUrl: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(report),
       }),
+    /** Checks one claim again with another statistic it offers: a new check. */
+    recheckClaim: (id: string, claimIndex: number, indicatorId: string) =>
+      request<CheckAccepted>(`/checks/${id}/claims/${claimIndex}/recheck`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ indicator_id: indicatorId }),
+      }),
+    /** The model providers as the router sees them now. */
+    status: (init?: RequestInit) => request<StatusResponse>("/status", init),
     catalog: () => request<CatalogResponse>("/catalog"),
     /** The allowed gaps and thresholds every verdict is judged by. */
     tolerances: () => request<Tolerances>("/tolerances"),

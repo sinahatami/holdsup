@@ -8,3 +8,6 @@ export const DONE_ID = "22222222-2222-4222-8222-222222222222";
 
 /** A well-formed id that nothing was stored under. */
 export const MISSING_ID = "33333333-3333-4333-8333-333333333333";
+
+/** The check a re-check of DONE_ID's claim starts: done, with the reader's statistic. */
+export const RECHECK_ID = "55555555-5555-4555-8555-555555555555";

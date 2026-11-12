@@ -5,8 +5,9 @@ import {
   type Page,
 } from "@playwright/test";
 import { axeViolations } from "./axe";
-import { CHECK_ID, DONE_ID, MISSING_ID } from "./ids";
-import { mockApi, mockReports } from "./mock-api";
+import { readFile } from "node:fs/promises";
+import { CHECK_ID, DONE_ID, MISSING_ID, RECHECK_ID } from "./ids";
+import { mockApi, mockRecheck, mockReports } from "./mock-api";
 
 test("submit → trace → result", async ({ page }) => {
   await mockApi(page);
@@ -206,6 +207,57 @@ test.describe("sharing a check", () => {
     );
     expect(summary).toContain("Holds up");
     expect(summary.endsWith(page.url())).toBe(true);
+  });
+
+  test("downloads the check's card image", async ({ page }) => {
+    await page.goto(`/check/${DONE_ID}`);
+    const share = page.getByRole("region", { name: "Share this check" });
+    const downloading = page.waitForEvent("download");
+    await share.getByRole("link", { name: "Download image" }).click();
+    const file = await downloading;
+    expect(file.suggestedFilename()).toBe(`holdsup-${DONE_ID}.png`);
+    const bytes = await readFile(await file.path());
+    expect([...bytes.subarray(0, 8)]).toEqual([
+      137, 80, 78, 71, 13, 10, 26, 10,
+    ]);
+  });
+});
+
+test.describe("re-checking with another statistic", () => {
+  test("starts the re-check and lands on the new check, which says what it replaced", async ({
+    page,
+  }) => {
+    const sent = await mockRecheck(page);
+    await page.goto(`/check/${DONE_ID}`);
+    const offered = page.getByRole("region", {
+      name: "Check with another statistic",
+    });
+    await offered
+      .getByRole("button", {
+        name: "Re-check with Unemployment rate (ILO modelled estimate)",
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/check/${RECHECK_ID}$`));
+    expect(sent).toEqual([
+      {
+        path: `/v1/checks/${DONE_ID}/claims/0/recheck`,
+        body: { indicator_id: "unemployment_rate_ilo" },
+      },
+    ]);
+    await expect(
+      page.getByText("This is a re-check with another statistic, instead of", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "See the first check" }),
+    ).toHaveAttribute("href", `/check/${DONE_ID}`);
+    // The new check offers the first statistic back.
+    await expect(
+      page
+        .getByRole("region", { name: "Check with another statistic" })
+        .getByRole("button", { name: /^Re-check with / }),
+    ).toHaveCount(1);
   });
 });
 
