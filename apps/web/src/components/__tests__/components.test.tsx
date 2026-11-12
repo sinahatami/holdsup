@@ -1,4 +1,5 @@
 import {
+  cleanup,
   render,
   screen,
   fireEvent,
@@ -352,13 +353,25 @@ describe("CharCounter", () => {
 });
 
 describe("CheckForm", () => {
-  it("tells people to write in English, and ties that to the box", () => {
+  it("gives one short helper line, ties it to the box, and offers Speak only where it works", () => {
     render(<CheckForm />);
-    const note = screen.getByText(strings.home.englishOnly);
+    // No speech recognition in this browser (as in Firefox): type only, and no Speak button.
     expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
-      expect.stringContaining(strings.home.englishOnly),
+      expect.stringContaining(strings.home.helper),
     );
-    expect(note).toBeVisible();
+    expect(screen.getByText(strings.home.helper)).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: strings.voice.start }),
+    ).not.toBeInTheDocument();
+    cleanup();
+
+    vi.stubGlobal("SpeechRecognition", class {});
+    render(<CheckForm />);
+    expect(screen.getByText(strings.home.helperVoice)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: strings.voice.start }),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it("fills the box and focuses it for every example, the same way each time", () => {
