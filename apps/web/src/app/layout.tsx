@@ -44,11 +44,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="flex min-h-full flex-col">
-        <div aria-hidden="true" className="aurora">
-          <i />
-          <i />
-          <i />
-        </div>
         <div aria-hidden="true" className="scroll-progress" />
         <SiteHeader />
         <OfflineNotice />
