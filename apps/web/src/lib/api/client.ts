@@ -50,6 +50,11 @@ export function browserApiUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? LOCAL_API;
 }
 
+/** The check's receipt as a Jupyter notebook, served by the API as a download. */
+export function notebookUrl(checkId: string): string {
+  return `${browserApiUrl()}/v1/checks/${encodeURIComponent(checkId)}/notebook`;
+}
+
 /** Server-side reads (gallery pre-render) use the private variable when set. */
 export function serverApiUrl(): string {
   return (

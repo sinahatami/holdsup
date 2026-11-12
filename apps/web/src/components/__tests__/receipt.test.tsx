@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CheckResultView } from "@/components/organisms/check-result";
 import { Receipt } from "@/components/organisms/receipt";
+import { notebookUrl } from "@/lib/api/client";
 import { VerdictLegend } from "@/components/organisms/verdict-legend";
 import type { ClaimResult } from "@/lib/api/client";
 import { routes } from "@/lib/routes";
@@ -160,6 +161,23 @@ describe("Receipt", () => {
     expect(
       verify.getByText(/has revised the series since November 7, 2026/),
     ).toBeInTheDocument();
+  });
+
+  it("offers the check's notebook, which repeats every calculation", () => {
+    open(holdingClaim, { checkId: "c1" });
+    const verify = section(t.verify.heading);
+    expect(verify.getAllByRole("listitem")).toHaveLength(5);
+    const link = verify.getByRole("link", { name: t.verify.notebookLink });
+    expect(link).toHaveAttribute("href", notebookUrl("c1"));
+    expect(link.getAttribute("href")).toMatch(/\/v1\/checks\/c1\/notebook$/);
+    expect(link).toHaveAttribute("download");
+  });
+
+  it("offers no notebook without a stored check or a calculation", () => {
+    open(holdingClaim);
+    expect(screen.queryByText(t.verify.notebookLink)).toBeNull();
+    open({ ...holdingClaim, operations: [] }, { checkId: "c1" });
+    expect(screen.queryByText(t.verify.notebookLink)).toBeNull();
   });
 
   it("keeps the fingerprint, the observations, the models and the versions in the technical details", () => {
