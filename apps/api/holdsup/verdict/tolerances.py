@@ -51,12 +51,21 @@ class SweepTolerances(BaseModel):
     min_years: float = Field(ge=0)  # the shortest claim window that gets a share
 
 
+class ChangePointTolerances(BaseModel):
+    """When a start or end on a break or extreme carries the claim (D025)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    shrink: float = Field(gt=0, le=1)  # the share the change may lose before it is flagged
+
+
 class Tolerances(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int
     framing_threshold: float = Field(ge=0, le=1)
     sweep: SweepTolerances
+    changepoints: ChangePointTolerances
     values: ValueTolerances
     flat_relative: float = Field(ge=0)
     trend_min_r2: float = Field(ge=0, le=1)
