@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import { strings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 const s = strings.home.sample;
 
@@ -26,16 +27,23 @@ function Stage({ label, children }: { label: string; children: ReactNode }) {
 export function SampleReceipt({ href }: { href?: string }) {
   return (
     <section aria-labelledby="sample-heading" className="@container">
+      {/* Quieter than the claim box on purpose: no shadow, a light edge, a flat tint. */}
       <figure
-        className={`glass relative flex flex-col gap-4 rounded-2xl p-5 ${href ? "hover:border-brand/50 transition hover:-translate-y-0.5 hover:shadow-(--shadow-lift)" : ""}`}
+        className={cn(
+          "bg-muted/40 border-border relative flex flex-col gap-4 rounded-2xl border p-5",
+          href && "hover:border-foreground/30 transition",
+        )}
       >
         <figcaption className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2
-            id="sample-heading"
-            className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
-          >
-            {s.heading}
-          </h2>
+          <div className="flex flex-col gap-0.5">
+            <h2
+              id="sample-heading"
+              className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
+            >
+              {s.heading}
+            </h2>
+            <p className="text-muted-foreground text-xs">{s.note}</p>
+          </div>
           {href && (
             <Link
               href={href}
