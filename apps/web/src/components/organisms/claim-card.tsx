@@ -3,6 +3,7 @@ import { Eyebrow } from "@/components/atoms/eyebrow";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
+import { FramingChecks } from "@/components/organisms/framing-checks";
 import { Receipt } from "@/components/organisms/receipt";
 import { ReportMatch } from "@/components/organisms/report-match";
 import { WindowHeatmap } from "@/components/organisms/window-heatmap";
@@ -74,6 +75,7 @@ export function ClaimCard({
           breaks={c.changepoints?.breaks ?? []}
         />
       )}
+      <FramingChecks claim={c} />
       <CantCheckHelp claim={c} />
       <Receipt claim={c} versions={versions} sharedModels={sharedModels} />
       <ReportMatch checkId={checkId} claimIndex={c.index} />

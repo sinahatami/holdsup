@@ -79,7 +79,7 @@ def sweep(
     if record.op not in SWEPT_OPS or claim.assertion.direction is None:
         return None
     try:
-        start, end = _own_window(record, series)
+        start, end = own_window(record, series)
     except OpError:
         return None
     holds = direction_judge(claim, unit=unit, tolerances=tolerances)
@@ -90,7 +90,7 @@ def sweep(
     values: list[list[float | None]] = []
     held: list[list[bool | None]] = []
     for s in starts:
-        cells = [_rerun(record, series, s, e) for e in ends]
+        cells = [rerun(record, series, s, e) for e in ends]
         values.append([None if r is None else r.value for r in cells])
         held.append([None if r is None else holds(r) for r in cells])
 
@@ -120,7 +120,7 @@ def sweep(
     )
 
 
-def _own_window(record: OpRecord, series: Series) -> tuple[Period, Period]:
+def own_window(record: OpRecord, series: Series) -> tuple[Period, Period]:
     """The claim's window as its operation read it: the two values a change or growth rate
     used (after any nearest-period substitution), or the span a trend was asked to fit."""
     if record.op == "trend":
@@ -138,7 +138,7 @@ def _axis(series: Series, sub: int, first_year: int) -> list[Period]:
     return [p for p in periods if lo <= p.ordinal <= hi]
 
 
-def _rerun(record: OpRecord, series: Series, start: Period, end: Period) -> OpRecord | None:
+def rerun(record: OpRecord, series: Series, start: Period, end: Period) -> OpRecord | None:
     """The claim's operation over another window, or None where it has no answer. A change or
     growth rate reads exactly `start` and `end`, never a neighbouring period; a trend fits the
     values between them."""

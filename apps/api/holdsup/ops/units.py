@@ -29,3 +29,13 @@ def unit_scale(unit: str | None) -> float:
 def is_rate(unit: str | None) -> bool:
     """A unit in percent: rates and shares, compared in points rather than relatively."""
     return unit is not None and unit.strip().startswith("%")
+
+
+def per_person_unit(unit: str | None) -> str | None:
+    """The unit of a series divided by population: "million euro" → "euro per person"."""
+    if not unit:
+        return None
+    bare = re.sub(
+        r"\b(thousand|million|billion|trillion|mio|bn)s?\b\s*", "", unit, flags=re.IGNORECASE
+    )
+    return f"{bare.strip()} per person"

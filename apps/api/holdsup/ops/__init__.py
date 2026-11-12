@@ -16,15 +16,16 @@ from holdsup.ops.periods import (
     LATEST,
     Frequency,
     Period,
+    months_since,
     parse_period,
     published_by,
     years_between,
 )
 from holdsup.ops.record import DataPoint, Flag, FlagCode, OpError, OpRecord
 from holdsup.ops.series import Series
-from holdsup.ops.transforms import deflate, per_capita
+from holdsup.ops.transforms import chain_index, deflate, per_capita
 from holdsup.ops.trend import LinearFit, linear_fit, trend
-from holdsup.ops.units import is_rate, unit_scale
+from holdsup.ops.units import is_rate, per_person_unit, unit_scale
 from holdsup.ops.values import cagr, change, compare, rank, value_at
 
 __all__ = [
@@ -43,6 +44,7 @@ __all__ = [
     "annual",
     "annual_flag",
     "cagr",
+    "chain_index",
     "change",
     "change_between",
     "compare",
@@ -51,8 +53,10 @@ __all__ = [
     "is_rate",
     "latest_year_flag",
     "linear_fit",
+    "months_since",
     "parse_period",
     "per_capita",
+    "per_person_unit",
     "published_by",
     "rank",
     "trend",

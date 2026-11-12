@@ -5,7 +5,6 @@ years, and how code runs it. Validation, repair and execution all read this tabl
 operation means one new entry here, one name in `OpName`, and a line in the prompt.
 """
 
-import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
@@ -19,6 +18,7 @@ from holdsup.ops import (
     compare,
     deflate,
     per_capita,
+    per_person_unit,
     rank,
     trend,
     unit_scale,
@@ -60,15 +60,6 @@ class OpSpec:
     def windowed(self) -> bool:
         """Whether it reads a start-to-end window (and so takes an assumed window)."""
         return "start" in self.required
-
-
-def per_person_unit(unit: str | None) -> str | None:
-    if not unit:
-        return None
-    bare = re.sub(
-        r"\b(thousand|million|billion|trillion|mio|bn)s?\b\s*", "", unit, flags=re.IGNORECASE
-    )
-    return f"{bare.strip()} per person"
 
 
 def _value_at(a: OpInput) -> OpRecord:
