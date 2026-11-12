@@ -1,4 +1,5 @@
 import {
+  cleanup,
   render,
   screen,
   fireEvent,
@@ -260,20 +261,38 @@ describe("GalleryCard", () => {
 });
 
 describe("SampleReceipt", () => {
-  it("walks from the claim to the verdict", () => {
-    render(<SampleReceipt />);
+  it("walks from the claim to the verdict, claimed figures beside the recomputed ones", () => {
+    const { container } = render(<SampleReceipt />);
     const s = strings.home.sample;
-    for (const text of [s.claim, s.series, s.source, s.recomputed]) {
+    for (const text of [s.claimNote, s.series, s.source, s.recomputedNote]) {
       expect(screen.getByText(text)).toBeInTheDocument();
     }
+    // The four stages, in order, as labelled terms.
+    expect(
+      [...container.querySelectorAll("dt")].map((dt) => dt.textContent),
+    ).toEqual([s.claimLabel, s.seriesLabel, s.recomputedLabel, s.verdictLabel]);
+    // "11.9% → 7.7%" reads "11.9% to 7.7%" aloud; the arrow itself is hidden from it.
+    const dds = [...container.querySelectorAll("dd")];
+    expect(dds[0]).toHaveTextContent(/11\.9%.*to.*7\.7%/);
+    expect(dds[2]).toHaveTextContent(/12\.02%.*to.*7\.68%/);
+    for (const i of [0, 2]) {
+      expect(dds[i].querySelectorAll("[aria-hidden]")).toHaveLength(1);
+    }
+    // The recomputed figures are the heavier ones.
+    expect(dds[2].querySelector(".font-bold")).toHaveTextContent("12.02%");
+    expect(dds[0].querySelector(".font-bold")).toBeNull();
+    // The verdict is a word and an icon, not a colour alone.
     expect(screen.getByText(strings.verdicts.supported)).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
-  it("opens a real receipt when given one", () => {
-    render(<SampleReceipt href="/check/abc" />);
+  it("closes with a link to a real receipt when given one", () => {
+    const { container } = render(<SampleReceipt href="/check/abc" />);
+    const link = screen.getByRole("link", { name: strings.home.sample.open });
+    expect(link).toHaveAttribute("href", "/check/abc");
+    // It is the last thing in the card, below the four stages.
     expect(
-      screen.getByRole("link", { name: strings.home.sample.open }),
-    ).toHaveAttribute("href", "/check/abc");
+      container.querySelector("figure")?.lastElementChild,
+    ).toContainElement(link);
   });
 });
 
@@ -334,13 +353,52 @@ describe("CharCounter", () => {
 });
 
 describe("CheckForm", () => {
-  it("tells people to write in English, and ties that to the box", () => {
+  it("gives one short helper line, ties it to the box, and offers Speak only where it works", () => {
     render(<CheckForm />);
-    const note = screen.getByText(strings.home.englishOnly);
+    // No speech recognition in this browser (as in Firefox): type only, and no Speak button.
     expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
-      expect.stringContaining(strings.home.englishOnly),
+      expect.stringContaining(strings.home.helper),
     );
-    expect(note).toBeVisible();
+    expect(screen.getByText(strings.home.helper)).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: strings.voice.start }),
+    ).not.toBeInTheDocument();
+    cleanup();
+
+    vi.stubGlobal("SpeechRecognition", class {});
+    render(<CheckForm />);
+    expect(screen.getByText(strings.home.helperVoice)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: strings.voice.start }),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it("fills the box and focuses it for every example, the same way each time", () => {
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    for (const ex of strings.home.examples) {
+      (document.activeElement as HTMLElement | null)?.blur();
+      fireEvent.click(screen.getByRole("button", { name: ex }));
+      expect(box).toHaveValue(ex);
+      expect(box).toHaveFocus();
+    }
+    // Nothing was sent: picking an example only fills the box.
+    expect(
+      screen.getByRole("button", { name: strings.home.submit }),
+    ).toHaveAttribute("aria-disabled", "false");
+  });
+
+  it("offers the examples as a named list of buttons", () => {
+    render(<CheckForm />);
+    const list = screen.getByRole("list", {
+      name: strings.home.examplesHeading,
+    });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual([
+      ...strings.home.examples,
+    ]);
+    for (const b of buttons) expect(b).toHaveAttribute("type", "button");
   });
 
   it("fills the box from an example and posts it", async () => {
@@ -383,15 +441,16 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
-  it("is disabled while the box is empty, and says how to submit from the keyboard", () => {
+  it("is off while the box is empty, and says how to submit from the keyboard", () => {
     render(<CheckForm />);
     const box = screen.getByLabelText(strings.home.inputLabel);
     const button = screen.getByRole("button", { name: strings.home.submit });
-    expect(button).toBeDisabled();
+    // aria-disabled, not disabled: the button stays in the tab order and says why it is off.
+    expect(button).toHaveAttribute("aria-disabled", "true");
     fireEvent.change(box, { target: { value: "   " } });
-    expect(button).toBeDisabled(); // whitespace is empty
+    expect(button).toHaveAttribute("aria-disabled", "true"); // whitespace is empty
     fireEvent.change(box, { target: { value: "claim" } });
-    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute("aria-disabled", "false");
     expect(screen.getByText(strings.home.shortcut)).toBeInTheDocument();
     expect(box).toHaveAttribute(
       "aria-keyshortcuts",
@@ -428,15 +487,29 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
+  it("sends nothing when the off button is pressed, and returns to the box", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CheckForm />);
+    fireEvent.click(screen.getByRole("button", { name: strings.home.submit }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(strings.home.inputLabel)).toHaveFocus();
+    vi.unstubAllGlobals();
+  });
+
   it("blocks text over the limit", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
     render(<CheckForm />);
     fireEvent.change(screen.getByLabelText(strings.home.inputLabel), {
       target: { value: "x".repeat(2001) },
     });
-    expect(
-      screen.getByRole("button", { name: strings.home.submit }),
-    ).toBeDisabled();
+    const button = screen.getByRole("button", { name: strings.home.submit });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(button);
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(strings.home.tooLong);
+    vi.unstubAllGlobals();
   });
 });
 

@@ -138,8 +138,9 @@ export const strings = {
     intro:
       "Paste a sentence with a number in it. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
     inputLabel: "The claim to check",
-    englishOnly:
-      "Write or type the claim in English. HoldsUp reads English only.",
+    // One short line under the label. It says "speak" only where the Speak button is shown.
+    helper: "Type a claim. English only for now.",
+    helperVoice: "Type or speak a claim. English only for now.",
     placeholder:
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",
@@ -147,16 +148,21 @@ export const strings = {
     shortcut: "to check",
     charsLeft: (n: string) => `${n} left`,
     sample: {
-      heading: "A sample receipt",
-      open: "Open the full receipt",
+      heading: "Example receipt",
+      note: "A fixed example of what a check returns, not a live check.",
+      open: "View full receipt",
       claimLabel: "Claim",
+      // The whole sentence. The home page looks for a real check with exactly this text to link to.
       claim:
         "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
+      // Short on purpose: four equal columns leave about 150px each, so each holds a figure and one line.
+      claimed: { from: "11.9%", to: "7.7%" },
+      claimNote: "Italy, 2015 to 2023",
       seriesLabel: "Official series",
-      series: "Unemployment rate (monthly)",
+      series: "Unemployment rate",
       source: "Eurostat · une_rt_m",
       recomputedLabel: "Recomputed",
-      recomputed: "12.02% → 7.68%",
+      recomputed: { from: "12.02%", to: "7.68%" },
       recomputedNote: "Down 4.34 points (yearly averages)",
       verdictLabel: "Verdict",
       verdict: "supported",
