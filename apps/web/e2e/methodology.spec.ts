@@ -53,13 +53,13 @@ test.describe("the methodology page", () => {
   }) => {
     await page.goto("/methodology");
     // Folded: the figures are on the page but not shown.
-    await expect(page.getByText("(version 4)")).toBeHidden();
+    await expect(page.getByText("(version 5)")).toBeHidden();
     await page
       .getByRole("navigation", { name: "On this page" })
       .getByRole("link", { name: "What counts as a match" })
       .click();
     await expect(page).toHaveURL(/#match$/);
-    await expect(page.getByText("(version 4)")).toBeVisible();
+    await expect(page.getByText("(version 5)")).toBeVisible();
     const rank = page
       .getByText("A position", { exact: true })
       .locator("xpath=ancestor::div[1]");

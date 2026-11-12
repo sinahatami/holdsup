@@ -165,6 +165,16 @@ export const holdingClaim: ClaimResult = {
   sweep: holdingSweep,
   // From the API's own find_breaks on the sweep's yearly values: the trend turns in 2014.
   changepoints: { breaks: ["2014"], flags: [] },
+  // What the API's distortion checks give this claim (regression r001).
+  distortion_checks: [
+    {
+      kind: "endpoints",
+      flagged: false,
+      text: "neither the start (2015) nor the end (2023) is at a peak, a trough or a turn in the trend that carries the claim",
+      records: [],
+      uses: null,
+    },
+  ],
   verdict: {
     label: "supported",
     reason: "Holds within tolerance.",
@@ -391,12 +401,13 @@ export function catalogEntry(
   };
 }
 
-/** The allowed gaps as `tolerances.yaml` sets them (version 4), as the API serves them. */
+/** The allowed gaps as `tolerances.yaml` sets them (version 5), as the API serves them. */
 export const tolerances: Tolerances = {
-  version: 4,
+  version: 5,
   framing_threshold: 0.7,
   sweep: { reach: 2, min_years: 2 },
   changepoints: { shrink: 0.25 },
+  distortions: { stale_years: 2 },
   values: {
     level: { relative: 0, absolute: 0, rounding: true, plus_relative: 0.01 },
     level_rate: {

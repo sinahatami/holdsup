@@ -299,6 +299,12 @@ export interface components {
       /** Result Url */
       result_url: string;
     };
+    /**
+     * CheckKind
+     * @enum {string}
+     */
+    CheckKind:
+      "endpoints" | "per_capita" | "real" | "points" | "definition" | "stale";
     /** CheckRequest */
     CheckRequest: {
       /**
@@ -390,6 +396,8 @@ export interface components {
       answer?: number[];
       sweep?: components["schemas"]["Sweep"] | null;
       changepoints?: components["schemas"]["ChangePoints"] | null;
+      /** Distortion Checks */
+      distortion_checks?: components["schemas"]["DistortionCheck"][];
       verdict: components["schemas"]["Verdict"];
       /** Explanation */
       explanation: string;
@@ -485,6 +493,29 @@ export interface components {
      */
     Direction: "up" | "down" | "flat";
     /**
+     * DistortionCheck
+     * @description One check that applied to the claim: whether it flags it, and one line saying why.
+     */
+    DistortionCheck: {
+      kind: components["schemas"]["CheckKind"];
+      /** Flagged */
+      flagged: boolean;
+      /** Text */
+      text: string;
+      /** Records */
+      records?: components["schemas"]["OpRecord"][];
+      /** Uses */
+      uses?: string | null;
+    };
+    /**
+     * DistortionTolerances
+     * @description When a distortion check flags a claim (D026).
+     */
+    DistortionTolerances: {
+      /** Stale Years */
+      stale_years: number;
+    };
+    /**
      * EndpointFlag
      * @description A start or end that sits on a break or an extreme and carries the claim.
      */
@@ -512,7 +543,8 @@ export interface components {
     };
     /**
      * ExtraSource
-     * @description A series used besides the matched one (the population a per-capita figure divides by).
+     * @description A series used besides the matched one: the population a per-capita figure divides by,
+     *     the prices or the real version a real-terms check reads.
      */
     ExtraSource: {
       indicator: components["schemas"]["IndicatorRef"];
@@ -877,6 +909,7 @@ export interface components {
       framing_threshold: number;
       sweep: components["schemas"]["SweepTolerances"];
       changepoints: components["schemas"]["ChangePointTolerances"];
+      distortions: components["schemas"]["DistortionTolerances"];
       values: components["schemas"]["ValueTolerances"];
       /** Flat Relative */
       flat_relative: number;

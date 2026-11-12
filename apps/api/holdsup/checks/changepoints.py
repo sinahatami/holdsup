@@ -18,7 +18,7 @@ import numpy as np
 import ruptures as rpt  # type: ignore[import-untyped]  # ships no type hints
 from pydantic import BaseModel
 
-from holdsup.fmt import fmt
+from holdsup.fmt import fmt, signed, unit_suffix
 from holdsup.ops import (
     ChangeKind,
     OpError,
@@ -104,11 +104,9 @@ def endpoint_flags(
 ) -> list[EndpointFlag]:
     """The claim's start and end that sit on a break or an extreme and carry the claim."""
     direction = claim.assertion.direction
-    if record.op not in FLAGGED_OPS or direction not in (Direction.UP, Direction.DOWN):
+    if direction is None or not checks_endpoints(claim, record, series):
         return []
     start, end = parse_period(record.inputs[0].period), parse_period(record.inputs[1].period)
-    if start.frequency is not series.frequency:
-        return []
     reach = tolerances.sweep.reach * series.frequency.per_year
     a, b = record.inputs[0].value, record.inputs[1].value
     claimed = _rerun(record, a, b, start, end)
@@ -140,20 +138,26 @@ def endpoint_flags(
     return flags
 
 
+def checks_endpoints(claim: ClaimSpec, record: OpRecord, series: Series) -> bool:
+    """Whether the claim's start and end are looked at: a change or growth rate claimed to rise
+    or fall, read from the series at its own frequency."""
+    if record.op not in FLAGGED_OPS or claim.assertion.direction not in (
+        Direction.UP,
+        Direction.DOWN,
+    ):
+        return False
+    return parse_period(record.inputs[0].period).frequency is series.frequency
+
+
 def flag_text(flag: EndpointFlag, unit: str | None) -> str:
     """The flag as the verdict's reason says it, with numbers only from the flag."""
     verb = "starts" if flag.end == "start" else "ends"
-    u = "" if not unit else unit if unit.startswith("%") else f" {unit}"
+    u = unit_suffix(unit)
     return (
         f"it {verb} {WHY_TEXT[flag.why]} ({flag.period}): from the usual level around then, "
-        f"{fmt(flag.typical)}, the change is {_signed(flag.shifted)}{u} rather than "
-        f"{_signed(flag.claimed)}{u}"
+        f"{fmt(flag.typical)}, the change is {signed(flag.shifted)}{u} rather than "
+        f"{signed(flag.claimed)}{u}"
     )
-
-
-def _signed(x: float) -> str:
-    text = fmt(x)
-    return f"+{text}" if x > 0 and text != "0" else text
 
 
 def _why(series: Series, at: Period, breaks: list[Period], reach: int) -> Why | None:

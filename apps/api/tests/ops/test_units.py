@@ -1,6 +1,6 @@
 import pytest
 
-from holdsup.ops import is_rate, unit_scale
+from holdsup.ops import is_rate, per_person_unit, unit_scale
 
 
 @pytest.mark.parametrize(
@@ -23,3 +23,9 @@ def test_unit_scale(unit: str | None, scale: float) -> None:
 def test_is_rate() -> None:
     assert is_rate("% of GDP") and is_rate(" %")
     assert not is_rate("million euro") and not is_rate(None) and not is_rate("")
+
+
+def test_per_person_unit() -> None:
+    assert per_person_unit("million euro (current prices)") == "euro (current prices) per person"
+    assert per_person_unit("Thousand persons") == "persons per person"
+    assert per_person_unit(None) is None

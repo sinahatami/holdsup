@@ -97,6 +97,14 @@ def same_frequency(a: Period, b: Period) -> None:
         raise OpError(f"period {a} is {a.frequency} but {b} is {b.frequency}")
 
 
+def months_since(period: Period, day: date) -> int:
+    """Whole months from the end of `period` to the month of `day`: 2024 on 2026-11-12 gives
+    23 (December 2024 to November 2026), 2026-09 on the same day gives 2."""
+    months_per = 12 // period.frequency.per_year
+    last_month = period.year * 12 + period.sub * months_per - 1  # 0-based count of months
+    return day.year * 12 + day.month - 1 - last_month
+
+
 def published_by(frequency: Frequency, as_of: date, lag_months: int) -> Period:
     """The last period of `frequency` out by `as_of`, if a period is published `lag_months`
     after it ends: 2018-12-31 with a 1-month lag gives 2018-11 (monthly), 2017 (annual)."""

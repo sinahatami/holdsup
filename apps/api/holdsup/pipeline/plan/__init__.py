@@ -29,7 +29,6 @@ from holdsup.pipeline.plan.operations import (
     SERIES_OPS,
     SIGNATURES,
     OpSpec,
-    per_person_unit,
 )
 from holdsup.pipeline.plan.periods import claim_years, yearly_allowed
 from holdsup.pipeline.plan.prompt import PLAN_SYSTEM, PlanResult, plan_analysis, plan_message
@@ -53,7 +52,6 @@ __all__ = [
     "ValidPlan",
     "claim_years",
     "execute_plan",
-    "per_person_unit",
     "plan_analysis",
     "plan_message",
     "validate_plan",

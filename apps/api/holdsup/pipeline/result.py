@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
-from holdsup.checks import ChangePoints, Sweep
+from holdsup.checks import ChangePoints, DistortionCheck, Sweep
 from holdsup.config import get_settings
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
@@ -79,7 +79,8 @@ class Suggestion(BaseModel):
 
 
 class ExtraSource(BaseModel):
-    """A series used besides the matched one (the population a per-capita figure divides by)."""
+    """A series used besides the matched one: the population a per-capita figure divides by,
+    the prices or the real version a real-terms check reads."""
 
     indicator: IndicatorRef
     data: DataRef
@@ -102,6 +103,9 @@ class ClaimResult(BaseModel):
     sweep: Sweep | None = None
     # Breaks in the trend of the series the answer read, and a start or end that leans on one.
     changepoints: ChangePoints | None = None
+    # The distortion checks that applied (P3.4): per person, after inflation, percent or
+    # points, definition, stale data, the start and end. A flagged one is a framing caveat.
+    distortion_checks: list[DistortionCheck] = Field(default_factory=list)
     verdict: Verdict
     explanation: str
     explanation_source: Literal["model", "template"] = "template"

@@ -20,3 +20,4 @@ first_year: 2007
 last_year: null # still updated (latest period seen: 2026)
 related: []
 filters: { nrg_cons: "KWH2500-4999", tax: "I_TAX", currency: "EUR" }
+nominal: true # current prices (half-yearly: no price index to adjust it with yet)

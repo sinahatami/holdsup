@@ -13,3 +13,14 @@ def fmt(x: float) -> str:
     if "." in text:
         text = text.rstrip("0").rstrip(".")
     return "0" if text in ("-0", "") else text
+
+
+def signed(x: float) -> str:
+    """A change with its sign: +4.2, -4.2, 0."""
+    text = fmt(x)
+    return f"+{text}" if x > 0 and text != "0" else text
+
+
+def unit_suffix(unit: str | None) -> str:
+    """How a unit follows a number: "%" closes up ("7.7%"), words take a space ("7 tonnes")."""
+    return "" if not unit else unit if unit.startswith("%") else f" {unit}"
