@@ -1044,6 +1044,10 @@ export const strings = {
         "Each step says what to do; a calculator or a spreadsheet is enough.",
       compare: "Compare with the claim.",
       compareBody: "The result should fall within the allowed gap shown above.",
+      notebook: "Or run the notebook.",
+      notebookBody:
+        "It repeats every calculation of this check in Python, from the values each one read, and stops if a number differs from this receipt. It needs only Python 3.10 or later.",
+      notebookLink: "Download the notebook (.ipynb)",
     },
     technical: {
       heading: "Technical details",

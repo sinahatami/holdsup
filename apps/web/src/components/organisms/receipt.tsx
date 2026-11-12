@@ -12,17 +12,21 @@ const t = strings.receipt;
 /**
  * The receipt of one claim, open on the page: how the claim was read, the
  * official series it was matched to, every calculation, what the verdict
- * compared, and how to check it again. The technical details fold away.
+ * compared, and how to check it again (or run its notebook). The technical
+ * details fold away.
  */
 export function Receipt({
   claim,
   versions,
   sharedModels = [],
+  checkId,
 }: {
   claim: ClaimResult;
   versions: CheckResult["versions"];
   /** Models that served the whole check (reading the claims), not one claim. */
   sharedModels?: NonNullable<CheckResult["models"]>;
+  /** The stored check, for its notebook download. */
+  checkId?: string;
 }) {
   const id = `receipt-${claim.index}`;
   return (
@@ -41,7 +45,7 @@ export function Receipt({
       <SeriesDetails id={`${id}-series`} claim={claim} />
       <Recomputation id={`${id}-steps`} claim={claim} />
       <VerdictParts id={`${id}-compared`} claim={claim} />
-      <VerifyYourself id={`${id}-verify`} claim={claim} />
+      <VerifyYourself id={`${id}-verify`} claim={claim} checkId={checkId} />
       <TechnicalDetails
         claim={claim}
         versions={versions}

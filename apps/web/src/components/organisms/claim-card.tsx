@@ -81,7 +81,12 @@ export function ClaimCard({
       )}
       <FramingChecks claim={c} />
       <CantCheckHelp claim={c} />
-      <Receipt claim={c} versions={versions} sharedModels={sharedModels} />
+      <Receipt
+        claim={c}
+        versions={versions}
+        sharedModels={sharedModels}
+        checkId={checkId}
+      />
       <ReportMatch checkId={checkId} claimIndex={c.index} />
     </article>
   );
