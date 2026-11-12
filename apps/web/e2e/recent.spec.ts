@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { axeViolations } from "./axe";
 
 /** The checks on show: one link to a receipt for each. */
 const cards = (page: Page) => page.locator('a[href^="/check/"]');
@@ -80,17 +80,14 @@ test.describe("the recent checks page", () => {
   }) => {
     await page.goto("/recent");
     await expect(page.getByRole("status")).toBeVisible();
-    const scan = () =>
-      new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-        .analyze();
-    expect((await scan()).violations).toEqual([]);
+    const scan = () => axeViolations(page);
+    expect(await scan()).toEqual([]);
     await page.getByRole("button", { name: /^Does not hold up/ }).click();
     await page.getByLabel("Place").selectOption("DE");
     await expect(
       page.getByText("No check matches these filters."),
     ).toBeVisible();
-    expect((await scan()).violations).toEqual([]);
+    expect(await scan()).toEqual([]);
   });
 
   test("fits a 360px screen without sideways scrolling", async ({ page }) => {

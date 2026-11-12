@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axeViolations } from "./axe";
 import { CHECK_ID } from "./ids";
 import { mockApi } from "./mock-api";
 
@@ -89,9 +89,7 @@ test.describe("a page that does not exist", () => {
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-      .analyze();
+    const violations = await axeViolations(page);
     expect(violations).toEqual([]);
   });
 });
