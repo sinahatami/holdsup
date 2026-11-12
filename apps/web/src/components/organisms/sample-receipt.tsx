@@ -111,7 +111,7 @@ export function SampleReceipt({ href }: { href?: string }) {
           <div className="border-border border-t pt-3">
             <Link
               href={href}
-              className="text-foreground decoration-foreground/30 hover:decoration-foreground inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4 after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-4 focus-visible:after:ring-ring/50"
+              className="text-foreground decoration-foreground/30 hover:decoration-foreground inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4 after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-ring focus-visible:after:ring-2 focus-visible:after:ring-offset-2 focus-visible:after:ring-offset-background"
             >
               {s.open}
               <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />

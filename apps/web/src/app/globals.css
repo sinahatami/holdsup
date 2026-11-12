@@ -199,7 +199,8 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* A solid ring colour: at 50% the default focus ring was 1.9:1 on light (WCAG wants 3:1). */
+    @apply border-border outline-ring;
   }
   html {
     @apply font-sans;
