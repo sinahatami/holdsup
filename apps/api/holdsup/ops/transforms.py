@@ -1,6 +1,6 @@
-"""Operations that turn one series into another: per_capita, deflate."""
+"""Operations that turn one series into another: per_capita, deflate, chain_index."""
 
-from holdsup.ops.periods import Period
+from holdsup.ops.periods import Period, parse_period, same_frequency
 from holdsup.ops.record import DataPoint, Flag, FlagCode, OpError, OpRecord, finite
 from holdsup.ops.series import Series
 from holdsup.ops.values import resolve
@@ -77,5 +77,59 @@ def deflate(series: Series, price_index: Series, base: str) -> OpRecord:
         inputs=series.data_points() + price_index.data_points(),
         series=out,
         unit=unit,
+        flags=flags,
+    )
+
+
+def chain_index(rates: Series, base: str) -> OpRecord:
+    """A price index from changes on the previous period in % (yearly inflation rates): 100 in
+    `base`, and each period `1 + rate / 100` times the one before. The rate of a period is its
+    change from the period before, so the index reaches back one period before the first rate.
+    Only periods joined to `base` by consecutive rates are chained; the rest are flagged."""
+    start = parse_period(base)
+    same_frequency(start, rates.first)
+    per_year = rates.frequency.per_year
+    by_ordinal = {p.ordinal: v for p, v in rates.points}
+    index = {start.ordinal: 100.0}
+
+    def factor(ordinal: int) -> float:
+        growth = 1 + by_ordinal[ordinal] / 100
+        if growth <= 0:
+            raise OpError(f"a change of {by_ordinal[ordinal]}% leaves no price level to chain")
+        return growth
+
+    o = start.ordinal + 1
+    while o in by_ordinal:  # forward: index[o] = index[o - 1] × (1 + rate[o])
+        index[o] = finite(index[o - 1] * factor(o), f"the index in period {o}")
+        o += 1
+    o = start.ordinal
+    while o in by_ordinal:  # backward: index[o - 1] = index[o] ÷ (1 + rate[o])
+        index[o - 1] = finite(index[o] / factor(o), f"the index in period {o - 1}")
+        o -= 1
+    if len(index) == 1:
+        raise OpError(f"no change in % next to the base period {base} to chain from")
+    used = set(index) - {min(index)}  # the first index value needs no rate of its own
+    left_out = [str(p) for p, _ in rates.points if p.ordinal not in used]
+    flags = []
+    if left_out:
+        flags.append(
+            Flag(
+                code=FlagCode.MISSING_PERIODS,
+                detail=f"left out (not joined to {base} by consecutive changes): "
+                + ", ".join(left_out),
+                items=left_out,
+            )
+        )
+    periods = sorted(index)
+    out = [
+        rates.point(Period(o // per_year, o % per_year + 1, rates.frequency), index[o])
+        for o in periods
+    ]
+    return OpRecord(
+        op="chain_index",
+        args={"geo": rates.geo, "base": base},
+        inputs=rates.data_points(),
+        series=out,
+        unit=f"index, {base}=100",
         flags=flags,
     )

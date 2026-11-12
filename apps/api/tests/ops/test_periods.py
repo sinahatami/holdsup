@@ -4,7 +4,15 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from holdsup.ops import Frequency, OpError, Period, parse_period, published_by, years_between
+from holdsup.ops import (
+    Frequency,
+    OpError,
+    Period,
+    months_since,
+    parse_period,
+    published_by,
+    years_between,
+)
 from holdsup.ops.periods import periods_between
 
 
@@ -101,3 +109,30 @@ def test_published_by(frequency: Frequency, as_of: date, lag: int, last: str) ->
 def test_published_by_rejects_a_negative_lag() -> None:
     with pytest.raises(OpError, match="cannot be negative"):
         published_by(Frequency.ANNUAL, date(2015, 1, 1), -1)
+
+
+@pytest.mark.parametrize(
+    ("period", "day", "months"),
+    [
+        ("2024", date(2026, 11, 12), 23),  # December 2024 to November 2026
+        ("2024", date(2026, 12, 1), 24),
+        ("2026-09", date(2026, 11, 12), 2),
+        ("2026-Q3", date(2026, 11, 12), 2),  # Q3 ends in September
+        ("2026-S1", date(2026, 11, 12), 5),  # S1 ends in June
+        ("2026-11", date(2026, 11, 30), 0),
+    ],
+)
+def test_months_since(period: str, day: date, months: int) -> None:
+    assert months_since(parse_period(period), day) == months
+
+
+@given(
+    frequency=st.sampled_from(list(Frequency)),
+    day=st.dates(date(1950, 1, 1), date(2100, 12, 31)),
+    lag=st.integers(0, 36),
+)
+def test_the_last_period_published_by_a_day_is_at_least_its_lag_old(
+    frequency: Frequency, day: date, lag: int
+) -> None:
+    age = months_since(published_by(frequency, day, lag), day)
+    assert lag <= age < lag + 12 // frequency.per_year

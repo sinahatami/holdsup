@@ -22,3 +22,4 @@ first_year: 1995
 last_year: null # still updated
 related: [government_debt_pct_gdp, population_total]
 filters: { na_item: "GD", sector: "S13", unit: "MIO_EUR" }
+nominal: true # current prices; adjusted for inflation by consumer prices

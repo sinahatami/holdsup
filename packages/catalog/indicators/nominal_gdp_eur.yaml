@@ -23,3 +23,5 @@ last_year: null # still updated
 related:
   [real_gdp_volume, government_debt_eur, real_gdp_per_capita, population_total]
 filters: { na_item: "B1GQ", unit: "CP_MEUR" }
+nominal: true # current prices; adjusted for inflation by its real version
+real_version: real_gdp_volume
