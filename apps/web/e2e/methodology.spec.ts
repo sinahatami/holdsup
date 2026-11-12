@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { axeViolations } from "./axe";
 import { DONE_ID } from "./ids";
 
 /** Opens every folded section, once the page has finished loading so React has taken it over. */
@@ -98,9 +98,7 @@ test.describe("the methodology page", () => {
   test("has no accessibility violations", async ({ page }) => {
     await page.goto("/methodology");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-      .analyze();
+    const violations = await axeViolations(page);
     expect(violations).toEqual([]);
   });
 
@@ -109,11 +107,8 @@ test.describe("the methodology page", () => {
   }) => {
     await page.goto("/methodology");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await page.emulateMedia({ reducedMotion: "reduce" });
     await openEverything(page);
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-      .analyze();
+    const violations = await axeViolations(page);
     expect(violations).toEqual([]);
   });
 
