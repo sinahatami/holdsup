@@ -233,6 +233,75 @@ export const strings = {
     // The page title and the shared preview: how it came out, then what was said.
     metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
+  // The cherry-pick heatmap: the claim's direction over other start and end years (P3.2).
+  windows: {
+    heading: "Other time windows",
+    // How a window's result is said; `none` is for a claim without a direction.
+    shows: {
+      up: "The rise shows",
+      down: "The fall shows",
+      flat: "It stays flat",
+      none: "The claim holds",
+    },
+    showsNot: {
+      up: "The rise does not show",
+      down: "The fall does not show",
+      flat: "It does not stay flat",
+      none: "The claim does not hold",
+    },
+    summary: (
+      shows: string,
+      held: number,
+      counted: number,
+      pct: number,
+      need: number | null,
+    ) =>
+      `${shows} in ${
+        held === counted ? `all ${counted}` : `${held} of the ${counted}`
+      } nearby time windows${held === counted ? "" : ` (${pct}%)`}.${
+        need === null ? "" : ` To hold up, a claim needs at least ${need}%.`
+      }`,
+    noShare:
+      "The claim covers too short a span for other windows to count towards the verdict. The chart shows them for context.",
+    howToRead:
+      "Each square is a time window: it starts in the year of its row and ends in the year of its column. The claim's own window has a thick outline, and the dashed box holds the nearby windows that count towards the verdict.",
+    subYear: (start: string, end: string) =>
+      `Each window starts and ends at the same point in the year as the claim's own, ${start} to ${end}.`,
+    start: "Start",
+    end: "End",
+    chartLabel: "Time windows chart",
+    keys: "Use the arrow keys to move between windows. Home and End go to the first and last end year.",
+    cell: (start: string, end: string, figure: string, verdict: string) =>
+      `From ${start} to ${end}: ${figure}. ${verdict}.`,
+    notAWindow: (start: string, end: string) =>
+      `From ${start} to ${end}: not a time window, because the end is not after the start.`,
+    noFigure: (start: string, end: string) =>
+      `From ${start} to ${end}: the data gives no figure for this window.`,
+    ownWindow: "This is the claim's own window.",
+    nearWindow: "A nearby window, so it counts towards the verdict.",
+    points: (n: string) => `${n} points`,
+    perYear: (n: string) => `${n}% a year`,
+    units: {
+      ratio: "multiples of the start value (×)",
+      percent: "per cent change",
+      points: "percentage points",
+      cagr: "per cent a year",
+      none: "the series' own unit",
+    },
+    legend: {
+      empty: "No figure",
+      own: "The claim's window",
+      near: "Nearby windows, which count",
+    },
+    showTable: "Show as table",
+    hideTable: "Hide table",
+    tableLabel: "Time windows table",
+    tableCaption: (unit: string) =>
+      `Rows are start years and columns are end years. Figures are in ${unit}.`,
+    holdsWord: "holds",
+    failsWord: "does not hold",
+    ownWord: "the claim's window",
+  },
   cantCheck: {
     heading: "What you can do",
     cause: {

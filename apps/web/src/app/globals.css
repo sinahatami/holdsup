@@ -176,6 +176,28 @@
     --v-cant-bg: oklch(0.3 0.02 255);
   }
 }
+/* The cherry-pick heatmap (P3.2): blue where the claim's direction holds, orange with a hatch
+   where it does not. Hue, lightness and the hatch each tell them apart, never red vs green. */
+:root {
+  --sweep-holds: oklch(0.5 0.14 250);
+  --sweep-fails: oklch(0.72 0.15 55);
+  --sweep-hatch: oklch(0.45 0.13 45);
+  --sweep-empty: oklch(0.92 0.01 277);
+}
+.dark {
+  --sweep-holds: oklch(0.72 0.12 250);
+  --sweep-fails: oklch(0.5 0.13 50);
+  --sweep-hatch: oklch(0.8 0.12 60);
+  --sweep-empty: oklch(0.3 0.02 275);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --sweep-holds: oklch(0.72 0.12 250);
+    --sweep-fails: oklch(0.5 0.13 50);
+    --sweep-hatch: oklch(0.8 0.12 60);
+    --sweep-empty: oklch(0.3 0.02 275);
+  }
+}
 [data-verdict="supported"] {
   --v: var(--v-supported);
   --vbg: var(--v-supported-bg);
