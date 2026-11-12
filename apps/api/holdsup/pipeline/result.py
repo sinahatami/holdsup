@@ -12,7 +12,7 @@ from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
 from holdsup.checks import ChangePoints, DistortionCheck, Sweep
 from holdsup.config import get_settings
-from holdsup.ops import OpRecord
+from holdsup.ops import OpRecord, Series
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.trace import ModelUse, Step
 from holdsup.verdict import Verdict
@@ -86,6 +86,31 @@ class ExtraSource(BaseModel):
     data: DataRef
 
 
+class SeriesPoint(BaseModel):
+    period: str
+    value: float
+
+
+class ChartSeries(BaseModel):
+    """The series the claim's deciding operation read, as it read it: yearly values made from
+    months, or cut at the claim's date. The result page's chart shows it, so every number
+    there is one the check used."""
+
+    geo: str
+    frequency: str
+    unit: str | None
+    points: list[SeriesPoint]
+
+    @classmethod
+    def of(cls, series: Series) -> "ChartSeries":
+        return cls(
+            geo=series.geo,
+            frequency=str(series.frequency),
+            unit=series.unit,
+            points=[SeriesPoint(period=str(p), value=v) for p, v in series.points],
+        )
+
+
 class ClaimResult(BaseModel):
     index: int
     claim: ClaimSpec
@@ -98,6 +123,8 @@ class ClaimResult(BaseModel):
     plan_reason: str | None = None
     operations: list[OpRecord] = Field(default_factory=list)
     answer: list[int] = Field(default_factory=list)  # which operations decide the claim
+    # The claim's place's series as the first answer read it (the chart); None if not run.
+    series: ChartSeries | None = None
     # The claim's direction over every time window (the cherry-pick sweep); None when the
     # claim picked no window (a level, a rank, a comparison, no direction).
     sweep: Sweep | None = None
