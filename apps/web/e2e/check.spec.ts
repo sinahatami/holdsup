@@ -285,6 +285,26 @@ test("result page has no accessibility violations", async ({ page }) => {
   expect(violations).toEqual([]);
 });
 
+test("other time windows: a heatmap to walk with the keys, a table, and no accessibility violations", async ({
+  page,
+}) => {
+  await page.goto(`/check/${DONE_ID}`);
+  await expect(
+    page.getByText("The fall shows in all 15 nearby time windows."),
+  ).toBeVisible();
+  const chart = page.getByRole("group", { name: "Time windows chart" });
+  await chart.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(
+    page.getByText("From 2015 to 2022: -3.92 points. The fall shows."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Show as table" }).click();
+  const table = page.getByRole("region", { name: "Time windows table" });
+  await expect(table.getByRole("rowheader", { name: "2015" })).toBeVisible();
+  const violations = await axeViolations(page);
+  expect(violations).toEqual([]);
+});
+
 test("a receipt opened from its link has no accessibility violations", async ({
   page,
 }) => {
