@@ -1,5 +1,6 @@
 """One place's values over time, at one frequency, without gaps written as None."""
 
+from bisect import bisect_left, bisect_right
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 
@@ -15,6 +16,7 @@ class Series:
     points: tuple[tuple[Period, float], ...]  # sorted by period, one value per period
     unit: str | None = None
     _index: dict[Period, float] = field(init=False, repr=False, compare=False)
+    _ordinals: tuple[int, ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not self.points:
@@ -25,6 +27,7 @@ class Series:
         if ordinals != sorted(set(ordinals)):
             raise OpError(f"{self.geo}: periods must be sorted and unique")
         object.__setattr__(self, "_index", dict(self.points))
+        object.__setattr__(self, "_ordinals", tuple(ordinals))
 
     @classmethod
     def from_values(
@@ -74,6 +77,11 @@ class Series:
 
     def get(self, period: Period) -> float | None:
         return self._index.get(period)
+
+    def between(self, lo: Period, hi: Period) -> tuple[tuple[Period, float], ...]:
+        """The values from `lo` to `hi`, both included (same frequency as the series)."""
+        i = bisect_left(self._ordinals, lo.ordinal)
+        return self.points[i : bisect_right(self._ordinals, hi.ordinal, lo=i)]
 
     @property
     def first(self) -> Period:
