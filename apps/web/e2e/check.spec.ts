@@ -1,10 +1,10 @@
-import AxeBuilder from "@axe-core/playwright";
 import {
   expect,
   test,
   type APIRequestContext,
   type Page,
 } from "@playwright/test";
+import { axeViolations } from "./axe";
 import { CHECK_ID, DONE_ID, MISSING_ID } from "./ids";
 import { mockApi, mockReports } from "./mock-api";
 
@@ -263,18 +263,14 @@ test.describe("reporting a wrong match", () => {
     await expect(
       page.getByRole("group", { name: "What looks wrong?" }),
     ).toBeVisible();
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-      .analyze();
+    const violations = await axeViolations(page);
     expect(violations).toEqual([]);
   });
 });
 
 test("home page has no accessibility violations", async ({ page }) => {
   await page.goto("/");
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-    .analyze();
+  const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });
 
@@ -285,9 +281,7 @@ test("result page has no accessibility violations", async ({ page }) => {
     page.getByRole("article").getByText("Holds up", { exact: true }),
   ).toBeVisible();
   await page.getByText("Technical details").click();
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-    .analyze();
+  const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });
 
@@ -299,9 +293,7 @@ test("a receipt opened from its link has no accessibility violations", async ({
     page.getByRole("article").getByText("Holds up", { exact: true }),
   ).toBeVisible();
   await page.getByText("Technical details").click();
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-    .analyze();
+  const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });
 
@@ -310,9 +302,7 @@ test("a link to no check has no accessibility violations", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "No check at this link" }),
   ).toBeVisible();
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-    .analyze();
+  const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });
 
@@ -329,11 +319,6 @@ test("the progress of a live check fits a 360px screen and passes the accessibil
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
-  // Sections fade in as they scroll into view, so one below the fold reads lighter than
-  // it will; reduced motion turns that off, and the colours are the real ones.
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-    .analyze();
+  const violations = await axeViolations(page);
   expect(violations).toEqual([]);
 });

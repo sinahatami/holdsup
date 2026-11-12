@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axeViolations } from "./axe";
 
 /** The statistics on show, by name; assertions on it wait until the list settles. */
 const names = (page: import("@playwright/test").Page) =>
@@ -76,19 +76,16 @@ test.describe("the catalog page", () => {
     page,
   }) => {
     await page.goto("/indicators");
-    const scan = () =>
-      new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-        .analyze();
-    expect((await scan()).violations).toEqual([]);
+    const scan = () => axeViolations(page);
+    expect(await scan()).toEqual([]);
     await page.getByLabel("From year").fill("2020");
     await page.getByLabel("To year").fill("2010");
     await expect(
       page.getByText("The first year comes after the last year."),
     ).toBeVisible();
-    expect((await scan()).violations).toEqual([]);
+    expect(await scan()).toEqual([]);
     await page.getByLabel("Search").fill("zebra");
-    expect((await scan()).violations).toEqual([]);
+    expect(await scan()).toEqual([]);
   });
 
   test("fits a 360px screen without sideways scrolling", async ({ page }) => {

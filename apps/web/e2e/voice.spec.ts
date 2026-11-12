@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { axeViolations } from "./axe";
 
 // Chromium has real speech recognition, but it needs a microphone and Google's service, so
 // every test drives a stand-in that the page cannot tell apart.
@@ -157,9 +157,7 @@ test.describe("speaking a claim", () => {
         () => document.documentElement.scrollWidth - window.innerWidth,
       );
       expect(overflow).toBeLessThanOrEqual(0);
-      const { violations } = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-        .analyze();
+      const violations = await axeViolations(page);
       expect(violations).toEqual([]);
     };
     await expect(page.getByRole("button", { name: "Speak" })).toBeVisible();
