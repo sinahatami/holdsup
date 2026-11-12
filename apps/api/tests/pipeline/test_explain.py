@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+from holdsup.fmt import fmt
 from holdsup.ops import (
     AnnualValue,
     ChangeKind,
@@ -22,7 +23,6 @@ from holdsup.pipeline.explain import (
     allowed_numbers,
     explain,
     explain_message,
-    fmt,
     invented_numbers,
     template_explanation,
     written_numbers,
