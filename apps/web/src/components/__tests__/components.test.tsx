@@ -361,6 +361,33 @@ describe("CheckForm", () => {
     expect(note).toBeVisible();
   });
 
+  it("fills the box and focuses it for every example, the same way each time", () => {
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    for (const ex of strings.home.examples) {
+      (document.activeElement as HTMLElement | null)?.blur();
+      fireEvent.click(screen.getByRole("button", { name: ex }));
+      expect(box).toHaveValue(ex);
+      expect(box).toHaveFocus();
+    }
+    // Nothing was sent: picking an example only fills the box.
+    expect(
+      screen.getByRole("button", { name: strings.home.submit }),
+    ).toHaveAttribute("aria-disabled", "false");
+  });
+
+  it("offers the examples as a named list of buttons", () => {
+    render(<CheckForm />);
+    const list = screen.getByRole("list", {
+      name: strings.home.examplesHeading,
+    });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual([
+      ...strings.home.examples,
+    ]);
+    for (const b of buttons) expect(b).toHaveAttribute("type", "button");
+  });
+
   it("fills the box from an example and posts it", async () => {
     const fetchMock = vi
       .fn()

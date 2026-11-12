@@ -79,6 +79,13 @@ export function CheckForm({
     setText(e.target.value);
   }
 
+  // An example fills the box the same way typing would, then puts the cursor there to edit or send.
+  function onPickExample(example: string) {
+    voice.cancel();
+    setText(example);
+    box.current?.focus();
+  }
+
   function onVoiceToggle() {
     if (voice.listening) return voice.stop();
     typedBefore.current = text;
@@ -182,7 +189,7 @@ export function CheckForm({
         <ExampleList
           heading={t.examplesHeading}
           examples={t.examples}
-          onPick={setText}
+          onPick={onPickExample}
         />
       )}
     </form>
