@@ -206,7 +206,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     # The trend turns in 1998, 2007 and 2014; 2015 is beside the last but carries no claim.
     assert c.changepoints is not None and c.changepoints.breaks == ["1998", "2007", "2014"]
     assert c.changepoints.flags == []
-    assert out.versions.catalog == "0.7.0" and out.versions.tolerances == 4
+    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 4
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
