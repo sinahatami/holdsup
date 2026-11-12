@@ -25,6 +25,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -74,6 +75,8 @@
   --accent-foreground: oklch(0.3 0.1 277);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.9 0.02 277);
+  /* 3:1 against the page and the card, for the edge of the claim box (WCAG 1.4.11). */
+  --border-strong: oklch(0.2 0.03 275 / 0.5);
   --input: oklch(0.88 0.025 277);
   --ring: oklch(0.6 0.2 277);
   --background: oklch(0.985 0.006 277);
@@ -89,8 +92,8 @@
   --card-foreground: oklch(0.96 0.01 275);
   --popover: oklch(0.23 0.03 275);
   --popover-foreground: oklch(0.96 0.01 275);
-  --primary: oklch(0.68 0.19 277);
-  --primary-foreground: oklch(0.14 0.03 275);
+  --primary: oklch(0.55 0.22 277);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.27 0.04 275);
   --secondary-foreground: oklch(0.96 0.01 275);
   --muted: oklch(0.26 0.03 275);
@@ -99,6 +102,7 @@
   --accent-foreground: oklch(0.96 0.01 275);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 12%);
+  --border-strong: oklch(0.96 0.01 275 / 0.4);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.7 0.17 277);
 }
@@ -113,8 +117,8 @@
     --card-foreground: oklch(0.96 0.01 275);
     --popover: oklch(0.23 0.03 275);
     --popover-foreground: oklch(0.96 0.01 275);
-    --primary: oklch(0.68 0.19 277);
-    --primary-foreground: oklch(0.14 0.03 275);
+    --primary: oklch(0.55 0.22 277);
+    --primary-foreground: oklch(0.99 0 0);
     --secondary: oklch(0.27 0.04 275);
     --secondary-foreground: oklch(0.96 0.01 275);
     --muted: oklch(0.26 0.03 275);
@@ -123,6 +127,7 @@
     --accent-foreground: oklch(0.96 0.01 275);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 12%);
+    --border-strong: oklch(0.96 0.01 275 / 0.4);
     --input: oklch(1 0 0 / 16%);
     --ring: oklch(0.7 0.17 277);
   }
@@ -378,6 +383,10 @@ html {
 }
 .shine:hover::after {
   transform: translateX(120%);
+}
+.shine:disabled::after,
+.shine[aria-disabled="true"]::after {
+  display: none;
 }
 
 /* ---------- Custom cursor ---------- */
