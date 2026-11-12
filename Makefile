@@ -13,7 +13,7 @@ export FASTEMBED_CACHE_PATH
 API_DIR := apps/api
 WEB_DIR := apps/web
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -91,6 +91,15 @@ list-models: ## List model ids each provider serves to your keys (needs keys; no
 
 pivot-test: ## Phase 1 pivot test over eval/seed_claims.csv -> eval/reports/pivot_test.csv (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.pivot_test $(ARGS)
+
+eval-smoke: ## Smoke evaluation (eval/smoke_claims.jsonl) -> eval/reports/smoke.{json,md}; fails on a verdict-accuracy drop over 5 points vs eval/baseline.json (needs keys; not CI's unit tests)
+	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --gate $(ARGS)
+
+eval-baseline: ## Accept the current smoke run as eval/baseline.json (after reading the report; needs keys)
+	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --update-baseline $(ARGS)
+
+eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider)
+	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
 
 record-extractions: ## Record live extraction responses for the P2.1 tests (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.record_extractions $(ARGS)
