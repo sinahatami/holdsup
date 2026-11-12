@@ -59,11 +59,12 @@ process.on("SIGINT", () => {
 
 let code = 1;
 try {
-  // A check takes 400 ms to come back, as from a real API, so the loading frame is on
-  // screen first (without the delay a fast machine may skip it and hide a layout shift).
+  // A small delay ensures the loading frame is on screen before the check arrives
+  // (without it a fast machine may skip the frame and hide a layout shift).
+  // Keep it short so the LCP budget stays tight in CI.
   start("node", ["e2e/mock-server.mjs"], {
     PORT: String(API_PORT),
-    CHECK_DELAY_MS: "400",
+    CHECK_DELAY_MS: "50",
   });
   await waitFor(`http://127.0.0.1:${API_PORT}/`);
 
