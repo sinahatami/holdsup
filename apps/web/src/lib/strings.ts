@@ -233,6 +233,23 @@ export const strings = {
     // The page title and the shared preview: how it came out, then what was said.
     metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
+  // The distortion checks (P3.4): the claim read in other fair ways, each passed or flagged.
+  // Each line comes from the API, written by code with the numbers it computed.
+  framing: {
+    heading: "Framing checks",
+    intro:
+      "HoldsUp also redid the claim in other fair ways. A flagged check does not make the number wrong, but it changes how the claim should be read.",
+    kinds: {
+      endpoints: "Start and end",
+      per_capita: "Per person",
+      real: "After inflation",
+      points: "Percent or points",
+      definition: "What is measured",
+      stale: "How recent the figures are",
+    },
+    passed: "No problem found",
+    flagged: "Framing matters",
+  },
   // The cherry-pick heatmap: the claim's direction over other start and end years (P3.2).
   windows: {
     heading: "Other time windows",
@@ -753,6 +770,9 @@ export const strings = {
       // Change points: `share` is how much of the change a start or end may carry.
       turns: (share: string) =>
         `A claim that starts or ends at a peak, a trough or where the trend turns is flagged when that year carries it: from the usual level around then, the change would go the other way or be more than ${share} smaller. Then the framing matters.`,
+      // The stale-data check: a claim about the present on figures `years` or more years old.
+      stale: (years: number) =>
+        `A claim about the present is flagged when its latest figure is for a period that ended ${years === 1 ? "1 year" : `${years} years`} or more before the claim was made (or before today, if it has no date).`,
       // The cherry-pick sweep: `reach` and `minYears` in years, `share` the framing threshold.
       windows: (reach: number, minYears: number, share: string) =>
         `A claim that something rose, fell or stayed flat over at least ${minYears === 1 ? "1 year" : `${minYears} years`} is also redone with its start moved up to ${reach === 1 ? "1 year" : `${reach} years`} either way and its end up to ${reach === 1 ? "1 year" : `${reach} years`} earlier. To hold up, it has to go the same way in at least ${share} of those time windows; otherwise the framing matters.`,

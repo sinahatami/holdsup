@@ -8,6 +8,7 @@ export type ClaimSpec = components["schemas"]["ClaimSpec"];
 export type Operation = NonNullable<ClaimResult["operations"]>[number];
 /** One checked piece of a claim: the figures a verdict compared. */
 export type Part = NonNullable<ClaimResult["verdict"]["parts"]>[number];
+export type DistortionCheck = components["schemas"]["DistortionCheck"];
 export type CheckView = components["schemas"]["CheckView"];
 export type CheckAccepted = components["schemas"]["CheckAccepted"];
 export type CatalogResponse = components["schemas"]["CatalogResponse"];

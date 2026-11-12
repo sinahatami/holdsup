@@ -75,6 +75,7 @@ export function AllowedGaps({ tolerances: tol }: { tolerances: Tolerances }) {
             )}
           </li>
           <li>{g.turns(percentText(tol.changepoints.shrink))}</li>
+          <li>{g.stale(tol.distortions.stale_years)}</li>
           <li>{g.periodGap(periodGap(tol.max_period_gap))}</li>
         </ul>
       </section>
