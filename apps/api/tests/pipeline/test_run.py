@@ -97,7 +97,9 @@ async def test_steps_summaries_name_what_happened() -> None:
     assert summaries["match"] == "Matched Unemployment rate (eurostat une_rt_a)."
     assert summaries["fetch"] == "Fetched 9 rows, 2015 to 2023."
     assert summaries["plan"] == "Planned change."
-    assert summaries["execute"] == "Ran 1 operation; recomputed 36 time windows."
+    assert summaries["execute"] == (
+        "Ran 1 operation; recomputed 36 time windows; 2 framing checks, none flagged."
+    )
     assert summaries["verdict"].startswith("supported")
     assert next(e for e in events if e.step is Step.MATCH and e.event == "step_done").models == [
         "fake/fake-model"
@@ -131,7 +133,14 @@ async def test_a_fall_from_a_spike_holds_but_the_framing_matters() -> None:
         "percentage points rather than -4 percentage points."
     )
     summaries = {str(e.step): e.summary for e in events if e.event == "step_done"}
-    assert summaries["execute"] == "Ran 1 operation; recomputed 55 time windows."
+    assert summaries["execute"] == (
+        "Ran 1 operation; recomputed 55 time windows; 2 framing checks, 1 flagged."
+    )
+    # The start on a peak is the one flagged framing check; the points check passes.
+    assert [(ch.kind, ch.flagged) for ch in c.distortion_checks] == [
+        ("endpoints", True),
+        ("points", False),
+    ]
 
 
 async def test_a_steady_fall_is_swept_and_stays_supported() -> None:
@@ -279,11 +288,12 @@ async def test_explain_out_of_providers_falls_back_to_the_template() -> None:
 
 
 async def test_an_invented_number_twice_falls_back_to_the_template() -> None:
-    invented = explain_answer("Unemployment fell by 35% since 2015.")
+    # 35% would pass: the points check computed the fall in percent (-35.3%).
+    invented = explain_answer("Unemployment fell by 61% since 2015.")
     script = [extraction(claim_json()), match_answer(), plan_answer(), invented, invented]
     out, events, _, _ = await run(script)
     assert out.claims[0].explanation_source == "template"
-    assert "35" not in out.claims[0].explanation
+    assert "61" not in out.claims[0].explanation
     assert "numbers not in the results" in events[-1].summary
 
 

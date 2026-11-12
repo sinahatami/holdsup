@@ -68,7 +68,11 @@ def written_numbers(text: str) -> list[Written]:
 
 
 def allowed_numbers(
-    records: Sequence[OpRecord], verdict: Verdict, claim: ClaimSpec, unit: str | None
+    records: Sequence[OpRecord],
+    verdict: Verdict,
+    claim: ClaimSpec,
+    unit: str | None,
+    checks: Sequence[str] = (),
 ) -> set[float]:
     """Every number the explanation may use, as magnitudes (signs are words: "fell 12")."""
     values: set[float] = set()
@@ -88,9 +92,9 @@ def allowed_numbers(
         values.update({verdict.window_share, verdict.window_share * 100})
     if verdict.framing_threshold is not None:
         values.update({verdict.framing_threshold, verdict.framing_threshold * 100})
-    # Framing flags are written by code from computed numbers (change points, P3.3).
-    for distortion in verdict.distortions:
-        values.update(w.value for w in written_numbers(distortion))
+    # Framing flags and distortion check lines are written by code from computed numbers.
+    for line in [*verdict.distortions, *checks]:
+        values.update(w.value for w in written_numbers(line))
     values.update(w.value for w in written_numbers(claim.quote))
     for period in (claim.start, claim.end):
         if period:
@@ -154,6 +158,8 @@ either (no "the claim does not hold up"). Say what the data shows, in your own w
 the verdict.
 - When the claim is about the present ("today", "now"), name the period of the latest value, \
 as RESULTS write it after the place (for example "September 2026" for IT 2026-09).
+- FRAMING CHECKS were run by code. Mention a flagged one when it changes how the claim should \
+be read; a passed one only when it answers an obvious doubt.
 
 Answer with JSON: {"explanation": "..."}."""
 
@@ -163,7 +169,11 @@ class ExplainAnswer(BaseModel):
 
 
 def explain_message(
-    claim: ClaimSpec, verdict: Verdict, records: Sequence[OpRecord], indicator: str
+    claim: ClaimSpec,
+    verdict: Verdict,
+    records: Sequence[OpRecord],
+    indicator: str,
+    checks: Sequence[str] = (),
 ) -> str:
     parts = "\n".join(f"- {p.name}: {'holds' if p.holds else 'does not hold'}; {p.detail}"
                       for p in verdict.parts)  # fmt: skip
@@ -174,6 +184,7 @@ def explain_message(
         + (f"Checks:\n{parts}\n" if parts else "")
         + "RESULTS:\n"
         + "\n".join(_record_line(r) for r in records)
+        + ("\nFRAMING CHECKS:\n" + "\n".join(f"- {c}" for c in checks) if checks else "")
     )
 
 
@@ -210,13 +221,14 @@ async def explain(
     indicator: str,
     unit: str | None,
     use: Use = Use.LIVE,
+    checks: Sequence[str] = (),
 ) -> Explanation:
     """Two tries at a model explanation that passes the invented-number check, then the
-    template. RouterError propagates."""
-    allowed = allowed_numbers(records, verdict, claim, unit)
+    template. RouterError propagates. `checks` are the distortion checks' lines."""
+    allowed = allowed_numbers(records, verdict, claim, unit, checks)
     convo: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": EXPLAIN_SYSTEM},
-        {"role": "user", "content": explain_message(claim, verdict, records, indicator)},
+        {"role": "user", "content": explain_message(claim, verdict, records, indicator, checks)},
     ]
     out = Explanation(text="", source="template")
     for _ in range(2):

@@ -263,6 +263,21 @@ def direction_judge(
     return holds
 
 
+def assertion_judge(
+    claim: ClaimSpec, *, unit: str | None, tolerances: Tolerances
+) -> Callable[[OpRecord], bool]:
+    """Whether one answer record meets the claim's main assertion, its number included, by the
+    verdict's own rules; stated start and end values aside. The percent-or-points check asks it
+    of the same change read the other way (D026)."""
+    bare = claim.assertion.model_copy(update={"start_value": None, "end_value": None})
+    rules = _Rules(claim.model_copy(update={"assertion": bare}), unit, tolerances)
+
+    def holds(record: OpRecord) -> bool:
+        return all(p.holds for p in _JUDGES[record.op](rules, [record]))
+
+    return holds
+
+
 # How the framing reason names what the sweep looked for in each window.
 _SHOWS = {
     Direction.UP: "the rise shows",

@@ -1,6 +1,6 @@
 # Verdict tolerances (docs/spec.md "Tolerances"). Shown on every receipt.
 # Tune on the dev split only (P4.7); bump `version` whenever a value changes.
-version: 4
+version: 5
 
 # "Supported" also needs the claim to hold in at least this share of reasonable time windows
 # (the cherry-pick sweep, P3.1); below it the label is "supported, but framing matters".
@@ -18,6 +18,10 @@ sweep: { reach: 2, min_years: 2 }
 # with the typical level around it in its place, the change goes the other way or shrinks by
 # more than `shrink`.
 changepoints: { shrink: 0.25 }
+
+# Distortion checks (D026). A claim about the present is flagged when its latest figure is for a
+# period that ended at least `stale_years` years before the claim was made (or before today).
+distortions: { stale_years: 2 }
 
 # A stated value holds when |computed - asserted| <= the largest of:
 #   relative × |asserted|, absolute, and (if rounding) half a unit of the asserted number's

@@ -29,8 +29,20 @@ from holdsup.adapters.base import (
 )
 from holdsup.catalog.schema import Catalog, IndicatorSpec
 from holdsup.catalog.search import CatalogSearch
-from holdsup.checks import ChangePoints, Sweep, change_points, flag_text, sweep
+from holdsup.checks import (
+    ChangePoints,
+    CheckInput,
+    DistortionCheck,
+    Related,
+    Sweep,
+    change_points,
+    distortion_checks,
+    said_between,
+    sweep,
+    wants_real_terms,
+)
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
+from holdsup.ops import OpError, Series
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
 from holdsup.pipeline.extract import extract_claims, parse_said_on
@@ -45,6 +57,7 @@ from holdsup.pipeline.plan import (
     plan_analysis,
 )
 from holdsup.pipeline.population import population_for, wants_population
+from holdsup.pipeline.prices import real_terms_source
 from holdsup.pipeline.result import (
     ClaimResult,
     DataRef,
@@ -131,12 +144,14 @@ class Pipeline:
     terms: OfficeTerms | None = None
     today: Callable[[], date] | None = None
 
+    def _today(self) -> date:
+        return self.today() if self.today else datetime.now(UTC).date()
+
     def _as_of(self, claim: ClaimSpec) -> date | None:
         """The day a dated claim is checked as of: the last day it can have been said."""
         if claim.said_on is None:
             return None
-        today = self.today() if self.today else datetime.now(UTC).date()
-        return parse_said_on(claim.said_on, today).by
+        return parse_said_on(claim.said_on, self._today()).by
 
     def versions(self) -> dict[str, object]:
         """What a stored result must match to be reused (the ledger): the catalog and the
@@ -204,7 +219,7 @@ class Pipeline:
                 for call in plan.calls
                 if call.population is not None and call.population in c.extra
             ]
-            execution = await self._execute(c, plan, ctx, data)
+            execution = await self._execute(c, spec, plan, ctx, data)
             await self._verdict(c, plan, execution)
             await self._explain(c, spec, execution)
         except _CantCheck as stop:
@@ -339,6 +354,7 @@ class Pipeline:
     async def _execute(
         self,
         c: _ClaimRun,
+        spec: IndicatorSpec,
         plan: ValidPlan,
         ctx: PlanContext,
         data: dict[str, list[Observation]],
@@ -353,10 +369,16 @@ class Pipeline:
             )
         c.out.sweep = self._sweep(c.claim, plan, execution)
         c.out.changepoints = self._change_points(c.claim, plan, execution)
+        checks = await self._distortions(c, spec, plan, execution, data)
+        c.out.distortion_checks = checks
         n = len(execution.records)
         summary = f"Ran {n} operation{'s' if n != 1 else ''}"
         if c.out.sweep is not None:
             summary += f"; recomputed {c.out.sweep.windows} time windows"
+        if checks:
+            flagged = sum(ch.flagged for ch in checks)
+            summary += f"; {len(checks)} framing check{'s' if len(checks) != 1 else ''}"
+            summary += f", {flagged} flagged" if flagged else ", none flagged"
         await c.done(Step.EXECUTE, summary + ".")
         return execution
 
@@ -386,6 +408,66 @@ class Pipeline:
             claim, execution.records[i], execution.series[i], tolerances=self.tolerances
         )
 
+    async def _distortions(
+        self,
+        c: _ClaimRun,
+        spec: IndicatorSpec,
+        plan: ValidPlan,
+        execution: Execution,
+        data: dict[str, list[Observation]],
+    ) -> list[DistortionCheck]:
+        """The distortion checks (P3.4) of the claim's answer. The series a check reads besides
+        the claim's (population, prices, a real version) join the receipt's sources."""
+        first = plan.answer[0]
+        answer = [execution.records[i] for i in plan.answer]
+        call = plan.calls[first]
+        adjusted = call.series not in (None, spec.id)  # a series the plan made, or another one
+        geo = c.claim.geo or ""
+        population = population_for(self.catalog, c.claim.geo) if wants_population(spec) else None
+        prices: Related | None = None
+        source = None
+        if wants_real_terms(c.claim, spec, answer, adjusted):
+            source = real_terms_source(self.catalog, spec, c.claim.geo)
+        if source is not None:
+            prices = await self._related(c, source, data)
+        checks = distortion_checks(
+            CheckInput(
+                claim=c.claim,
+                spec=spec,
+                answer=answer,
+                series=execution.series[first] if first < len(execution.series) else None,
+                unit=execution.unit,
+                tolerances=self.tolerances,
+                today=self._today(),
+                said=said_between(c.claim.said_on, self._as_of(c.claim)),
+                adjusted=adjusted,
+                changepoints=c.out.changepoints,
+                population=_related(population, data, geo),
+                real=prices if source is not None and source.id == spec.real_version else None,
+                prices=prices if source is not None and source.id != spec.real_version else None,
+            )
+        )
+        listed = {e.indicator.id for e in c.out.extra_sources}
+        for used in dict.fromkeys(ch.uses for ch in checks if ch.uses is not None):
+            if used not in listed and used in c.extra:
+                c.out.extra_sources.append(c.extra[used])
+        return checks
+
+    async def _related(
+        self, c: _ClaimRun, spec: IndicatorSpec, data: dict[str, list[Observation]]
+    ) -> Related | None:
+        """A series a check reads (fetched now, only when the check applies). Best effort: the
+        check is left out when the source has nothing."""
+        try:
+            series, observations = await self._load(c.claim, spec)
+        except _CantCheck:
+            return None
+        data[spec.id] = observations
+        c.extra[spec.id] = ExtraSource(
+            indicator=IndicatorRef.of(spec), data=DataRef.of(series, observations)
+        )
+        return _related(spec, data, c.claim.geo or "")
+
     async def _verdict(self, c: _ClaimRun, plan: ValidPlan, execution: Execution) -> None:
         await c.start(Step.VERDICT)
         verdict = decide(
@@ -395,10 +477,7 @@ class Pipeline:
             unit=execution.unit,
             tolerances=self.tolerances,
             window_share=c.out.sweep.share if c.out.sweep else None,
-            distortions=[
-                flag_text(f, execution.records[plan.answer[0]].unit)
-                for f in (c.out.changepoints.flags if c.out.changepoints else [])
-            ],
+            distortions=[ch.text for ch in c.out.distortion_checks if ch.flagged],
         )
         c.out.verdict = verdict
         status: StepStatus = "cant_check" if verdict.label is Label.CANT_CHECK else "ok"
@@ -415,6 +494,7 @@ class Pipeline:
             explained = await explain(
                 self.router, c.claim, out.verdict, execution.records,
                 indicator=spec.name, unit=execution.unit, use=self.use,
+                checks=[_check_line(ch) for ch in out.distortion_checks],
             )  # fmt: skip
         except RouterError:
             out.explanation = template_explanation(out.verdict, spec.name)
@@ -432,3 +512,20 @@ class Pipeline:
 
 def _name(out: ClaimResult) -> str:
     return out.indicator.name if out.indicator else "matched"
+
+
+def _related(
+    spec: IndicatorSpec | None, data: dict[str, list[Observation]], geo: str
+) -> Related | None:
+    """The place's values of a fetched series, or None when it was not fetched or has none."""
+    if spec is None or spec.id not in data:
+        return None
+    try:
+        return Related(spec, Series.from_observations(data[spec.id], geo, unit=spec.unit))
+    except OpError:
+        return None
+
+
+def _check_line(check: DistortionCheck) -> str:
+    """A distortion check as the explanation step reads it: "per_capita (flagged): ..."."""
+    return f"{check.kind} ({'flagged' if check.flagged else 'passed'}): {check.text}"
