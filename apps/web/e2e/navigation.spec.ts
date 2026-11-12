@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axeViolations } from "./axe";
 
 const PAGES = [
   { name: "What it can check", url: /\/indicators$/ },
@@ -76,9 +76,7 @@ test.describe("the menu on a phone", () => {
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
-    const { violations } = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
-      .analyze();
+    const violations = await axeViolations(page);
     expect(violations).toEqual([]);
   });
 });
