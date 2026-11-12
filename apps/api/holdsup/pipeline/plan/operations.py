@@ -135,8 +135,9 @@ SERIES_OPS = frozenset(name for name, spec in OPERATIONS.items() if spec.makes_s
 
 def run_call(
     call: OpCall, read: SeriesReader, ctx: PlanContext, tolerances: Tolerances
-) -> OpRecord:
-    """Run one validated call, reading its own series first."""
+) -> tuple[OpRecord, Series]:
+    """Run one validated call, reading its own series first; returns the record and that
+    series as the call saw it (the cherry-pick sweep reruns the call on it)."""
     s = read(call.series, call.geo or "")
     gap = tolerances.max_period_gap.get(s.frequency)
-    return OPERATIONS[call.op].run(OpInput(call, s, read, ctx, gap))
+    return OPERATIONS[call.op].run(OpInput(call, s, read, ctx, gap)), s

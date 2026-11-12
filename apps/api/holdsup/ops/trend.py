@@ -39,12 +39,15 @@ def linear_fit(xs: list[float], ys: list[float]) -> LinearFit:
     return LinearFit(slope, intercept, max(0.0, 1 - ss_res / ss_tot))
 
 
-def trend(series: Series, start: str, end: str) -> OpRecord:
-    """Slope per year of a least-squares line through every value from `start` to `end`."""
+def trend(series: Series, start: str, end: str, *, keep_inputs: bool = True) -> OpRecord:
+    """Slope per year of a least-squares line through every value from `start` to `end`.
+
+    `keep_inputs=False` leaves the window's values out of the record: the cherry-pick sweep
+    fits hundreds of windows and keeps only the numbers each one gives."""
     lo, hi = resolve(series, start), resolve(series, end)
     if lo.ordinal >= hi.ordinal:
         raise OpError(f"{series.geo}: the window {lo}..{hi} is empty or reversed")
-    window = [(p, v) for p, v in series.points if lo.ordinal <= p.ordinal <= hi.ordinal]
+    window = series.between(lo, hi)
     if len(window) < 2:
         raise OpError(f"{series.geo} has fewer than two values from {lo} to {hi}")
     fit = linear_fit([p.time for p, _ in window], [v for _, v in window])
@@ -75,7 +78,7 @@ def trend(series: Series, start: str, end: str) -> OpRecord:
     return OpRecord(
         op="trend",
         args={"geo": series.geo, "start": start, "end": end},
-        inputs=[series.point(p, v) for p, v in window],
+        inputs=[series.point(p, v) for p, v in window] if keep_inputs else [],
         value=fit.slope,
         extras=extras,
         unit=unit,
