@@ -174,3 +174,26 @@ export function showsLabel(
 export function subYear(s: Sweep): boolean {
   return s.claim_start.length > 4;
 }
+
+const yearList = new Intl.ListFormat(strings.locale, {
+  style: "long",
+  type: "conjunction",
+});
+
+/**
+ * The years on the grid's axes in which the trend turns (the change points), oldest first.
+ * A break in a monthly series marks its year.
+ */
+export function turnYears(s: Sweep, breaks: readonly string[]): string[] {
+  const axis = new Set([...s.starts, ...s.ends].map((p) => p.slice(0, 4)));
+  return [...new Set(breaks.map((b) => b.slice(0, 4)))]
+    .filter((y) => axis.has(y))
+    .sort();
+}
+
+/** "The trend turns in 1998, 2007 and 2014.", or null when it does not on the grid. */
+export function turnsSentence(years: readonly string[]): string | null {
+  return years.length === 0
+    ? null
+    : strings.windows.turns(yearList.format(years));
+}

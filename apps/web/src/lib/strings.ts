@@ -267,8 +267,8 @@ export const strings = {
       "Each square is a time window: it starts in the year of its row and ends in the year of its column. The claim's own window has a thick outline, and the dashed box holds the nearby windows that count towards the verdict.",
     subYear: (start: string, end: string) =>
       `Each window starts and ends at the same point in the year as the claim's own, ${start} to ${end}.`,
-    start: "Start",
-    end: "End",
+    start: "Start ↓",
+    end: "End →",
     chartLabel: "Time windows chart",
     keys: "Use the arrow keys to move between windows. Home and End go to the first and last end year.",
     cell: (start: string, end: string, figure: string, verdict: string) =>
@@ -277,6 +277,8 @@ export const strings = {
       `From ${start} to ${end}: not a time window, because the end is not after the start.`,
     noFigure: (start: string, end: string) =>
       `From ${start} to ${end}: the data gives no figure for this window.`,
+    // The years the trend turns in (change points, P3.3), marked on the chart's axes.
+    turns: (years: string) => `The trend turns in ${years}.`,
     ownWindow: "This is the claim's own window.",
     nearWindow: "A nearby window, so it counts towards the verdict.",
     points: (n: string) => `${n} points`,
@@ -289,6 +291,7 @@ export const strings = {
       none: "the series' own unit",
     },
     legend: {
+      turns: "Where the trend turns",
       empty: "No figure",
       own: "The claim's window",
       near: "Nearby windows, which count",
@@ -300,6 +303,9 @@ export const strings = {
       `Rows are start years and columns are end years. Figures are in ${unit}.`,
     holdsWord: "holds",
     failsWord: "does not hold",
+    // The table's marks; the words above are what a screen reader hears.
+    marks: { holds: "✓", fails: "✗", empty: "—" },
+    tableKey: (shows: string, showsNot: string) => `✓ ${shows}. ✗ ${showsNot}.`,
     ownWord: "the claim's window",
   },
   cantCheck: {
@@ -744,6 +750,9 @@ export const strings = {
         `“Flat” or “stable” holds when the end value is within ${share} of the start value.`,
       trend: (share: string) =>
         `“Rising” or “falling” also needs the straight line to explain at least ${share} of the ups and downs.`,
+      // Change points: `share` is how much of the change a start or end may carry.
+      turns: (share: string) =>
+        `A claim that starts or ends at a peak, a trough or where the trend turns is flagged when that year carries it: from the usual level around then, the change would go the other way or be more than ${share} smaller. Then the framing matters.`,
       // The cherry-pick sweep: `reach` and `minYears` in years, `share` the framing threshold.
       windows: (reach: number, minYears: number, share: string) =>
         `A claim that something rose, fell or stayed flat over at least ${minYears === 1 ? "1 year" : `${minYears} years`} is also redone with its start moved up to ${reach === 1 ? "1 year" : `${reach} years`} either way and its end up to ${reach === 1 ? "1 year" : `${reach} years`} earlier. To hold up, it has to go the same way in at least ${share} of those time windows; otherwise the framing matters.`,
