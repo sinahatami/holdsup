@@ -75,6 +75,15 @@ def unknown_claim(index: int) -> Problem:
     )
 
 
+def not_offered(indicator_id: str) -> Problem:
+    return Problem(
+        type="/problems/not-offered",
+        title="Not a statistic this claim offers",
+        status=422,
+        detail=f"{indicator_id} is not among the statistics this claim can be re-checked with.",
+    )
+
+
 def at_capacity(wait_s: float | None) -> Problem:
     wait = _seconds(wait_s)
     minutes = f" Try again in about {math.ceil(wait / 60)} minutes." if wait else ""

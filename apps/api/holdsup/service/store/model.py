@@ -15,7 +15,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from holdsup.pipeline.ledger import LedgerEntry, LedgerStore
-from holdsup.pipeline.result import ClaimResult, Versions
+from holdsup.pipeline.result import ClaimResult, Suggestion, Versions
 from holdsup.pipeline.trace import ModelUse
 from holdsup.problems import Problem
 
@@ -48,6 +48,14 @@ class StoredReport:
     created_at: datetime
 
 
+class RecheckOf(BaseModel):
+    """The claim a re-check redid with a statistic a reader chose."""
+
+    check_id: UUID
+    claim_index: int
+    replaced: Suggestion | None  # the statistic the first check used, if it matched one
+
+
 class CheckResult(BaseModel):
     """A finished check: what `GET /v1/checks/{id}` returns and the ledger stores."""
 
@@ -56,6 +64,7 @@ class CheckResult(BaseModel):
     created_at: datetime
     finished_at: datetime
     cached_from: UUID | None = None  # the check this result was first computed for
+    recheck_of: RecheckOf | None = None  # a re-check: never a ledger entry
     claims: list[ClaimResult]
     versions: Versions
     models: list[ModelUse]  # check-wide model calls; each claim lists its own
