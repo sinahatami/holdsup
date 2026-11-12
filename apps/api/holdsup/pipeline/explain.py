@@ -88,6 +88,9 @@ def allowed_numbers(
         values.update({verdict.window_share, verdict.window_share * 100})
     if verdict.framing_threshold is not None:
         values.update({verdict.framing_threshold, verdict.framing_threshold * 100})
+    # Framing flags are written by code from computed numbers (change points, P3.3).
+    for distortion in verdict.distortions:
+        values.update(w.value for w in written_numbers(distortion))
     values.update(w.value for w in written_numbers(claim.quote))
     for period in (claim.start, claim.end):
         if period:

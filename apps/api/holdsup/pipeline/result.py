@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
-from holdsup.checks import Sweep
+from holdsup.checks import ChangePoints, Sweep
 from holdsup.config import get_settings
 from holdsup.ops import OpRecord
 from holdsup.pipeline.claim import ClaimSpec
@@ -100,6 +100,8 @@ class ClaimResult(BaseModel):
     # The claim's direction over every time window (the cherry-pick sweep); None when the
     # claim picked no window (a level, a rank, a comparison, no direction).
     sweep: Sweep | None = None
+    # Breaks in the trend of the series the answer read, and a start or end that leans on one.
+    changepoints: ChangePoints | None = None
     verdict: Verdict
     explanation: str
     explanation_source: Literal["model", "template"] = "template"
