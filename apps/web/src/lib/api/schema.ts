@@ -281,6 +281,22 @@ export interface components {
       /** Flags */
       flags: components["schemas"]["EndpointFlag"][];
     };
+    /**
+     * ChartSeries
+     * @description The series the claim's deciding operation read, as it read it: yearly values made from
+     *     months, or cut at the claim's date. The result page's chart shows it, so every number
+     *     there is one the check used.
+     */
+    ChartSeries: {
+      /** Geo */
+      geo: string;
+      /** Frequency */
+      frequency: string;
+      /** Unit */
+      unit: string | null;
+      /** Points */
+      points: components["schemas"]["SeriesPoint"][];
+    };
     /** CheckAccepted */
     CheckAccepted: {
       /**
@@ -394,6 +410,7 @@ export interface components {
       operations?: components["schemas"]["OpRecord"][];
       /** Answer */
       answer?: number[];
+      series?: components["schemas"]["ChartSeries"] | null;
       sweep?: components["schemas"]["Sweep"] | null;
       changepoints?: components["schemas"]["ChangePoints"] | null;
       /** Distortion Checks */
@@ -818,6 +835,13 @@ export interface components {
        * @default
        */
       note: string;
+    };
+    /** SeriesPoint */
+    SeriesPoint: {
+      /** Period */
+      period: string;
+      /** Value */
+      value: number;
     };
     /**
      * Step
