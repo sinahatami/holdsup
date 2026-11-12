@@ -1,0 +1,757 @@
+{
+  "schema_version": 1,
+  "name": "smoke",
+  "created_at": "2026-11-12T22:53:37Z",
+  "benchmark": "smoke_claims.jsonl",
+  "split": "dev",
+  "provider": "router",
+  "use": "live",
+  "versions": {
+    "app": "0.0.0",
+    "catalog": "0.8.0",
+    "tolerances": 5,
+    "eval": "0.1.0"
+  },
+  "steps": {
+    "extract": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "match": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "plan": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "explain": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "smoke": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ]
+  },
+  "metrics": {
+    "texts": 10,
+    "labelled_claims": 14,
+    "extracted_claims": 12,
+    "excluded": {
+      "texts_not_run": 0,
+      "claims_not_run": 0,
+      "claims_verdict_unavailable": 0,
+      "share": 0.0
+    },
+    "extraction": {
+      "precision": {
+        "hits": 12,
+        "total": 12,
+        "rate": 1.0
+      },
+      "recall": {
+        "hits": 12,
+        "total": 14,
+        "rate": 0.8571
+      },
+      "geo": {
+        "hits": 12,
+        "total": 12,
+        "rate": 1.0
+      },
+      "start": {
+        "hits": 10,
+        "total": 12,
+        "rate": 0.8333
+      },
+      "end": {
+        "hits": 11,
+        "total": 12,
+        "rate": 0.9167
+      },
+      "window": {
+        "hits": 9,
+        "total": 12,
+        "rate": 0.75
+      }
+    },
+    "matching": {
+      "top1": {
+        "hits": 11,
+        "total": 12,
+        "rate": 0.9167
+      },
+      "recall_at_8": {
+        "hits": 12,
+        "total": 12,
+        "rate": 1.0
+      }
+    },
+    "verdict": {
+      "accuracy": {
+        "hits": 12,
+        "total": 14,
+        "rate": 0.8571
+      },
+      "accuracy_given_found": {
+        "hits": 12,
+        "total": 12,
+        "rate": 1.0
+      },
+      "labels": [
+        "supported",
+        "supported_framing_matters",
+        "not_supported",
+        "partly_supported",
+        "cant_check",
+        "missed"
+      ],
+      "confusion": {
+        "supported": {
+          "supported": 6,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 1
+        },
+        "supported_framing_matters": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "not_supported": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 6,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "partly_supported": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 1
+        },
+        "cant_check": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        }
+      },
+      "per_label": {
+        "supported": {
+          "hits": 6,
+          "total": 7,
+          "rate": 0.8571
+        },
+        "supported_framing_matters": {
+          "hits": 0,
+          "total": 0,
+          "rate": null
+        },
+        "not_supported": {
+          "hits": 6,
+          "total": 6,
+          "rate": 1.0
+        },
+        "partly_supported": {
+          "hits": 0,
+          "total": 1,
+          "rate": 0.0
+        },
+        "cant_check": {
+          "hits": 0,
+          "total": 0,
+          "rate": null
+        }
+      }
+    },
+    "explanation": {
+      "pass_rate": {
+        "hits": 10,
+        "total": 12,
+        "rate": 0.8333
+      }
+    },
+    "cost": {
+      "model_calls": 83,
+      "failed_calls": 24,
+      "calls_per_claim": 5.93,
+      "prompt_tokens": 62548,
+      "completion_tokens": 38932,
+      "seconds": 222.3,
+      "seconds_per_claim": 15.88,
+      "seconds_p50_per_text": 14.69,
+      "seconds_p95_per_text": 54.15,
+      "series_requests": 13,
+      "series_cache_hits": 5,
+      "series_cache_hit_rate": 0.3846,
+      "by_step_provider": [
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 2,
+          "failed": 1,
+          "tokens": 894,
+          "mean_latency_ms": 479.4
+        },
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 14,
+          "failed": 3,
+          "tokens": 12631,
+          "mean_latency_ms": 633.0
+        },
+        {
+          "step": "explain",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 5,
+          "failed": 3,
+          "tokens": 1189,
+          "mean_latency_ms": 519.2
+        },
+        {
+          "step": "explain",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 3,
+          "failed": 0,
+          "tokens": 4106,
+          "mean_latency_ms": 5484.8
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 4,
+          "failed": 4,
+          "tokens": 0,
+          "mean_latency_ms": 70.2
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 9,
+          "failed": 5,
+          "tokens": 13024,
+          "mean_latency_ms": 1140.1
+        },
+        {
+          "step": "extract",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 6,
+          "failed": 0,
+          "tokens": 14394,
+          "mean_latency_ms": 9795.7
+        },
+        {
+          "step": "match",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 13,
+          "failed": 2,
+          "tokens": 14667,
+          "mean_latency_ms": 751.5
+        },
+        {
+          "step": "match",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 1,
+          "failed": 1,
+          "tokens": 0,
+          "mean_latency_ms": 132.2
+        },
+        {
+          "step": "match",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 6,
+          "failed": 0,
+          "tokens": 10058,
+          "mean_latency_ms": 4781.1
+        },
+        {
+          "step": "plan",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 15,
+          "failed": 5,
+          "tokens": 18165,
+          "mean_latency_ms": 844.4
+        },
+        {
+          "step": "plan",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 2,
+          "failed": 0,
+          "tokens": 1464,
+          "mean_latency_ms": 896.9
+        },
+        {
+          "step": "plan",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 3,
+          "failed": 0,
+          "tokens": 10888,
+          "mean_latency_ms": 22317.5
+        }
+      ]
+    },
+    "failures": {
+      "extract": 2
+    }
+  },
+  "texts": [
+    {
+      "id": "r001",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 6.53,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "r001",
+          "index": 0,
+          "quote": "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023",
+          "expected": "supported",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c004",
+      "error": null,
+      "labelled": 2,
+      "extracted": 2,
+      "linked": 2,
+      "seconds": 13.99,
+      "model_calls": 12,
+      "outcomes": [
+        {
+          "text_id": "c004",
+          "index": 0,
+          "quote": "In 2011 Italy's youth unemployment was 29%",
+          "expected": "supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        },
+        {
+          "text_id": "c004",
+          "index": 1,
+          "quote": "today it is 43.3%",
+          "expected": "not_supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c001",
+      "error": null,
+      "labelled": 2,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 54.15,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "c001",
+          "index": 0,
+          "quote": "youth unemployment has fallen 12 points",
+          "expected": "not_supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": false,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "rejected",
+          "failed_step": null
+        },
+        {
+          "text_id": "c001",
+          "index": 1,
+          "quote": "from 44% to 32%",
+          "expected": "partly_supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": false,
+          "geo_ok": null,
+          "start_ok": null,
+          "end_ok": null,
+          "indicator": null,
+          "match_ok": null,
+          "in_top8": null,
+          "verdict": "missed",
+          "verdict_ok": false,
+          "reason": "",
+          "stopped_at": null,
+          "explanation": null,
+          "failed_step": "extract"
+        }
+      ]
+    },
+    {
+      "id": "c002",
+      "error": null,
+      "labelled": 2,
+      "extracted": 2,
+      "linked": 2,
+      "seconds": 18.32,
+      "model_calls": 12,
+      "outcomes": [
+        {
+          "text_id": "c002",
+          "index": 0,
+          "quote": "Italy's youth unemployment has reached 37%",
+          "expected": "not_supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        },
+        {
+          "text_id": "c002",
+          "index": 1,
+          "quote": "has been rising for years",
+          "expected": "supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": false,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c007",
+      "error": null,
+      "labelled": 2,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 43.95,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "c007",
+          "index": 0,
+          "quote": "Italy's debt-to-GDP ratio hit 132.6%",
+          "expected": "supported",
+          "expected_indicator": "government_debt_pct_gdp",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": false,
+          "end_ok": true,
+          "indicator": "government_debt_pct_gdp",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        },
+        {
+          "text_id": "c007",
+          "index": 1,
+          "quote": "up from 127% in 2012",
+          "expected": "supported",
+          "expected_indicator": "government_debt_pct_gdp",
+          "status": "scored",
+          "note": "",
+          "found": false,
+          "geo_ok": null,
+          "start_ok": null,
+          "end_ok": null,
+          "indicator": null,
+          "match_ok": null,
+          "in_top8": null,
+          "verdict": "missed",
+          "verdict_ok": false,
+          "reason": "",
+          "stopped_at": null,
+          "explanation": null,
+          "failed_step": "extract"
+        }
+      ]
+    },
+    {
+      "id": "c006",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.41,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "c006",
+          "index": 0,
+          "quote": "Italy's public debt is 133% of GDP",
+          "expected": "supported",
+          "expected_indicator": "government_debt_pct_gdp",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_pct_gdp_quarterly",
+          "match_ok": false,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c018",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 14.69,
+      "model_calls": 9,
+      "outcomes": [
+        {
+          "text_id": "c018",
+          "index": 0,
+          "quote": "Italy's greenhouse gas emissions are down 23% compared with 1990",
+          "expected": "not_supported",
+          "expected_indicator": "greenhouse_gas_emissions",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "greenhouse_gas_emissions",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "rejected",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c024",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 13.6,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "c024",
+          "index": 0,
+          "quote": "US per capita carbon dioxide emissions fell more than 18% between 2000 and 2014",
+          "expected": "supported",
+          "expected_indicator": "co2_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "c029",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 20.26,
+      "model_calls": 9,
+      "outcomes": [
+        {
+          "text_id": "c029",
+          "index": 0,
+          "quote": "Unemployment in South Africa has increased by 60% in the past 19 years",
+          "expected": "not_supported",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    },
+    {
+      "id": "p001",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 32.38,
+      "model_calls": 9,
+      "outcomes": [
+        {
+          "text_id": "p001",
+          "index": 0,
+          "quote": "Italy has 20 millions population in 2022",
+          "expected": "not_supported",
+          "expected_indicator": "population_total",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null
+        }
+      ]
+    }
+  ]
+}
