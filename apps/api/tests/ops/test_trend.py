@@ -14,6 +14,13 @@ def test_trend_on_a_line() -> None:
     assert [p.period for p in r.inputs] == [str(y) for y in range(2012, 2019)]
 
 
+def test_trend_without_inputs_gives_the_same_numbers() -> None:
+    s = Series.from_values("IT", {str(y): float(y % 3 + y) for y in range(2010, 2021)}, "%")
+    full, bare = trend(s, "2012", "2018"), trend(s, "2012", "2018", keep_inputs=False)
+    assert bare.inputs == [] and len(full.inputs) == 7
+    assert (bare.value, bare.extras, bare.flags) == (full.value, full.extras, full.flags)
+
+
 def test_trend_monthly_slope_is_per_year() -> None:
     s = Series.from_values("IT", {f"2024-{m:02d}": float(m) for m in range(1, 13)})
     assert trend(s, "2024-01", "latest").value == pytest.approx(12.0)
