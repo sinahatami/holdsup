@@ -36,6 +36,25 @@ jobs:
   unit-tests:
     name: Unit tests with coverage
     runs-on: ubuntu-latest
+    # The store, cache, catalog and usage tests skip without TEST_DATABASE_URL. A throwaway
+    # Postgres with pgvector (the same major version as Neon) lets them run on every push.
+    # It is reachable only from this job, so it trusts local connections and has no password.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: holdsup
+          POSTGRES_DB: holdsup_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U holdsup -d holdsup_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgresql://holdsup@localhost:5432/holdsup_test
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -57,6 +76,10 @@ jobs:
           key: fastembed-bge-small-en-v1.5
       - name: Download embedding model (setup step; tests themselves stay offline)
         run: make embed-model
+      - name: Migrate the test database (the database tests expect the schema at head)
+        run: make db-migrate
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
       - name: Run tests
         run: make test
       - name: Upload coverage reports
