@@ -383,15 +383,16 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
-  it("is disabled while the box is empty, and says how to submit from the keyboard", () => {
+  it("is off while the box is empty, and says how to submit from the keyboard", () => {
     render(<CheckForm />);
     const box = screen.getByLabelText(strings.home.inputLabel);
     const button = screen.getByRole("button", { name: strings.home.submit });
-    expect(button).toBeDisabled();
+    // aria-disabled, not disabled: the button stays in the tab order and says why it is off.
+    expect(button).toHaveAttribute("aria-disabled", "true");
     fireEvent.change(box, { target: { value: "   " } });
-    expect(button).toBeDisabled(); // whitespace is empty
+    expect(button).toHaveAttribute("aria-disabled", "true"); // whitespace is empty
     fireEvent.change(box, { target: { value: "claim" } });
-    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute("aria-disabled", "false");
     expect(screen.getByText(strings.home.shortcut)).toBeInTheDocument();
     expect(box).toHaveAttribute(
       "aria-keyshortcuts",
@@ -428,15 +429,29 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
+  it("sends nothing when the off button is pressed, and returns to the box", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CheckForm />);
+    fireEvent.click(screen.getByRole("button", { name: strings.home.submit }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(strings.home.inputLabel)).toHaveFocus();
+    vi.unstubAllGlobals();
+  });
+
   it("blocks text over the limit", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
     render(<CheckForm />);
     fireEvent.change(screen.getByLabelText(strings.home.inputLabel), {
       target: { value: "x".repeat(2001) },
     });
-    expect(
-      screen.getByRole("button", { name: strings.home.submit }),
-    ).toBeDisabled();
+    const button = screen.getByRole("button", { name: strings.home.submit });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(button);
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(strings.home.tooLong);
+    vi.unstubAllGlobals();
   });
 });
 

@@ -147,7 +147,8 @@ export const strings = {
     shortcut: "to check",
     charsLeft: (n: string) => `${n} left`,
     sample: {
-      heading: "A sample receipt",
+      heading: "Example receipt",
+      note: "A fixed example of what a check returns, not a live check.",
       open: "Open the full receipt",
       claimLabel: "Claim",
       claim:

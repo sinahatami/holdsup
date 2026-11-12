@@ -46,6 +46,7 @@ export function CheckForm({
   const HINT_ID = `${idPrefix}-hint`;
   const LANG_ID = `${idPrefix}-english`;
   const [text, setText] = useState(initialText);
+  const box = useRef<HTMLTextAreaElement>(null);
   const { submit, busy, error } = useSubmitCheck();
   const modifier = useModifierKey();
   const t = strings.home;
@@ -65,6 +66,8 @@ export function CheckForm({
 
   function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+    // The button is aria-disabled, not disabled, so it can still be pressed: send the visitor to the box.
+    if (empty) box.current?.focus();
     if (busy || empty || tooLong) return;
     voice.cancel();
     void submit(text.trim());
@@ -92,7 +95,7 @@ export function CheckForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
-      <div className="glass focus-within:ring-ring/40 focus-within:border-ring flex flex-col gap-2 rounded-3xl p-4 shadow-(--shadow-lift) transition focus-within:ring-4">
+      <div className="bg-popover border-border-strong focus-within:ring-ring/40 focus-within:border-ring flex flex-col gap-2 rounded-3xl border p-4 shadow-(--shadow-lift) transition focus-within:ring-4">
         <label
           htmlFor={BOX_ID}
           className="text-muted-foreground px-1 text-sm font-medium"
@@ -106,6 +109,7 @@ export function CheckForm({
           {t.englishOnly}
         </p>
         <textarea
+          ref={box}
           id={BOX_ID}
           value={text}
           onChange={onChange}
@@ -141,7 +145,7 @@ export function CheckForm({
             </span>
             <button
               type="submit"
-              disabled={busy || empty || tooLong}
+              aria-disabled={busy || empty || tooLong}
               className={pill({ tone: "primary" })}
             >
               {busy ? t.submitting : t.submit}
