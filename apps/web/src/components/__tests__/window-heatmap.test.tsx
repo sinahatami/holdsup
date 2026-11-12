@@ -164,6 +164,31 @@ describe("WindowHeatmap", () => {
     expect(chart().scrollLeft).toBe(0);
   });
 
+  it("marks the years where the trend turns on both axes, and names them", () => {
+    render(
+      <WindowHeatmap
+        sweep={holdingSweep}
+        direction="down"
+        threshold={0.7}
+        breaks={["2014", "1990"]}
+      />,
+    );
+    const svg = screen.getByTestId("window-heatmap");
+    expect(svg.querySelectorAll('rect[data-turn="start"]')).toHaveLength(1);
+    expect(svg.querySelectorAll('rect[data-turn="end"]')).toHaveLength(1);
+    expect(screen.getByText(/The trend turns in 2014\./)).toBeInTheDocument();
+    expect(screen.getByText(t.legend.turns)).toBeInTheDocument();
+  });
+
+  it("says nothing about turns when the trend has none on the grid", () => {
+    draw();
+    expect(screen.queryByText(/The trend turns/)).toBeNull();
+    expect(screen.queryByText(t.legend.turns)).toBeNull();
+    expect(
+      screen.getByTestId("window-heatmap").querySelectorAll("rect[data-turn]"),
+    ).toHaveLength(0);
+  });
+
   it("explains windows that start and end within the year", () => {
     const monthly: Sweep = {
       ...holdingSweep,
@@ -209,6 +234,8 @@ describe("ClaimCard", () => {
     expect(
       screen.getByRole("heading", { name: t.heading }),
     ).toBeInTheDocument();
+    // With the change points the run found.
+    expect(screen.getByText(/The trend turns in 2014\./)).toBeInTheDocument();
   });
 
   it("leaves it out when there is no sweep, or nothing could be checked", () => {

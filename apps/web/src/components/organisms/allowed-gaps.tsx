@@ -74,6 +74,7 @@ export function AllowedGaps({ tolerances: tol }: { tolerances: Tolerances }) {
               percentText(tol.framing_threshold),
             )}
           </li>
+          <li>{g.turns(percentText(tol.changepoints.shrink))}</li>
           <li>{g.periodGap(periodGap(tol.max_period_gap))}</li>
         </ul>
       </section>

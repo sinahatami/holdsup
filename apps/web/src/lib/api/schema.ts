@@ -266,6 +266,21 @@ export interface components {
       /** Indicators */
       indicators: components["schemas"]["CatalogEntry"][];
     };
+    /**
+     * ChangePointTolerances
+     * @description When a start or end on a break or extreme carries the claim (D025).
+     */
+    ChangePointTolerances: {
+      /** Shrink */
+      shrink: number;
+    };
+    /** ChangePoints */
+    ChangePoints: {
+      /** Breaks */
+      breaks: string[];
+      /** Flags */
+      flags: components["schemas"]["EndpointFlag"][];
+    };
     /** CheckAccepted */
     CheckAccepted: {
       /**
@@ -374,6 +389,7 @@ export interface components {
       /** Answer */
       answer?: number[];
       sweep?: components["schemas"]["Sweep"] | null;
+      changepoints?: components["schemas"]["ChangePoints"] | null;
       verdict: components["schemas"]["Verdict"];
       /** Explanation */
       explanation: string;
@@ -468,6 +484,32 @@ export interface components {
      * @enum {string}
      */
     Direction: "up" | "down" | "flat";
+    /**
+     * EndpointFlag
+     * @description A start or end that sits on a break or an extreme and carries the claim.
+     */
+    EndpointFlag: {
+      /**
+       * End
+       * @enum {string}
+       */
+      end: "start" | "end";
+      /** Period */
+      period: string;
+      /**
+       * Why
+       * @enum {string}
+       */
+      why: "peak" | "trough" | "break";
+      /** Value */
+      value: number;
+      /** Typical */
+      typical: number;
+      /** Claimed */
+      claimed: number;
+      /** Shifted */
+      shifted: number;
+    };
     /**
      * ExtraSource
      * @description A series used besides the matched one (the population a per-capita figure divides by).
@@ -834,6 +876,7 @@ export interface components {
       /** Framing Threshold */
       framing_threshold: number;
       sweep: components["schemas"]["SweepTolerances"];
+      changepoints: components["schemas"]["ChangePointTolerances"];
       values: components["schemas"]["ValueTolerances"];
       /** Flat Relative */
       flat_relative: number;
