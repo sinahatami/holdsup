@@ -204,6 +204,9 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert c.sweep is not None and (c.sweep.starts[0], c.sweep.ends[-1]) == ("1983", "2025")
     assert (c.sweep.held, c.sweep.counted, c.verdict.window_share) == (15, 15, 1.0)
     # The trend turns in 1998, 2007 and 2014; 2015 is beside the last but carries no claim.
+    # The chart shows the yearly averages the change read, not the months.
+    assert c.series is not None and c.series.frequency == "annual"
+    assert {p.period: round(p.value, 2) for p in c.series.points}["2015"] == 12.02
     assert c.changepoints is not None and c.changepoints.breaks == ["1998", "2007", "2014"]
     assert c.changepoints.flags == []
     assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 5
