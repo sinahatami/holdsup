@@ -149,15 +149,19 @@ export const strings = {
     sample: {
       heading: "Example receipt",
       note: "A fixed example of what a check returns, not a live check.",
-      open: "Open the full receipt",
+      open: "View full receipt",
       claimLabel: "Claim",
+      // The whole sentence. The home page looks for a real check with exactly this text to link to.
       claim:
         "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
+      // Short on purpose: four equal columns leave about 150px each, so each holds a figure and one line.
+      claimed: { from: "11.9%", to: "7.7%" },
+      claimNote: "Italy, 2015 to 2023",
       seriesLabel: "Official series",
-      series: "Unemployment rate (monthly)",
+      series: "Unemployment rate",
       source: "Eurostat · une_rt_m",
       recomputedLabel: "Recomputed",
-      recomputed: "12.02% → 7.68%",
+      recomputed: { from: "12.02%", to: "7.68%" },
       recomputedNote: "Down 4.34 points (yearly averages)",
       verdictLabel: "Verdict",
       verdict: "supported",

@@ -27,7 +27,7 @@ describe("Home page", () => {
     expect(
       within(
         screen.getByRole("region", { name: strings.home.sample.heading }),
-      ).getByText(strings.home.sample.claim),
+      ).getByText(strings.home.sample.series),
     ).toBeInTheDocument();
     expect(screen.getByText(strings.home.canCheckBody)).toBeInTheDocument();
     vi.unstubAllGlobals();

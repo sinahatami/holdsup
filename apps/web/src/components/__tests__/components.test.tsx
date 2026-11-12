@@ -260,20 +260,38 @@ describe("GalleryCard", () => {
 });
 
 describe("SampleReceipt", () => {
-  it("walks from the claim to the verdict", () => {
-    render(<SampleReceipt />);
+  it("walks from the claim to the verdict, claimed figures beside the recomputed ones", () => {
+    const { container } = render(<SampleReceipt />);
     const s = strings.home.sample;
-    for (const text of [s.claim, s.series, s.source, s.recomputed]) {
+    for (const text of [s.claimNote, s.series, s.source, s.recomputedNote]) {
       expect(screen.getByText(text)).toBeInTheDocument();
     }
+    // The four stages, in order, as labelled terms.
+    expect(
+      [...container.querySelectorAll("dt")].map((dt) => dt.textContent),
+    ).toEqual([s.claimLabel, s.seriesLabel, s.recomputedLabel, s.verdictLabel]);
+    // "11.9% → 7.7%" reads "11.9% to 7.7%" aloud; the arrow itself is hidden from it.
+    const dds = [...container.querySelectorAll("dd")];
+    expect(dds[0]).toHaveTextContent(/11\.9%.*to.*7\.7%/);
+    expect(dds[2]).toHaveTextContent(/12\.02%.*to.*7\.68%/);
+    for (const i of [0, 2]) {
+      expect(dds[i].querySelectorAll("[aria-hidden]")).toHaveLength(1);
+    }
+    // The recomputed figures are the heavier ones.
+    expect(dds[2].querySelector(".font-bold")).toHaveTextContent("12.02%");
+    expect(dds[0].querySelector(".font-bold")).toBeNull();
+    // The verdict is a word and an icon, not a colour alone.
     expect(screen.getByText(strings.verdicts.supported)).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
-  it("opens a real receipt when given one", () => {
-    render(<SampleReceipt href="/check/abc" />);
+  it("closes with a link to a real receipt when given one", () => {
+    const { container } = render(<SampleReceipt href="/check/abc" />);
+    const link = screen.getByRole("link", { name: strings.home.sample.open });
+    expect(link).toHaveAttribute("href", "/check/abc");
+    // It is the last thing in the card, below the four stages.
     expect(
-      screen.getByRole("link", { name: strings.home.sample.open }),
-    ).toHaveAttribute("href", "/check/abc");
+      container.querySelector("figure")?.lastElementChild,
+    ).toContainElement(link);
   });
 });
 
