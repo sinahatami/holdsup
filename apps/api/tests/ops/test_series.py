@@ -87,3 +87,12 @@ def test_until_keeps_values_up_to_a_period() -> None:
         s.until(parse_period("2014"))
     with pytest.raises(OpError, match="2016-01 is monthly but the series is annual"):
         s.until(parse_period("2016-01"))
+
+
+def test_between_keeps_values_from_one_period_to_another() -> None:
+    s = Series.from_values("IT", {"2010": 1.0, "2012": 2.0, "2013": 3.0, "2015": 4.0})
+    p = parse_period
+    assert [str(q) for q, _ in s.between(p("2011"), p("2013"))] == ["2012", "2013"]
+    assert [v for _, v in s.between(p("2010"), p("2015"))] == [1.0, 2.0, 3.0, 4.0]
+    assert s.between(p("2014"), p("2014")) == ()
+    assert s.between(p("2016"), p("2020")) == ()

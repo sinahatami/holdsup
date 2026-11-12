@@ -22,6 +22,7 @@ from tests.service.fakes import (
     claim_json,
     explain_answer,
     extraction,
+    happy_script,
     make_pipeline,
     match_answer,
     observations,
@@ -96,11 +97,43 @@ async def test_steps_summaries_name_what_happened() -> None:
     assert summaries["match"] == "Matched Unemployment rate (eurostat une_rt_a)."
     assert summaries["fetch"] == "Fetched 9 rows, 2015 to 2023."
     assert summaries["plan"] == "Planned change."
-    assert summaries["execute"] == "Ran 1 operation."
+    assert summaries["execute"] == "Ran 1 operation; recomputed 36 time windows."
     assert summaries["verdict"].startswith("supported")
     assert next(e for e in events if e.step is Step.MATCH and e.event == "step_done").models == [
         "fake/fake-model"
     ]
+
+
+# 2015 is a spike: the fall from it to 2023 is right, but nearby windows mostly rise.
+SPIKE = {
+    "2013": 7.0, "2014": 7.5, "2015": 11.9, "2016": 8.0, "2017": 7.9, "2018": 8.1,
+    "2019": 8.3, "2020": 8.4, "2021": 8.2, "2022": 8.0, "2023": 7.9,
+}  # fmt: skip
+
+
+async def test_a_fall_from_a_spike_holds_but_the_framing_matters() -> None:
+    explained = explain_answer("Unemployment fell from 11.9% in 2015 to 7.9% in 2023.")
+    script = [extraction(claim_json()), match_answer(), plan_answer(), explained]
+    out, events, _, _ = await run(script, FakeFetcher(rows=observations({"IT": SPIKE})))
+    [c] = out.claims
+    assert c.sweep is not None
+    assert (c.sweep.claim_start, c.sweep.claim_end, c.sweep.windows) == ("2015", "2023", 55)
+    # Of 15 nearby windows, the fall shows from 2015 (3) and from 2016 to 2023 (1).
+    assert (c.sweep.counted, c.sweep.held) == (15, 4)
+    assert c.verdict.label is Label.SUPPORTED_FRAMING_MATTERS
+    assert c.verdict.window_share == pytest.approx(4 / 15)
+    assert c.verdict.reason == (
+        "Holds within tolerance, but the fall shows in only 27% of nearby time windows."
+    )
+    summaries = {str(e.step): e.summary for e in events if e.event == "step_done"}
+    assert summaries["execute"] == "Ran 1 operation; recomputed 55 time windows."
+
+
+async def test_a_steady_fall_is_swept_and_stays_supported() -> None:
+    out, _, _, _ = await run(happy_script())
+    [c] = out.claims
+    assert c.sweep is not None and c.sweep.share == 1.0
+    assert c.verdict.window_share == 1.0 and c.verdict.label is Label.SUPPORTED
 
 
 async def test_no_claim_found() -> None:

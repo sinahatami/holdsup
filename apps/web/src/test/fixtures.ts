@@ -337,10 +337,11 @@ export function catalogEntry(
   };
 }
 
-/** The allowed gaps as `tolerances.yaml` sets them (version 2), as the API serves them. */
+/** The allowed gaps as `tolerances.yaml` sets them (version 3), as the API serves them. */
 export const tolerances: Tolerances = {
-  version: 2,
+  version: 3,
   framing_threshold: 0.7,
+  sweep: { reach: 2, min_years: 2 },
   values: {
     level: { relative: 0, absolute: 0, rounding: true, plus_relative: 0.01 },
     level_rate: {
