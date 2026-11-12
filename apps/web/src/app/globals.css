@@ -176,6 +176,25 @@
     --v-cant-bg: oklch(0.3 0.02 255);
   }
 }
+/* The series chart (P3.5): blue dots for the values the check used, orange hollow diamonds for
+   the values the claim states. Shape tells them apart as well as hue; the band is a light tint. */
+:root {
+  --chart-used: oklch(0.5 0.14 250);
+  --chart-claimed: oklch(0.56 0.15 50);
+  --chart-window: oklch(0.94 0.025 250);
+}
+.dark {
+  --chart-used: oklch(0.66 0.13 250);
+  --chart-claimed: oklch(0.67 0.14 58);
+  --chart-window: oklch(0.32 0.04 255);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --chart-used: oklch(0.66 0.13 250);
+    --chart-claimed: oklch(0.67 0.14 58);
+    --chart-window: oklch(0.32 0.04 255);
+  }
+}
 /* The cherry-pick heatmap (P3.2): blue where the claim's direction holds, orange with a hatch
    where it does not. Hue, lightness and the hatch each tell them apart, never red vs green. */
 :root {
