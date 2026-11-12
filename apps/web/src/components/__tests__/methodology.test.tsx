@@ -72,6 +72,11 @@ describe("AllowedGaps", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
+        /starts or ends at a peak, a trough or where the trend turns .* more than 25% smaller/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
         /1 year for yearly series, 1 half-year for half-yearly series, 2 quarters for quarterly series, and 3 months for monthly series/,
       ),
     ).toBeInTheDocument();

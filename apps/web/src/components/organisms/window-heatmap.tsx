@@ -26,6 +26,8 @@ import {
   showsLabel,
   subYear,
   sweepSummary,
+  turnYears,
+  turnsSentence,
   windowNumber,
   windowUnit,
   type Cell,
@@ -65,11 +67,14 @@ export function WindowHeatmap({
   sweep,
   direction,
   threshold,
+  breaks = [],
 }: {
   sweep: Sweep;
   direction: Direction | null;
   /** The verdict's framing threshold (a share), for the summary. */
   threshold: number | null | undefined;
+  /** The periods where the series' trend turns (change points), marked on the axes. */
+  breaks?: readonly string[];
 }) {
   const id = useId().replace(/[^\w-]/g, "");
   const ids = {
@@ -107,6 +112,8 @@ export function WindowHeatmap({
   const near = nearBox(sweep);
   const everyCol = labelEvery(sweep.ends.length, LABELS);
   const everyRow = labelEvery(sweep.starts.length, LABELS);
+  const turns = turnYears(sweep, breaks);
+  const turnSet = new Set(turns);
 
   // A long grid scrolls inside its frame on a narrow screen: start with the claim's window
   // in view rather than the oldest years.
@@ -141,6 +148,7 @@ export function WindowHeatmap({
         {t.howToRead}
         {subYear(sweep) &&
           ` ${t.subYear(formatPeriod(sweep.claim_start), formatPeriod(sweep.claim_end))}`}
+        {turns.length > 0 && ` ${turnsSentence(turns)}`}
       </p>
 
       <div
@@ -183,18 +191,22 @@ export function WindowHeatmap({
             </pattern>
           </defs>
           <text x={2} y={TOP - 4} className="fill-muted-foreground text-[8px]">
-            {t.start} ↓
+            {t.start}
           </text>
           <text x={LEFT} y={8} className="fill-muted-foreground text-[8px]">
-            {t.end} →
+            {t.end}
           </text>
           {sweep.ends.map(
             (end) =>
-              showsLabel(end, everyCol, sweep.claim_end) && (
+              (showsLabel(end, everyCol, sweep.claim_end) ||
+                turnSet.has(end.slice(0, 4))) && (
                 <text
                   key={end}
-                  transform={`translate(${(x(end) ?? 0) + x.bandwidth() / 2 + 3}, ${TOP - 3}) rotate(-90)`}
-                  className={label(end === sweep.claim_end)}
+                  transform={`translate(${(x(end) ?? 0) + x.bandwidth() / 2 + 3}, ${TOP - 4}) rotate(-90)`}
+                  className={label(
+                    end === sweep.claim_end,
+                    turnSet.has(end.slice(0, 4)),
+                  )}
                 >
                   {end.slice(0, 4)}
                 </text>
@@ -202,16 +214,49 @@ export function WindowHeatmap({
           )}
           {sweep.starts.map(
             (start) =>
-              showsLabel(start, everyRow, sweep.claim_start) && (
+              (showsLabel(start, everyRow, sweep.claim_start) ||
+                turnSet.has(start.slice(0, 4))) && (
                 <text
                   key={start}
-                  x={LEFT - 3}
+                  x={LEFT - 4}
                   y={(y(start) ?? 0) + y.bandwidth() / 2 + 3}
                   textAnchor="end"
-                  className={label(start === sweep.claim_start)}
+                  className={label(
+                    start === sweep.claim_start,
+                    turnSet.has(start.slice(0, 4)),
+                  )}
                 >
                   {start.slice(0, 4)}
                 </text>
+              ),
+          )}
+          {/* Where the trend turns: a bar between each such year's label and the grid. */}
+          {sweep.ends.map(
+            (end) =>
+              turnSet.has(end.slice(0, 4)) && (
+                <rect
+                  key={`turn-${end}`}
+                  data-turn="end"
+                  x={x(end)}
+                  y={TOP - 2.8}
+                  width={x.bandwidth()}
+                  height={1.6}
+                  className="fill-brand"
+                />
+              ),
+          )}
+          {sweep.starts.map(
+            (start) =>
+              turnSet.has(start.slice(0, 4)) && (
+                <rect
+                  key={`turn-${start}`}
+                  data-turn="start"
+                  x={LEFT - 2.8}
+                  y={y(start)}
+                  width={1.6}
+                  height={y.bandwidth()}
+                  className="fill-brand"
+                />
               ),
           )}
           <g
@@ -295,6 +340,11 @@ export function WindowHeatmap({
         <Key swatch={<span className="size-3 rounded-sm" style={HATCH} />}>
           {t.showsNot[direction ?? "none"]}
         </Key>
+        {turns.length > 0 && (
+          <Key swatch={<span className="bg-brand h-1 w-3 rounded-sm" />}>
+            {t.legend.turns}
+          </Key>
+        )}
         <Key swatch={<span className="size-3 rounded-sm bg-(--sweep-empty)" />}>
           {t.legend.empty}
         </Key>
@@ -330,7 +380,8 @@ export function WindowHeatmap({
   );
 }
 
-function label(own: boolean): string {
+function label(own: boolean, turn: boolean): string {
+  if (turn) return "fill-brand text-[8px] font-semibold";
   return own
     ? "fill-foreground text-[8px] font-semibold"
     : "fill-muted-foreground text-[8px]";
@@ -378,7 +429,10 @@ function WindowTable({
       <table className="text-xs tabular-nums">
         <caption className="text-muted-foreground p-3 text-start">
           {t.tableCaption(windowUnit(sweep))}{" "}
-          {`✓ ${t.shows[direction ?? "none"]}. ✗ ${t.showsNot[direction ?? "none"]}.`}
+          {t.tableKey(
+            t.shows[direction ?? "none"],
+            t.showsNot[direction ?? "none"],
+          )}
         </caption>
         <thead>
           <tr>
@@ -432,11 +486,11 @@ function WindowTableCell({
   const near = isNear(sweep, at);
   const className = `px-2 py-1 text-end whitespace-nowrap ${near ? "bg-muted" : ""}`;
   if (state === "none") return <td className={className} />;
-  if (state === "empty") return <td className={className}>—</td>;
+  if (state === "empty") return <td className={className}>{t.marks.empty}</td>;
   const figure = windowNumber(sweep, sweep.values[at.row][at.col] as number);
   const content = (
     <>
-      {figure} <span aria-hidden>{state === "holds" ? "✓" : "✗"}</span>
+      {figure} <span aria-hidden>{t.marks[state]}</span>
       <span className="sr-only">
         {state === "holds" ? t.holdsWord : t.failsWord}
         {own && `, ${t.ownWord}`}

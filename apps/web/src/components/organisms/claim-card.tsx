@@ -71,6 +71,7 @@ export function ClaimCard({
           sweep={c.sweep}
           direction={c.claim.assertion.direction ?? null}
           threshold={c.verdict.framing_threshold}
+          breaks={c.changepoints?.breaks ?? []}
         />
       )}
       <CantCheckHelp claim={c} />
