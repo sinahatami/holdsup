@@ -68,6 +68,8 @@ def test_real_catalog_lists_every_theme_and_no_unthemed_entry() -> None:
         ({"geo_coverage": []}, "at least 1"),
         ({"surprise": 1}, "Extra inputs"),
         ({"theme": "sport"}, "population"),
+        ({"real_version": "real_x", "related": ["real_x"]}, "only for a nominal entry"),
+        ({"nominal": True, "real_version": "real_x", "related": []}, "must be one of related"),
     ],
 )
 def test_invalid_entries(change: dict[str, object], message: str) -> None:
@@ -110,6 +112,26 @@ def test_cross_file_problems_are_all_reported(tmp_path: Path) -> None:
     assert "invalid.yaml" in text
     assert "same source series" in text
     assert len(info.value.problems) == 6
+
+
+def test_a_real_version_is_a_constant_price_entry_of_the_same_frequency(tmp_path: Path) -> None:
+    nominal = entry(nominal=True, real_version="real_rate", related=["real_rate"])
+    cases: list[tuple[dict[str, object], str | None]] = [
+        ({}, None),
+        ({"nominal": True}, "must not be nominal"),
+        ({"frequency": "monthly"}, "must be annual"),
+    ]
+    for i, (change, problem) in enumerate(cases):
+        (tmp_path / str(i)).mkdir()
+        real = entry(id="real_rate", filters={"x": "1"}, **change)
+        root = make_catalog(
+            tmp_path / str(i), {"unemployment_rate.yaml": nominal, "real_rate.yaml": real}
+        )
+        if problem is None:
+            assert load_catalog(root).get("unemployment_rate").real_version == "real_rate"
+        else:
+            with pytest.raises(CatalogError, match=problem):
+                load_catalog(root)
 
 
 def test_duplicate_ids(tmp_path: Path) -> None:

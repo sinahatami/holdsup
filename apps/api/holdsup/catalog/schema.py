@@ -103,6 +103,11 @@ class IndicatorSpec(BaseModel):
     # Months from the end of a period to its first release, for checking a dated claim against
     # what was published by its date. Null uses the default for the frequency (DEFAULT_LAG).
     release_lag_months: int | None = Field(default=None, ge=0, le=36)
+    # An amount of money at current prices. The real-terms check (P3.4) adjusts it for
+    # inflation: with `real_version`, the same quantity at constant prices (one of `related`),
+    # when the catalog has it; otherwise with consumer prices.
+    nominal: bool = False
+    real_version: Slug | None = None
 
     @property
     def lag_months(self) -> int:
@@ -123,6 +128,10 @@ class IndicatorSpec(BaseModel):
             raise ValueError("an alias repeats the name")
         if self.id in self.related:
             raise ValueError("an indicator cannot be related to itself")
+        if self.real_version is not None and not self.nominal:
+            raise ValueError("real_version is only for a nominal entry")
+        if self.real_version is not None and self.real_version not in self.related:
+            raise ValueError("real_version must be one of related")
         return self
 
     def embedding_text(self) -> str:
@@ -172,11 +181,17 @@ def load_catalog(root: Path) -> Catalog:
     ids = [s.id for s in specs]
     for dup in sorted({i for i in ids if ids.count(i) > 1}):
         problems.append(f"duplicate id {dup}")
-    known = set(ids)
+    by_id = {s.id: s for s in specs}
     for spec in specs:
         for rel in spec.related:
-            if rel not in known:
+            if rel not in by_id:
                 problems.append(f"{spec.id}: related indicator {rel!r} does not exist")
+        real = by_id.get(spec.real_version or "")
+        if real is not None and (real.nominal or real.frequency is not spec.frequency):
+            problems.append(
+                f"{spec.id}: real_version {real.id!r} must not be nominal, and must be "
+                f"{spec.frequency} too"
+            )
     keys = [(s.source, s.source_code, tuple(sorted(s.filters.items(), key=str))) for s in specs]
     if len(set(map(str, keys))) != len(keys):
         problems.append("two entries point at the same source series and filters")
