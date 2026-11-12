@@ -42,6 +42,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Status
+     * @description Each live model provider: ready, cooling down, failing or out of today's budget, and
+     *     the requests it has left today. Never cached: it is the state at this moment.
+     */
+    get: operations["status_v1_status_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/catalog": {
     parameters: {
       query?: never;
@@ -90,6 +111,27 @@ export interface paths {
     put?: never;
     /** Submit Check */
     post: operations["submit_check_v1_checks_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/checks/{check_id}/claims/{index}/recheck": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Recheck Claim
+     * @description Check one claim again with another statistic it offers. It starts a new check, read
+     *     like `POST /checks`; the result says what it replaced and links back.
+     */
+    post: operations["recheck_claim_v1_checks__check_id__claims__index__recheck_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -374,6 +416,7 @@ export interface components {
       finished_at: string;
       /** Cached From */
       cached_from?: string | null;
+      recheck_of?: components["schemas"]["RecheckOf"] | null;
       /** Claims */
       claims: components["schemas"]["ClaimResult"][];
       versions: components["schemas"]["Versions"];
@@ -921,6 +964,64 @@ export interface components {
           }[]
         | null;
     };
+    /**
+     * ProviderState
+     * @enum {string}
+     */
+    ProviderState:
+      "ready" | "cooling_down" | "failing" | "out_of_budget" | "not_configured";
+    /** ProviderStatus */
+    ProviderStatus: {
+      /** Name */
+      name: string;
+      /** Label */
+      label: string;
+      /** Model */
+      model: string;
+      state: components["schemas"]["ProviderState"];
+      /**
+       * Wait S
+       * @description Seconds until it may be called again; 0 if ready.
+       */
+      wait_s: number;
+      /**
+       * Remaining Today
+       * @description Requests left today under the router's cap; null when it has no daily limit.
+       */
+      remaining_today: number | null;
+      /**
+       * Daily Cap
+       * @description The router's daily cap: 90% of the published limit.
+       */
+      daily_cap: number | null;
+      /**
+       * Steps
+       * @description The pipeline steps it serves, in the router's order.
+       */
+      steps: string[];
+    };
+    /**
+     * RecheckOf
+     * @description The claim a re-check redid with a statistic a reader chose.
+     */
+    RecheckOf: {
+      /**
+       * Check Id
+       * Format: uuid
+       */
+      check_id: string;
+      /** Claim Index */
+      claim_index: number;
+      replaced: components["schemas"]["Suggestion"] | null;
+    };
+    /** RecheckRequest */
+    RecheckRequest: {
+      /**
+       * Indicator Id
+       * @description One of the claim's `suggestions`: the statistic to check it with instead.
+       */
+      indicator_id: string;
+    };
     /** ReportAccepted */
     ReportAccepted: {
       /**
@@ -957,6 +1058,16 @@ export interface components {
       /** Value */
       value: number;
     };
+    /** StatusResponse */
+    StatusResponse: {
+      /**
+       * Checked At
+       * Format: date-time
+       */
+      checked_at: string;
+      /** Providers */
+      providers: components["schemas"]["ProviderStatus"][];
+    };
     /**
      * Step
      * @enum {string}
@@ -972,7 +1083,8 @@ export interface components {
       | "explain";
     /**
      * Suggestion
-     * @description A statistic HoldsUp has that is close to what a claim talks about.
+     * @description A statistic HoldsUp has that is close to what a claim talks about: one a reader can
+     *     re-check the claim with.
      */
     Suggestion: {
       /** Id */
@@ -1175,6 +1287,26 @@ export interface operations {
       };
     };
   };
+  status_v1_status_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StatusResponse"];
+        };
+      };
+    };
+  };
   list_catalog_v1_catalog_get: {
     parameters: {
       query?: never;
@@ -1248,6 +1380,63 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CheckAccepted"];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  recheck_claim_v1_checks__check_id__claims__index__recheck_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        check_id: string;
+        index: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RecheckRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CheckAccepted"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": unknown;
+          "application/json": components["schemas"]["Problem"];
         };
       };
       /** @description Unprocessable Content */

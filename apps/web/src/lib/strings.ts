@@ -80,6 +80,7 @@ export const strings = {
     methodology: "Methodology",
     about: "About",
     recent: "Recent checks",
+    status: "Status",
     pages: "Pages",
     menuOpen: "Open the menu",
     menuClose: "Close the menu",
@@ -480,10 +481,72 @@ export const strings = {
     partly_supported: "Partly holds up",
     cant_check: "Can't check",
   },
+  // One-click re-checks with another statistic (P3.7).
+  recheck: {
+    heading: "Check with another statistic",
+    intro:
+      "The claim could also be about one of these. A re-check uses the claim as it was read here, with the statistic you pick, and gets its own link.",
+    action: "Re-check",
+    actionLabel: (name: string) => `Re-check with ${name}`,
+    sending: "Starting…",
+    of: (replaced: string | null) =>
+      replaced
+        ? `This is a re-check with another statistic, instead of ${replaced}.`
+        : "This is a re-check with another statistic.",
+    back: "See the first check",
+  },
+  // The /status page: the router's providers right now (P3.7).
+  status: {
+    meta: {
+      title: "Status",
+      description:
+        "The language models behind HoldsUp's checks right now: which can take a request, and how many requests each has left today.",
+    },
+    heading: "Status",
+    intro:
+      "Language models read the claims, choose the statistic, plan the calculation and write the explanation; code does everything else. HoldsUp spreads that work across free providers and moves to the next one when one is busy. This is how each stands right now.",
+    loading: "Asking the API…",
+    down: "The HoldsUp API is not answering, so no check can run right now. Please try again in a few minutes.",
+    asOf: (moment: string) => `As of ${moment}.`,
+    refresh: "Refresh",
+    summary: (ready: number, total: number) =>
+      ready === total
+        ? `All ${total} providers are ready.`
+        : ready === 0
+          ? "No provider is ready: new checks wait until one is."
+          : `${ready} of ${total} providers are ready; checks use those.`,
+    caption:
+      "Each provider, the steps it serves in order of preference, and its state now.",
+    columns: {
+      model: "Model",
+      steps: "Steps",
+      state: "State",
+      left: "Requests left today",
+    },
+    states: {
+      ready: () => "Ready",
+      cooling_down: (wait: string) => `Cooling down, ready in ${wait}`,
+      failing: (wait: string) => `Failing, tried again in ${wait}`,
+      out_of_budget: (wait: string) =>
+        `Out of today's requests, back in ${wait}`,
+      not_configured: () => "Not set up on this server",
+    },
+    noLimit: "No daily limit",
+    left: (left: number, cap: number) => `${left} of ${cap}`,
+    capNote:
+      "Each cap is 90% of the provider's published daily limit, so HoldsUp stops before the provider says no.",
+    wait: {
+      seconds: (n: number) => `about ${n} second${n === 1 ? "" : "s"}`,
+      minutes: (n: number) => `about ${n} minute${n === 1 ? "" : "s"}`,
+      hours: (n: number) => `about ${n} hour${n === 1 ? "" : "s"}`,
+    },
+  },
   share: {
     heading: "Share this check",
     copyLink: "Copy link",
     copySummary: "Copy summary",
+    image: "Download image",
+    imageName: (id: string) => `holdsup-${id}.png`,
     native: "Share",
     linkCopied: "Link copied.",
     summaryCopied: "Summary copied.",
