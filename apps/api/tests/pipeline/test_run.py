@@ -122,8 +122,13 @@ async def test_a_fall_from_a_spike_holds_but_the_framing_matters() -> None:
     assert (c.sweep.counted, c.sweep.held) == (15, 4)
     assert c.verdict.label is Label.SUPPORTED_FRAMING_MATTERS
     assert c.verdict.window_share == pytest.approx(4 / 15)
+    # And 2015 is a peak that carries the fall: from the usual level around it, it is a rise.
+    assert c.changepoints is not None
+    assert [(f.end, f.period, f.why) for f in c.changepoints.flags] == [("start", "2015", "peak")]
     assert c.verdict.reason == (
-        "Holds within tolerance, but the fall shows in only 27% of nearby time windows."
+        "Holds within tolerance, but the fall shows in only 27% of nearby time windows; it "
+        "starts at a peak (2015): from the usual level around then, 7.7, the change is +0.2 "
+        "percentage points rather than -4 percentage points."
     )
     summaries = {str(e.step): e.summary for e in events if e.event == "step_done"}
     assert summaries["execute"] == "Ran 1 operation; recomputed 55 time windows."
@@ -134,6 +139,7 @@ async def test_a_steady_fall_is_swept_and_stays_supported() -> None:
     [c] = out.claims
     assert c.sweep is not None and c.sweep.share == 1.0
     assert c.verdict.window_share == 1.0 and c.verdict.label is Label.SUPPORTED
+    assert c.changepoints is not None and c.changepoints.flags == []
 
 
 async def test_no_claim_found() -> None:
