@@ -33,6 +33,22 @@ afterEach(() => {
 });
 
 describe("ShareActions", () => {
+  it("offers the check's card image to download, only when there is one", () => {
+    const { unmount } = render(
+      <ShareActions
+        title="Holds up"
+        text={TEXT}
+        image={{ href: "/check/c1/opengraph-image", name: "holdsup-c1.png" }}
+      />,
+    );
+    const link = screen.getByRole("link", { name: t.image });
+    expect(link).toHaveAttribute("href", "/check/c1/opengraph-image");
+    expect(link).toHaveAttribute("download", "holdsup-c1.png");
+    unmount();
+    open();
+    expect(screen.queryByRole("link", { name: t.image })).toBeNull();
+  });
+
   it("copies the link of this page, without its query or fragment", async () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));

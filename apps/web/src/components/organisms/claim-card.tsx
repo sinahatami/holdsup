@@ -5,6 +5,7 @@ import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
 import { FramingChecks } from "@/components/organisms/framing-checks";
 import { Receipt } from "@/components/organisms/receipt";
+import { RecheckOptions } from "@/components/organisms/recheck-options";
 import { ReportMatch } from "@/components/organisms/report-match";
 import { SeriesChart } from "@/components/organisms/series-chart";
 import { WindowHeatmap } from "@/components/organisms/window-heatmap";
@@ -14,7 +15,7 @@ import { strings } from "@/lib/strings";
 
 type Models = NonNullable<CheckResult["models"]>;
 
-/** One checked claim: the quote, the verdict, why, the data, other time windows, the framing checks, and the receipt. */
+/** One checked claim: the quote, the verdict, why, the data, other time windows, the framing checks, the receipt, and other statistics to re-check with. */
 export function ClaimCard({
   claim: c,
   versions,
@@ -80,13 +81,14 @@ export function ClaimCard({
         />
       )}
       <FramingChecks claim={c} />
-      <CantCheckHelp claim={c} />
+      <CantCheckHelp claim={c} checkId={checkId} />
       <Receipt
         claim={c}
         versions={versions}
         sharedModels={sharedModels}
         checkId={checkId}
       />
+      <RecheckOptions claim={c} checkId={checkId} />
       <ReportMatch checkId={checkId} claimIndex={c.index} />
     </article>
   );

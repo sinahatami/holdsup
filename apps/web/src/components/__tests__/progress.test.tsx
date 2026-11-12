@@ -1,10 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CheckReport } from "@/components/organisms/check-report";
 import type { CheckState } from "@/hooks/use-check";
 import { strings } from "@/lib/strings";
 import type { TraceRow } from "@/lib/trace";
 import { checkResult, holdingClaim } from "@/test/fixtures";
+
+// A checked claim offers re-checks, which open the new check with the router.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const t = strings.progress;
 
