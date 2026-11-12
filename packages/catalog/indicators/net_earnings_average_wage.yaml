@@ -18,3 +18,4 @@ first_year: 2000
 last_year: null # still updated (latest period seen: 2025)
 related: [minimum_wage_to_average_earnings]
 filters: { estruct: "NET", ecase: "P1_NCH_AW100", currency: "EUR" }
+nominal: true # current prices; adjusted for inflation by consumer prices
