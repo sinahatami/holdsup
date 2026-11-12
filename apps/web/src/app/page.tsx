@@ -22,10 +22,10 @@ export default async function Home() {
     <PageShell layout="home">
       <header className="rise flex flex-col items-center gap-4 text-center">
         <span className="glass text-muted-foreground inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium">
-          <ShieldCheck className="text-brand size-4" aria-hidden />
+          <ShieldCheck className="size-4" aria-hidden />
           {strings.tagline}
         </span>
-        <h1 className="text-gradient pb-1 text-5xl font-bold tracking-tight sm:text-6xl">
+        <h1 className="text-foreground text-5xl font-bold tracking-tight sm:text-6xl">
           {strings.appName}
         </h1>
         <p className="text-foreground/80 max-w-xl text-lg leading-8 text-balance sm:text-xl sm:leading-9">

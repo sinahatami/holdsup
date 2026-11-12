@@ -49,12 +49,13 @@
   --font-heading: var(--font-sans);
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
+  /* Neutral on purpose: colour is kept for verdicts and the one primary action. */
   --shadow-soft:
-    0 1px 2px oklch(0.2 0.03 275 / 0.05),
-    0 8px 24px -8px oklch(0.3 0.08 275 / 0.12);
+    0 1px 2px oklch(0.2 0.01 275 / 0.05),
+    0 8px 24px -8px oklch(0.2 0.01 275 / 0.1);
   --shadow-lift:
-    0 2px 4px oklch(0.2 0.03 275 / 0.06),
-    0 18px 40px -12px oklch(0.4 0.15 275 / 0.28);
+    0 2px 4px oklch(0.2 0.01 275 / 0.06),
+    0 16px 36px -14px oklch(0.2 0.01 275 / 0.26);
 }
 
 :root {
@@ -81,6 +82,8 @@
   --ring: oklch(0.6 0.2 277);
   --background: oklch(0.985 0.006 277);
   --foreground: oklch(0.2 0.03 275);
+  /* The page's single background tint: a faint wash at the top, nothing else. */
+  --tint: oklch(0.86 0.06 277 / 0.2);
 }
 
 .dark {
@@ -105,6 +108,7 @@
   --border-strong: oklch(0.96 0.01 275 / 0.4);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.7 0.17 277);
+  --tint: oklch(0.5 0.12 277 / 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -130,6 +134,7 @@
     --border-strong: oklch(0.96 0.01 275 / 0.4);
     --input: oklch(1 0 0 / 16%);
     --ring: oklch(0.7 0.17 277);
+    --tint: oklch(0.5 0.12 277 / 0.16);
   }
 }
 
@@ -201,24 +206,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(
-        60rem 32rem at 12% -8%,
-        oklch(0.78 0.14 277 / 0.28),
-        transparent 70%
-      ),
-      radial-gradient(
-        48rem 28rem at 100% 4%,
-        oklch(0.8 0.14 330 / 0.22),
-        transparent 70%
-      ),
-      radial-gradient(
-        40rem 24rem at 50% 110%,
-        oklch(0.82 0.1 200 / 0.16),
-        transparent 70%
-      );
+    background-image: radial-gradient(
+      60rem 26rem at 50% -4%,
+      var(--tint),
+      transparent 70%
+    );
     background-repeat: no-repeat;
-    background-attachment: fixed;
   }
   ::selection {
     background: oklch(0.7 0.17 277 / 0.35);
@@ -295,56 +288,6 @@ html {
 @keyframes grow {
   to {
     transform: scaleX(1);
-  }
-}
-
-/* ---------- Aurora background ---------- */
-.aurora {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-.aurora i {
-  position: absolute;
-  width: 38rem;
-  height: 38rem;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  animation: drift 24s ease-in-out infinite alternate;
-}
-.aurora i:nth-child(1) {
-  top: -14rem;
-  left: -10rem;
-  background: oklch(0.72 0.17 277);
-}
-.aurora i:nth-child(2) {
-  top: 20%;
-  right: -14rem;
-  background: oklch(0.74 0.17 330);
-  animation-duration: 30s;
-  animation-delay: -8s;
-}
-.aurora i:nth-child(3) {
-  bottom: -18rem;
-  left: 30%;
-  background: oklch(0.78 0.12 210);
-  animation-duration: 36s;
-  animation-delay: -16s;
-}
-:is(.dark) .aurora i {
-  opacity: 0.2;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .aurora i {
-    opacity: 0.2;
-  }
-}
-@keyframes drift {
-  to {
-    transform: translate3d(6rem, 4rem, 0) scale(1.15);
   }
 }
 
@@ -456,7 +399,6 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .reveal,
-  .aurora i,
   .scroll-progress {
     animation: none;
   }
