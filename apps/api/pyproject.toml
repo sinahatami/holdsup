@@ -17,6 +17,7 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "pyyaml>=6.0.3",
+    "ruptures==1.1.10",
     "sqlalchemy[asyncio]>=2.1.8",
     "structlog>=26.1.0",
     "tenacity>=9.2.1",
