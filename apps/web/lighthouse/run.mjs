@@ -2,8 +2,17 @@
 //
 // It starts the e2e mock API (so the home page has a gallery and a finished check exists
 // to open), builds the site against it, serves the production build and runs Lighthouse CI
-// over the pages in lighthouserc.json. Everything it starts is stopped again, pass or fail.
-// The exit code is Lighthouse CI's: non-zero when a budget in lighthouserc.json is broken.
+// over the home page (lighthouserc.json) and a finished check (lighthouserc.check.json).
+// Everything it starts is stopped again, pass or fail.
+// The exit code is Lighthouse CI's: non-zero when a budget in either file is broken.
+//
+// Why two files: the home page is static, so Lighthouse's default simulated throttling
+// models it well. A check page is streamed: React reveals the receipt (a Suspense
+// boundary) about 300 ms after first paint, on purpose, so that the loading frame does
+// not flash. Once that paint lands after the scripts have loaded, the simulation counts
+// all of them as blocking, and a 0.5 s paint is reported as 3.4 s. The check page is
+// therefore measured with applied (devtools) throttling, which reports what the browser
+// did, and its numbers are stable run to run. Do not raise the budget to fit a model.
 //
 // Run it where nothing else heavy is running, and not while `next dev` is building: the
 // numbers come from a throttled browser on this machine and move with its load.
@@ -76,7 +85,18 @@ try {
       siteEnv,
     );
     await waitFor(`http://127.0.0.1:${WEB_PORT}/`);
-    code = run("pnpm", ["exec", "lhci", "autorun", ...process.argv.slice(2)]);
+    // Both run, so one failure does not hide the other; the worse exit code wins.
+    const extra = process.argv.slice(2);
+    for (const config of ["lighthouserc.json", "lighthouserc.check.json"]) {
+      const status = run("pnpm", [
+        "exec",
+        "lhci",
+        "autorun",
+        `--config=${config}`,
+        ...extra,
+      ]);
+      code = Math.max(code, status);
+    }
   }
 } finally {
   stopAll();
