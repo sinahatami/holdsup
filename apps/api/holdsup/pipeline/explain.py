@@ -13,6 +13,7 @@ from typing import Literal
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
+from holdsup.fmt import fmt
 from holdsup.ops import OpRecord, parse_period, unit_scale
 from holdsup.ops.record import OpError
 from holdsup.pipeline.claim import ClaimSpec
@@ -87,6 +88,9 @@ def allowed_numbers(
         values.update({verdict.window_share, verdict.window_share * 100})
     if verdict.framing_threshold is not None:
         values.update({verdict.framing_threshold, verdict.framing_threshold * 100})
+    # Framing flags are written by code from computed numbers (change points, P3.3).
+    for distortion in verdict.distortions:
+        values.update(w.value for w in written_numbers(distortion))
     values.update(w.value for w in written_numbers(claim.quote))
     for period in (claim.start, claim.end):
         if period:
@@ -116,20 +120,6 @@ def invented_numbers(text: str, allowed: Iterable[float]) -> list[str]:
 
 
 # --- formatting numbers for the prompt and the template --------------------------------------
-
-
-def fmt(x: float) -> str:
-    """A readable figure: 28135.6 → '28,136'; 28.0937 → '28.1'; 0.5214 → '0.52'."""
-    size = abs(x)
-    if size >= 1000:
-        text = f"{x:,.0f}"
-    elif size >= 10:
-        text = f"{x:.1f}"
-    else:
-        text = f"{x:.2f}"
-    if "." in text:
-        text = text.rstrip("0").rstrip(".")
-    return "0" if text in ("-0", "") else text
 
 
 def _record_line(r: OpRecord) -> str:

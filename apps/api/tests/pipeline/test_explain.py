@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+from holdsup.fmt import fmt
 from holdsup.ops import (
     AnnualValue,
     ChangeKind,
@@ -22,7 +23,6 @@ from holdsup.pipeline.explain import (
     allowed_numbers,
     explain,
     explain_message,
-    fmt,
     invented_numbers,
     template_explanation,
     written_numbers,
@@ -103,6 +103,18 @@ def test_allowed_numbers_cover_records_parts_periods_and_the_claim() -> None:
     allowed = allowed_numbers([r], v, claim(), "million euro")
     assert invented_numbers("The ratio was 0.52, a 52% level; 5.2 million euro.", allowed) == []
     assert invented_numbers("That is 5.2 trillion.", allowed) == ["5.2 trillion"]
+
+
+def test_numbers_in_a_framing_flag_are_allowed() -> None:
+    flag = (
+        "it starts at a peak (2015): from the usual level around then, 7.7, the change is "
+        "+0.2 percentage points rather than -4 percentage points"
+    )
+    v = decide(claim(), RECORDS, [0], unit="%", tolerances=TOL, distortions=[flag])
+    allowed = allowed_numbers(RECORDS, v, claim(), "%")
+    assert (
+        invented_numbers("From the usual level of 7.7 it barely moved: 0.2 points.", allowed) == []
+    )
 
 
 def test_window_share_and_threshold_are_allowed() -> None:
