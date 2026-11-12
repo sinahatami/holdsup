@@ -1,7 +1,7 @@
 """Run a validated plan over the fetched data: code computes every number."""
 
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from holdsup.adapters.base import Observation
 from holdsup.ops import (
@@ -38,6 +38,9 @@ class Execution:
     records: list[OpRecord]
     error: str | None  # an OpError message: the claim can't be checked with this data
     unit: str | None  # the unit of the series the first answer call reads
+    # Per record, the series its call read for its own place, as the call saw it: cut as of
+    # the claim's date, or made yearly. The cherry-pick sweep reruns the answer call on it.
+    series: list[Series] = field(default_factory=list)
 
 
 def execute_plan(
@@ -49,6 +52,7 @@ def execute_plan(
     """Run a validated plan over the fetched observations (keyed by indicator id)."""
     cache: dict[tuple[str, str], Series] = {}
     records: list[OpRecord] = []
+    read_series: list[Series] = []
     units: list[str | None] = []
 
     def native(ref: str | None, geo: str) -> Series:
@@ -76,18 +80,19 @@ def execute_plan(
             how = _yearly(call, source)
             read, cut = _as_of(call, source, native, ctx)
             if how is None:
-                record = run_call(call, read, ctx, tolerances)
+                record, seen = run_call(call, read, ctx, tolerances)
             else:
-                record = _run_yearly(call, read, how, ctx, tolerances)
+                record, seen = _run_yearly(call, read, how, ctx, tolerances)
             records.append(
                 record.model_copy(
                     update={"flags": [*record.flags, *cut(), *_window_flags(call, ctx)]}
                 )
             )
+            read_series.append(seen)
             units.append(unit_of(call))
     except OpError as exc:
-        return Execution(records, str(exc), None)
-    return Execution(records, None, units[plan.answer[0]])
+        return Execution(records, str(exc), None, read_series)
+    return Execution(records, None, units[plan.answer[0]], read_series)
 
 
 def _as_of(
@@ -158,9 +163,9 @@ def _yearly(call: OpCall, source: SeriesInfo | None) -> AnnualValue | None:
 
 def _run_yearly(
     call: OpCall, native: SeriesReader, how: AnnualValue, ctx: PlanContext, tol: Tolerances
-) -> OpRecord:
+) -> tuple[OpRecord, Series]:
     """Run `call` on yearly values made from its monthly or quarterly series; the record says
-    how they were made, and which year "latest" is."""
+    how they were made, and which year "latest" is. Returns the yearly series it read too."""
     made: dict[str, tuple[Series, Series]] = {}
 
     def read(ref: str | None, geo: str) -> Series:
@@ -169,10 +174,10 @@ def _run_yearly(
             made[geo] = (annual(base, how), base)
         return made[geo][0]
 
-    record = run_call(call, read, ctx, tol)
+    record, seen = run_call(call, read, ctx, tol)
     yearly, base = made[call.geo or ""]
     years = sorted({p.period for p in record.inputs})
     flags = [annual_flag(base.frequency, how, years)]
     if LATEST in (call.period, call.start, call.end):
         flags.append(latest_year_flag(yearly, base))
-    return record.model_copy(update={"flags": [*record.flags, *flags]})
+    return record.model_copy(update={"flags": [*record.flags, *flags]}), seen

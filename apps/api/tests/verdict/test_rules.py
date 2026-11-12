@@ -19,6 +19,7 @@ from holdsup.ops import (
 )
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, Operator
 from holdsup.verdict import Label, cant_check, combine, decide, load_tolerances
+from holdsup.verdict.rules import direction_judge
 from holdsup.verdict.tolerances import ValueTolerance, half_unit
 
 TOL = load_tolerances()
@@ -76,7 +77,22 @@ def test_supported() -> None:
     assert v.label is Label.SUPPORTED
     [part] = v.parts
     assert (part.computed, part.asserted, part.tolerance) == (-12.0, -12.0, 0.5)
-    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (2, 0.7, 0.9)
+    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (3, 0.7, 0.9)
+
+
+def test_the_sweep_judges_direction_only_and_needs_one() -> None:
+    r = change(RATE, "2015", "2020", ChangeKind.PERCENTAGE_POINTS)  # -12 points
+    falls = direction_judge(claim(AssertionType.PERCENTAGE_POINTS, 3, Direction.DOWN),
+                            unit="%", tolerances=TOL)  # fmt: skip
+    assert falls(r) is True  # 12 points is not 3, but the direction is right
+    with pytest.raises(ValueError, match="nothing to sweep"):
+        direction_judge(claim(AssertionType.PERCENT, 5), unit="%", tolerances=TOL)
+
+
+def test_a_framing_share_without_a_direction_is_worded_plainly() -> None:
+    c = claim(AssertionType.LEVEL, 30)
+    v = decide(c, [value_at(RATE, "2019")], [0], unit="%", tolerances=TOL, window_share=0.5)
+    assert v.reason == "Holds within tolerance, but it holds in only 50% of nearby time windows."
 
 
 def test_supported_framing_matters_by_window_share() -> None:
@@ -84,7 +100,9 @@ def test_supported_framing_matters_by_window_share() -> None:
     r = change(RATE, "2015", "2020", ChangeKind.PERCENTAGE_POINTS)
     v = decide(c, [r], [0], unit="%", tolerances=TOL, window_share=0.4)
     assert v.label is Label.SUPPORTED_FRAMING_MATTERS
-    assert "holds in 40% of time windows" in v.reason
+    assert v.reason == (
+        "Holds within tolerance, but the fall shows in only 40% of nearby time windows."
+    )
 
 
 def test_supported_framing_matters_by_distortion() -> None:
