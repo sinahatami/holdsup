@@ -82,8 +82,8 @@
   --ring: oklch(0.6 0.2 277);
   --background: oklch(0.985 0.006 277);
   --foreground: oklch(0.2 0.03 275);
-  /* The page's single background tint: a faint wash at the top, nothing else. */
-  --tint: oklch(0.86 0.06 277 / 0.2);
+  /* The page's single background tint: a soft indigo wash at the top, nothing else. */
+  --tint: oklch(0.8 0.1 277 / 0.55);
 }
 
 .dark {
@@ -108,7 +108,7 @@
   --border-strong: oklch(0.96 0.01 275 / 0.4);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.7 0.17 277);
-  --tint: oklch(0.5 0.12 277 / 0.16);
+  --tint: oklch(0.5 0.16 277 / 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -134,7 +134,7 @@
     --border-strong: oklch(0.96 0.01 275 / 0.4);
     --input: oklch(1 0 0 / 16%);
     --ring: oklch(0.7 0.17 277);
-    --tint: oklch(0.5 0.12 277 / 0.16);
+    --tint: oklch(0.5 0.16 277 / 0.4);
   }
 }
 
