@@ -17,7 +17,7 @@ from openai.types.chat.completion_create_params import ResponseFormat
 from pydantic import BaseModel, ValidationError
 
 from holdsup.router.breaker import CircuitBreaker
-from holdsup.router.budgets import Budgets, InMemoryUsageStore, UsageStore
+from holdsup.router.budgets import Budgets, InMemoryUsageStore, UsageStore, budget_cap
 from holdsup.router.client import ChatRequest, ChatResponse, SupportsChat, ToolCall
 from holdsup.router.clock import Clock, SystemClock, next_utc_midnight
 from holdsup.router.config import Capability, ProviderConfig, RouterConfig, Use
@@ -30,6 +30,7 @@ from holdsup.router.errors import (
     RateLimited,
     RouterError,
 )
+from holdsup.router.status import ProviderState, ProviderStatus
 
 log = logging.getLogger("holdsup.router")
 
@@ -134,6 +135,47 @@ class Router:
             if p.serves(use) and self._capable(p, needs) and self._client.has_key(p):
                 out.append(p)
         return out
+
+    # --- status ------------------------------------------------------------------------------
+
+    async def status(self) -> list[ProviderStatus]:
+        """Every provider that serves live checks, in config order, as /status shows it."""
+        now = self._clock.now()
+        out = []
+        for p in self.config.providers:
+            if p.allowed_use is not Use.LIVE:
+                continue
+            state, wait = await self._state(p, now)
+            per_day = p.limits.requests_per_day
+            out.append(
+                ProviderStatus(
+                    name=p.name,
+                    label=p.label or p.model,
+                    model=p.model,
+                    state=state,
+                    wait_s=round(wait, 1),
+                    remaining_today=await self.budgets.remaining_today(p, now),
+                    daily_cap=budget_cap(per_day) if per_day is not None else None,
+                    steps=[s for s, names in self.config.steps.items() if p.name in names],
+                )
+            )
+        return out
+
+    async def _state(self, p: ProviderConfig, now: float) -> tuple[ProviderState, float]:
+        if not self._client.has_key(p):
+            return ProviderState.NOT_CONFIGURED, 0.0
+        exhausted = self._exhausted_until.get(p.name, 0.0) - now
+        if exhausted > 0 or await self.budgets.day_exhausted(p, now):
+            return ProviderState.OUT_OF_BUDGET, next_utc_midnight(now) - now
+        failing = self.breaker.wait_s(p.name, now)
+        if failing > 0:
+            return ProviderState.FAILING, failing
+        cooling = max(
+            self._cooldown_until.get(p.name, 0.0) - now, self.budgets.minute_wait_s(p, now)
+        )
+        if cooling > 0:
+            return ProviderState.COOLING_DOWN, cooling
+        return ProviderState.READY, 0.0
 
     # --- the call ------------------------------------------------------------------------------
 

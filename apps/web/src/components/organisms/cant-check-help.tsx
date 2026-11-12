@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/atoms/eyebrow";
+import { RecheckList } from "@/components/molecules/recheck-list";
 import { CheckForm } from "@/components/organisms/check-form";
 import type { ClaimResult } from "@/lib/api/client";
 import { stopCause } from "@/lib/receipt";
@@ -9,11 +10,18 @@ import { strings } from "@/lib/strings";
 const link = "text-brand w-fit font-medium underline underline-offset-4";
 
 /**
- * Under a claim HoldsUp could not check: why, what to try, the nearest statistics, and the
- * claim in a box to reword and send again. A claim that only failed because a source was
+ * Under a claim HoldsUp could not check: why, what to try, the nearest statistics (each one
+ * click from a re-check), and the claim in a box to reword and send again. A claim that only failed because a source was
  * briefly down gets none of this; it needs trying again, not rewording.
  */
-export function CantCheckHelp({ claim: c }: { claim: ClaimResult }) {
+export function CantCheckHelp({
+  claim: c,
+  checkId,
+}: {
+  claim: ClaimResult;
+  /** The stored check: with it, each closest statistic is one click from a re-check. */
+  checkId?: string;
+}) {
   const cause = stopCause(c);
   if (cause === null || cause === "temporary") return null;
   const t = strings.cantCheck;
@@ -46,7 +54,19 @@ export function CantCheckHelp({ claim: c }: { claim: ClaimResult }) {
         </div>
       )}
 
-      {near.length > 0 && (
+      {near.length > 0 && checkId && (
+        <div className="flex flex-col gap-2">
+          <p className="font-medium">{strings.check.closestHeading}</p>
+          <RecheckList
+            checkId={checkId}
+            claimIndex={c.index}
+            quote={c.claim.quote}
+            statistics={near}
+            linkFor={(s) => routes.indicatorSearch(s.name)}
+          />
+        </div>
+      )}
+      {near.length > 0 && !checkId && (
         <div className="flex flex-col gap-2">
           <p className="font-medium">{strings.check.closestHeading}</p>
           <ul className="list-disc ps-5 leading-6">

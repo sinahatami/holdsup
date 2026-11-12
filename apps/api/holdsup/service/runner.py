@@ -17,8 +17,10 @@ from uuid import UUID, uuid4
 
 import structlog
 
+from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.ledger import Ledger
-from holdsup.pipeline.run import Pipeline
+from holdsup.pipeline.result import Suggestion
+from holdsup.pipeline.run import Choice, Pipeline
 from holdsup.pipeline.trace import Step, StepEvent
 from holdsup.problems import (
     Problem,
@@ -30,7 +32,7 @@ from holdsup.problems import (
 )
 from holdsup.router import RouterError
 from holdsup.service.ratelimit import RateLimiter
-from holdsup.service.store import CheckResult, CheckStatus, CheckStore, StoredCheck
+from holdsup.service.store import CheckResult, CheckStatus, CheckStore, RecheckOf, StoredCheck
 
 log = structlog.get_logger(__name__)
 
@@ -80,6 +82,15 @@ class Channel:
 
 
 @dataclass(frozen=True)
+class Recheck:
+    """What a re-check runs: the claim as first read, the reader's statistic, and the link back."""
+
+    claim: ClaimSpec
+    choice: Choice
+    of: RecheckOf
+
+
+@dataclass(frozen=True)
 class Submitted:
     id: UUID
     status: CheckStatus
@@ -109,18 +120,47 @@ class CheckRunner:
         hit = None if fresh else await self.ledger.lookup(text)
         if hit is not None:
             return await self._copy(text, CheckResult.model_validate(hit.entry.result), started)
+        self._count(client)
+        return await self._start(
+            text, started, "No earlier check of this claim; checking it now.", None
+        )
+
+    async def recheck(
+        self, original: CheckResult, index: int, indicator_id: str, client: str
+    ) -> Submitted:
+        """Check claim `index` of a finished check again with `indicator_id`, a statistic the
+        claim offers. Counted like a new check; the result is never a ledger entry, so a plain
+        check of the same words is never answered by a reader's choice."""
+        claim = original.claims[index]
+        self._count(client)
+        first = claim.indicator
+        replaced = Suggestion(id=first.id, name=first.name) if first else None
+        offered = [*([first.id] if first else []), *(s.id for s in claim.suggestions)]
+        work = Recheck(
+            claim=claim.claim,
+            choice=Choice(indicator_id, tuple(i for i in offered if i != indicator_id)),
+            of=RecheckOf(check_id=original.id, claim_index=index, replaced=replaced),
+        )
+        return await self._start(
+            claim.claim.quote, self.now(), "A re-check with another statistic.", work
+        )
+
+    def _count(self, client: str) -> None:
         wait = self.limiter.hit(client)
         if wait is not None:
             raise ProblemError(rate_limited(wait))
 
+    async def _start(
+        self, text: str, started: datetime, summary: str, recheck: Recheck | None
+    ) -> Submitted:
         check_id = uuid4()
         await self.store.create(StoredCheck(check_id, text, CheckStatus.QUEUED, started))
         channel = self.channels[check_id] = Channel()
-        await self._ledger_events(channel, "No earlier check of this claim; checking it now.")
-        task = asyncio.create_task(self._run(check_id, text, started, channel))
+        await self._ledger_events(channel, summary)
+        task = asyncio.create_task(self._run(check_id, text, started, channel, recheck))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
-        log.info("check_started", check_id=str(check_id), chars=len(text))
+        log.info("check_started", check_id=str(check_id), chars=len(text), recheck=bool(recheck))
         return Submitted(check_id, CheckStatus.QUEUED, cached=False)
 
     async def _copy(self, text: str, original: CheckResult, at: datetime) -> Submitted:
@@ -155,7 +195,14 @@ class CheckRunner:
             )  # fmt: skip
             await channel.publish(step.event, step.model_dump(mode="json"))
 
-    async def _run(self, check_id: UUID, text: str, started: datetime, channel: Channel) -> None:
+    async def _run(
+        self,
+        check_id: UUID,
+        text: str,
+        started: datetime,
+        channel: Channel,
+        recheck: Recheck | None = None,
+    ) -> None:
         structlog.contextvars.bind_contextvars(check_id=str(check_id))
 
         async def emit(step: StepEvent) -> None:
@@ -163,14 +210,18 @@ class CheckRunner:
 
         try:
             await self.store.mark_running(check_id)
-            output = await self.pipeline.run(text, emit)
+            if recheck is None:
+                output = await self.pipeline.run(text, emit)
+            else:
+                output = await self.pipeline.recheck(recheck.claim, recheck.choice, emit)
             result = CheckResult(
                 id=check_id, text=text, created_at=started, finished_at=self.now(),
                 claims=output.claims, versions=output.versions, models=output.models,
-                notes=output.notes,
+                notes=output.notes, recheck_of=recheck.of if recheck else None,
             )  # fmt: skip
             payload = result.model_dump(mode="json")
-            entry = None if output.retryable else await self.ledger.entry(text, payload)
+            reusable = recheck is None and not output.retryable
+            entry = await self.ledger.entry(text, payload) if reusable else None
             await self.store.finish(result, entry)
             await channel.publish("result", payload)
             log.info("check_done", verdicts=[str(c.verdict.label) for c in result.claims])

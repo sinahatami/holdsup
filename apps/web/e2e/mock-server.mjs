@@ -13,7 +13,7 @@ import {
   holdingClaim,
   tolerances,
 } from "../src/test/fixtures.ts";
-import { CHECK_ID, DONE_ID } from "./ids.ts";
+import { CHECK_ID, DONE_ID, RECHECK_ID } from "./ids.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -111,6 +111,40 @@ const server = createServer(async (req, res) => {
   }
   if (id === DONE_ID) {
     const result = checkResult([holdingClaim], { id });
+    return send(
+      res,
+      200,
+      checkView({
+        id,
+        status: "done",
+        finished_at: result.finished_at,
+        result,
+      }),
+    );
+  }
+  if (id === RECHECK_ID) {
+    // DONE_ID's claim checked again with its alternative, which offers the first one back.
+    const [ilo] = holdingClaim.suggestions;
+    const first = holdingClaim.indicator;
+    const result = checkResult(
+      [
+        {
+          ...holdingClaim,
+          indicator: { ...first, id: ilo.id, name: ilo.name },
+          alternatives: [first.id],
+          suggestions: [{ id: first.id, name: first.name }],
+        },
+      ],
+      {
+        id,
+        text: holdingClaim.claim.quote,
+        recheck_of: {
+          check_id: DONE_ID,
+          claim_index: 0,
+          replaced: { id: first.id, name: first.name },
+        },
+      },
+    );
     return send(
       res,
       200,

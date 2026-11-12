@@ -14,10 +14,11 @@ from holdsup.catalog.schema import Theme
 from holdsup.config import get_settings
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
-from holdsup.problems import Problem, ProblemError, not_found
+from holdsup.problems import Problem, ProblemError, not_found, not_offered, unknown_claim
 from holdsup.receipt.notebook import Notebook, notebook
 from holdsup.routes.deps import CatalogDep, Runner, Store
 from holdsup.service.ratelimit import client_ip
+from holdsup.service.runner import Submitted
 from holdsup.service.store import CheckResult, CheckStatus
 from holdsup.verdict import Label, Part
 
@@ -93,6 +94,46 @@ async def submit_check(
     body: CheckRequest, request: Request, response: Response, runner: Runner
 ) -> CheckAccepted:
     submitted = await runner.submit(body.text, client_ip(request, get_settings().trusted_proxies))
+    return _accepted(submitted, response)
+
+
+class RecheckRequest(BaseModel):
+    indicator_id: str = Field(
+        description="One of the claim's `suggestions`: the statistic to check it with instead."
+    )
+
+
+@router.post(
+    "/checks/{check_id}/claims/{index}/recheck",
+    status_code=202,
+    response_model=CheckAccepted,
+    responses={404: PROBLEM, 422: PROBLEM, 429: PROBLEM},
+)
+async def recheck_claim(
+    check_id: UUID,
+    index: int,
+    body: RecheckRequest,
+    request: Request,
+    response: Response,
+    runner: Runner,
+    store: Store,
+) -> CheckAccepted:
+    """Check one claim again with another statistic it offers. It starts a new check, read
+    like `POST /checks`; the result says what it replaced and links back."""
+    stored = await store.get(check_id)
+    if stored is None or not stored.result:
+        raise ProblemError(not_found(f"No finished check {check_id}."))
+    result = CheckResult.model_validate(stored.result)
+    if not 0 <= index < len(result.claims):
+        raise ProblemError(unknown_claim(index))
+    if body.indicator_id not in {s.id for s in result.claims[index].suggestions}:
+        raise ProblemError(not_offered(body.indicator_id))
+    client = client_ip(request, get_settings().trusted_proxies)
+    submitted = await runner.recheck(result, index, body.indicator_id, client)
+    return _accepted(submitted, response)
+
+
+def _accepted(submitted: Submitted, response: Response) -> CheckAccepted:
     url = f"/v1/checks/{submitted.id}"
     response.headers["Location"] = url
     return CheckAccepted(
