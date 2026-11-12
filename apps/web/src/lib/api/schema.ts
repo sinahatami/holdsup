@@ -373,6 +373,7 @@ export interface components {
       operations?: components["schemas"]["OpRecord"][];
       /** Answer */
       answer?: number[];
+      sweep?: components["schemas"]["Sweep"] | null;
       verdict: components["schemas"]["Verdict"];
       /** Explanation */
       explanation: string;
@@ -768,6 +769,50 @@ export interface components {
       name: string;
     };
     /**
+     * Sweep
+     * @description The claim recomputed over every window of its series: the heatmap's data.
+     */
+    Sweep: {
+      /** Op */
+      op: string;
+      /** Kind */
+      kind?: string | null;
+      /** Unit */
+      unit?: string | null;
+      /** Starts */
+      starts: string[];
+      /** Ends */
+      ends: string[];
+      /** Values */
+      values: (number | null)[][];
+      /** Holds */
+      holds: (boolean | null)[][];
+      /** Claim Start */
+      claim_start: string;
+      /** Claim End */
+      claim_end: string;
+      /** Near Starts */
+      near_starts: string[];
+      /** Near Ends */
+      near_ends: string[];
+      /** Counted */
+      counted: number;
+      /** Held */
+      held: number;
+      /** Share */
+      share: number | null;
+    };
+    /**
+     * SweepTolerances
+     * @description Which time windows the cherry-pick sweep counts (D023).
+     */
+    SweepTolerances: {
+      /** Reach */
+      reach: number;
+      /** Min Years */
+      min_years: number;
+    };
+    /**
      * Theme
      * @description The topic an indicator is listed under on the /indicators page, in display order.
      * @enum {string}
@@ -788,6 +833,7 @@ export interface components {
       version: number;
       /** Framing Threshold */
       framing_threshold: number;
+      sweep: components["schemas"]["SweepTolerances"];
       values: components["schemas"]["ValueTolerances"];
       /** Flat Relative */
       flat_relative: number;

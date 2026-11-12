@@ -68,7 +68,7 @@ export default async function Page() {
           threshold={
             tolerances ? Math.round(tolerances.framing_threshold * 100) : null
           }
-          windows={false}
+          windows
         />
       </TitledSection>
 

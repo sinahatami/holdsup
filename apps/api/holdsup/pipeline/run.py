@@ -29,6 +29,7 @@ from holdsup.adapters.base import (
 )
 from holdsup.catalog.schema import Catalog, IndicatorSpec
 from holdsup.catalog.search import CatalogSearch
+from holdsup.checks import Sweep, sweep
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
@@ -350,14 +351,37 @@ class Pipeline:
                 Step.EXECUTE,
                 f"HoldsUp found the data but couldn't finish the calculation: {execution.error}.",
             )
+        c.out.sweep = self._sweep(c.claim, plan, execution)
         n = len(execution.records)
-        await c.done(Step.EXECUTE, f"Ran {n} operation{'s' if n != 1 else ''}.")
+        summary = f"Ran {n} operation{'s' if n != 1 else ''}"
+        if c.out.sweep is not None:
+            summary += f"; recomputed {c.out.sweep.windows} time windows"
+        await c.done(Step.EXECUTE, summary + ".")
         return execution
+
+    def _sweep(self, claim: ClaimSpec, plan: ValidPlan, execution: Execution) -> Sweep | None:
+        """The cherry-pick sweep of the claim's one answer. Several answers compare places
+        ("grew more than France"), which is not a choice of window."""
+        if len(plan.answer) != 1:
+            return None
+        i = plan.answer[0]
+        return sweep(
+            claim,
+            execution.records[i],
+            execution.series[i],
+            unit=execution.unit,
+            tolerances=self.tolerances,
+        )
 
     async def _verdict(self, c: _ClaimRun, plan: ValidPlan, execution: Execution) -> None:
         await c.start(Step.VERDICT)
         verdict = decide(
-            c.claim, execution.records, plan.answer, unit=execution.unit, tolerances=self.tolerances
+            c.claim,
+            execution.records,
+            plan.answer,
+            unit=execution.unit,
+            tolerances=self.tolerances,
+            window_share=c.out.sweep.share if c.out.sweep else None,
         )
         c.out.verdict = verdict
         status: StepStatus = "cant_check" if verdict.label is Label.CANT_CHECK else "ok"

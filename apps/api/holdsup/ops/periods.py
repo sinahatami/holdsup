@@ -20,12 +20,7 @@ class Frequency(StrEnum):
 
     @property
     def per_year(self) -> int:
-        return {
-            Frequency.ANNUAL: 1,
-            Frequency.SEMIANNUAL: 2,
-            Frequency.QUARTERLY: 4,
-            Frequency.MONTHLY: 12,
-        }[self]
+        return _PER_YEAR[self]
 
     @property
     def part(self) -> str:
@@ -36,6 +31,15 @@ class Frequency(StrEnum):
             Frequency.QUARTERLY: "quarter",
             Frequency.MONTHLY: "month",
         }[self]
+
+
+# Read on every period comparison, so built once (the cherry-pick sweep compares millions).
+_PER_YEAR = {
+    Frequency.ANNUAL: 1,
+    Frequency.SEMIANNUAL: 2,
+    Frequency.QUARTERLY: 4,
+    Frequency.MONTHLY: 12,
+}
 
 
 @dataclass(frozen=True)

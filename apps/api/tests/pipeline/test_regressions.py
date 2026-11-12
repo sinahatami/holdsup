@@ -200,7 +200,10 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.name: p.period for p in c.verdict.parts} == {
         "assertion": None, "start value": "2015", "end value": "2023",
     }  # fmt: skip
-    assert out.versions.catalog == "0.7.0" and out.versions.tolerances == 2
+    # The fall shows in all 15 nearby windows of yearly averages (1983 to 2025 in the grid).
+    assert c.sweep is not None and (c.sweep.starts[0], c.sweep.ends[-1]) == ("1983", "2025")
+    assert (c.sweep.held, c.sweep.counted, c.verdict.window_share) == (15, 15, 1.0)
+    assert out.versions.catalog == "0.7.0" and out.versions.tolerances == 3
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:

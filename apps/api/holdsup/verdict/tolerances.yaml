@@ -1,10 +1,17 @@
 # Verdict tolerances (docs/spec.md "Tolerances"). Shown on every receipt.
 # Tune on the dev split only (P4.7); bump `version` whenever a value changes.
-version: 2
+version: 3
 
 # "Supported" also needs the claim to hold in at least this share of reasonable time windows
 # (the cherry-pick sweep, P3.1); below it the label is "supported, but framing matters".
 framing_threshold: 0.7
+
+# The cherry-pick sweep (D023). A claim that something rose, fell or stayed flat is recomputed
+# for every window of the series, and each window is asked the claim's direction (not its
+# number). The share above counts the nearby windows: start within `reach` years of the claim's
+# start, end up to `reach` years before its end. A claim window shorter than `min_years` years
+# gets no share ("rose in 2023" chose no window).
+sweep: { reach: 2, min_years: 2 }
 
 # A stated value holds when |computed - asserted| <= the largest of:
 #   relative × |asserted|, absolute, and (if rounding) half a unit of the asserted number's
