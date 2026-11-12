@@ -206,7 +206,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     # The trend turns in 1998, 2007 and 2014; 2015 is beside the last but carries no claim.
     assert c.changepoints is not None and c.changepoints.breaks == ["1998", "2007", "2014"]
     assert c.changepoints.flags == []
-    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 4
+    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 5
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
@@ -455,6 +455,16 @@ async def test_c018_latest_respects_a_slow_source_s_release_lag() -> None:
         op, FlagCode.AS_OF
     )
     assert c.verdict.label is Label.NOT_SUPPORTED
+    # Distortion checks (D026): per person it also fell; "are down" rests on 2013 figures,
+    # 2 years old in December 2015 (the slow release is why; open for review).
+    assert [(str(ch.kind), ch.flagged) for ch in c.distortion_checks] == [
+        ("endpoints", False), ("per_capita", False), ("stale", True),
+    ]  # fmt: skip
+    [stale] = [ch for ch in c.distortion_checks if ch.flagged]
+    assert stale.text == (
+        "the latest figure is for 2013, 2 or more years before the claim was made (2015-12)"
+    )
+    assert [s.indicator.id for s in c.extra_sources] == ["population_total"]
 
 
 async def test_c018_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date_note() -> None:
