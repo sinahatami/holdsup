@@ -10,6 +10,8 @@ import {
   showsLabel,
   subYear,
   sweepSummary,
+  turnYears,
+  turnsSentence,
   windowFigure,
   windowNumber,
   windowUnit,
@@ -163,5 +165,23 @@ describe("axis labels", () => {
     expect(
       subYear({ ...small, claim_start: "2019-03", claim_end: "2021-09" }),
     ).toBe(true);
+  });
+});
+
+describe("where the trend turns", () => {
+  it("keeps the break years on the grid's axes, once each, oldest first", () => {
+    expect(turnYears(small, ["2015", "1990", "2014-03", "2014-09"])).toEqual([
+      "2014",
+      "2015",
+    ]);
+    expect(turnYears(small, [])).toEqual([]);
+  });
+
+  it("says them in a sentence", () => {
+    expect(turnsSentence(["2014"])).toBe("The trend turns in 2014.");
+    expect(turnsSentence(["1998", "2007", "2014"])).toBe(
+      "The trend turns in 1998, 2007, and 2014.",
+    );
+    expect(turnsSentence([])).toBeNull();
   });
 });
