@@ -51,6 +51,55 @@ const model = {
 } as const;
 
 /** "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.": it holds. */
+/**
+ * The holding claim's cherry-pick sweep, made by the API's own `sweep` (P3.1) from
+ * yearly averages 2010 to 2024: the fall shows in every nearby window.
+ */
+// prettier-ignore
+export const holdingSweep: NonNullable<ClaimResult["sweep"]> = {
+  op: "change", kind: "percentage_points", unit: "percentage points",
+  starts: ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+  ends: ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+  values: [
+    [null, 0.0, 2.3, 3.7, 4.3, 3.62, 3.3, 2.8, 2.2, 1.5, 0.9, 1.1, -0.3, -0.72, -1.9],
+    [null, null, 2.3, 3.7, 4.3, 3.62, 3.3, 2.8, 2.2, 1.5, 0.9, 1.1, -0.3, -0.72, -1.9],
+    [null, null, null, 1.4, 2.0, 1.32, 1.0, 0.5, -0.1, -0.8, -1.4, -1.2, -2.6, -3.02, -4.2],
+    [null, null, null, null, 0.6, -0.08, -0.4, -0.9, -1.5, -2.2, -2.8, -2.6, -4.0, -4.42, -5.6],
+    [null, null, null, null, null, -0.68, -1.0, -1.5, -2.1, -2.8, -3.4, -3.2, -4.6, -5.02, -6.2],
+    [null, null, null, null, null, null, -0.32, -0.82, -1.42, -2.12, -2.72, -2.52, -3.92, -4.34, -5.52],
+    [null, null, null, null, null, null, null, -0.5, -1.1, -1.8, -2.4, -2.2, -3.6, -4.02, -5.2],
+    [null, null, null, null, null, null, null, null, -0.6, -1.3, -1.9, -1.7, -3.1, -3.52, -4.7],
+    [null, null, null, null, null, null, null, null, null, -0.7, -1.3, -1.1, -2.5, -2.92, -4.1],
+    [null, null, null, null, null, null, null, null, null, null, -0.6, -0.4, -1.8, -2.22, -3.4],
+    [null, null, null, null, null, null, null, null, null, null, null, 0.2, -1.2, -1.62, -2.8],
+    [null, null, null, null, null, null, null, null, null, null, null, null, -1.4, -1.82, -3.0],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, -0.42, -1.6],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.18],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  ],
+  holds: [
+    [null, false, false, false, false, false, false, false, false, false, false, false, true, true, true],
+    [null, null, false, false, false, false, false, false, false, false, false, false, true, true, true],
+    [null, null, null, false, false, false, false, false, true, true, true, true, true, true, true],
+    [null, null, null, null, false, true, true, true, true, true, true, true, true, true, true],
+    [null, null, null, null, null, true, true, true, true, true, true, true, true, true, true],
+    [null, null, null, null, null, null, true, true, true, true, true, true, true, true, true],
+    [null, null, null, null, null, null, null, true, true, true, true, true, true, true, true],
+    [null, null, null, null, null, null, null, null, true, true, true, true, true, true, true],
+    [null, null, null, null, null, null, null, null, null, true, true, true, true, true, true],
+    [null, null, null, null, null, null, null, null, null, null, true, true, true, true, true],
+    [null, null, null, null, null, null, null, null, null, null, null, false, true, true, true],
+    [null, null, null, null, null, null, null, null, null, null, null, null, true, true, true],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, true, true],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, true],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  ],
+  claim_start: "2015", claim_end: "2023",
+  near_starts: ["2013", "2014", "2015", "2016", "2017"],
+  near_ends: ["2021", "2022", "2023"],
+  counted: 15, held: 15, share: 1.0,
+};
+
 export const holdingClaim: ClaimResult = {
   index: 0,
   claim: {
@@ -113,6 +162,7 @@ export const holdingClaim: ClaimResult = {
     },
   ],
   answer: [0],
+  sweep: holdingSweep,
   verdict: {
     label: "supported",
     reason: "Holds within tolerance.",
@@ -145,7 +195,7 @@ export const holdingClaim: ClaimResult = {
         detail: "computed 7.68 for 2023, asserted 7.7 ± 0.127",
       },
     ],
-    window_share: 0.9,
+    window_share: 1,
     framing_threshold: 0.7,
     distortions: [],
     tolerances_version: 2,
@@ -162,6 +212,7 @@ export const holdingClaim: ClaimResult = {
 export const partlyClaim: ClaimResult = {
   ...holdingClaim,
   index: 0,
+  sweep: null, // its own sweep is not part of the fixture
   claim: {
     quote: "youth unemployment has fallen 12 points, from 44% to 32%.",
     indicator_phrase: "youth unemployment rate",
