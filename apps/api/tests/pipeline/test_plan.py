@@ -22,7 +22,6 @@ from holdsup.pipeline.plan import (
     PlanInvalid,
     SeriesInfo,
     execute_plan,
-    per_person_unit,
     plan_analysis,
     plan_message,
     validate_plan,
@@ -434,9 +433,7 @@ def test_from_to_levels_end_to_end() -> None:
     assert v.label is Label.PARTLY_SUPPORTED  # 2020 is 28, not 30
 
 
-def test_per_person_unit() -> None:
-    assert per_person_unit("million euro (current prices)") == "euro (current prices) per person"
-    assert per_person_unit(None) is None
+def test_a_call_with_no_arguments_gives_none() -> None:
     assert OpCall(op="value_at").given() == set()
 
 
