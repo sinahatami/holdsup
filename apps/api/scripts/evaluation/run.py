@@ -6,6 +6,7 @@ from scratch, so the figures describe the pipeline, not what happens to be cache
 """
 
 import asyncio
+import sys
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import asynccontextmanager
@@ -22,7 +23,7 @@ from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
 from holdsup.pipeline.result import PipelineOutput
 from holdsup.pipeline.run import Pipeline
-from holdsup.router import Router, RouterConfig, RouterError, Use
+from holdsup.router import RouterConfig, RouterError, Use
 from holdsup.router.client import OpenAICompatibleClient
 from holdsup.verdict import Tolerances
 from scripts.evaluation.benchmark import BenchmarkText
@@ -32,6 +33,7 @@ from scripts.evaluation.meter import (
     Meter,
     MeteredClient,
 )
+from scripts.evaluation.patient import PatientRouter
 from scripts.evaluation.score import TOP_K, TextOutcome, not_run, score_text
 
 
@@ -67,7 +69,11 @@ async def live_rig(
         fetcher = CountingFetcher(CachedFetcher(adapters, InMemorySeriesCacheStore()), meter)
         search = vector_search(InMemoryIndex.build(catalog.indicators, embedder).search, embedder)
         pipeline = Pipeline(
-            router=Router(config, MeteredClient(OpenAICompatibleClient(), meter)),
+            router=PatientRouter(
+                config,
+                MeteredClient(OpenAICompatibleClient(), meter),
+                progress=lambda line: print(line, file=sys.stderr),
+            ),
             catalog=catalog,
             search=search,
             fetcher=fetcher,
@@ -80,11 +86,10 @@ async def live_rig(
 Progress = Callable[[str], None]
 Sleep = Callable[[float], Awaitable[None]]
 
-# A free-tier provider that answers "rate limited" is usually ready again within seconds, and
-# the router says when. Waiting that long and trying the text again turns a transient limit
-# into a slower run instead of a dropped claim. A quota that resets in hours (a daily limit) is
-# not worth waiting for: past MAX_WAIT_S the text is recorded as not run.
-DEFAULT_RETRIES = 4
+# The PatientRouter already waits out a rate limit at the step that hit it. What reaches here is
+# a limit it gave up on (a long wait, or the run's waiting budget spent), so one more try of the
+# whole text is all that is worth making: it re-runs the steps that had worked.
+DEFAULT_RETRIES = 1
 MAX_WAIT_S = 90.0
 
 
