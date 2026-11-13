@@ -279,3 +279,37 @@ def test_an_empty_run_has_nothing_to_report_rather_than_a_zero() -> None:
     assert m.verdict.accuracy.rate is None and m.extraction.recall.rate is None
     assert (m.cost.calls_per_claim, m.cost.seconds_p95_per_text) == (None, None)
     assert (m.cost.series_cache_hit_rate, m.excluded.share) == (None, None)
+
+
+# --- confidence (P4.5) -----------------------------------------------------------------------
+
+
+def scored(p: float | None, *, abstain: bool, right: bool, i: int) -> TextOutcome:
+    from holdsup.ml.confidence import Confidence, Signals
+
+    claim = result(got=Label.SUPPORTED if right else Label.NOT_SUPPORTED)
+    claim.confidence = Confidence(
+        signals=Signals(rerank_margin=0.3), probability=p, abstain=abstain
+    )
+    return score_text(text(f"t{i}", "x", label()), output(claim), TOP8, seconds=1.0, model_calls=4)
+
+
+def test_a_claim_keeps_the_confidence_it_was_given_for_training_and_for_the_figures() -> None:
+    one = only_outcome(scored(0.4, abstain=True, right=False, i=0))
+    assert one.confidence is not None and one.confidence.signals.rerank_margin == 0.3
+
+
+def test_the_verdicts_answered_and_held_back_are_scored_apart() -> None:
+    texts = [
+        scored(0.9, abstain=False, right=True, i=0),
+        scored(0.8, abstain=False, right=True, i=1),
+        scored(0.7, abstain=False, right=False, i=2),
+        scored(0.3, abstain=True, right=False, i=3),
+        scored(None, abstain=False, right=True, i=4),  # signals only: no model was loaded
+        score(label(), result(got=Label.CANT_CHECK, stopped_at=Step.MATCH, indicator=None)),
+    ]
+    c = summarize(texts, []).confidence
+    assert c is not None and c.scored == 4
+    assert (c.abstained.hits, c.abstained.total) == (1, 4)
+    assert (c.answered_accuracy.hits, c.answered_accuracy.total) == (2, 3)
+    assert (c.abstained_accuracy.hits, c.abstained_accuracy.total) == (0, 1)

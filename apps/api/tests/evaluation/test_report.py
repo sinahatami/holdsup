@@ -110,3 +110,25 @@ def test_a_table_cell_cannot_break_the_table() -> None:
     )
 
     assert "a \\| b and c" in markdown(report)
+
+
+def test_the_confidence_model_s_abstentions_are_summed_up_when_it_scored_any() -> None:
+    from holdsup.ml.confidence import Confidence, Signals
+
+    assert "## Confidence" not in markdown(make_report(3, 4))  # no model: nothing to say
+    claims = []
+    for i, (right, abstain) in enumerate([(True, False), (False, True), (True, False)]):
+        claim = result(got=Label.SUPPORTED if right else Label.NOT_SUPPORTED)
+        claim.confidence = Confidence(signals=Signals(), probability=0.5, abstain=abstain)
+        claims.append(
+            score_text(text(f"t{i}", "x", label()), output(claim), {}, seconds=1, model_calls=1)
+        )
+    report = make_report(0, 0).model_copy(
+        update={"metrics": summarize(claims, []), "texts": claims}
+    )
+    md = markdown(report)
+    assert "Abstained on 33.3% (1/3) of the 3 claims it scored." in md
+    assert (
+        "Accuracy of the verdicts it gave: 100.0% (2/2); of the ones it held back: 0.0% (0/1)."
+        in md
+    )
