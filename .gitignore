@@ -64,3 +64,5 @@ apps/web/playwright-report/
 
 # Claude Code notes (local only)
 CLAUDE.md
+.claudeignore
+.claude/
