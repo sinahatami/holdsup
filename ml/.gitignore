@@ -1,0 +1,2 @@
+# The trained model and its ONNX export: regenerate with `make reranker-train`.
+reranker/artifacts/
