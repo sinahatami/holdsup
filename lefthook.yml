@@ -34,5 +34,9 @@ pre-push:
     - name: mypy
       run: uv run mypy apps/api
 
+    - name: mypy ml
+      root: "ml/"
+      run: uv run --locked mypy .
+
     - name: unit tests
       run: make test

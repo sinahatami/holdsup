@@ -12,14 +12,16 @@ export FASTEMBED_CACHE_PATH
 
 API_DIR := apps/api
 WEB_DIR := apps/web
+ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval ml-setup test-ml reranker-paraphrase reranker-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
 
 setup: ## Install Python (uv) and JS (pnpm) deps, install lefthook hooks
 	uv sync --all-packages --locked
+	cd $(ML_DIR) && uv sync --locked
 	pnpm install --frozen-lockfile
 	pnpm exec lefthook install
 
@@ -38,18 +40,22 @@ lint-py:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run mypy $(API_DIR)
+	cd $(ML_DIR) && uv run --locked mypy .
 
 lint-web:
 	pnpm --filter @holdsup/web lint
 	pnpm exec prettier --check .
 	pnpm --filter @holdsup/web typecheck
 
-test: test-py test-web ## pytest with coverage, vitest
+test: test-py test-ml test-web ## pytest with coverage, vitest
 
 test-py:
 	cd $(API_DIR) && uv run pytest --cov=holdsup --cov-report=term-missing --cov-report=xml --cov-fail-under=85
 	@echo "ops/ must stay at 100% line coverage (CLAUDE.md, Testing standards):"
 	cd $(API_DIR) && uv run coverage report --include='holdsup/ops/*' --fail-under=100 --skip-covered
+
+test-ml: ## ml/ tests (dataset, leakage guard, metrics, report; no torch, no network)
+	cd $(ML_DIR) && uv run --locked pytest -q
 
 test-web:
 	pnpm --filter @holdsup/web test --coverage
@@ -100,6 +106,15 @@ eval-baseline: ## Accept the current smoke run as eval/baseline.json (after read
 
 eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider)
 	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
+
+ml-setup: ## ml/ environment with the training libraries (torch CPU wheels, sentence-transformers, onnx)
+	cd $(ML_DIR) && uv sync --locked --group train
+
+reranker-paraphrase: ## Reword the dev-split claims for reranker training -> ml/reranker/data/paraphrases.jsonl (offline: Gemini, else Groq; resumes)
+	cd $(ML_DIR) && uv run --locked python -m reranker.paraphrase
+
+reranker-train: ## Cross-validate on the dev split, train, export ONNX -> ml/reranker/artifacts, reports/, MODEL_CARD.md (after ml-setup; over an hour on CPU; ARGS="--quick DIR" for a few-minute check)
+	cd $(ML_DIR) && uv run --locked --group train python -m reranker.experiment $(ARGS)
 
 record-extractions: ## Record live extraction responses for the P2.1 tests (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.record_extractions $(ARGS)

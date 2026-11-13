@@ -1,0 +1,50 @@
+[project]
+name = "holdsup-ml"
+version = "0.0.0"
+description = "HoldsUp training code (reranker, confidence model). Never shipped in the API image."
+license = "MIT"
+requires-python = ">=3.13,<3.14"
+# The default environment builds datasets and scores exported models: the catalog, coverage
+# filter, embeddings and router come from holdsup; onnxruntime and tokenizers come with
+# fastembed. Training libraries are in the `train` group (`make ml-setup`), so CI's ml tests
+# never install torch.
+dependencies = ["holdsup"]
+
+[dependency-groups]
+dev = ["mypy", "pytest", "ruff"]
+train = ["onnx>=1.19", "sentence-transformers>=5", "torch>=2.9"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+holdsup = { path = "../apps/api", editable = true }
+torch = { index = "pytorch-cpu" }
+
+# CPU wheels: the model is small and the CUDA build is about ten times the download.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--strict-markers"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "."
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+# Training libraries are only installed with the `train` group; without it they are unknown
+# to mypy (CI's lint runs without them).
+module = ["sentence_transformers.*", "torch.*", "transformers.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["onnxruntime.*"]  # ships no type information
+ignore_missing_imports = true
