@@ -3,7 +3,7 @@
 Every report is stamped with what produced it: app, catalog, tolerances and benchmark
 versions, and the provider and model behind each step. It carries claim ids, labels, the
 pipeline's verdicts and the code-written reasons, never a raw model answer or the benchmark's
-full texts (eval/CLAUDE.md).
+full texts.
 """
 
 from collections.abc import Sequence

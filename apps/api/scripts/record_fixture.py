@@ -1,4 +1,4 @@
-"""Record raw data-source responses as test fixtures (CLAUDE.md: tests never hit the network).
+"""Record raw data-source responses as test fixtures (tests never hit the network).
 
 Usage (from apps/api):  uv run python -m scripts.record_fixture [name ...]
 With no names, every fixture in FIXTURES is re-recorded. Bodies are saved byte-for-byte so

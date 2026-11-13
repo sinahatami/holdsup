@@ -18,7 +18,7 @@ from holdsup.verdict import Label
 
 Split = Literal["dev", "test"]
 # What a run reads: the dev split (and texts that name no split, such as the smoke file), the
-# held-out test split, or both. Tuning uses dev only (eval/CLAUDE.md).
+# held-out test split, or both. Tuning uses dev only.
 Selection = Literal["dev", "test", "all"]
 
 
