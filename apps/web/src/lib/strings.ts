@@ -1,4 +1,4 @@
-// All interface text lives here (RTL/i18n readiness; see CLAUDE.md conventions).
+// All interface text lives here (RTL/i18n readiness).
 export const strings = {
   locale: "en",
   dir: "ltr",

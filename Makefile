@@ -1,4 +1,4 @@
-# One command surface for humans and agents. See CLAUDE.md.
+# One command surface for humans and agents.
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
@@ -51,7 +51,7 @@ test: test-py test-ml test-web ## pytest with coverage, vitest
 
 test-py:
 	cd $(API_DIR) && uv run pytest --cov=holdsup --cov-report=term-missing --cov-report=xml --cov-fail-under=85
-	@echo "ops/ must stay at 100% line coverage (CLAUDE.md, Testing standards):"
+	@echo "ops/ must stay at 100% line coverage (Testing standards):"
 	cd $(API_DIR) && uv run coverage report --include='holdsup/ops/*' --fail-under=100 --skip-covered
 
 test-ml: ## ml/ tests (dataset, leakage guard, metrics, report; no torch, no network)
