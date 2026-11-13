@@ -24,7 +24,7 @@ META_FILE = "reranker.json"
 
 class ExportMeta(BaseModel):
     """reranker.json: what serving needs to feed the model, and what the model was made from
-    (ml/CLAUDE.md: data version, eval version, seed, metrics, date)."""
+    (data version, eval version, seed, metrics, date)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 

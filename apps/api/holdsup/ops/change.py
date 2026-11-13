@@ -1,4 +1,4 @@
-"""Scalar arithmetic behind the operations (CLAUDE.md golden rule 1: arithmetic lives here)."""
+"""Scalar arithmetic behind the operations (golden rule 1: arithmetic lives here)."""
 
 import math
 from enum import StrEnum

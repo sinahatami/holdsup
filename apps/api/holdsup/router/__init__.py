@@ -1,4 +1,4 @@
-"""Model router: the only way any code path calls a model (CLAUDE.md golden rule 2)."""
+"""Model router: the only way any code path calls a model (golden rule 2)."""
 
 from holdsup.router.config import Capability, ProviderConfig, RouterConfig, Use, load_router_config
 from holdsup.router.errors import RouterError
