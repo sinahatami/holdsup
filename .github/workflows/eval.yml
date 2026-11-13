@@ -2,8 +2,9 @@ name: Eval smoke
 
 # The smoke benchmark through the real pipeline (eval/smoke_claims.jsonl, P4.2) on every pull
 # request that touches the API, the models, the benchmark or the catalog, and every night. It
-# fails when verdict accuracy drops more than 5 points below eval/baseline.json, and when so
-# many claims drop out (a provider or a source down) that the run cannot be judged.
+# fails when verdict accuracy drops more than 5 points below eval/baseline.json. When so many
+# claims drop out (a provider or a source down) that the run cannot be judged, the nightly run
+# fails and a pull request gets a warning to rerun it.
 #
 # It calls the live free-tier providers, so it needs their keys as repository secrets
 # (GROQ_API_KEY, MISTRAL_API_KEY, OPENROUTER_API_KEY: development keys only). Without them
@@ -52,6 +53,11 @@ jobs:
     if: needs.keys.outputs.present == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Every run shares the same free-tier keys, so two at once starve each other: runs from
+    # different pull requests (and the nightly) queue here instead of overlapping.
+    concurrency:
+      group: eval-smoke-provider-keys
+      cancel-in-progress: false
     env:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
@@ -72,7 +78,19 @@ jobs:
       - name: Download embedding model
         run: make embed-model
       - name: Evaluate and gate
-        run: make eval-smoke
+        # `make eval-smoke`'s command, run directly: make reports every failure as 2, and the
+        # gate's own code matters here. 1 is a regression and always fails. 3 means too many
+        # claims dropped out to judge (providers at their limits): on a pull request that is a
+        # warning, not a pass, and the nightly run on main judges again and fails on it.
+        working-directory: apps/api
+        run: |
+          code=0
+          uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --gate || code=$?
+          if [ "$code" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "::warning title=Smoke evaluation inconclusive::Too many claims dropped out to judge this pull request (providers at their free-tier limits). This is not a pass: rerun the job once the limits reset. The nightly run on main fails on it."
+            exit 0
+          fi
+          exit "$code"
       - name: Show the report
         if: always()
         run: |
