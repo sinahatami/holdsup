@@ -480,6 +480,7 @@ export interface components {
       /** Distortion Checks */
       distortion_checks?: components["schemas"]["DistortionCheck"][];
       verdict: components["schemas"]["Verdict"];
+      confidence?: components["schemas"]["Confidence"] | null;
       /** Explanation */
       explanation: string;
       /**
@@ -548,6 +549,26 @@ export interface components {
       outputs?: {
         [key: string]: string;
       }[];
+    };
+    /**
+     * Confidence
+     * @description How sure the check is of a claim's verdict.
+     */
+    Confidence: {
+      signals: components["schemas"]["Signals"];
+      /** Probability */
+      probability?: number | null;
+      /** Label */
+      label?: ("high" | "medium" | "low") | null;
+      /**
+       * Abstain
+       * @default false
+       */
+      abstain: boolean;
+      /** Reason */
+      reason?: string | null;
+      /** Model */
+      model?: string | null;
     };
     /** DataPoint */
     DataPoint: {
@@ -1057,6 +1078,33 @@ export interface components {
       period: string;
       /** Value */
       value: number;
+    };
+    /**
+     * Signals
+     * @description What the confidence model reads, as the check found it. None: not known for this claim
+     *     (the model then reads the training mean, which moves nothing).
+     */
+    Signals: {
+      /** Rerank Probability */
+      rerank_probability?: number | null;
+      /** Rerank Margin */
+      rerank_margin?: number | null;
+      /**
+       * Definition Mismatch
+       * @default false
+       */
+      definition_mismatch: boolean;
+      /** Data Age Years */
+      data_age_years?: number | null;
+      /** Series Length */
+      series_length?: number | null;
+      /** Boundary Distance */
+      boundary_distance?: number | null;
+      /**
+       * Fallback Steps
+       * @default 0
+       */
+      fallback_steps: number;
     };
     /** StatusResponse */
     StatusResponse: {
