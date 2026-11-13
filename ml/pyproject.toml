@@ -6,9 +6,10 @@ license = "MIT"
 requires-python = ">=3.13,<3.14"
 # The default environment builds datasets and scores exported models: the catalog, coverage
 # filter, embeddings and router come from holdsup; onnxruntime and tokenizers come with
-# fastembed. Training libraries are in the `train` group (`make ml-setup`), so CI's ml tests
-# never install torch.
-dependencies = ["holdsup"]
+# fastembed. scikit-learn trains the confidence model (small: CI's ml tests use it; the API
+# reads the exported coefficients without it, D032). The reranker's training libraries are in
+# the `train` group (`make ml-setup`), so CI's ml tests never install torch.
+dependencies = ["holdsup", "scikit-learn>=1.7"]
 
 [dependency-groups]
 dev = ["mypy", "pytest", "ruff"]
@@ -46,5 +47,5 @@ module = ["onnx.*", "sentence_transformers.*", "torch.*", "transformers.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["onnxruntime.*"]  # ships no type information
+module = ["onnxruntime.*", "sklearn.*"]  # ship no type information
 ignore_missing_imports = true
