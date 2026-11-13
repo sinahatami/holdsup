@@ -9,9 +9,11 @@ from scripts.evaluation.gate import (
     Outcome,
     baseline_of,
     check,
+    first_choices_spent,
     read_baseline,
     write_baseline,
 )
+from scripts.evaluation.meter import Call
 
 from tests.evaluation.helpers import make_report
 
@@ -124,6 +126,39 @@ def test_a_baseline_for_another_benchmark_cannot_be_compared(version: str, bench
     gate = check(make_report(16, 20, eval=version, benchmark=benchmark), baseline(0.8))
 
     assert gate.outcome is Outcome.INCONCLUSIVE and "--update-baseline" in gate.message
+
+
+def spent(provider: str = "fake", step: str = "match") -> list[Call]:
+    """A daily-limit failure from `provider` in `step`, then the next choice answering."""
+    return [
+        Call(step, provider, "m", False, 50.0, error="RateLimited", daily_limit=True),
+        Call(step, "spare", "m", True, 900.0),
+    ]
+
+
+def test_a_run_whose_first_choice_reached_its_daily_limit_cannot_be_judged() -> None:
+    gate = check(make_report(14, 20, calls=spent()), baseline(0.8))  # else a 10-point drop
+
+    assert gate.outcome is Outcome.INCONCLUSIVE
+    assert "Daily limit reached by fake (first choice for match)" in gate.message
+    assert "once the limits reset" in gate.message
+
+
+def test_only_the_steps_that_called_a_model_are_named() -> None:
+    report = make_report(16, 20, calls=[*spent(step="extract"), *spent(step="plan")])
+
+    assert first_choices_spent(report) == {"fake": ["extract", "plan"]}
+
+
+def test_a_fallback_reaching_its_daily_limit_is_judged_as_usual() -> None:
+    gate = check(make_report(14, 20, calls=spent(provider="spare")), baseline(0.8))
+
+    assert gate.outcome is Outcome.REGRESSION
+
+
+def test_a_run_whose_first_choice_reached_its_daily_limit_is_not_a_baseline() -> None:
+    with pytest.raises(ValueError, match="Daily limit reached by fake"):
+        baseline_of(make_report(16, 20, calls=spent()))
 
 
 def test_the_exit_codes_are_the_documented_ones() -> None:
