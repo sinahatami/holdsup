@@ -1,0 +1,9 @@
+{
+  "eval": "0.2.0",
+  "benchmark": "smoke_claims.jsonl",
+  "claims": 14,
+  "written": "2026-11-13",
+  "verdict_accuracy": 0.8462,
+  "match_top1": 0.9167,
+  "extraction_recall": 0.8571
+}

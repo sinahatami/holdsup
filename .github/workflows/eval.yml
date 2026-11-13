@@ -1,0 +1,88 @@
+name: Eval smoke
+
+# The smoke benchmark through the real pipeline (eval/smoke_claims.jsonl, P4.2) on every pull
+# request that touches the API, the models, the benchmark or the catalog, and every night. It
+# fails when verdict accuracy drops more than 5 points below eval/baseline.json, and when so
+# many claims drop out (a provider or a source down) that the run cannot be judged.
+#
+# It calls the live free-tier providers, so it needs their keys as repository secrets
+# (GROQ_API_KEY, MISTRAL_API_KEY, OPENROUTER_API_KEY: development keys only). Without them
+# (a pull request from a fork, or secrets not set yet) the job is skipped with a notice.
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "ml/**"
+      - "eval/**"
+      - "packages/catalog/**"
+      - ".github/workflows/eval.yml"
+  schedule:
+    - cron: "43 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  keys:
+    name: Provider keys available?
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -n "$GROQ_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Smoke evaluation skipped::No provider keys are available to this run (a fork's pull request, or the repository secrets are not set)."
+          fi
+
+  smoke:
+    name: Smoke evaluation (5-point gate)
+    needs: keys
+    if: needs.keys.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      APP_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --all-packages --locked
+      - name: Cache embedding model
+        uses: actions/cache@v6
+        with:
+          path: .cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+      - name: Download embedding model
+        run: make embed-model
+      - name: Evaluate and gate
+        run: make eval-smoke
+      - name: Show the report
+        if: always()
+        run: |
+          if [ -f eval/reports/smoke.md ]; then cat eval/reports/smoke.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-smoke
+          path: |
+            eval/reports/smoke.json
+            eval/reports/smoke.md
+          if-no-files-found: warn
