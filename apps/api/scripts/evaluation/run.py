@@ -5,8 +5,9 @@ the step that was running. The ledger (the answer cache) is not used: every text
 from scratch, so the figures describe the pipeline, not what happens to be cached.
 """
 
+import asyncio
 import time
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
@@ -19,6 +20,7 @@ from holdsup.catalog.index import InMemoryIndex
 from holdsup.catalog.schema import Catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
+from holdsup.pipeline.result import PipelineOutput
 from holdsup.pipeline.run import Pipeline
 from holdsup.router import Router, RouterConfig, RouterError, Use
 from holdsup.router.client import OpenAICompatibleClient
@@ -76,19 +78,54 @@ async def live_rig(
 
 
 Progress = Callable[[str], None]
+Sleep = Callable[[float], Awaitable[None]]
+
+# A free-tier provider that answers "rate limited" is usually ready again within seconds, and
+# the router says when. Waiting that long and trying the text again turns a transient limit
+# into a slower run instead of a dropped claim. A quota that resets in hours (a daily limit) is
+# not worth waiting for: past MAX_WAIT_S the text is recorded as not run.
+DEFAULT_RETRIES = 4
+MAX_WAIT_S = 90.0
+
+
+async def _run_text(
+    rig: Rig, text: str, retries: int, max_wait_s: float, sleep: Sleep, progress: Progress
+) -> PipelineOutput:
+    """Run one text, waiting out the router's "retry in ~Ns" up to `retries` times. Raises the
+    last RouterError when the router gives no wait, the wait is over `max_wait_s`, or the
+    retries are spent."""
+    for attempt in range(retries + 1):
+        try:
+            return await rig.pipeline.run(text, rig.meter.on_event)
+        except RouterError as exc:
+            wait = exc.retry_after_s
+            if attempt == retries or wait is None or wait > max_wait_s:
+                raise
+            progress(
+                f"  router busy at {exc.step!r}; waiting {wait + 1:.0f}s ({attempt + 1}/{retries})"
+            )
+            await sleep(wait + 1)
+    raise AssertionError("unreachable")  # pragma: no cover
 
 
 async def evaluate(
-    rig: Rig, texts: Sequence[BenchmarkText], progress: Progress = lambda _: None
+    rig: Rig,
+    texts: Sequence[BenchmarkText],
+    progress: Progress = lambda _: None,
+    *,
+    retries: int = 0,
+    max_wait_s: float = MAX_WAIT_S,
+    sleep: Sleep = asyncio.sleep,
 ) -> list[TextOutcome]:
-    """Check every text and score it. A text the router cannot serve is recorded as `not_run`;
-    any other error is a bug and stops the run."""
+    """Check every text and score it. A text the router cannot serve is retried after the wait
+    the router asks for (`retries` times, none by default), then recorded as `not_run`; any
+    other error is a bug and stops the run."""
     out: list[TextOutcome] = []
     for n, item in enumerate(texts, 1):
         calls_before = len(rig.meter.calls)
         started = time.monotonic()
         try:
-            output = await rig.pipeline.run(item.text, rig.meter.on_event)
+            output = await _run_text(rig, item.text, retries, max_wait_s, sleep, progress)
         except RouterError as exc:
             outcome = not_run(
                 item,
