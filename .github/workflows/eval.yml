@@ -77,6 +77,13 @@ jobs:
           key: fastembed-bge-small-en-v1.5
       - name: Download embedding model
         run: make embed-model
+      - name: Cache the pinned reranker
+        uses: actions/cache@v6
+        with:
+          path: ml/reranker/artifacts/onnx
+          key: reranker-${{ hashFiles('apps/api/holdsup/ml/reranker_pin.json') }}
+      - name: Download the pinned reranker
+        run: make reranker-fetch
       - name: Evaluate and gate
         # `make eval-smoke`'s command, run directly: make reports every failure as 2, and the
         # gate's own code matters here. 1 is a regression and always fails. 3 means too many
