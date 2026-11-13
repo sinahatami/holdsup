@@ -2,6 +2,7 @@
 leaves the figures (an outage is not a wrong answer)."""
 
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 
 import pytest
 from scripts.evaluation.benchmark import LabelledClaim
@@ -260,6 +261,16 @@ def test_cost_per_claim_and_per_text_with_the_calls_of_each_step_and_provider() 
     by = {(s.step, s.provider): s for s in c.by_step_provider}
     assert (by["extract", "groq"].calls, by["extract", "groq"].failed) == (2, 1)
     assert by["match", "groq"].mean_latency_ms == 200.0
+
+
+def test_the_providers_that_reached_their_daily_limit_are_named_once() -> None:
+    spent = Call("match", "groq", "gpt", False, 50.0, error="RateLimited", daily_limit=True)
+    calls = [spent, replace(spent, step="plan"), call("match", ok=False), call("match")]
+
+    m = summarize(two_texts(), calls)
+
+    assert m.cost.daily_limited == ["groq"]
+    assert summarize(two_texts(), [call(ok=False)]).cost.daily_limited == []
 
 
 def test_an_empty_run_has_nothing_to_report_rather_than_a_zero() -> None:
