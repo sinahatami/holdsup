@@ -11,3 +11,6 @@ export const MISSING_ID = "33333333-3333-4333-8333-333333333333";
 
 /** The check a re-check of DONE_ID's claim starts: done, with the reader's statistic. */
 export const RECHECK_ID = "55555555-5555-4555-8555-555555555555";
+
+/** A finished check of two claims: one the check is sure of, one it holds back (P4.5). */
+export const UNSURE_ID = "66666666-6666-4666-8666-666666666666";

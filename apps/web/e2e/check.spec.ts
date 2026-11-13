@@ -6,8 +6,9 @@ import {
 } from "@playwright/test";
 import { axeViolations } from "./axe";
 import { readFile } from "node:fs/promises";
-import { CHECK_ID, DONE_ID, MISSING_ID, RECHECK_ID } from "./ids";
+import { CHECK_ID, DONE_ID, MISSING_ID, RECHECK_ID, UNSURE_ID } from "./ids";
 import { mockApi, mockRecheck, mockReports } from "./mock-api";
+import { holdingClaim, unsureClaim, unsureReason } from "../src/test/fixtures";
 
 test("submit → trace → result", async ({ page }) => {
   await mockApi(page);
@@ -384,4 +385,29 @@ test("the progress of a live check fits a 360px screen and passes the accessibil
   expect(overflow).toBeLessThanOrEqual(0);
   const violations = await axeViolations(page);
   expect(violations).toEqual([]);
+});
+
+test("says how sure it is of each verdict, and holds back one it is unsure of, with the reason", async ({
+  page,
+}) => {
+  await page.goto(`/check/${UNSURE_ID}`);
+  const sure = page.getByRole("article", { name: holdingClaim.claim.quote });
+  const unsure = page.getByRole("article", { name: unsureClaim.claim.quote });
+
+  await expect(sure.getByText("Holds up", { exact: true })).toBeVisible();
+  const level = sure.getByText("High confidence");
+  await expect(level).toBeVisible();
+  await level.click();
+  await expect(
+    sure.getByText(/How likely this verdict is to be right/),
+  ).toBeVisible();
+
+  // The unsure claim: no verdict given, the reason, and the rules' verdict kept for the reader.
+  await expect(unsure.getByText("Can't check confidently")).toBeVisible();
+  await expect(unsure.getByText(unsureReason)).toBeVisible();
+  const alone = unsure.getByText("What the numbers alone say:");
+  await expect(alone.getByText("Holds up", { exact: true })).toBeVisible();
+  await expect(unsure).toHaveAttribute("data-verdict", "cant_check");
+
+  expect(await axeViolations(page)).toEqual([]);
 });

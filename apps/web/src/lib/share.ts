@@ -1,4 +1,5 @@
 import type { CheckResult } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { sourceName } from "@/lib/format";
 import { verdictLine } from "@/lib/receipt-meta";
 import { strings } from "@/lib/strings";
@@ -16,15 +17,15 @@ export function shareText(result: CheckResult): string {
   if (more.length === 0) {
     return t.one(
       only.claim.quote,
-      strings.verdicts[only.verdict.label],
+      strings.verdicts[shownLabel(only)],
       only.data ? sourceName(only.data.source) : null,
     );
   }
-  const labels = result.claims.map((c) => ({ label: c.verdict.label }));
+  const labels = result.claims.map((c) => ({ label: shownLabel(c) }));
   return [
     t.many(result.claims.length, verdictLine(labels)),
     ...result.claims.map((c, i) =>
-      t.item(i + 1, c.claim.quote, strings.verdicts[c.verdict.label]),
+      t.item(i + 1, c.claim.quote, strings.verdicts[shownLabel(c)]),
     ),
   ].join("\n");
 }

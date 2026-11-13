@@ -1,4 +1,5 @@
 import type { CheckResult, Label } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { countHolding } from "@/lib/gallery";
 import { strings } from "@/lib/strings";
 
@@ -19,7 +20,7 @@ export function verdictLine(claims: readonly { label: Label }[]): string {
 }
 
 const labels = (result: CheckResult) =>
-  result.claims.map((c) => ({ label: c.verdict.label }));
+  result.claims.map((c) => ({ label: shownLabel(c) }));
 
 /** The page title and the shared link's title: the outcome, then the claim. */
 export function receiptTitle(result: CheckResult): string {

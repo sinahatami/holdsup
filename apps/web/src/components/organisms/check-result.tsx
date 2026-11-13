@@ -4,6 +4,7 @@ import { ClaimCard } from "@/components/organisms/claim-card";
 import { OriginalText } from "@/components/organisms/original-text";
 import { VerdictLegend } from "@/components/organisms/verdict-legend";
 import type { CheckResult } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { receiptTitle } from "@/lib/receipt-meta";
 import {
   framingPercent,
@@ -67,7 +68,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
         />
       ))}
       <VerdictLegend
-        present={claims.map((c) => c.verdict.label)}
+        present={claims.map((c) => shownLabel(c))}
         threshold={framingPercent(result)}
         windows={windowsCompared(result)}
         tolerancesVersion={result.versions.tolerances}

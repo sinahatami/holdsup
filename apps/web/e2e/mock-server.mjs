@@ -10,10 +10,12 @@ import {
   checkView,
   galleryClaim,
   galleryItem,
+  highConfidence,
   holdingClaim,
   tolerances,
+  unsureClaim,
 } from "../src/test/fixtures.ts";
-import { CHECK_ID, DONE_ID, RECHECK_ID } from "./ids.ts";
+import { CHECK_ID, DONE_ID, RECHECK_ID, UNSURE_ID } from "./ids.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -111,6 +113,22 @@ const server = createServer(async (req, res) => {
   }
   if (id === DONE_ID) {
     const result = checkResult([holdingClaim], { id });
+    return send(
+      res,
+      200,
+      checkView({
+        id,
+        status: "done",
+        finished_at: result.finished_at,
+        result,
+      }),
+    );
+  }
+  if (id === UNSURE_ID) {
+    const result = checkResult(
+      [{ ...holdingClaim, confidence: highConfidence }, unsureClaim],
+      { id },
+    );
     return send(
       res,
       200,
