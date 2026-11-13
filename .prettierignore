@@ -10,3 +10,5 @@ docs/
 apps/api/tests/fixtures/
 .lighthouseci/
 eval/reports/
+ml/reranker/reports/
+ml/reranker/artifacts/

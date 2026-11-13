@@ -138,6 +138,13 @@ class IndicatorSpec(BaseModel):
         """What gets embedded for search: name, aliases, definition."""
         return f"{self.name}. Also called: {'; '.join(self.aliases)}. {self.definition}"
 
+    def rerank_text(self) -> str:
+        """What the reranker reads beside a claim (ml/reranker trains on it, serving uses it):
+        the unit too, which tells "debt in euros" from "debt as a share of GDP"."""
+        return (
+            f"{self.name} ({self.unit}). Also called: {'; '.join(self.aliases)}. {self.definition}"
+        )
+
 
 class CatalogError(Exception):
     def __init__(self, problems: list[str]) -> None:
