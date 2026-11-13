@@ -304,3 +304,59 @@ async def test_an_invented_number_twice_falls_back_to_the_template() -> None:
 async def test_router_out_of_providers_in_extraction_propagates() -> None:
     with pytest.raises(RouterError):
         await run([ProviderUnavailable("down")])
+
+
+async def test_a_clear_reranker_match_saves_the_match_call_and_is_on_the_receipt() -> None:
+    from holdsup.ml.reranker import LABEL, PROVIDER
+    from holdsup.pipeline.trace import ModelUse
+    from tests.ml.fakes import FakeReranker
+    from tests.service.fakes import CATALOG
+
+    pipeline, client, _ = make_pipeline([extraction(claim_json()), plan_answer(), explain_answer()])
+    pipeline.reranker = FakeReranker(CATALOG, {"unemployment_rate": 0.95})
+    events: list[StepEvent] = []
+
+    async def emit(event: StepEvent) -> None:
+        events.append(event)
+
+    out = await pipeline.run(TEXT, emit)
+
+    assert len(client.calls) == 3  # extract, plan, explain: no match call
+    [c] = out.claims
+    assert c.verdict.label is Label.SUPPORTED
+    assert c.indicator is not None and c.indicator.id == "unemployment_rate"
+    reranker = ModelUse(
+        step=Step.MATCH, provider=PROVIDER, model="fake/reranker@0000000", label=LABEL
+    )
+    assert [m for m in c.models if m.step is Step.MATCH] == [reranker]
+    assert c.notes == ["matched by the reranker alone: margin 0.95 is at least 0.50"]
+    match_done = next(e for e in events if e.step is Step.MATCH and e.event == "step_done")
+    assert match_done.summary == (
+        "Matched Unemployment rate (eurostat une_rt_a). The reranker was clear, so no model was "
+        "asked."
+    )
+    assert match_done.models == ["local/fake/reranker@0000000"]
+
+
+async def test_a_close_reranker_call_names_both_on_the_receipt() -> None:
+    from tests.ml.fakes import FakeReranker
+    from tests.service.fakes import CATALOG
+
+    script = [extraction(claim_json()), match_answer(), plan_answer(), explain_answer()]
+    pipeline, client, _ = make_pipeline(script)
+    pipeline.reranker = FakeReranker(
+        CATALOG, {"unemployment_rate": 0.5, "youth_unemployment_rate": 0.4}
+    )
+
+    out = await pipeline.run(TEXT, _ignore)
+
+    assert len(client.calls) == 4
+    [c] = out.claims
+    assert [(m.provider, m.model) for m in c.models if m.step is Step.MATCH] == [
+        ("local", "fake/reranker@0000000"),
+        ("fake", "fake-model"),
+    ]
+
+
+async def _ignore(event: StepEvent) -> None:
+    return None

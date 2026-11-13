@@ -1,5 +1,6 @@
-"""The match conversation: show the candidates, answer tool calls, take a second look, and
-check the model's pick."""
+"""The match: rerank the candidates, and when the reranker is not clear enough, the
+conversation: show the candidates, answer tool calls, take a second look, and check the
+model's pick."""
 
 from dataclasses import dataclass, field
 
@@ -17,6 +18,7 @@ from holdsup.pipeline.match.prompt import (
     parse_answer,
     tool_calls_message,
 )
+from holdsup.pipeline.match.rerank import SKIP_MARGIN, Ranked, Reranker, rerank
 from holdsup.pipeline.match.second_look import second_look
 from holdsup.pipeline.match.tools import MAX_TOOL_CALLS, TOOLS, answer_tool_call
 from holdsup.places import place_name
@@ -31,6 +33,8 @@ class Matcher:
     catalog: Catalog
     search: CatalogSearch
     use: Use = Use.LIVE
+    reranker: Reranker | None = None  # None: the model always picks, in search order
+    skip_margin: float = SKIP_MARGIN
     pool: CandidatePool = field(init=False)
 
     def __post_init__(self) -> None:
@@ -38,7 +42,6 @@ class Matcher:
 
     async def match(self, claim: ClaimSpec) -> MatchResult:
         candidates, excluded = await self.pool.covering(claim.indicator_phrase, claim.geo)
-        shown = [Candidate(id=h.id, score=h.score) for h in candidates]
         if not candidates:
             return MatchResult(
                 status="cant_check",
@@ -49,12 +52,51 @@ class Matcher:
                 candidates=[],
                 excluded_by_geo=excluded,
             )
+        ranked = None
+        if self.reranker is not None:
+            ranked = await rerank(self.reranker, claim.quote, candidates, self.catalog)
+            candidates = ranked.hits
+        probabilities = ranked.probabilities if ranked else [None] * len(candidates)
+        shown = [
+            Candidate(id=h.id, score=h.score, rerank=p)
+            for h, p in zip(candidates, probabilities, strict=True)
+        ]
+        # The model reads the candidates in this order: the reranker's, when it ran.
         run = MatchRun(claim, {h.id: self.catalog.get(h.id) for h in candidates})
-        answer, convo = await self._ask(run)
-        if (nudge := second_look(run, answer)) is not None:
-            run.notes.append(nudge.note)
-            answer = await self._ask_again(run, convo, answer, nudge.prompt)
-        return self._verdict(run, answer, shown, excluded)
+        if ranked is not None and ranked.margin >= self.skip_margin:
+            result = self._reranker_pick(run, ranked, shown, excluded)
+        else:
+            answer, convo = await self._ask(run)
+            if (nudge := second_look(run, answer)) is not None:
+                run.notes.append(nudge.note)
+                answer = await self._ask_again(run, convo, answer, nudge.prompt)
+            result = self._verdict(run, answer, shown, excluded)
+        if ranked is None:
+            return result
+        return result.model_copy(
+            update={"reranker": ranked.model, "margin": round(ranked.margin, 4)}
+        )
+
+    def _reranker_pick(
+        self, run: MatchRun, ranked: Ranked, shown: list[Candidate], excluded: list[str]
+    ) -> MatchResult:
+        """The reranker's first candidate, with no model call: its margin is wide enough."""
+        spec = run.eligible[ranked.hits[0].id]
+        return MatchResult(
+            status="matched",
+            indicator_id=spec.id,
+            confidence="high",
+            reason=f"The reranker put {spec.name} well ahead of every other candidate "
+            f"(margin {ranked.margin:.2f}), so no model was asked.",
+            alternatives=[],
+            candidates=shown,
+            excluded_by_geo=excluded,
+            notes=[
+                f"matched by the reranker alone: margin {ranked.margin:.2f} is at least "
+                + f"{self.skip_margin:.2f}"
+            ],
+            skipped_model=True,
+        )
 
     async def _ask_again(
         self,

@@ -23,7 +23,8 @@ class MatchAnswer(BaseModel):
 
 class Candidate(BaseModel):
     id: str
-    score: float
+    score: float  # the vector search's similarity
+    rerank: float | None = None  # the reranker's probability, when it ran
 
 
 class ToolUse(BaseModel):
@@ -38,11 +39,14 @@ class MatchResult(BaseModel):
     confidence: Confidence | None
     reason: str
     alternatives: list[str]
-    candidates: list[Candidate]  # the top 8 shown to the model
+    candidates: list[Candidate]  # the top 8, in the order the model saw (or would have seen)
     excluded_by_geo: list[str]  # vector hits dropped because they do not cover the place
     tool_calls: list[ToolUse] = Field(default_factory=list)
     providers: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+    reranker: str | None = None  # the reranker's model, when it ordered the candidates
+    margin: float | None = None  # its first candidate's probability minus the second's
+    skipped_model: bool = False  # the reranker's margin was enough: no model call
 
 
 @dataclass
