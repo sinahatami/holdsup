@@ -27,6 +27,13 @@ FROM build AS model
 ENV FASTEMBED_CACHE_PATH=/opt/fastembed
 RUN /opt/venv/bin/python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('/opt/fastembed')"
 
+# The fine-tuned indicator reranker (D030): the files named in the pin, from the Hugging Face
+# Hub at the pinned commit, each sha256-checked (any mismatch fails the build). The stage holds
+# only the pin and the standard-library script, so it downloads again only when the pin changes.
+FROM python:3.13-slim AS reranker
+COPY apps/api/holdsup/ml/reranker_pin.json apps/api/scripts/fetch_reranker.py /fetch/
+RUN python -I /fetch/fetch_reranker.py /fetch/reranker_pin.json /opt/reranker
+
 FROM python:3.13-slim AS runtime
 # The commit shown on receipts: --build-arg APP_COMMIT=$(git rev-parse --short HEAD)
 # (on Hugging Face Spaces, set it as a Space variable).
@@ -35,10 +42,13 @@ ARG APP_COMMIT=""
 RUN useradd --create-home --uid 1000 app
 COPY --from=build /opt/venv /opt/venv
 COPY --from=model --chown=app:app /opt/fastembed /opt/fastembed
+# Read-only: the API checks these files against the pin again when it loads them.
+COPY --from=reranker /opt/reranker /opt/reranker
 COPY --chown=app:app apps/api/alembic.ini /app/alembic.ini
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     FASTEMBED_CACHE_PATH=/opt/fastembed \
+    RERANKER_DIR=/opt/reranker \
     PORT=7860 \
     APP_COMMIT=${APP_COMMIT}
 WORKDIR /app
