@@ -21,6 +21,7 @@ from holdsup.catalog.index import InMemoryIndex
 from holdsup.catalog.schema import Catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
+from holdsup.ml.reranker import load_reranker
 from holdsup.pipeline.result import PipelineOutput
 from holdsup.pipeline.run import Pipeline
 from holdsup.router import RouterConfig, RouterError, Use
@@ -59,8 +60,10 @@ async def live_rig(
     catalog: Catalog, config: RouterConfig, tolerances: Tolerances, use: Use
 ) -> AsyncIterator[Rig]:  # pragma: no cover (live providers, live sources, the embedding model)
     """The real pipeline: live providers, live sources (cached in memory for the run) and the
-    catalog in an in-memory index, so a run needs no database."""
+    catalog in an in-memory index, so a run needs no database. The pinned reranker is
+    required (`make reranker-fetch`): without it a run would measure another pipeline."""
     embedder = default_embedder(get_settings().fastembed_cache_path)
+    reranker = load_reranker(get_settings().reranker_dir)
     meter = Meter()
     async with httpx.AsyncClient(timeout=30.0) as http:
         adapters = {
@@ -79,6 +82,7 @@ async def live_rig(
             fetcher=fetcher,
             tolerances=tolerances,
             use=use,
+            reranker=reranker,
         )
         yield Rig(pipeline, search, meter)
 
