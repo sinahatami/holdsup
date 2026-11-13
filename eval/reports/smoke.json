@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "smoke",
-  "created_at": "2026-11-12T22:53:37Z",
+  "created_at": "2026-11-13T00:08:23Z",
   "benchmark": "smoke_claims.jsonl",
   "split": "dev",
   "provider": "router",
@@ -10,7 +10,7 @@
     "app": "0.0.0",
     "catalog": "0.8.0",
     "tolerances": 5,
-    "eval": "0.1.0"
+    "eval": "0.2.0"
   },
   "steps": {
     "extract": [
@@ -54,8 +54,8 @@
     "excluded": {
       "texts_not_run": 0,
       "claims_not_run": 0,
-      "claims_verdict_unavailable": 0,
-      "share": 0.0
+      "claims_verdict_unavailable": 1,
+      "share": 0.0714
     },
     "extraction": {
       "precision": {
@@ -103,13 +103,13 @@
     },
     "verdict": {
       "accuracy": {
-        "hits": 12,
-        "total": 14,
-        "rate": 0.8571
+        "hits": 11,
+        "total": 13,
+        "rate": 0.8462
       },
       "accuracy_given_found": {
-        "hits": 12,
-        "total": 12,
+        "hits": 11,
+        "total": 11,
         "rate": 1.0
       },
       "labels": [
@@ -122,7 +122,7 @@
       ],
       "confusion": {
         "supported": {
-          "supported": 6,
+          "supported": 5,
           "supported_framing_matters": 0,
           "not_supported": 0,
           "partly_supported": 0,
@@ -164,9 +164,9 @@
       },
       "per_label": {
         "supported": {
-          "hits": 6,
-          "total": 7,
-          "rate": 0.8571
+          "hits": 5,
+          "total": 6,
+          "rate": 0.8333
         },
         "supported_framing_matters": {
           "hits": 0,
@@ -192,21 +192,21 @@
     },
     "explanation": {
       "pass_rate": {
-        "hits": 10,
-        "total": 12,
-        "rate": 0.8333
+        "hits": 9,
+        "total": 11,
+        "rate": 0.8182
       }
     },
     "cost": {
-      "model_calls": 83,
-      "failed_calls": 24,
-      "calls_per_claim": 5.93,
-      "prompt_tokens": 62548,
-      "completion_tokens": 38932,
-      "seconds": 222.3,
-      "seconds_per_claim": 15.88,
-      "seconds_p50_per_text": 14.69,
-      "seconds_p95_per_text": 54.15,
+      "model_calls": 78,
+      "failed_calls": 21,
+      "calls_per_claim": 5.57,
+      "prompt_tokens": 62400,
+      "completion_tokens": 35983,
+      "seconds": 198.8,
+      "seconds_per_claim": 14.2,
+      "seconds_p50_per_text": 12.71,
+      "seconds_p95_per_text": 69.68,
       "series_requests": 13,
       "series_cache_hits": 5,
       "series_cache_hit_rate": 0.3846,
@@ -217,116 +217,125 @@
           "model": "openai/gpt-oss-120b",
           "calls": 2,
           "failed": 1,
-          "tokens": 894,
-          "mean_latency_ms": 479.4
+          "tokens": 815,
+          "mean_latency_ms": 382.7
         },
         {
           "step": "explain",
           "provider": "groq-gpt-oss-20b",
           "model": "openai/gpt-oss-20b",
           "calls": 14,
-          "failed": 3,
-          "tokens": 12631,
-          "mean_latency_ms": 633.0
+          "failed": 2,
+          "tokens": 12625,
+          "mean_latency_ms": 596.4
         },
         {
           "step": "explain",
           "provider": "mistral-ministral-14b",
           "model": "ministral-14b-2512",
-          "calls": 5,
-          "failed": 3,
-          "tokens": 1189,
-          "mean_latency_ms": 519.2
+          "calls": 2,
+          "failed": 1,
+          "tokens": 968,
+          "mean_latency_ms": 854.1
         },
         {
           "step": "explain",
           "provider": "openrouter-nemotron-free",
           "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 3,
+          "calls": 1,
           "failed": 0,
-          "tokens": 4106,
-          "mean_latency_ms": 5484.8
+          "tokens": 1602,
+          "mean_latency_ms": 7980.2
         },
         {
           "step": "extract",
           "provider": "groq-gpt-oss-120b",
           "model": "openai/gpt-oss-120b",
           "calls": 4,
-          "failed": 4,
-          "tokens": 0,
-          "mean_latency_ms": 70.2
+          "failed": 3,
+          "tokens": 2774,
+          "mean_latency_ms": 486.3
         },
         {
           "step": "extract",
           "provider": "groq-gpt-oss-20b",
           "model": "openai/gpt-oss-20b",
           "calls": 9,
-          "failed": 5,
-          "tokens": 13024,
-          "mean_latency_ms": 1140.1
+          "failed": 4,
+          "tokens": 16057,
+          "mean_latency_ms": 895.9
+        },
+        {
+          "step": "extract",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 2,
+          "failed": 1,
+          "tokens": 1160,
+          "mean_latency_ms": 1396.2
         },
         {
           "step": "extract",
           "provider": "openrouter-nemotron-free",
           "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 6,
+          "calls": 3,
           "failed": 0,
-          "tokens": 14394,
-          "mean_latency_ms": 9795.7
+          "tokens": 5789,
+          "mean_latency_ms": 6834.9
         },
         {
           "step": "match",
           "provider": "groq-gpt-oss-120b",
           "model": "openai/gpt-oss-120b",
-          "calls": 13,
-          "failed": 2,
-          "tokens": 14667,
-          "mean_latency_ms": 751.5
+          "calls": 14,
+          "failed": 4,
+          "tokens": 13001,
+          "mean_latency_ms": 645.9
         },
         {
           "step": "match",
-          "provider": "mistral-ministral-14b",
-          "model": "ministral-14b-2512",
-          "calls": 1,
-          "failed": 1,
-          "tokens": 0,
-          "mean_latency_ms": 132.2
-        },
-        {
-          "step": "match",
-          "provider": "openrouter-nemotron-free",
-          "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 6,
-          "failed": 0,
-          "tokens": 10058,
-          "mean_latency_ms": 4781.1
-        },
-        {
-          "step": "plan",
-          "provider": "groq-gpt-oss-120b",
-          "model": "openai/gpt-oss-120b",
-          "calls": 15,
-          "failed": 5,
-          "tokens": 18165,
-          "mean_latency_ms": 844.4
-        },
-        {
-          "step": "plan",
           "provider": "mistral-ministral-14b",
           "model": "ministral-14b-2512",
           "calls": 2,
           "failed": 0,
-          "tokens": 1464,
-          "mean_latency_ms": 896.9
+          "tokens": 2483,
+          "mean_latency_ms": 1531.1
+        },
+        {
+          "step": "match",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 6,
+          "failed": 0,
+          "tokens": 9788,
+          "mean_latency_ms": 3941.2
+        },
+        {
+          "step": "plan",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 12,
+          "failed": 4,
+          "tokens": 13986,
+          "mean_latency_ms": 805.6
+        },
+        {
+          "step": "plan",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 3,
+          "failed": 1,
+          "tokens": 1587,
+          "mean_latency_ms": 1297.8
         },
         {
           "step": "plan",
           "provider": "openrouter-nemotron-free",
           "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 3,
+          "calls": 4,
           "failed": 0,
-          "tokens": 10888,
-          "mean_latency_ms": 22317.5
+          "tokens": 15748,
+          "mean_latency_ms": 23656.2
         }
       ]
     },
@@ -341,8 +350,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 6.53,
-      "model_calls": 5,
+      "seconds": 5.99,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "r001",
@@ -350,8 +359,8 @@
           "quote": "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023",
           "expected": "supported",
           "expected_indicator": "unemployment_rate_monthly",
-          "status": "scored",
-          "note": "",
+          "status": "verdict_unavailable",
+          "note": "HoldsUp couldn't work out how to calculate this claim from the data. Trying again may help.",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -359,11 +368,11 @@
           "indicator": "unemployment_rate_monthly",
           "match_ok": true,
           "in_top8": true,
-          "verdict": "supported",
-          "verdict_ok": true,
-          "reason": "Holds within tolerance.",
-          "stopped_at": null,
-          "explanation": "passed",
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "plan",
+          "explanation": "not_asked",
           "failed_step": null
         }
       ]
@@ -374,8 +383,8 @@
       "labelled": 2,
       "extracted": 2,
       "linked": 2,
-      "seconds": 13.99,
-      "model_calls": 12,
+      "seconds": 16.67,
+      "model_calls": 13,
       "outcomes": [
         {
           "text_id": "c004",
@@ -396,7 +405,7 @@
           "verdict_ok": true,
           "reason": "Holds within tolerance.",
           "stopped_at": null,
-          "explanation": "passed",
+          "explanation": "rejected",
           "failed_step": null
         },
         {
@@ -429,8 +438,8 @@
       "labelled": 2,
       "extracted": 1,
       "linked": 1,
-      "seconds": 54.15,
-      "model_calls": 8,
+      "seconds": 69.68,
+      "model_calls": 11,
       "outcomes": [
         {
           "text_id": "c001",
@@ -484,8 +493,8 @@
       "labelled": 2,
       "extracted": 2,
       "linked": 2,
-      "seconds": 18.32,
-      "model_calls": 12,
+      "seconds": 8.99,
+      "model_calls": 9,
       "outcomes": [
         {
           "text_id": "c002",
@@ -539,7 +548,7 @@
       "labelled": 2,
       "extracted": 1,
       "linked": 1,
-      "seconds": 43.95,
+      "seconds": 31.36,
       "model_calls": 7,
       "outcomes": [
         {
@@ -594,8 +603,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.41,
-      "model_calls": 5,
+      "seconds": 12.71,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "c006",
@@ -627,8 +636,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 14.69,
-      "model_calls": 9,
+      "seconds": 19.11,
+      "model_calls": 8,
       "outcomes": [
         {
           "text_id": "c018",
@@ -649,7 +658,7 @@
           "verdict_ok": true,
           "reason": "Outside tolerance for the stated window.",
           "stopped_at": null,
-          "explanation": "rejected",
+          "explanation": "passed",
           "failed_step": null
         }
       ]
@@ -660,7 +669,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 13.6,
+      "seconds": 11.51,
       "model_calls": 7,
       "outcomes": [
         {
@@ -693,8 +702,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 20.26,
-      "model_calls": 9,
+      "seconds": 6.25,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "c029",
@@ -726,8 +735,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 32.38,
-      "model_calls": 9,
+      "seconds": 16.56,
+      "model_calls": 8,
       "outcomes": [
         {
           "text_id": "p001",

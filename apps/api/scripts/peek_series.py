@@ -19,18 +19,18 @@ import argparse
 import asyncio
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
 
 import httpx
 
-from holdsup.adapters.eurostat import EurostatAdapter
-from holdsup.adapters.owid import OwidAdapter
-from holdsup.adapters.worldbank import WorldBankAdapter
+from holdsup.adapters.base import Observation
+from holdsup.adapters.registry import build_adapters
 from holdsup.catalog.schema import load_catalog
 from holdsup.config import REPO_ROOT
 from holdsup.geo import geo_filter
 
 
-def yearly(observations, rule: str) -> dict[str, float]:
+def yearly(observations: Iterable[Observation], rule: str) -> dict[str, float]:
     by_year: dict[str, list[tuple[str, float]]] = defaultdict(list)
     for o in observations:
         if o.value is not None:
@@ -55,11 +55,7 @@ def fmt(value: float) -> str:
 async def main(pairs: list[tuple[str, str]], first: int) -> int:
     catalog = load_catalog(REPO_ROOT / "packages" / "catalog")
     async with httpx.AsyncClient(timeout=60.0) as http:
-        adapters = {
-            "eurostat": EurostatAdapter(http),
-            "worldbank": WorldBankAdapter(http),
-            "owid": OwidAdapter(http),
-        }
+        adapters = build_adapters(http)
         for indicator_id, geo in pairs:
             head = f"== {indicator_id}:{geo}"
             try:
