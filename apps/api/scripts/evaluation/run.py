@@ -21,6 +21,7 @@ from holdsup.catalog.index import InMemoryIndex
 from holdsup.catalog.schema import Catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
+from holdsup.ml.confidence import load_confidence
 from holdsup.ml.reranker import load_reranker
 from holdsup.pipeline.result import PipelineOutput
 from holdsup.pipeline.run import Pipeline
@@ -83,6 +84,7 @@ async def live_rig(
             tolerances=tolerances,
             use=use,
             reranker=reranker,
+            confidence=load_confidence(),
         )
         yield Rig(pipeline, search, meter)
 
