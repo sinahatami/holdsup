@@ -5,7 +5,8 @@ from scripts.evaluation.run import Rig, evaluate, only_provider
 
 from holdsup.adapters.base import FetchedSeries, Filters, SourceUnavailable
 from holdsup.catalog.index import IndicatorHit
-from holdsup.router.errors import ProviderUnavailable
+from holdsup.pipeline.result import PipelineOutput
+from holdsup.router.errors import ProviderUnavailable, RouterError
 from holdsup.verdict import Label
 from tests.evaluation.helpers import FALL, fall_claim, fall_script, label, make_rig, text
 from tests.pipeline.test_regressions import extraction, match
@@ -149,3 +150,80 @@ def test_a_per_provider_run_sends_every_step_to_that_provider() -> None:
 def test_an_unknown_provider_is_a_key_error() -> None:
     with pytest.raises(KeyError):
         only_provider(config(provider("a")), "nope")
+
+
+class BusyPipeline:
+    """Raises the router's "retry in ~Ns" `busy` times, then runs the real pipeline."""
+
+    def __init__(self, real: Rig, busy: int, retry_after_s: float | None = 2.0) -> None:
+        self.real, self.busy, self.retry_after_s, self.calls = real, busy, retry_after_s, 0
+
+    async def run(self, text: str, emit: object) -> PipelineOutput:
+        self.calls += 1
+        if self.calls <= self.busy:
+            raise RouterError(step="extract", retry_after_s=self.retry_after_s)
+        return await self.real.pipeline.run(text, emit)  # type: ignore[arg-type]
+
+
+async def test_a_rate_limited_router_is_waited_out_and_the_text_is_run() -> None:
+    real, _, _ = make_rig(fall_script())
+    busy = BusyPipeline(real, busy=2)
+    waits: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    [outcome] = await evaluate(
+        Rig(busy, real.search, real.meter),  # type: ignore[arg-type]
+        [text()],
+        retries=4,
+        sleep=sleep,
+    )
+
+    assert outcome.error is None and busy.calls == 3
+    assert waits == [3.0, 3.0]
+
+
+async def test_a_router_that_stays_busy_is_given_up_on_after_the_retries() -> None:
+    real, _, _ = make_rig(fall_script())
+    busy = BusyPipeline(real, busy=99)
+
+    async def sleep(seconds: float) -> None:
+        pass
+
+    [outcome] = await evaluate(
+        Rig(busy, real.search, real.meter),  # type: ignore[arg-type]
+        [text()],
+        retries=2,
+        sleep=sleep,
+    )
+
+    assert outcome.error is not None and busy.calls == 3
+
+
+async def test_a_wait_longer_than_the_cap_is_not_waited_for() -> None:
+    real, _, _ = make_rig(fall_script())
+    busy = BusyPipeline(real, busy=99, retry_after_s=3600.0)  # a daily quota
+    waits: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    [outcome] = await evaluate(
+        Rig(busy, real.search, real.meter),  # type: ignore[arg-type]
+        [text()],
+        retries=4,
+        max_wait_s=90.0,
+        sleep=sleep,
+    )
+
+    assert outcome.error is not None and busy.calls == 1 and waits == []
+
+
+async def test_a_router_that_gives_no_wait_is_not_retried() -> None:
+    real, _, _ = make_rig(fall_script())
+    busy = BusyPipeline(real, busy=99, retry_after_s=None)
+
+    [outcome] = await evaluate(Rig(busy, real.search, real.meter), [text()], retries=4)  # type: ignore[arg-type]
+
+    assert outcome.error is not None and busy.calls == 1
