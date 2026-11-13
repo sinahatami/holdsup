@@ -388,6 +388,51 @@ export const unmatchedClaim: ClaimResult = {
   retryable: false,
 };
 
+/** A sure verdict (P4.5): the signals the check found, and the model's probability. */
+export const highConfidence: NonNullable<ClaimResult["confidence"]> = {
+  signals: {
+    rerank_probability: 0.97,
+    rerank_margin: 0.91,
+    definition_mismatch: false,
+    data_age_years: 2.9,
+    series_length: 9,
+    boundary_distance: 2.4,
+    fallback_steps: 0,
+  },
+  probability: 0.93,
+  label: "high",
+  abstain: false,
+  reason: null,
+  model: "logistic regression (trained 2026-11-14)",
+};
+
+/** The reason the API gives when the check abstains: written by code from the signals. */
+export const unsureReason =
+  "HoldsUp is not confident in this verdict: another statistic fits the claim's wording almost as well as the one used, and a backup model did part of the work.";
+
+/** A claim whose verdict holds by the numbers, but the check is too unsure to give it. */
+export const unsureClaim: ClaimResult = {
+  ...holdingClaim,
+  index: 1,
+  claim: {
+    ...holdingClaim.claim,
+    quote: "Italy's jobless rate fell by about 4 points between 2015 and 2023.",
+  },
+  confidence: {
+    signals: {
+      ...highConfidence.signals,
+      rerank_probability: 0.46,
+      rerank_margin: 0.04,
+      fallback_steps: 2,
+    },
+    probability: 0.41,
+    label: "low",
+    abstain: true,
+    reason: unsureReason,
+    model: "logistic regression (trained 2026-11-14)",
+  },
+};
+
 export function checkResult(
   claims: ClaimResult[],
   over: Partial<CheckResult> = {},

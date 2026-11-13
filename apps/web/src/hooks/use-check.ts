@@ -8,6 +8,7 @@ import {
   type CheckResult,
   type Problem,
 } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { historyStore } from "@/lib/history";
 import { applyStep, type TraceRow } from "@/lib/trace";
 
@@ -48,7 +49,7 @@ export function useCheck(id: string, api: ApiClient = browserApi) {
     const finish = (result: CheckResult) => {
       historyStore.finish(
         id,
-        result.claims.map((c) => c.verdict.label),
+        result.claims.map((c) => shownLabel(c)),
       );
       patch({ loading: false, result });
     };

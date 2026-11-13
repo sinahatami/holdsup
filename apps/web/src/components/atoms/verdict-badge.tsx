@@ -23,9 +23,12 @@ export const verdictIcon: Record<Label, LucideIcon> = {
 export function VerdictBadge({
   label,
   large = false,
+  text,
 }: {
   label: Label;
   large?: boolean;
+  /** Other words for the same look, e.g. "Can't check confidently". */
+  text?: string;
 }) {
   const Icon = verdictIcon[label];
   return (
@@ -42,7 +45,7 @@ export function VerdictBadge({
       )}
     >
       <Icon className={large ? "size-5" : "size-4"} aria-hidden />
-      {strings.verdicts[label]}
+      {text ?? strings.verdicts[label]}
     </span>
   );
 }
