@@ -27,7 +27,7 @@ from scripts.evaluation.benchmark import (
     select,
 )
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report, write_report
-from scripts.evaluation.run import Rig, evaluate, live_rig, only_provider
+from scripts.evaluation.run import DEFAULT_RETRIES, Rig, evaluate, live_rig, only_provider
 from scripts.evaluation.score import Metrics, TextOutcome, summarize
 
 DEFAULT_CLAIMS = Path("eval/claims.jsonl")
@@ -57,6 +57,12 @@ def _parser() -> argparse.ArgumentParser:
         help="allow the held-out test split: for the final report only (P4.7), never for tuning",
     )
     p.add_argument("--limit", type=int, default=None, help="only the first N texts")
+    p.add_argument(
+        "--retries",
+        type=int,
+        default=DEFAULT_RETRIES,
+        help="times to wait out a rate-limited router and retry a text before dropping it",
+    )
     p.add_argument("--provider", default=None, help="force every step onto this one provider")
     p.add_argument("--use", choices=[u.value for u in Use], default=Use.LIVE.value)
     p.add_argument("--catalog", type=Path, default=None, help="default: packages/catalog")
@@ -129,9 +135,10 @@ async def _evaluate(
     tolerances: Tolerances,
     use: Use,
     factory: RigFactory,
+    retries: int,
 ) -> tuple[list[TextOutcome], Metrics]:
     async with factory(catalog, config, tolerances, use) as rig:
-        outcomes = await evaluate(rig, texts, _stderr)
+        outcomes = await evaluate(rig, texts, _stderr, retries=retries)
         metrics = summarize(
             outcomes,
             rig.meter.calls,
@@ -163,7 +170,9 @@ def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
 
     use = Use(args.use)
     tolerances = load_tolerances()
-    outcomes, metrics = asyncio.run(_evaluate(texts, catalog, config, tolerances, use, factory))
+    outcomes, metrics = asyncio.run(
+        _evaluate(texts, catalog, config, tolerances, use, factory, args.retries)
+    )
 
     suffix = f".{args.provider}" if args.provider else ""
     report = build_report(
