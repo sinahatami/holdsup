@@ -122,6 +122,9 @@ record-extractions: ## Record live extraction responses for the P2.1 tests (need
 record-series: ## Record adapter output for the pipeline regression tests (network; not CI)
 	cd $(API_DIR) && uv run python -m scripts.record_series $(ARGS)
 
+reranker-fetch: ## Download the pinned reranker (apps/api/holdsup/ml/reranker_pin.json) from the Hugging Face Hub into ml/reranker/artifacts/onnx, sha256-checked; never overwrites a different local file (network)
+	cd $(API_DIR) && uv run python -m scripts.fetch_reranker holdsup/ml/reranker_pin.json ../../ml/reranker/artifacts/onnx
+
 embed-model: ## Download the embedding model into .cache/fastembed (needed by tests and catalog)
 	cd $(API_DIR) && uv run python -c "from holdsup.catalog.embed import FastEmbedder; FastEmbedder('$(FASTEMBED_CACHE_PATH)')"
 

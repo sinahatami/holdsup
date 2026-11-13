@@ -131,3 +131,11 @@ def test_percent_format(value: float | None, text: str) -> None:
     from reranker.report import pct
 
     assert pct(value) == text
+
+
+def test_the_committed_card_names_the_hub_repo_the_api_pins() -> None:
+    from holdsup.ml.reranker import load_pin
+    from reranker import MODEL_CARD
+
+    card = MODEL_CARD.read_text(encoding="utf-8")
+    assert f'CrossEncoder("{load_pin().repo}")' in card and "<hub-owner>" not in card

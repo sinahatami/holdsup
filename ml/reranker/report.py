@@ -12,6 +12,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
+from holdsup.ml.reranker import load_pin
 from reranker.benchmark import Claim, dev
 from reranker.dataset import Group
 from reranker.experiment import BASE, EMBEDDING, RERANKER, CrossValidation
@@ -20,7 +21,8 @@ from reranker.paraphrase import Paraphrase
 from reranker.scorer import Latency
 
 NAME = "holdsup-indicator-reranker"
-HUB_OWNER = "<hub-owner>"  # set when the model is published (P4.7)
+# The Hub repo the card belongs to: the one the API pins (apps/api/holdsup/ml/reranker_pin.json).
+HUB_REPO = load_pin().repo
 THRESHOLDS = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 GROUPING = "statistic and place (a sentence and its variants stay in one fold)"
 RANKER_NAMES = {
@@ -326,7 +328,7 @@ def render_card(r: Report) -> str:
             "```python",
             "from sentence_transformers import CrossEncoder",
             "",
-            f'model = CrossEncoder("{HUB_OWNER}/{r.model}")',
+            f'model = CrossEncoder("{HUB_REPO}")',
             "scores = model.predict([(claim, entry) for entry in entries])  # logits",
             "```",
             "",

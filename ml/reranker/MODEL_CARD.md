@@ -16,7 +16,7 @@ A small cross-encoder that reranks candidate statistics for a numeric claim. Giv
 ```python
 from sentence_transformers import CrossEncoder
 
-model = CrossEncoder("<hub-owner>/holdsup-indicator-reranker")
+model = CrossEncoder("sinahatami/holdsup-reranker")
 scores = model.predict([(claim, entry) for entry in entries])  # logits
 ```
 
