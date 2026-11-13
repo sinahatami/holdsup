@@ -32,6 +32,7 @@ from holdsup.catalog.search import CatalogSearch
 from holdsup.checks import (
     ChangePoints,
     CheckInput,
+    CheckKind,
     DistortionCheck,
     Related,
     Sweep,
@@ -43,6 +44,15 @@ from holdsup.checks import (
 )
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
 from holdsup.ml import reranker as reranker_model
+from holdsup.ml.confidence import (
+    Confidence,
+    ConfidenceModel,
+    Signals,
+    boundary_distance,
+    data_age_years,
+    rerank_signals,
+    unscored,
+)
 from holdsup.ops import OpError, Series
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
@@ -120,6 +130,9 @@ class _ClaimRun:
     out: ClaimResult
     # Series fetched besides the matched one (the population), by indicator id, until a plan uses them.
     extra: dict[str, ExtraSource] = field(default_factory=dict)
+    # The check-wide model calls (extraction), which the confidence model reads.
+    check_models: Sequence[ModelUse] = ()
+    match: MatchResult | None = None  # None for a reader's re-check
 
     async def start(self, step: Step) -> None:
         await self.trace.start(step, self.index)
@@ -161,6 +174,8 @@ class Pipeline:
     today: Callable[[], date] | None = None
     reranker: Reranker | None = None  # None: the match model always picks
     skip_margin: float = SKIP_MARGIN
+    # None: claims carry the confidence signals only, with no probability and no abstaining.
+    confidence: ConfidenceModel | None = None
 
     def _today(self) -> date:
         return self.today() if self.today else datetime.now(UTC).date()
@@ -210,7 +225,10 @@ class Pipeline:
             status="ok" if n else "cant_check",
             models=extract_models,
         )
-        claims = [await self._claim(trace, i, c) for i, c in enumerate(extracted.claims)]
+        claims = [
+            await self._claim(trace, i, c, check_models=extract_models)
+            for i, c in enumerate(extracted.claims)
+        ]
         return PipelineOutput(
             claims=claims,
             versions=Versions(
@@ -238,10 +256,16 @@ class Pipeline:
         )
 
     async def _claim(
-        self, trace: Trace, i: int, claim: ClaimSpec, choice: Choice | None = None
+        self,
+        trace: Trace,
+        i: int,
+        claim: ClaimSpec,
+        choice: Choice | None = None,
+        *,
+        check_models: Sequence[ModelUse] = (),
     ) -> ClaimResult:
         out = ClaimResult(index=i, claim=claim, verdict=cant_check(""), explanation="")
-        c = _ClaimRun(trace, i, claim, out)
+        c = _ClaimRun(trace, i, claim, out, check_models=check_models)
         try:
             spec = await self._match(c) if choice is None else await self._chosen(c, choice)
             observations, info = await self._fetch(c, spec)
@@ -256,6 +280,7 @@ class Pipeline:
             ]
             execution = await self._execute(c, spec, plan, ctx, data)
             await self._verdict(c, plan, execution)
+            out.confidence = self._confidence(c)
             await self._explain(c, spec, execution)
         except _CantCheck as stop:
             await c.done(stop.step, stop.reason, status="cant_check", models=stop.models)
@@ -272,6 +297,7 @@ class Pipeline:
             self.router, self.catalog, self.search, self.use, self.reranker, self.skip_margin
         )
         match = await matcher.match(c.claim)
+        c.match = match
         models = self._reranker_use(match) + self._uses(Step.MATCH, match.providers)
         c.out.models += models
         c.out.match_reason, c.out.alternatives = match.reason, match.alternatives
@@ -560,6 +586,48 @@ class Pipeline:
         c.out.verdict = verdict
         status: StepStatus = "cant_check" if verdict.label is Label.CANT_CHECK else "ok"
         await c.done(Step.VERDICT, f"{verdict.label}: {verdict.reason}", status=status)
+
+    def _confidence(self, c: _ClaimRun) -> Confidence | None:
+        """How sure the check is of its verdict (P4.5), from what the steps found. None when
+        the verdict is cant_check: there is nothing to be sure of."""
+        out = c.out
+        if out.verdict.label is Label.CANT_CHECK or out.indicator is None:
+            return None
+        probability, margin = (None, None)
+        if c.match is not None:
+            probability, margin = rerank_signals(
+                [(h.id, h.rerank) for h in c.match.candidates], out.indicator.id
+            )
+        last = out.series.points[-1].period if out.series and out.series.points else None
+        signals = Signals(
+            rerank_probability=probability,
+            rerank_margin=margin,
+            definition_mismatch=any(
+                ch.kind is CheckKind.DEFINITION and ch.flagged for ch in out.distortion_checks
+            ),
+            data_age_years=data_age_years(last, self._as_of(c.claim) or self._today()),
+            series_length=len(out.series.points) if out.series else None,
+            boundary_distance=boundary_distance(out.verdict.parts),
+            fallback_steps=self._fallback_steps([*c.check_models, *out.models]),
+        )
+        return unscored(signals) if self.confidence is None else self.confidence.score(signals)
+
+    def _fallback_steps(self, models: Sequence[ModelUse]) -> int:
+        """Of extraction, matching and planning, the steps a model other than the router's
+        first choice served (the reranker is not a router model)."""
+        config = self.router.config
+        n = 0
+        for step in (Step.EXTRACT, Step.MATCH, Step.PLAN):
+            served = [
+                p for p in config.steps.get(str(step), ()) if config.provider(p).serves(self.use)
+            ]
+            used = {
+                m.provider
+                for m in models
+                if m.step is step and m.provider != reranker_model.PROVIDER
+            }
+            n += bool(used - set(served[:1]))
+        return n
 
     async def _explain(self, c: _ClaimRun, spec: IndicatorSpec, execution: Execution) -> None:
         await c.start(Step.EXPLAIN)

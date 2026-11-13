@@ -360,3 +360,114 @@ async def test_a_close_reranker_call_names_both_on_the_receipt() -> None:
 
 async def _ignore(event: StepEvent) -> None:
     return None
+
+
+# --- confidence (P4.5) -----------------------------------------------------------------------
+
+
+async def test_a_verdict_carries_the_signals_the_confidence_model_reads() -> None:
+    from holdsup.ml.confidence import boundary_distance
+
+    out, *_ = await run([extraction(claim_json()), match_answer(), plan_answer(), explain_answer()])
+    [c] = out.claims
+    assert c.confidence is not None
+    s = c.confidence.signals
+    assert (s.rerank_probability, s.rerank_margin) == (None, None)  # no reranker here
+    assert s.definition_mismatch is False
+    assert s.series_length == 9
+    assert s.data_age_years == pytest.approx(35 / 12, abs=0.01)  # 2023 to November 2026
+    assert s.boundary_distance is not None
+    assert s.boundary_distance == boundary_distance(c.verdict.parts)
+    assert s.fallback_steps == 0
+    # No model loaded: the signals alone, nothing withheld.
+    assert (c.confidence.probability, c.confidence.abstain) == (None, False)
+
+
+async def test_an_unsure_verdict_is_withheld_but_kept_with_a_reason() -> None:
+    from holdsup.ml.confidence import FEATURES, NOT_CONFIDENT, ConfidenceModel
+    from tests.ml.fakes import FakeReranker
+    from tests.service.fakes import CATALOG
+
+    n = len(FEATURES)
+    pipeline, _, _ = make_pipeline(
+        [extraction(claim_json()), match_answer(), plan_answer(), explain_answer()]
+    )
+    pipeline.reranker = FakeReranker(
+        CATALOG, {"unemployment_rate": 0.45, "youth_unemployment_rate": 0.4}
+    )
+    pipeline.confidence = ConfidenceModel(
+        features=list(FEATURES),
+        impute=[0.0] * n,
+        center=[0.0, 0.3, 0, 0, 0, 0, 0],
+        scale=[1.0] * n,
+        coef=[0.0, 4.0, 0, 0, 0, 0, 0],
+        intercept=0.0,
+        threshold=0.5,
+        high=0.9,
+        target_accuracy=0.9,
+        trained_on={
+            "created": "2026-11-14",
+            "eval_version": "1",
+            "catalog_version": "0.0.1-test",
+            "reports": {},
+            "rows": 1,
+            "seed": 0,
+        },
+    )
+
+    out = await pipeline.run(TEXT, _ignore)
+
+    [c] = out.claims
+    assert c.verdict.label is Label.SUPPORTED  # the rules' verdict stands on the receipt
+    assert c.confidence is not None
+    assert c.confidence.signals.rerank_probability == 0.45
+    assert c.confidence.signals.rerank_margin == pytest.approx(0.05)
+    assert c.confidence.abstain and c.confidence.label == "low"
+    assert c.confidence.reason == (
+        f"{NOT_CONFIDENT} another statistic fits the claim's wording almost as well as the one used."
+    )
+
+
+async def test_a_cant_check_verdict_has_no_confidence() -> None:
+    out, *_ = await run([extraction(claim_json()), match_answer(None)])
+    assert out.claims[0].confidence is None
+
+
+async def test_steps_a_backup_model_served_are_counted() -> None:
+    from holdsup.router import Router
+    from tests.router.fakes import FakeClient, FakeClock, config, provider
+
+    script = [extraction(claim_json()), match_answer(), plan_answer(), explain_answer()]
+    pipeline, _, _ = make_pipeline(script)
+    client = FakeClient(keys={"fake"})  # the first choice has no key: the backup does it all
+    client.script("fake", script)
+    steps = {s: ["first", "fake"] for s in ("extract", "match", "plan", "explain")}
+    pipeline.router = Router(
+        config(provider("first"), provider("fake"), steps=steps), client, clock=FakeClock()
+    )
+
+    out = await pipeline.run(TEXT, _ignore)
+
+    confidence = out.claims[0].confidence
+    assert confidence is not None and confidence.signals.fallback_steps == 3
+
+
+async def test_an_offline_only_first_choice_is_not_the_live_first_choice() -> None:
+    from holdsup.router import Router
+    from tests.router.fakes import FakeClient, FakeClock, config, provider
+
+    script = [extraction(claim_json()), match_answer(), plan_answer(), explain_answer()]
+    pipeline, _, _ = make_pipeline(script)
+    client = FakeClient()
+    client.script("fake", script)
+    steps = {s: ["offline", "fake"] for s in ("extract", "match", "plan", "explain")}
+    pipeline.router = Router(
+        config(provider("offline", use="offline"), provider("fake"), steps=steps),
+        client,
+        clock=FakeClock(),
+    )
+
+    out = await pipeline.run(TEXT, _ignore)
+
+    confidence = out.claims[0].confidence
+    assert confidence is not None and confidence.signals.fallback_steps == 0
