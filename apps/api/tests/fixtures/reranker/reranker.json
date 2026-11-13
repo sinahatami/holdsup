@@ -1,0 +1,18 @@
+{
+  "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+  ],
+  "max_length": 16,
+  "pad_id": 0,
+  "pad_token": "[PAD]",
+  "base_model": "tiny fixture",
+  "eval_version": "0.0.0",
+  "catalog_version": "0.0.0",
+  "paraphrases_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "seed": 0,
+  "created": "2026-11-13",
+  "cv_top1": null,
+  "cv_mrr_at_8": null
+}

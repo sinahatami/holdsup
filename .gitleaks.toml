@@ -1,0 +1,19 @@
+# Secret scan settings: gitleaks' default rules, plus one reviewed false positive.
+# The gitleaks workflow and `gitleaks detect` read this file from the repository root.
+
+[extend]
+useDefault = true
+
+# holdsup/ml/reranker_pin.json holds the sha256 checksums of public files on the Hugging Face
+# Hub. Its "tokenizer.json" key looks like a token's name to generic-api-key. The pin's schema
+# (holdsup/ml/reranker.py) admits only 64-hex checksums there, so exactly those are allowed,
+# and only in that file.
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "the reranker pin's public sha256 checksums"
+condition = "AND"
+paths = ['''^apps/api/holdsup/ml/reranker_pin\.json$''']
+regexTarget = "secret"
+regexes = ['''^[0-9a-f]{64}$''']

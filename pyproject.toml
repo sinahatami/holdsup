@@ -39,5 +39,9 @@ python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = ["onnxruntime.*"]  # ships no type information (the reranker, holdsup/ml/)
+ignore_missing_imports = true
+
 [tool.ruff.lint.isort]
 known-first-party = ["holdsup", "reranker"]

@@ -1,0 +1,9 @@
+{
+  "repo": "sinahatami/holdsup-reranker",
+  "revision": "8f067c7e18db9b594706a9a5c09963e3ba3d2f18",
+  "files": {
+    "model.onnx": "7fc778f5c43cec79607440a0e35df0fd90f5283035bc2ecdcb8e3113948acf5b",
+    "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+    "reranker.json": "9680932e9089d1a3e2def02fd6a79a4299c6a5d006f7d6258a3562229d4b1867"
+  }
+}
