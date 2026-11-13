@@ -8,6 +8,8 @@ package = false
 
 [tool.uv.workspace]
 members = ["apps/api"]
+# ml/ is its own project with its own lockfile: training libraries never enter this one.
+exclude = ["ml"]
 
 [dependency-groups]
 dev = [
@@ -38,4 +40,4 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["holdsup"]
+known-first-party = ["holdsup", "reranker"]

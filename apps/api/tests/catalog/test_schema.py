@@ -186,3 +186,11 @@ def test_release_lag_defaults_by_frequency() -> None:
     assert IndicatorSpec.model_validate({**VALID, "release_lag_months": 18}).lag_months == 18
     with pytest.raises(ValidationError):
         IndicatorSpec.model_validate({**VALID, "release_lag_months": -1})
+
+
+def test_rerank_text_names_the_unit_and_aliases() -> None:
+    spec = IndicatorSpec.model_validate(VALID)
+    text = spec.rerank_text()
+    assert text.startswith(f"{spec.name} ({spec.unit}). Also called: ")
+    assert all(alias in text for alias in spec.aliases)
+    assert text.endswith(f". {spec.definition}")
