@@ -2,7 +2,8 @@
 
 Exit codes: 0 done (and, with --gate, within 5 points of the baseline); 1 the gate found a
 regression; 2 the command could not run (bad file, wrong flags); 3 the gate could not judge
-(no baseline, a different benchmark version, or too many claims dropped out).
+(no baseline, a different benchmark version, too many claims dropped out, or a step's
+first-choice model reached its daily limit).
 """
 
 import argparse

@@ -257,6 +257,9 @@ class CostMetrics(BaseModel):
     series_cache_hits: int
     series_cache_hit_rate: float | None
     by_step_provider: list[CallStats]
+    # Providers that said their quota for the day was spent: the router moved on to the next
+    # choice for the rest of the run. Reports from before this field read as none.
+    daily_limited: list[str] = Field(default_factory=list)
 
 
 class Excluded(BaseModel):
@@ -402,6 +405,7 @@ def _cost(
             )
             for (step, provider, model), group in sorted(grouped.items())
         ],
+        daily_limited=sorted({c.provider for c in calls if c.daily_limit}),
     )
 
 

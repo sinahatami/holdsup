@@ -3,8 +3,10 @@
 `eval/baseline.json` holds the figures of the last accepted smoke run. The gate fails when
 end-to-end verdict accuracy drops by more than `MAX_DROP_POINTS`, and refuses to judge
 (`inconclusive`) when the run is not comparable or too much of it dropped out: a provider
-outage must not read as a pass. With a small smoke set one claim is worth several points, so a
-single flip can trip the gate; look at the report before updating the baseline.
+outage must not read as a pass. A run in which a step's first-choice model reached its daily
+limit is not comparable either: the fallback models answered, and the baseline is a measure of
+the first choices. With a small smoke set one claim is worth several points, so a single flip
+can trip the gate; look at the report before updating the baseline.
 """
 
 from dataclasses import dataclass
@@ -53,6 +55,8 @@ def baseline_of(report: Report) -> Baseline:
             f"{m.excluded.share:.0%} of the claims dropped out (a provider or a source did not "
             "answer): not a baseline worth keeping. Run it again."
         )
+    if spent := first_choices_spent(report):
+        raise ValueError(f"{_spent(spent)}: not a baseline worth keeping. Run it again.")
     return Baseline(
         eval=report.versions.eval,
         benchmark=report.benchmark,
@@ -62,6 +66,23 @@ def baseline_of(report: Report) -> Baseline:
         match_top1=m.matching.top1.rate,
         extraction_recall=m.extraction.recall.rate,
     )
+
+
+def first_choices_spent(report: Report) -> dict[str, list[str]]:
+    """Each first-choice provider that reached its daily limit in the run, with the steps it is
+    first choice for. Only steps that called a model count."""
+    spent = set(report.metrics.cost.daily_limited)
+    called = {s.step for s in report.metrics.cost.by_step_provider}
+    out: dict[str, list[str]] = {}
+    for step, models in report.steps.items():  # models: "provider/model", first choice first
+        if step in called and models and (first := models[0].split("/", 1)[0]) in spent:
+            out.setdefault(first, []).append(step)
+    return out
+
+
+def _spent(spent: dict[str, list[str]]) -> str:
+    named = "; ".join(f"{p} (first choice for {', '.join(steps)})" for p, steps in spent.items())
+    return f"Daily limit reached by {named}, so fallback models answered"
 
 
 def read_baseline(path: Path) -> Baseline | None:
@@ -97,6 +118,12 @@ def check(
             f"The baseline is for {baseline.benchmark} at eval {baseline.eval}; this run is "
             f"{report.benchmark} at eval {report.versions.eval}. Accept the new claims with "
             "--update-baseline.",
+        )
+    if spent := first_choices_spent(report):
+        return Gate(
+            Outcome.INCONCLUSIVE,
+            f"{_spent(spent)}; the baseline measures the first choices, so this run cannot be "
+            "compared with it. Run it again once the limits reset.",
         )
     drop = round((baseline.verdict_accuracy - accuracy) * 100, 6)
     summary = (

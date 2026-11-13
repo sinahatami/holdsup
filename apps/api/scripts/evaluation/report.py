@@ -160,6 +160,7 @@ def markdown(report: Report) -> str:
             f"- Source series: {c.series_requests} requests, {c.series_cache_hits} served from the "
             f"cache ({_rate(c.series_cache_hit_rate)}). The answer cache is not used in a run."
         ),
+        *_daily_limited(c.daily_limited),
         "",
     ]
     out += _table(
@@ -185,6 +186,17 @@ def _providers(report: Report) -> str:
         )
         + ")"
     )
+
+
+def _daily_limited(providers: Sequence[str]) -> list[str]:
+    if not providers:
+        return []
+    return [
+        (
+            f"- Daily limit reached: {', '.join(providers)}. The router moved on to the next "
+            "choice for the rest of the run."
+        )
+    ]
 
 
 def _excluded(m: Metrics) -> list[str]:

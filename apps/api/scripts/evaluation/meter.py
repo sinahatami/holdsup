@@ -14,7 +14,7 @@ from holdsup.adapters.cache import CachedFetcher
 from holdsup.pipeline.trace import StepEvent
 from holdsup.router.client import ChatRequest, ChatResponse, SupportsChat
 from holdsup.router.config import ProviderConfig
-from holdsup.router.errors import ProviderError
+from holdsup.router.errors import ProviderError, RateLimited
 
 NO_STEP = "none"
 
@@ -29,6 +29,7 @@ class Call:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     error: str | None = None  # the error's class name, e.g. RateLimited
+    daily_limit: bool = False  # a 429 saying the provider's quota for the day is spent
 
 
 @dataclass
@@ -59,7 +60,8 @@ class MeteredClient:
         try:
             response = await self._inner.complete(provider, request)
         except ProviderError as exc:
-            self._record(provider, started, ok=False, error=type(exc).__name__)
+            daily = isinstance(exc, RateLimited) and exc.daily
+            self._record(provider, started, ok=False, error=type(exc).__name__, daily_limit=daily)
             raise
         self._record(
             provider,
@@ -79,6 +81,7 @@ class MeteredClient:
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
         error: str | None = None,
+        daily_limit: bool = False,
     ) -> None:
         self._meter.calls.append(
             Call(
@@ -90,6 +93,7 @@ class MeteredClient:
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
                 error=error,
+                daily_limit=daily_limit,
             )
         )
 

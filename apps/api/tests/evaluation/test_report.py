@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from scripts.evaluation.meter import Call
 from scripts.evaluation.report import Report, markdown, step_models, write_report
 from scripts.evaluation.score import score_text, summarize
 
@@ -59,6 +60,15 @@ def test_the_markdown_shows_each_step_the_confusion_matrix_and_the_cost() -> Non
     assert "| Matching | Top-1 (the labelled statistic picked) | 100.0% (4/4) |" in md
     assert "expected \\ answered" in md and "| supported | 3 | 0 | 1 |" in md
     assert "## Cost" in md and "0 model calls (0 failed)" in md  # no meter calls were fed in
+
+
+def test_a_provider_that_reached_its_daily_limit_is_named_under_the_cost() -> None:
+    spent = Call("plan", "groq-x", "m", False, 40.0, error="RateLimited", daily_limit=True)
+
+    md = markdown(make_report(3, 4, calls=[spent]))
+
+    assert "- Daily limit reached: groq-x. The router moved on to the next choice" in md
+    assert "Daily limit" not in markdown(make_report(3, 4))
 
 
 def test_a_wrong_verdict_is_listed_with_the_step_that_broke_and_its_reason() -> None:

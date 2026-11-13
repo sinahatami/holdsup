@@ -52,6 +52,19 @@ async def test_a_failed_call_is_recorded_too_and_still_raises() -> None:
 
     [call] = meter.calls
     assert (call.ok, call.error, call.step) == (False, "RateLimited", NO_STEP)
+    assert call.daily_limit is False  # a per-minute limit: the provider is back in a moment
+
+
+async def test_a_spent_daily_quota_is_recorded_as_such() -> None:
+    meter = Meter()
+    client = FakeClient()
+    client.script("groq", [RateLimited(daily=True, message="tokens per day")])
+
+    with pytest.raises(RateLimited):
+        await MeteredClient(client, meter).complete(a_provider(), REQUEST)
+
+    [call] = meter.calls
+    assert (call.ok, call.error, call.daily_limit) == (False, "RateLimited", True)
 
 
 async def test_only_a_step_starting_changes_the_step() -> None:
