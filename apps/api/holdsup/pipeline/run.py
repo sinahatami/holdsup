@@ -42,11 +42,12 @@ from holdsup.checks import (
     wants_real_terms,
 )
 from holdsup.geo import UnknownPlace, geo_filter, to_claim_codes
+from holdsup.ml import reranker as reranker_model
 from holdsup.ops import OpError, Series
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.explain import explain, template_explanation
 from holdsup.pipeline.extract import extract_claims, parse_said_on
-from holdsup.pipeline.match import Matcher
+from holdsup.pipeline.match import SKIP_MARGIN, Matcher, Reranker
 from holdsup.pipeline.match.model import MatchResult
 from holdsup.pipeline.plan import (
     Execution,
@@ -158,6 +159,8 @@ class Pipeline:
     use: Use = Use.LIVE
     terms: OfficeTerms | None = None
     today: Callable[[], date] | None = None
+    reranker: Reranker | None = None  # None: the match model always picks
+    skip_margin: float = SKIP_MARGIN
 
     def _today(self) -> date:
         return self.today() if self.today else datetime.now(UTC).date()
@@ -265,9 +268,11 @@ class Pipeline:
 
     async def _match(self, c: _ClaimRun) -> IndicatorSpec:
         await c.start(Step.MATCH)
-        matcher = Matcher(self.router, self.catalog, self.search, self.use)
+        matcher = Matcher(
+            self.router, self.catalog, self.search, self.use, self.reranker, self.skip_margin
+        )
         match = await matcher.match(c.claim)
-        models = self._uses(Step.MATCH, match.providers)
+        models = self._reranker_use(match) + self._uses(Step.MATCH, match.providers)
         c.out.models += models
         c.out.match_reason, c.out.alternatives = match.reason, match.alternatives
         c.out.notes += match.notes
@@ -281,10 +286,27 @@ class Pipeline:
         c.out.indicator = IndicatorRef.of(spec)
         # What a reader can re-check the claim with: the other statistics the model named.
         c.out.suggestions = self._named([a for a in match.alternatives if a != spec.id])
+        by = " The reranker was clear, so no model was asked." if match.skipped_model else ""
         await c.done(
-            Step.MATCH, f"Matched {spec.name} ({spec.source} {spec.source_code}).", models=models
+            Step.MATCH,
+            f"Matched {spec.name} ({spec.source} {spec.source_code}).{by}",
+            models=models,
         )
         return spec
+
+    @staticmethod
+    def _reranker_use(match: MatchResult) -> list[ModelUse]:
+        """The reranker, when it ordered the candidates: receipts name every model a step used."""
+        if match.reranker is None:
+            return []
+        return [
+            ModelUse(
+                step=Step.MATCH,
+                provider=reranker_model.PROVIDER,
+                model=match.reranker,
+                label=reranker_model.LABEL,
+            )
+        ]
 
     async def _chosen(self, c: _ClaimRun, choice: Choice) -> IndicatorSpec:
         """The statistic a reader picked for a re-check: no model call."""
