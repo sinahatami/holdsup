@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import httpx
+from pydantic import BaseModel
 
 from holdsup.adapters.cache import CachedFetcher, InMemorySeriesCacheStore
 from holdsup.adapters.registry import build_adapters
@@ -30,6 +31,7 @@ from holdsup.router.client import OpenAICompatibleClient
 from holdsup.verdict import Tolerances
 from scripts.evaluation.benchmark import BenchmarkText
 from scripts.evaluation.meter import (
+    Call,
     CountingAdapter,
     CountingFetcher,
     Meter,
@@ -89,8 +91,18 @@ async def live_rig(
         yield Rig(pipeline, search, meter)
 
 
+class TextRun(BaseModel):
+    """One text's outcome and what checking it spent: what a stopped run keeps (checkpoint.py)."""
+
+    outcome: TextOutcome
+    calls: list[Call]  # the model calls made for this text, failed ones too
+    series_requests: int = 0
+    series_fetches: int = 0
+
+
 Progress = Callable[[str], None]
 Sleep = Callable[[float], Awaitable[None]]
+OnText = Callable[[TextRun], None]
 
 # The PatientRouter already waits out a rate limit at the step that hit it. What reaches here is
 # a limit it gave up on (a long wait, or the run's waiting budget spent), so one more try of the
@@ -127,13 +139,16 @@ async def evaluate(
     retries: int = 0,
     max_wait_s: float = MAX_WAIT_S,
     sleep: Sleep = asyncio.sleep,
+    on_text: OnText = lambda _: None,
 ) -> list[TextOutcome]:
     """Check every text and score it. A text the router cannot serve is retried after the wait
     the router asks for (`retries` times, none by default), then recorded as `not_run`; any
-    other error is a bug and stops the run."""
+    other error is a bug and stops the run. Each text, once scored, goes to `on_text` with the
+    calls and series requests it made."""
     out: list[TextOutcome] = []
     for n, item in enumerate(texts, 1):
         calls_before = len(rig.meter.calls)
+        requests_before, fetches_before = rig.meter.series_requests, rig.meter.series_fetches
         started = time.monotonic()
         try:
             output = await _run_text(rig, item.text, retries, max_wait_s, sleep, progress)
@@ -158,6 +173,14 @@ async def evaluate(
                 model_calls=len(rig.meter.calls) - calls_before,
             )
         out.append(outcome)
+        on_text(
+            TextRun(
+                outcome=outcome,
+                calls=rig.meter.calls[calls_before:],
+                series_requests=rig.meter.series_requests - requests_before,
+                series_fetches=rig.meter.series_fetches - fetches_before,
+            )
+        )
         progress(_line(n, len(texts), outcome))
     return out
 

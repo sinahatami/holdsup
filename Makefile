@@ -104,7 +104,7 @@ eval-smoke: ## Smoke evaluation (eval/smoke_claims.jsonl) -> eval/reports/smoke.
 eval-baseline: ## Accept the current smoke run as eval/baseline.json (after reading the report; needs keys)
 	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --update-baseline $(ARGS)
 
-eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider)
+eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run)
 	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
 
 ml-setup: ## ml/ environment with the training libraries (torch CPU wheels, sentence-transformers, onnx)
