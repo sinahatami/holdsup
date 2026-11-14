@@ -1,15 +1,24 @@
 """Whole runs: the real pipeline with a scripted provider and recorded source data, scored."""
 
 import pytest
-from scripts.evaluation.run import Rig, evaluate, only_provider
+from scripts.evaluation.meter import Meter
+from scripts.evaluation.run import Rig, TextRun, evaluate, only_provider
 
 from holdsup.adapters.base import FetchedSeries, Filters, SourceUnavailable
 from holdsup.catalog.index import IndicatorHit
 from holdsup.pipeline.result import PipelineOutput
 from holdsup.router.errors import ProviderUnavailable, RouterError
 from holdsup.verdict import Label
-from tests.evaluation.helpers import FALL, fall_claim, fall_script, label, make_rig, text
-from tests.pipeline.test_regressions import extraction, match
+from tests.evaluation.helpers import (
+    FALL,
+    STEPS,
+    fall_claim,
+    fall_script,
+    label,
+    make_rig,
+    text,
+)
+from tests.pipeline.test_regressions import RecordedFetcher, extraction, match
 from tests.router.fakes import config, provider
 
 
@@ -72,6 +81,33 @@ async def test_a_text_with_no_claim_in_it_misses_every_labelledfall_claim() -> N
     [one] = outcome.outcomes
     assert (outcome.extracted, outcome.linked) == (0, 0)
     assert (one.found, one.verdict, one.failed_step) == (False, "missed", "extract")
+
+
+class CountedFetcher:
+    """Recorded series, each request counted on the run's meter as the live rig counts it."""
+
+    def __init__(self) -> None:
+        self.meter = Meter()
+        self._inner = RecordedFetcher()
+
+    async def fetch_series(self, source: str, dataset: str, filters: Filters) -> FetchedSeries:
+        self.meter.series_requests += 1
+        return await self._inner.fetch_series(source, dataset, filters)
+
+
+async def test_each_text_is_handed_on_with_the_calls_and_series_requests_it_made() -> None:
+    fetcher = CountedFetcher()
+    rig, _, meter = make_rig([*fall_script(), *fall_script()], fetcher=fetcher)
+    fetcher.meter = meter
+    runs: list[TextRun] = []
+
+    outcomes = await evaluate(rig, [text("a"), text("b")], on_text=runs.append)
+
+    assert [run.outcome for run in runs] == outcomes
+    assert [[c.step for c in run.calls] for run in runs] == [list(STEPS)] * 2
+    assert [c for run in runs for c in run.calls] == meter.calls  # every call, once
+    assert [run.series_requests for run in runs] == [1, 1]
+    assert sum(run.series_requests for run in runs) == meter.series_requests
 
 
 async def test_a_text_the_router_cannot_serve_is_not_run_and_the_run_goes_on() -> None:

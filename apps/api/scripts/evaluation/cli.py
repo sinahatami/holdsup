@@ -1,7 +1,11 @@
 """`make eval-smoke` and `make eval`: read the benchmark, run it, write the report, gate it.
 
+A run keeps each finished text in `<name>.partial.jsonl` until the report is written; one that
+stops part-way is continued with --resume (checkpoint.py).
+
 Exit codes: 0 done (and, with --gate, within 5 points of the baseline); 1 the gate found a
-regression; 2 the command could not run (bad file, wrong flags); 3 the gate could not judge
+regression; 2 the command could not run (bad file, wrong flags, a partial run of something
+else to resume); 3 the gate could not judge
 (no baseline, a different benchmark version, too many claims dropped out, or a step's
 first-choice model reached its daily limit).
 """
@@ -27,9 +31,18 @@ from scripts.evaluation.benchmark import (
     load_benchmark,
     select,
 )
+from scripts.evaluation.checkpoint import Checkpoint, CheckpointError, Header, checkpoint_path
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report, write_report
-from scripts.evaluation.run import DEFAULT_RETRIES, Rig, evaluate, live_rig, only_provider
-from scripts.evaluation.score import Metrics, TextOutcome, summarize
+from scripts.evaluation.run import (
+    DEFAULT_RETRIES,
+    OnText,
+    Rig,
+    TextRun,
+    evaluate,
+    live_rig,
+    only_provider,
+)
+from scripts.evaluation.score import summarize
 
 DEFAULT_CLAIMS = Path("eval/claims.jsonl")
 DEFAULT_OUT = Path("eval/reports")
@@ -73,6 +86,11 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--gate", action="store_true", help="fail on a drop of more than 5 points")
     p.add_argument("--max-drop", type=float, default=gate.MAX_DROP_POINTS)
     p.add_argument("--update-baseline", action="store_true", help="accept this run as baseline")
+    p.add_argument(
+        "--resume",
+        action="store_true",
+        help="continue the partial run a stopped run of the same name left; otherwise start over",
+    )
     return p
 
 
@@ -137,16 +155,25 @@ async def _evaluate(
     use: Use,
     factory: RigFactory,
     retries: int,
-) -> tuple[list[TextOutcome], Metrics]:
+    on_text: OnText,
+) -> list[TextRun]:
+    runs: list[TextRun] = []
+
+    def keep(run: TextRun) -> None:
+        on_text(run)
+        runs.append(run)
+
     async with factory(catalog, config, tolerances, use) as rig:
-        outcomes = await evaluate(rig, texts, _stderr, retries=retries)
-        metrics = summarize(
-            outcomes,
-            rig.meter.calls,
-            series_requests=rig.meter.series_requests,
-            series_fetches=rig.meter.series_fetches,
-        )
-    return outcomes, metrics
+        await evaluate(rig, texts, _stderr, retries=retries, on_text=keep)
+    return runs
+
+
+def _checkpoint(path: Path, header: Header, resume: bool) -> Checkpoint:
+    if resume:
+        return Checkpoint.resume(path, header)
+    if path.exists():
+        _stderr(f"starting over: replacing the partial run in {path.name} (--resume continues it)")
+    return Checkpoint.start(path, header)
 
 
 def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
@@ -171,12 +198,9 @@ def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
 
     use = Use(args.use)
     tolerances = load_tolerances()
-    outcomes, metrics = asyncio.run(
-        _evaluate(texts, catalog, config, tolerances, use, factory, args.retries)
-    )
-
+    out_dir = _resolve(args.out_dir)
     suffix = f".{args.provider}" if args.provider else ""
-    report = build_report(
+    header = Header(
         name=(args.name or args.split) + suffix,
         benchmark=claims.name,
         split=args.split,
@@ -185,11 +209,47 @@ def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
         versions=Stamp(
             app=app_version(), catalog=catalog.version, tolerances=tolerances.version, eval=version
         ),
+    )
+    try:
+        checkpoint = _checkpoint(checkpoint_path(out_dir, header.name), header, args.resume)
+    except CheckpointError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    done = {t.id: checkpoint.done[t.id] for t in texts if t.id in checkpoint.done}
+    todo = [t for t in texts if t.id not in done]
+    if done:
+        _stderr(f"resuming {checkpoint.path.name}: {len(done)} of {len(texts)} texts already ran")
+    ran = (
+        asyncio.run(
+            _evaluate(
+                todo, catalog, config, tolerances, use, factory, args.retries, checkpoint.record
+            )
+        )
+        if todo
+        else []
+    )
+
+    by_id = done | {run.outcome.id: run for run in ran}
+    runs = [by_id[t.id] for t in texts]
+    metrics = summarize(
+        [run.outcome for run in runs],
+        [call for run in runs for call in run.calls],
+        series_requests=sum(run.series_requests for run in runs),
+        series_fetches=sum(run.series_fetches for run in runs),
+    )
+    report = build_report(
+        name=header.name,
+        benchmark=header.benchmark,
+        split=header.split,
+        provider=header.provider,
+        use=header.use,
+        versions=header.versions,
         config=config,
         metrics=metrics,
-        texts=outcomes,
+        texts=[run.outcome for run in runs],
     )
-    json_path, md_path = write_report(report, _resolve(args.out_dir))
+    json_path, md_path = write_report(report, out_dir)
+    checkpoint.remove()
     print(summary(report))
     print(f"wrote {json_path} and {md_path.name}")
 

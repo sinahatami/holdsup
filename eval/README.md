@@ -17,7 +17,10 @@ make eval-smoke      # smoke claims; fails on a verdict-accuracy drop of more th
 make eval-baseline   # the same run, accepted as the new baseline.json (read the report first)
 make eval            # the dev split of claims.jsonl (P4.1); manual
 make eval ARGS="--provider groq-gpt-oss-120b"   # every step forced onto one provider
+make eval ARGS=--resume   # continue a run that stopped part-way; see below
 ```
+
+A run keeps every text it has finished in `reports/<name>.partial.jsonl` (ignored by git) until the report is written. The dev split is more model calls than one day of the free quota, and a run that long can be stopped (out of memory, a restart), so `--resume` keeps those texts and runs the rest, including any the router could not serve, and the report covers every text. It resumes only a partial run of the same benchmark, split, provider and versions; without `--resume` a run starts over. Locally the app version carries no commit, so do not change the code between the runs you resume.
 
 Reports land in `reports/<name>.json` (what the `/eval` page reads) and `reports/<name>.md`, stamped with the app, catalog, tolerances and eval versions and the provider and model behind each step. They hold ids, the labelled quotes, verdicts and code-written reasons, never raw model output or the benchmark's full texts.
 
