@@ -141,6 +141,7 @@ def markdown(report: Report) -> str:
             ["Explanation", "No invented numbers (of model explanations)", pct(m.explanation.pass_rate)],
         ],
     )  # fmt: skip
+    out += _confidence(m)
     out += ["## Verdicts: expected (rows) against answered (columns)", ""]
     out += _confusion(m)
     out += _failures(report)
@@ -221,6 +222,22 @@ def _confusion(m: Metrics) -> list[str]:
         for expected in v.confusion
     ]  # fmt: skip
     return _table(["expected \\ answered", *v.labels, "right"], rows)
+
+
+def _confidence(m: Metrics) -> list[str]:
+    c = m.confidence
+    if c is None or not c.scored:
+        return []
+    return [
+        "## Confidence",
+        "",
+        (
+            f"- Abstained on {pct(c.abstained)} of the {c.scored} claims it scored. "
+            f"Accuracy of the verdicts it gave: {pct(c.answered_accuracy)}; "
+            f"of the ones it held back: {pct(c.abstained_accuracy)}."
+        ),
+        "",
+    ]
 
 
 def _failures(report: Report) -> list[str]:

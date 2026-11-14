@@ -58,6 +58,9 @@ node_modules/
 .cache/
 
 /docs
+# an evaluation run that stopped part-way (make eval ARGS=--resume)
+eval/reports/*.partial.jsonl
+eval/reports/*.partial.jsonl.tmp
 # Playwright
 apps/web/test-results/
 apps/web/playwright-report/

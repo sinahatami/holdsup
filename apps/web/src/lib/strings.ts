@@ -234,6 +234,18 @@ export const strings = {
     // The page title and the shared preview: how it came out, then what was said.
     metaTitle: (verdict: string, claim: string) => `${verdict} · “${claim}”`,
   },
+  // How sure the check is of a verdict (P4.5). When it abstains, the reason comes from the API,
+  // written by code from the check's own signals.
+  confidence: {
+    label: {
+      high: "High confidence",
+      medium: "Medium confidence",
+      low: "Low confidence",
+    },
+    help: "How likely this verdict is to be right, judged from how clearly the statistic fits the claim, how old and how long the data is, how close the figure is to the tolerance, and whether backup models did the work.",
+    abstained: "Can't check confidently",
+    numbersAlone: "What the numbers alone say:",
+  },
   // The series chart (P3.5): the data the check read, the claim's window, and the values the
   // check used and the claim stated. Every number on it comes from the API.
   chart: {

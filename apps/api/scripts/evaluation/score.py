@@ -17,6 +17,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from holdsup.ml.confidence import Confidence
 from holdsup.pipeline.result import ClaimResult, PipelineOutput
 from holdsup.pipeline.trace import Step
 from holdsup.verdict import Label
@@ -68,6 +69,9 @@ class ClaimOutcome(BaseModel):
     stopped_at: str | None = None
     explanation: ExplanationState | None = None
     failed_step: str | None = None  # for a wrong verdict: the first step that went wrong
+    # The confidence model's signals (its training rows, ml/confidence) and, when a model was
+    # loaded, its probability and whether the check abstained. None for a cant_check verdict.
+    confidence: Confidence | None = None
 
 
 class TextOutcome(BaseModel):
@@ -197,6 +201,7 @@ def _scored(
         return out
     out.verdict = str(result.verdict.label)
     out.reason = result.verdict.reason
+    out.confidence = result.confidence
     out.verdict_ok = result.verdict.label is label.expected
     if not out.verdict_ok:
         out.failed_step = failed_step(label, result, fields_ok=geo and start and end)
@@ -227,6 +232,16 @@ class VerdictMetrics(BaseModel):
     # confusion[expected][got]; `got` is a label or "missed".
     confusion: dict[str, dict[str, int]]
     per_label: dict[str, Rate]  # of each expected label, the share answered correctly
+
+
+class ConfidenceMetrics(BaseModel):
+    """The confidence model (P4.5) on the claims it scored: how many it abstained on, and how
+    often the verdicts it answered and the ones it held back were right."""
+
+    scored: int  # claims with a probability (a verdict other than cant_check, a model loaded)
+    abstained: Rate  # of the scored
+    answered_accuracy: Rate
+    abstained_accuracy: Rate
 
 
 class ExplanationMetrics(BaseModel):
@@ -279,6 +294,8 @@ class Metrics(BaseModel):
     verdict: VerdictMetrics
     explanation: ExplanationMetrics
     cost: CostMetrics
+    # None in reports from before P4.5.
+    confidence: ConfidenceMetrics | None = None
     # For each wrong verdict, the step that broke first (the error analysis, P4.6).
     failures: dict[str, int] = Field(default_factory=dict)
 
@@ -342,7 +359,22 @@ def summarize(
             pass_rate=_count([_passed(o) for o in found if o.explanation != "not_asked"])
         ),
         cost=_cost(texts, calls, len(claims), series_requests, series_fetches),
+        confidence=_confidence(judged),
         failures=dict(Counter(o.failed_step for o in judged if o.failed_step is not None)),
+    )
+
+
+def _confidence(judged: Sequence[ClaimOutcome]) -> ConfidenceMetrics:
+    scored = [
+        o for o in judged if o.confidence is not None and o.confidence.probability is not None
+    ]
+    held = [o for o in scored if o.confidence is not None and o.confidence.abstain]
+    answered = [o for o in scored if o not in held]
+    return ConfidenceMetrics(
+        scored=len(scored),
+        abstained=rate_of(len(held), len(scored)),
+        answered_accuracy=_count([o.verdict_ok for o in answered]),
+        abstained_accuracy=_count([o.verdict_ok for o in held]),
     )
 
 

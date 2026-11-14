@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval ml-setup test-ml reranker-paraphrase reranker-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -104,7 +104,7 @@ eval-smoke: ## Smoke evaluation (eval/smoke_claims.jsonl) -> eval/reports/smoke.
 eval-baseline: ## Accept the current smoke run as eval/baseline.json (after reading the report; needs keys)
 	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --update-baseline $(ARGS)
 
-eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider)
+eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run)
 	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
 
 ml-setup: ## ml/ environment with the training libraries (torch CPU wheels, sentence-transformers, onnx)
@@ -115,6 +115,9 @@ reranker-paraphrase: ## Reword the dev-split claims for reranker training -> ml/
 
 reranker-train: ## Cross-validate on the dev split, train, export ONNX -> ml/reranker/artifacts, reports/, MODEL_CARD.md (after ml-setup; over an hour on CPU; ARGS="--quick DIR" for a few-minute check)
 	cd $(ML_DIR) && uv run --locked --group train python -m reranker.experiment $(ARGS)
+
+confidence-train: ## Cross-validate the confidence model on dev evaluation reports (default eval/reports/dev.json; ARGS="--report A --report B" for several runs) -> apps/api/holdsup/ml/confidence_model.json, ml/confidence/reports/
+	cd $(ML_DIR) && uv run --locked python -m confidence.experiment $(ARGS)
 
 record-extractions: ## Record live extraction responses for the P2.1 tests (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.record_extractions $(ARGS)
