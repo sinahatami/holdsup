@@ -116,7 +116,7 @@ reranker-paraphrase: ## Reword the dev-split claims for reranker training -> ml/
 reranker-train: ## Cross-validate on the dev split, train, export ONNX -> ml/reranker/artifacts, reports/, MODEL_CARD.md (after ml-setup; over an hour on CPU; ARGS="--quick DIR" for a few-minute check)
 	cd $(ML_DIR) && uv run --locked --group train python -m reranker.experiment $(ARGS)
 
-confidence-train: ## Cross-validate the confidence model on dev evaluation reports (default eval/reports/dev.json; ARGS="--report A --report B" for several runs) -> apps/api/holdsup/ml/confidence_model.json, ml/confidence/reports/
+confidence-train: ## Cross-validate the confidence model on dev evaluation reports (default eval/reports/dev.json; ARGS="--report A --report B" for several runs) -> ml/confidence/reports/, and apps/api/holdsup/ml/confidence_model.json only if it beats the base rate
 	cd $(ML_DIR) && uv run --locked python -m confidence.experiment $(ARGS)
 
 record-extractions: ## Record live extraction responses for the P2.1 tests (needs keys; not CI)

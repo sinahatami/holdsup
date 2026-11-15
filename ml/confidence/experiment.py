@@ -10,7 +10,8 @@ out-of-fold rows: the base rate (every verdict gets the training share right), a
 regression on the reranker's margin alone, the logistic regression on every signal (the one
 served), and gradient boosting (the spec's "only if cross-validation shows a clear gain").
 The threshold comes from the served model's out-of-fold probabilities; the final model then
-fits every row and is exported to apps/api/holdsup/ml/confidence_model.json.
+fits every row and is exported to apps/api/holdsup/ml/confidence_model.json, but only when it
+beats the base rate (otherwise the report is written, nothing is served, and it exits 1).
 """
 
 import sys
@@ -253,13 +254,22 @@ def main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - reads 
         },
     )
     model = export(fit_final(rows), threshold, trained_on)
-    args.model_out.write_text(model.model_dump_json(indent=2) + "\n", encoding="utf-8")
     report = build_report(data, cv, table, threshold, model, created=created)
     json_path, md_path = write_report(report, args.report_dir)
     print(
         f"Brier {served.brier:.4f} (base rate {base.brier:.4f}); threshold {threshold.threshold:.3f} "
         f"answers {threshold.coverage:.0%} at {threshold.accuracy:.1%}"
     )
+    # A model that does no better than the base rate must not decide when to abstain: the API
+    # serves whatever file is at --model-out, so a failing one is never written there.
+    if not report.cross_validation.beats_base_rate:
+        print(
+            f"wrote {json_path} and {md_path.name}; NOT exported to {args.model_out}: the "
+            "model does not beat the base rate on the Brier score",
+            file=sys.stderr,
+        )
+        return 1
+    args.model_out.write_text(model.model_dump_json(indent=2) + "\n", encoding="utf-8")
     print(f"wrote {args.model_out}, {json_path} and {md_path.name}")
     return 0
 
