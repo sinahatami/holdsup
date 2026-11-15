@@ -42,7 +42,7 @@ explicit_package_bases = true
 [[tool.mypy.overrides]]
 # Training libraries are only installed with the `train` group; without it they are unknown
 # to mypy (CI's lint runs without them).
-module = ["sentence_transformers.*", "torch.*", "transformers.*"]
+module = ["onnx.*", "sentence_transformers.*", "torch.*", "transformers.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

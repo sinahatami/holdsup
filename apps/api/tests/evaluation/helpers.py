@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from scripts.evaluation.benchmark import BenchmarkText, LabelledClaim
-from scripts.evaluation.meter import Meter, MeteredClient
+from scripts.evaluation.meter import Call, Meter, MeteredClient
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report
 from scripts.evaluation.run import Rig
 from scripts.evaluation.score import TextOutcome, score_text, summarize
@@ -180,9 +180,10 @@ def make_report(
     eval: str = "0.1.0",
     benchmark: str = "smoke_claims.jsonl",
     provider_name: str | None = None,
+    calls: Sequence[Call] = (),
 ) -> Report:
     """A report of `total` one-claim texts, `right` of them answered correctly, and `not_run`
-    more texts the router could not serve."""
+    more texts the router could not serve. Every step's only choice is the provider `fake`."""
     texts: list[TextOutcome] = [
         score_text(
             text(f"t{i}", "x", label()),
@@ -204,7 +205,7 @@ def make_report(
         use="live",
         versions=Stamp(app="0.0.0+abc1234", catalog=CATALOG.version, tolerances=5, eval=eval),
         config=config(provider("fake"), steps={s: ["fake"] for s in STEPS}),
-        metrics=summarize(texts, []),
+        metrics=summarize(texts, list(calls)),
         texts=texts,
         now=datetime(2026, 11, 12, 9, 30, tzinfo=UTC),
     )
