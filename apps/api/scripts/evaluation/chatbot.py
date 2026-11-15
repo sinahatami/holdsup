@@ -25,7 +25,7 @@ from holdsup.router.client import OpenAICompatibleClient
 from holdsup.verdict import Label
 from scripts.evaluation.benchmark import BenchmarkText
 from scripts.evaluation.meter import Meter, MeteredClient
-from scripts.evaluation.patient import PatientRouter
+from scripts.evaluation.patient import BUDGET_S, PatientRouter
 from scripts.evaluation.run import OnText, Progress, TextRun
 from scripts.evaluation.score import MISSED, ClaimOutcome, TextOutcome, not_run
 
@@ -108,13 +108,16 @@ class ChatRig:
 
 
 @asynccontextmanager
-async def live_chat_rig(config: RouterConfig) -> AsyncIterator[ChatRig]:  # pragma: no cover (live)
+async def live_chat_rig(
+    config: RouterConfig, wait_budget_s: float = BUDGET_S
+) -> AsyncIterator[ChatRig]:  # pragma: no cover (live)
     meter = Meter()
     meter.step = STEP
     yield ChatRig(
         PatientRouter(
             config,
             MeteredClient(OpenAICompatibleClient(), meter),
+            budget_s=wait_budget_s,
             progress=lambda line: print(line, file=sys.stderr),
         ),
         meter,

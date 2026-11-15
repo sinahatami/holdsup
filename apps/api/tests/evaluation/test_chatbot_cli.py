@@ -22,11 +22,14 @@ RIGHT = ChatResponse(content='{"verdicts": [{"claim": 1, "label": "supported"}]}
 def factory(
     *script: ChatResponse | Callable[[ChatRequest], ChatResponse],
     seen: list[RouterConfig] | None = None,
+    budgets: list[float] | None = None,
 ) -> ChatRigFactory:
     @asynccontextmanager
-    async def build(conf: RouterConfig) -> AsyncIterator[ChatRig]:
+    async def build(conf: RouterConfig, wait_budget_s: float) -> AsyncIterator[ChatRig]:
         if seen is not None:
             seen.append(conf)
+        if budgets is not None:
+            budgets.append(wait_budget_s)
         client = FakeClient()
         client.script("fake", script)
         meter = Meter()
@@ -118,3 +121,13 @@ def test_a_stopped_run_resumes_and_asks_only_about_the_texts_left(
     report = Report.model_validate_json((out / "dev.chatbot.json").read_text())
     assert report.metrics.texts == 2 and report.metrics.verdict.accuracy.rate == 1.0
     assert not (out / "dev.chatbot.partial.jsonl").exists()
+
+
+def test_the_wait_budget_reaches_the_rig_and_cannot_be_negative(tmp_path: Path) -> None:
+    claims = benchmark(tmp_path, entry())
+    budgets: list[float] = []
+
+    assert run(tmp_path, claims, fake=factory(RIGHT, budgets=budgets)) == 0
+    assert run(tmp_path, claims, "--wait-budget", "7200", fake=factory(RIGHT, budgets=budgets)) == 0
+    assert budgets == [600.0, 7200.0]  # the default is ten minutes
+    assert run(tmp_path, claims, "--wait-budget", "-1", fake=factory(RIGHT)) == 2

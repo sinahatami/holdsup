@@ -41,6 +41,7 @@ from scripts.evaluation.cli import (
     _resolve,
     _stderr,
 )
+from scripts.evaluation.patient import BUDGET_S
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report, write_report
 from scripts.evaluation.run import TextRun
 from scripts.evaluation.score import summarize
@@ -55,7 +56,8 @@ def summary(report: Report) -> str:
     )
 
 
-ChatRigFactory = Callable[[RouterConfig], AbstractAsyncContextManager[ChatRig]]
+# How the live rig is made (config, seconds the run may spend waiting out rate limits).
+ChatRigFactory = Callable[[RouterConfig, float], AbstractAsyncContextManager[ChatRig]]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -75,12 +77,22 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--name", default=None, help="report file name; default: <split>.chatbot")
     p.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
     p.add_argument("--resume", action="store_true", help="continue a stopped run of this name")
+    p.add_argument(
+        "--wait-budget",
+        type=float,
+        default=BUDGET_S,
+        metavar="SECONDS",
+        help=(
+            "in all, wait at most this long for rate limits before leaving texts not run "
+            f"(default {BUDGET_S:.0f}); a provider held to about a call a minute needs hours"
+        ),
+    )
     return p
 
 
 async def _run(
     config: RouterConfig, factory: ChatRigFactory, texts: Sequence[BenchmarkText], use: Use,
-    checkpoint: Checkpoint,
+    checkpoint: Checkpoint, wait_budget_s: float,
 ) -> list[TextRun]:  # fmt: skip
     runs: list[TextRun] = []
 
@@ -88,13 +100,16 @@ async def _run(
         checkpoint.record(run)
         runs.append(run)
 
-    async with factory(config) as rig:
+    async with factory(config, wait_budget_s) as rig:
         await evaluate_chatbot(rig, texts, use, _stderr, on_text=keep)
     return runs
 
 
 def main(argv: Sequence[str], factory: ChatRigFactory = live_chat_rig) -> int:
     args = _parser().parse_args(argv)
+    if args.wait_budget < 0:
+        print("--wait-budget cannot be negative", file=sys.stderr)
+        return 2
     claims = _resolve(args.claims)
     try:
         if args.split in ("test", "all") and not args.final:
@@ -139,7 +154,9 @@ def main(argv: Sequence[str], factory: ChatRigFactory = live_chat_rig) -> int:
     todo = [t for t in texts if t.id not in done]
     if done:
         _stderr(f"resuming {checkpoint.path.name}: {len(done)} of {len(texts)} texts already ran")
-    ran = asyncio.run(_run(config, factory, todo, use, checkpoint)) if todo else []
+    ran = (
+        asyncio.run(_run(config, factory, todo, use, checkpoint, args.wait_budget)) if todo else []
+    )
 
     by_id = done | {run.outcome.id: run for run in ran}
     runs = [by_id[t.id] for t in texts]
