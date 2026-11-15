@@ -78,6 +78,47 @@ def test_the_router_run_wins_a_tie_and_a_run_that_answered_nothing_is_no_compari
     assert bench.comparisons == [] and [r.name for r in bench.runs] == ["dev", "dev.chatbot.fake"]
 
 
+def test_the_comparison_uses_the_best_ranked_model_and_marks_a_weaker_run(tmp_path: Path) -> None:
+    reports, ml = folders(tmp_path)
+    put(reports, make_report(1, 2), "dev")
+    # The strong model answered one text of two; the weak one answered both.
+    put(
+        reports,
+        make_report(1, 1, not_run=1),
+        "dev.chatbot.strong",
+        kind="chatbot",
+        provider="strong",
+    )
+    put(reports, make_report(2, 2), "dev.chatbot.weak", kind="chatbot", provider="weak")
+    put(reports, make_report(2, 2), "dev.chatbot", kind="chatbot")  # the whole router: ranks last
+
+    bench = read_benchmark(reports, ml, LABELS, ["strong", "other", "weak"])
+
+    [cmp] = bench.comparisons
+    assert cmp.chatbot.name == "dev.chatbot.strong"
+    roles = {r.name: r.role for r in bench.runs}
+    assert roles == {
+        "dev": None,  # the pipeline
+        "dev.chatbot.strong": "compared",
+        "dev.chatbot.weak": "weaker",
+        "dev.chatbot": None,  # mixed models: neither stronger nor weaker
+    }
+
+
+def test_without_a_ranking_the_fullest_run_is_compared_and_none_is_called_weaker(
+    tmp_path: Path,
+) -> None:
+    reports, ml = folders(tmp_path)
+    put(reports, make_report(1, 2), "dev")
+    put(reports, make_report(1, 1, not_run=1), "dev.chatbot.a", kind="chatbot", provider="a")
+    put(reports, make_report(2, 2), "dev.chatbot.b", kind="chatbot", provider="b")
+
+    bench = read_benchmark(reports, ml, LABELS)
+
+    assert bench.comparisons[0].chatbot.name == "dev.chatbot.b"
+    assert [r.role for r in bench.runs] == [None, None, "compared"]
+
+
 def test_where_holdsup_loses_is_listed_with_the_step_that_broke(tmp_path: Path) -> None:
     reports, ml = folders(tmp_path)
     ours = make_report(1, 2)

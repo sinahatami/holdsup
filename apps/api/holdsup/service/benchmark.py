@@ -9,12 +9,15 @@ on the page.
 The head-to-head joins a split's pipeline run (`<split>.json`) and its chatbot run on the claims
 both could be scored on, so a text one of them could not be served for does not tilt the
 comparison. A split can have several chatbot runs (`<split>.chatbot.json` on the router,
-`<split>.chatbot.<provider>.json` on one provider): the one that answered the most claims is
-used, and a run that answered none is no comparison at all. Every run is still listed.
+`<split>.chatbot.<provider>.json` on one provider). The comparison uses the run on the model the
+baseline step prefers (providers.yaml lists the best first), the fullest run among equals, and
+none when no run answered a claim. Every run is still listed, and one on a model the step ranks
+below the compared one is marked as the weaker model.
 """
 
 import json
 from collections import Counter
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -127,6 +130,9 @@ class FailureCause(BaseModel):
     share: float  # of the run's wrong verdicts
 
 
+Role = Literal["compared", "weaker"]
+
+
 class Run(BaseModel):
     """One evaluation run: a split of the benchmark, answered by the pipeline or a chatbot."""
 
@@ -149,6 +155,9 @@ class Run(BaseModel):
     failure_causes: list[FailureCause]  # the steps that broke first, most common first
     calls_per_claim: float | None
     seconds_per_claim: float | None
+    # Chatbot runs only: "compared" is the one set against HoldsUp on the page; "weaker" is on a
+    # model the baseline step ranks below that one.
+    role: Role | None = None
 
 
 class Loss(BaseModel):
@@ -304,10 +313,19 @@ def _answered(report: _Report) -> int:
     return m.labelled_claims - m.excluded.claims_not_run - m.excluded.claims_verdict_unavailable
 
 
-def _chatbot_for(reports: list[_Report], split: str) -> _Report | None:
-    """The chatbot run of a split that answered the most claims; the router's run on a tie."""
+def _rank(provider: str, ranking: Sequence[str]) -> int:
+    """Where a provider stands in the baseline step's preference (0 is best). A run on the whole
+    router mixes models, so it ranks after every named one."""
+    return ranking.index(provider) if provider in ranking else len(ranking)
+
+
+def _chatbot_for(reports: list[_Report], split: str, ranking: Sequence[str]) -> _Report | None:
+    """The chatbot run of a split to compare: on the best-ranked model, then the one that
+    answered the most claims, then by name (so the router's run `dev.chatbot` comes first)."""
     answered = [r for r in reports if r.kind == "chatbot" and r.split == split and _answered(r) > 0]
-    return min(answered, key=lambda r: (-_answered(r), r.name), default=None)
+    return min(
+        answered, key=lambda r: (_rank(r.provider, ranking), -_answered(r), r.name), default=None
+    )
 
 
 def read_runs(reports_dir: Path, labels: dict[str, str]) -> tuple[list[_Report], list[Run]]:
@@ -320,8 +338,11 @@ def read_runs(reports_dir: Path, labels: dict[str, str]) -> tuple[list[_Report],
     return reports, [_run(r, labels) for r in reports]
 
 
-def read_benchmark(reports_dir: Path, ml_dir: Path, labels: dict[str, str]) -> Benchmark:
-    """Everything the /eval page shows. `labels` maps a provider's name to its readable name."""
+def read_benchmark(
+    reports_dir: Path, ml_dir: Path, labels: dict[str, str], ranking: Sequence[str] = ()
+) -> Benchmark:
+    """Everything the /eval page shows. `labels` maps a provider's name to its readable name;
+    `ranking` is the baseline step's providers, best model first."""
     reports, runs = read_runs(reports_dir, labels)
     by_name = {r.name: r for r in reports}
     comparisons = [
@@ -329,15 +350,34 @@ def read_benchmark(reports_dir: Path, ml_dir: Path, labels: dict[str, str]) -> B
         for split in sorted({r.split for r in reports})
         if (ours := by_name.get(split)) is not None
         and ours.kind == "pipeline"
-        and (theirs := _chatbot_for(reports, split)) is not None
+        and (theirs := _chatbot_for(reports, split, ranking)) is not None
     ]
     version = reports_dir.parent / "VERSION"
     return Benchmark(
         eval_version=version.read_text(encoding="utf-8").strip() if version.exists() else None,
         comparisons=comparisons,
-        runs=runs,
+        runs=_with_roles(runs, comparisons, ranking),
         models=[m for m in (_reranker(ml_dir), _confidence(ml_dir)) if m is not None],
     )
+
+
+def _with_roles(
+    runs: list[Run], comparisons: list[Comparison], ranking: Sequence[str]
+) -> list[Run]:
+    compared = {c.split: c.chatbot for c in comparisons}
+    out = []
+    for run in runs:
+        rival = compared.get(run.split)
+        role: Role | None = None
+        if run.kind == "chatbot" and rival is not None:
+            if run.name == rival.name:
+                role = "compared"
+            elif run.provider in ranking and _rank(run.provider, ranking) > _rank(
+                rival.provider, ranking
+            ):
+                role = "weaker"
+        out.append(run.model_copy(update={"role": role}))
+    return out
 
 
 # --- the trained models' reports -------------------------------------------------------------

@@ -1251,6 +1251,8 @@ export interface components {
       calls_per_claim: number | null;
       /** Seconds Per Claim */
       seconds_per_claim: number | null;
+      /** Role */
+      role?: ("compared" | "weaker") | null;
     };
     /** SeriesPoint */
     SeriesPoint: {
