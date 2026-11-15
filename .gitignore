@@ -69,3 +69,5 @@ apps/web/playwright-report/
 CLAUDE.md
 .claudeignore
 .claude/
+
+/repo-backup.git/
