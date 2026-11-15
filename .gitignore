@@ -68,3 +68,6 @@ CLAUDE.md
 .claude/
 
 /repo-backup.git/
+
+# A stopped eval run keeps its finished texts here until the report is written (make eval --resume)
+eval/reports/*.partial.jsonl
