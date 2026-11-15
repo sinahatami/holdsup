@@ -6,9 +6,11 @@ those files, counts claims both runs answered, and sets the figures side by side
 code cannot read is skipped with a warning (an old schema, a half-written file), never an error
 on the page.
 
-The head-to-head joins a split's pipeline run (`<split>.json`) and its chatbot run
-(`<split>.chatbot.json`) on the claims both could be scored on, so a text one of them could not
-be served for does not tilt the comparison.
+The head-to-head joins a split's pipeline run (`<split>.json`) and its chatbot run on the claims
+both could be scored on, so a text one of them could not be served for does not tilt the
+comparison. A split can have several chatbot runs (`<split>.chatbot.json` on the router,
+`<split>.chatbot.<provider>.json` on one provider): the one that answered the most claims is
+used, and a run that answered none is no comparison at all. Every run is still listed.
 """
 
 import json
@@ -296,6 +298,18 @@ def _compare(split: str, holdsup: _Report, chatbot: _Report, labels: dict[str, s
     )
 
 
+def _answered(report: _Report) -> int:
+    """The claims the run could score: those that were not left out."""
+    m = report.metrics
+    return m.labelled_claims - m.excluded.claims_not_run - m.excluded.claims_verdict_unavailable
+
+
+def _chatbot_for(reports: list[_Report], split: str) -> _Report | None:
+    """The chatbot run of a split that answered the most claims; the router's run on a tie."""
+    answered = [r for r in reports if r.kind == "chatbot" and r.split == split and _answered(r) > 0]
+    return min(answered, key=lambda r: (-_answered(r), r.name), default=None)
+
+
 def read_runs(reports_dir: Path, labels: dict[str, str]) -> tuple[list[_Report], list[Run]]:
     reports = [
         r
@@ -314,9 +328,8 @@ def read_benchmark(reports_dir: Path, ml_dir: Path, labels: dict[str, str]) -> B
         _compare(split, ours, theirs, labels)
         for split in sorted({r.split for r in reports})
         if (ours := by_name.get(split)) is not None
-        and (theirs := by_name.get(f"{split}.chatbot")) is not None
         and ours.kind == "pipeline"
-        and theirs.kind == "chatbot"
+        and (theirs := _chatbot_for(reports, split)) is not None
     ]
     version = reports_dir.parent / "VERSION"
     return Benchmark(

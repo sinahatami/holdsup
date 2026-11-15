@@ -49,6 +49,35 @@ def test_a_head_to_head_counts_the_claims_both_could_be_scored_on(tmp_path: Path
     assert bench.eval_version == "0.3.0"
 
 
+def test_a_chatbot_run_on_one_provider_is_compared_and_the_fullest_run_wins(tmp_path: Path) -> None:
+    reports, ml = folders(tmp_path)
+    put(reports, make_report(1, 2), "dev")
+    put(reports, make_report(1, 1, not_run=1), "dev.chatbot", kind="chatbot")  # half served
+    put(reports, make_report(2, 2), "dev.chatbot.fake", kind="chatbot", provider="fake")
+
+    [cmp] = read_benchmark(reports, ml, LABELS).comparisons
+
+    assert cmp.chatbot.name == "dev.chatbot.fake" and cmp.chatbot.provider == "fake"
+    assert cmp.claims == 2 and cmp.chatbot.left_out == 0
+
+
+def test_the_router_run_wins_a_tie_and_a_run_that_answered_nothing_is_no_comparison(
+    tmp_path: Path,
+) -> None:
+    reports, ml = folders(tmp_path)
+    put(reports, make_report(1, 2), "dev")
+    put(reports, make_report(2, 2), "dev.chatbot.fake", kind="chatbot", provider="fake")
+    put(reports, make_report(2, 2), "dev.chatbot", kind="chatbot")
+    [cmp] = read_benchmark(reports, ml, LABELS).comparisons
+    assert cmp.chatbot.name == "dev.chatbot"
+
+    empty, ml2 = folders(tmp_path / "empty")
+    put(empty, make_report(1, 2), "dev")
+    put(empty, make_report(0, 0, not_run=2), "dev.chatbot.fake", kind="chatbot")
+    bench = read_benchmark(empty, ml2, LABELS)
+    assert bench.comparisons == [] and [r.name for r in bench.runs] == ["dev", "dev.chatbot.fake"]
+
+
 def test_where_holdsup_loses_is_listed_with_the_step_that_broke(tmp_path: Path) -> None:
     reports, ml = folders(tmp_path)
     ours = make_report(1, 2)
