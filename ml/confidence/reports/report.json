@@ -1,0 +1,655 @@
+{
+  "model": "holdsup-confidence",
+  "created": "2026-11-15",
+  "seed": 13,
+  "hyperparameters": {
+    "model": "logistic regression (L2), standardized signals, mean imputation",
+    "C": 1.0,
+    "folds": 5,
+    "clear_gain": 0.01
+  },
+  "data": {
+    "reports": {
+      "dev.json": "2966ceeac3ddf127f1974c8a5ad54ea917fe9d68ba333ceb4c6fc555b069222d"
+    },
+    "eval_version": "0.2.0",
+    "catalog_version": "0.8.0",
+    "rows": 80,
+    "right": 67,
+    "wrong": 13,
+    "groups": 55,
+    "skipped": {
+      "cant_check (nothing to abstain from)": 9,
+      "no signals (a report from before P4.5)": 1,
+      "no verdict (not run, source down, or missed by extraction)": 16
+    },
+    "missing": {
+      "rerank_probability": 1,
+      "rerank_margin": 1,
+      "definition_mismatch": 0,
+      "data_age_years": 0,
+      "series_length": 0,
+      "boundary_distance": 1,
+      "fallback_steps": 0
+    }
+  },
+  "cross_validation": {
+    "folds": 5,
+    "fold_sizes": [16, 16, 16, 16, 16],
+    "grouping": "statistic and place (a claim's rows from several runs stay in one fold)",
+    "models": [
+      {
+        "name": "base_rate",
+        "label": "Base rate (the training share right, for every claim)",
+        "brier": 0.13837890625,
+        "log_loss": 0.4521401825520995,
+        "auc": null
+      },
+      {
+        "name": "margin_only",
+        "label": "Logistic regression, reranker margin only",
+        "brier": 0.13549442980823964,
+        "log_loss": 0.44504561942464377,
+        "auc": 0.47761194029850745
+      },
+      {
+        "name": "logistic",
+        "label": "Logistic regression, every signal (served)",
+        "brier": 0.1394668672837899,
+        "log_loss": 0.4536722024860029,
+        "auc": 0.5614236509758898
+      },
+      {
+        "name": "boosting",
+        "label": "Gradient boosting, every signal",
+        "brier": 0.12171413037334018,
+        "log_loss": 0.4174527436576936,
+        "auc": 0.7146957520091849
+      }
+    ],
+    "calibration": [
+      {
+        "low": 0.0,
+        "high": 0.2,
+        "n": 1,
+        "mean_probability": 0.00021780561190342377,
+        "accuracy": 0.0
+      },
+      {
+        "low": 0.2,
+        "high": 0.4,
+        "n": 0,
+        "mean_probability": null,
+        "accuracy": null
+      },
+      {
+        "low": 0.4,
+        "high": 0.6,
+        "n": 3,
+        "mean_probability": 0.5235824619099643,
+        "accuracy": 1.0
+      },
+      {
+        "low": 0.6,
+        "high": 0.8,
+        "n": 15,
+        "mean_probability": 0.7209429064748534,
+        "accuracy": 0.8666666666666667
+      },
+      {
+        "low": 0.8,
+        "high": 1.0,
+        "n": 61,
+        "mean_probability": 0.8955921425192527,
+        "accuracy": 0.8360655737704918
+      }
+    ],
+    "coverage": [
+      {
+        "answered": 1,
+        "coverage": 0.0125,
+        "accuracy": 1.0,
+        "lowest": 0.9680467773470065
+      },
+      {
+        "answered": 2,
+        "coverage": 0.025,
+        "accuracy": 1.0,
+        "lowest": 0.967565903081404
+      },
+      {
+        "answered": 3,
+        "coverage": 0.0375,
+        "accuracy": 1.0,
+        "lowest": 0.9658834730072605
+      },
+      {
+        "answered": 4,
+        "coverage": 0.05,
+        "accuracy": 1.0,
+        "lowest": 0.9653772993917303
+      },
+      {
+        "answered": 5,
+        "coverage": 0.0625,
+        "accuracy": 1.0,
+        "lowest": 0.9620240587506657
+      },
+      {
+        "answered": 6,
+        "coverage": 0.075,
+        "accuracy": 1.0,
+        "lowest": 0.955097422920791
+      },
+      {
+        "answered": 7,
+        "coverage": 0.0875,
+        "accuracy": 1.0,
+        "lowest": 0.9534838089539147
+      },
+      {
+        "answered": 8,
+        "coverage": 0.1,
+        "accuracy": 1.0,
+        "lowest": 0.9459291267063635
+      },
+      {
+        "answered": 9,
+        "coverage": 0.1125,
+        "accuracy": 1.0,
+        "lowest": 0.9449141907096982
+      },
+      {
+        "answered": 10,
+        "coverage": 0.125,
+        "accuracy": 1.0,
+        "lowest": 0.9422696871123012
+      },
+      {
+        "answered": 11,
+        "coverage": 0.1375,
+        "accuracy": 1.0,
+        "lowest": 0.9402235665403093
+      },
+      {
+        "answered": 12,
+        "coverage": 0.15,
+        "accuracy": 1.0,
+        "lowest": 0.9344918606044059
+      },
+      {
+        "answered": 13,
+        "coverage": 0.1625,
+        "accuracy": 1.0,
+        "lowest": 0.9314060424414369
+      },
+      {
+        "answered": 14,
+        "coverage": 0.175,
+        "accuracy": 1.0,
+        "lowest": 0.9301950357212548
+      },
+      {
+        "answered": 15,
+        "coverage": 0.1875,
+        "accuracy": 1.0,
+        "lowest": 0.9291081231720988
+      },
+      {
+        "answered": 16,
+        "coverage": 0.2,
+        "accuracy": 1.0,
+        "lowest": 0.9283305885141773
+      },
+      {
+        "answered": 17,
+        "coverage": 0.2125,
+        "accuracy": 1.0,
+        "lowest": 0.9282055847787923
+      },
+      {
+        "answered": 18,
+        "coverage": 0.225,
+        "accuracy": 0.9444444444444444,
+        "lowest": 0.9274504965632202
+      },
+      {
+        "answered": 19,
+        "coverage": 0.2375,
+        "accuracy": 0.8947368421052632,
+        "lowest": 0.9231407205503096
+      },
+      {
+        "answered": 20,
+        "coverage": 0.25,
+        "accuracy": 0.9,
+        "lowest": 0.923007508047428
+      },
+      {
+        "answered": 21,
+        "coverage": 0.2625,
+        "accuracy": 0.8571428571428571,
+        "lowest": 0.9210416829202924
+      },
+      {
+        "answered": 22,
+        "coverage": 0.275,
+        "accuracy": 0.8636363636363636,
+        "lowest": 0.9206230677475672
+      },
+      {
+        "answered": 23,
+        "coverage": 0.2875,
+        "accuracy": 0.8695652173913043,
+        "lowest": 0.9203684929125254
+      },
+      {
+        "answered": 24,
+        "coverage": 0.3,
+        "accuracy": 0.875,
+        "lowest": 0.9203660502750637
+      },
+      {
+        "answered": 25,
+        "coverage": 0.3125,
+        "accuracy": 0.84,
+        "lowest": 0.9189865343172733
+      },
+      {
+        "answered": 26,
+        "coverage": 0.325,
+        "accuracy": 0.8076923076923077,
+        "lowest": 0.9072663320100602
+      },
+      {
+        "answered": 27,
+        "coverage": 0.3375,
+        "accuracy": 0.8148148148148148,
+        "lowest": 0.906118956095312
+      },
+      {
+        "answered": 28,
+        "coverage": 0.35,
+        "accuracy": 0.8214285714285714,
+        "lowest": 0.9039612617931899
+      },
+      {
+        "answered": 29,
+        "coverage": 0.3625,
+        "accuracy": 0.8275862068965517,
+        "lowest": 0.9029113380287861
+      },
+      {
+        "answered": 30,
+        "coverage": 0.375,
+        "accuracy": 0.8333333333333334,
+        "lowest": 0.901462297810456
+      },
+      {
+        "answered": 31,
+        "coverage": 0.3875,
+        "accuracy": 0.8387096774193549,
+        "lowest": 0.9011117588466849
+      },
+      {
+        "answered": 32,
+        "coverage": 0.4,
+        "accuracy": 0.84375,
+        "lowest": 0.9011071522219976
+      },
+      {
+        "answered": 33,
+        "coverage": 0.4125,
+        "accuracy": 0.8484848484848485,
+        "lowest": 0.9006272473620549
+      },
+      {
+        "answered": 34,
+        "coverage": 0.425,
+        "accuracy": 0.8529411764705882,
+        "lowest": 0.8969237343150593
+      },
+      {
+        "answered": 35,
+        "coverage": 0.4375,
+        "accuracy": 0.8571428571428571,
+        "lowest": 0.8949955946009683
+      },
+      {
+        "answered": 36,
+        "coverage": 0.45,
+        "accuracy": 0.8611111111111112,
+        "lowest": 0.8932493053821285
+      },
+      {
+        "answered": 37,
+        "coverage": 0.4625,
+        "accuracy": 0.8648648648648649,
+        "lowest": 0.8922695091524304
+      },
+      {
+        "answered": 38,
+        "coverage": 0.475,
+        "accuracy": 0.868421052631579,
+        "lowest": 0.88269164983065
+      },
+      {
+        "answered": 39,
+        "coverage": 0.4875,
+        "accuracy": 0.8717948717948718,
+        "lowest": 0.8822641113636217
+      },
+      {
+        "answered": 40,
+        "coverage": 0.5,
+        "accuracy": 0.875,
+        "lowest": 0.8783572191850386
+      },
+      {
+        "answered": 41,
+        "coverage": 0.5125,
+        "accuracy": 0.8780487804878049,
+        "lowest": 0.8721329890079065
+      },
+      {
+        "answered": 42,
+        "coverage": 0.525,
+        "accuracy": 0.8809523809523809,
+        "lowest": 0.8703014983963555
+      },
+      {
+        "answered": 43,
+        "coverage": 0.5375,
+        "accuracy": 0.8604651162790697,
+        "lowest": 0.8696863964360155
+      },
+      {
+        "answered": 44,
+        "coverage": 0.55,
+        "accuracy": 0.8636363636363636,
+        "lowest": 0.86274122255189
+      },
+      {
+        "answered": 45,
+        "coverage": 0.5625,
+        "accuracy": 0.8444444444444444,
+        "lowest": 0.8622451913850069
+      },
+      {
+        "answered": 46,
+        "coverage": 0.575,
+        "accuracy": 0.8478260869565217,
+        "lowest": 0.8605135758956626
+      },
+      {
+        "answered": 47,
+        "coverage": 0.5875,
+        "accuracy": 0.851063829787234,
+        "lowest": 0.8544698090745799
+      },
+      {
+        "answered": 48,
+        "coverage": 0.6,
+        "accuracy": 0.8541666666666666,
+        "lowest": 0.8520394221858847
+      },
+      {
+        "answered": 49,
+        "coverage": 0.6125,
+        "accuracy": 0.8571428571428571,
+        "lowest": 0.8510258344761971
+      },
+      {
+        "answered": 50,
+        "coverage": 0.625,
+        "accuracy": 0.86,
+        "lowest": 0.850482430583441
+      },
+      {
+        "answered": 51,
+        "coverage": 0.6375,
+        "accuracy": 0.8431372549019608,
+        "lowest": 0.8498329162288418
+      },
+      {
+        "answered": 52,
+        "coverage": 0.65,
+        "accuracy": 0.8269230769230769,
+        "lowest": 0.8498218119410688
+      },
+      {
+        "answered": 53,
+        "coverage": 0.6625,
+        "accuracy": 0.8301886792452831,
+        "lowest": 0.8483422227013104
+      },
+      {
+        "answered": 54,
+        "coverage": 0.675,
+        "accuracy": 0.8333333333333334,
+        "lowest": 0.8345060786860292
+      },
+      {
+        "answered": 55,
+        "coverage": 0.6875,
+        "accuracy": 0.8363636363636363,
+        "lowest": 0.8276989747488899
+      },
+      {
+        "answered": 56,
+        "coverage": 0.7,
+        "accuracy": 0.8392857142857143,
+        "lowest": 0.8237787483989624
+      },
+      {
+        "answered": 57,
+        "coverage": 0.7125,
+        "accuracy": 0.8245614035087719,
+        "lowest": 0.820046147991386
+      },
+      {
+        "answered": 58,
+        "coverage": 0.725,
+        "accuracy": 0.8275862068965517,
+        "lowest": 0.8186674549450881
+      },
+      {
+        "answered": 59,
+        "coverage": 0.7375,
+        "accuracy": 0.8305084745762712,
+        "lowest": 0.8159902508345658
+      },
+      {
+        "answered": 60,
+        "coverage": 0.75,
+        "accuracy": 0.8333333333333334,
+        "lowest": 0.814798070929523
+      },
+      {
+        "answered": 61,
+        "coverage": 0.7625,
+        "accuracy": 0.8360655737704918,
+        "lowest": 0.8091450751900789
+      },
+      {
+        "answered": 62,
+        "coverage": 0.775,
+        "accuracy": 0.8387096774193549,
+        "lowest": 0.795868837957413
+      },
+      {
+        "answered": 63,
+        "coverage": 0.7875,
+        "accuracy": 0.8412698412698413,
+        "lowest": 0.7915057061991957
+      },
+      {
+        "answered": 64,
+        "coverage": 0.8,
+        "accuracy": 0.84375,
+        "lowest": 0.788814579246816
+      },
+      {
+        "answered": 65,
+        "coverage": 0.8125,
+        "accuracy": 0.8461538461538461,
+        "lowest": 0.7886300014366513
+      },
+      {
+        "answered": 66,
+        "coverage": 0.825,
+        "accuracy": 0.8484848484848485,
+        "lowest": 0.7783579715777854
+      },
+      {
+        "answered": 67,
+        "coverage": 0.8375,
+        "accuracy": 0.835820895522388,
+        "lowest": 0.7726833142832358
+      },
+      {
+        "answered": 68,
+        "coverage": 0.85,
+        "accuracy": 0.8382352941176471,
+        "lowest": 0.7463068616898647
+      },
+      {
+        "answered": 69,
+        "coverage": 0.8625,
+        "accuracy": 0.8405797101449275,
+        "lowest": 0.7302104647765003
+      },
+      {
+        "answered": 70,
+        "coverage": 0.875,
+        "accuracy": 0.8428571428571429,
+        "lowest": 0.7168830254687639
+      },
+      {
+        "answered": 71,
+        "coverage": 0.8875,
+        "accuracy": 0.8450704225352113,
+        "lowest": 0.681770242123322
+      },
+      {
+        "answered": 72,
+        "coverage": 0.9,
+        "accuracy": 0.8472222222222222,
+        "lowest": 0.6671730833095237
+      },
+      {
+        "answered": 73,
+        "coverage": 0.9125,
+        "accuracy": 0.8493150684931506,
+        "lowest": 0.6612386121564682
+      },
+      {
+        "answered": 74,
+        "coverage": 0.925,
+        "accuracy": 0.8513513513513513,
+        "lowest": 0.6484837198413319
+      },
+      {
+        "answered": 75,
+        "coverage": 0.9375,
+        "accuracy": 0.8533333333333334,
+        "lowest": 0.6403912761145037
+      },
+      {
+        "answered": 76,
+        "coverage": 0.95,
+        "accuracy": 0.8421052631578947,
+        "lowest": 0.6058259009414247
+      },
+      {
+        "answered": 77,
+        "coverage": 0.9625,
+        "accuracy": 0.8441558441558441,
+        "lowest": 0.5879738236296267
+      },
+      {
+        "answered": 78,
+        "coverage": 0.975,
+        "accuracy": 0.8461538461538461,
+        "lowest": 0.5244345563408173
+      },
+      {
+        "answered": 79,
+        "coverage": 0.9875,
+        "accuracy": 0.8481012658227848,
+        "lowest": 0.4583390057594488
+      },
+      {
+        "answered": 80,
+        "coverage": 1.0,
+        "accuracy": 0.8375,
+        "lowest": 0.00021780561190342377
+      }
+    ],
+    "threshold": {
+      "threshold": 0.9220245954838602,
+      "target": 0.9,
+      "met": true,
+      "answered": 20,
+      "coverage": 0.25,
+      "accuracy": 0.9
+    },
+    "beats_base_rate": false,
+    "boosting_clearly_better": true
+  },
+  "served": {
+    "threshold": 0.9220245954838602,
+    "high": 0.9220245954838602,
+    "target_accuracy": 0.9,
+    "intercept": 1.781256261361567,
+    "coefficients": [
+      {
+        "feature": "rerank_probability",
+        "weight": 1.0907785017023255,
+        "expected_sign": 1,
+        "as_expected": true
+      },
+      {
+        "feature": "rerank_margin",
+        "weight": -0.14947215293709068,
+        "expected_sign": 1,
+        "as_expected": false
+      },
+      {
+        "feature": "definition_mismatch",
+        "weight": -0.5204382269101329,
+        "expected_sign": -1,
+        "as_expected": true
+      },
+      {
+        "feature": "data_age_years",
+        "weight": 0.42531634595258133,
+        "expected_sign": -1,
+        "as_expected": false
+      },
+      {
+        "feature": "series_length",
+        "weight": 0.18489838640799003,
+        "expected_sign": 1,
+        "as_expected": true
+      },
+      {
+        "feature": "boundary_distance",
+        "weight": 0.02395327286302595,
+        "expected_sign": 1,
+        "as_expected": true
+      },
+      {
+        "feature": "fallback_steps",
+        "weight": -0.19359473211750616,
+        "expected_sign": -1,
+        "as_expected": true
+      }
+    ]
+  },
+  "limitations": [
+    "The served reranker was fine-tuned on every dev claim (P4.3), so on these rows its probabilities and margins are in-sample: higher, and more often right, than on claims it has never seen. The model may lean on them more than it should; the held-out evaluation (P4.7) is the honest check of its calibration.",
+    "About a hundred rows, most of them right: one claim moves the figures by about a point, and the threshold can move with them.",
+    "Rows come from the runs named above; a run on backup models (a provider at its daily limit) has more wrong verdicts and more fallback steps than a usual day."
+  ]
+}

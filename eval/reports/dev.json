@@ -1,0 +1,5167 @@
+{
+  "schema_version": 1,
+  "name": "dev",
+  "created_at": "2026-11-15T17:10:29Z",
+  "benchmark": "claims.jsonl",
+  "split": "dev",
+  "provider": "router",
+  "use": "live",
+  "versions": {
+    "app": "0.0.0",
+    "catalog": "0.8.0",
+    "tolerances": 5,
+    "eval": "0.2.0"
+  },
+  "steps": {
+    "extract": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "match": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "plan": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "explain": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "smoke": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ]
+  },
+  "metrics": {
+    "texts": 106,
+    "labelled_claims": 106,
+    "extracted_claims": 105,
+    "excluded": {
+      "texts_not_run": 0,
+      "claims_not_run": 0,
+      "claims_verdict_unavailable": 16,
+      "share": 0.1509
+    },
+    "extraction": {
+      "precision": {
+        "hits": 105,
+        "total": 105,
+        "rate": 1.0
+      },
+      "recall": {
+        "hits": 105,
+        "total": 106,
+        "rate": 0.9906
+      },
+      "geo": {
+        "hits": 105,
+        "total": 105,
+        "rate": 1.0
+      },
+      "start": {
+        "hits": 105,
+        "total": 105,
+        "rate": 1.0
+      },
+      "end": {
+        "hits": 105,
+        "total": 105,
+        "rate": 1.0
+      },
+      "window": {
+        "hits": 105,
+        "total": 105,
+        "rate": 1.0
+      }
+    },
+    "matching": {
+      "top1": {
+        "hits": 104,
+        "total": 105,
+        "rate": 0.9905
+      },
+      "recall_at_8": {
+        "hits": 102,
+        "total": 103,
+        "rate": 0.9903
+      }
+    },
+    "verdict": {
+      "accuracy": {
+        "hits": 76,
+        "total": 90,
+        "rate": 0.8444
+      },
+      "accuracy_given_found": {
+        "hits": 76,
+        "total": 89,
+        "rate": 0.8539
+      },
+      "labels": [
+        "supported",
+        "supported_framing_matters",
+        "not_supported",
+        "partly_supported",
+        "cant_check",
+        "missed"
+      ],
+      "confusion": {
+        "supported": {
+          "supported": 32,
+          "supported_framing_matters": 1,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "supported_framing_matters": {
+          "supported": 7,
+          "supported_framing_matters": 7,
+          "not_supported": 4,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "not_supported": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 24,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "partly_supported": {
+          "supported": 1,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 4,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "cant_check": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 9,
+          "missed": 1
+        }
+      },
+      "per_label": {
+        "supported": {
+          "hits": 32,
+          "total": 33,
+          "rate": 0.9697
+        },
+        "supported_framing_matters": {
+          "hits": 7,
+          "total": 18,
+          "rate": 0.3889
+        },
+        "not_supported": {
+          "hits": 24,
+          "total": 24,
+          "rate": 1.0
+        },
+        "partly_supported": {
+          "hits": 4,
+          "total": 5,
+          "rate": 0.8
+        },
+        "cant_check": {
+          "hits": 9,
+          "total": 10,
+          "rate": 0.9
+        }
+      }
+    },
+    "explanation": {
+      "pass_rate": {
+        "hits": 79,
+        "total": 80,
+        "rate": 0.9875
+      }
+    },
+    "cost": {
+      "model_calls": 457,
+      "failed_calls": 142,
+      "calls_per_claim": 4.31,
+      "prompt_tokens": 403315,
+      "completion_tokens": 128398,
+      "seconds": 1650.8,
+      "seconds_per_claim": 15.57,
+      "seconds_p50_per_text": 7.03,
+      "seconds_p95_per_text": 51.7,
+      "series_requests": 132,
+      "series_cache_hits": 54,
+      "series_cache_hit_rate": 0.4091,
+      "by_step_provider": [
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 23,
+          "failed": 3,
+          "tokens": 17667,
+          "mean_latency_ms": 863.1
+        },
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 68,
+          "failed": 11,
+          "tokens": 53426,
+          "mean_latency_ms": 639.4
+        },
+        {
+          "step": "explain",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 11,
+          "failed": 4,
+          "tokens": 3614,
+          "mean_latency_ms": 761.7
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 57,
+          "failed": 32,
+          "tokens": 68811,
+          "mean_latency_ms": 785.5
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 95,
+          "failed": 42,
+          "tokens": 155975,
+          "mean_latency_ms": 719.2
+        },
+        {
+          "step": "extract",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 28,
+          "failed": 8,
+          "tokens": 22141,
+          "mean_latency_ms": 1505.5
+        },
+        {
+          "step": "extract",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 9,
+          "failed": 1,
+          "tokens": 17716,
+          "mean_latency_ms": 23551.2
+        },
+        {
+          "step": "match",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 38,
+          "failed": 16,
+          "tokens": 28468,
+          "mean_latency_ms": 584.1
+        },
+        {
+          "step": "match",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 11,
+          "failed": 2,
+          "tokens": 16116,
+          "mean_latency_ms": 718.9
+        },
+        {
+          "step": "match",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 3,
+          "failed": 0,
+          "tokens": 6086,
+          "mean_latency_ms": 10276.5
+        },
+        {
+          "step": "plan",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 96,
+          "failed": 18,
+          "tokens": 128626,
+          "mean_latency_ms": 813.5
+        },
+        {
+          "step": "plan",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 11,
+          "failed": 5,
+          "tokens": 4774,
+          "mean_latency_ms": 937.6
+        },
+        {
+          "step": "plan",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 7,
+          "failed": 0,
+          "tokens": 8293,
+          "mean_latency_ms": 11492.7
+        }
+      ],
+      "daily_limited": [
+        "groq-gpt-oss-20b",
+        "openrouter-nemotron-free"
+      ]
+    },
+    "confidence": {
+      "scored": 0,
+      "abstained": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      },
+      "answered_accuracy": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      },
+      "abstained_accuracy": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      }
+    },
+    "failures": {
+      "verdict": 12,
+      "extract": 1,
+      "match": 1
+    }
+  },
+  "texts": [
+    {
+      "id": "e001",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.63,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e001",
+          "index": 0,
+          "quote": "Germany's unemployment rate was 3.1% in 2022",
+          "expected": "supported",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9825,
+              "rerank_margin": 0.4876,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.5885,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e002",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.83,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e002",
+          "index": 0,
+          "quote": "Spain's youth unemployment rate was 55% in 2013",
+          "expected": "supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9929,
+              "rerank_margin": 0.4751,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 39,
+              "boundary_distance": 0.5714,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e005",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.94,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e005",
+          "index": 0,
+          "quote": "Sweden's employment rate for people aged 20 to 64 was 82% in 2018",
+          "expected": "supported",
+          "expected_indicator": "employment_rate_20_64",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_rate_20_64",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9305,
+              "rerank_margin": 0.7343,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 21,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e006",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 51.7,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e006",
+          "index": 0,
+          "quote": "Life expectancy at birth in Italy was 83 years in 2014",
+          "expected": "supported",
+          "expected_indicator": "life_expectancy",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "life_expectancy",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9935,
+              "rerank_margin": 0.9883,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 0.9321,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e007",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.54,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e007",
+          "index": 0,
+          "quote": "Germany got 52% of its electricity from renewables in 2023",
+          "expected": "supported",
+          "expected_indicator": "renewable_share_electricity",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_electricity",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9931,
+              "rerank_margin": 0.5931,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 22,
+              "boundary_distance": 0.9461,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e009",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.45,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e009",
+          "index": 0,
+          "quote": "20% of people in Italy were at risk of poverty",
+          "expected": "supported",
+          "expected_indicator": "at_risk_of_poverty_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "at_risk_of_poverty_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9965,
+              "rerank_margin": 0.9917,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 29,
+              "boundary_distance": 0.5714,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e010",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.78,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e010",
+          "index": 0,
+          "quote": "Italy's economy grew 9.2% in 2021",
+          "expected": "supported",
+          "expected_indicator": "real_gdp_growth",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_growth",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9847,
+              "rerank_margin": 0.8883,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 30,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e011",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.16,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e011",
+          "index": 0,
+          "quote": "Italy's unemployment rate was below 7% in 2024",
+          "expected": "supported",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8969,
+              "rerank_margin": 0.6668,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 43,
+              "boundary_distance": 0.7456,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e012",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 29.18,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e012",
+          "index": 0,
+          "quote": "Spain's unemployment rate was 15% in 2013",
+          "expected": "not_supported",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9767,
+              "rerank_margin": 0.745,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 39,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e013",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 17.64,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e013",
+          "index": 0,
+          "quote": "France's public debt reached 120% of GDP in 2019",
+          "expected": "not_supported",
+          "expected_indicator": "government_debt_pct_gdp",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_pct_gdp",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8047,
+              "rerank_margin": 0.3638,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e014",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 21.81,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e014",
+          "index": 0,
+          "quote": "Germany's economy shrank 3% in 2023",
+          "expected": "not_supported",
+          "expected_indicator": "real_gdp_growth",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_growth",
+          "match_ok": true,
+          "in_top8": false,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": null,
+              "rerank_margin": null,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 34,
+              "boundary_distance": 3.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e016",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.3,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e016",
+          "index": 0,
+          "quote": "Italy's homicide rate was 2.0 per 100,000 people in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "homicide_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "homicide_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9821,
+              "rerank_margin": 0.6484,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 17,
+              "boundary_distance": 1.9231,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e017",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 49.56,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e017",
+          "index": 0,
+          "quote": "Spanish house prices fell 20% between 2020 and 2024",
+          "expected": "not_supported",
+          "expected_indicator": "house_price_index",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "house_price_index",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9419,
+              "rerank_margin": 0.076,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 20,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e018",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.59,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e018",
+          "index": 0,
+          "quote": "Life expectancy at birth in Italy was 86 years in 2024",
+          "expected": "not_supported",
+          "expected_indicator": "life_expectancy",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "life_expectancy",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9953,
+              "rerank_margin": 0.988,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 0.5065,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e019",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.6,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e019",
+          "index": 0,
+          "quote": "Spain's youth unemployment rate was above 25% in 2025",
+          "expected": "not_supported",
+          "expected_indicator": "youth_unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "youth_unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9931,
+              "rerank_margin": 0.5161,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 39,
+              "boundary_distance": 0.1444,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e020",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 23.39,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e020",
+          "index": 0,
+          "quote": "Italy's unemployment rate fell from 12.4% in 2013 to 6.0% in 2023",
+          "expected": "partly_supported",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8936,
+              "rerank_margin": 0.6838,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 43,
+              "boundary_distance": 0.8084,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e021",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.14,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e021",
+          "index": 0,
+          "quote": "Germany's renewable share of electricity rose from 25% in 2013 to 70% in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "renewable_share_electricity",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_electricity",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9933,
+              "rerank_margin": 0.6931,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 22,
+              "boundary_distance": 0.6213,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e022",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 19.48,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e022",
+          "index": 0,
+          "quote": "Spain's unemployment rate fell from 26% in 2013 to 10.5% in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9148,
+              "rerank_margin": 0.8363,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 39,
+              "boundary_distance": 0.8575,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e023",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.04,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e023",
+          "index": 0,
+          "quote": "Germany's unemployment rate fell from 11.0% in 2005 to 3.0% in 2019",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9646,
+              "rerank_margin": 0.7272,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.9057,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e024",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 28.11,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e024",
+          "index": 0,
+          "quote": "Italy's unemployment rate fell by 4.3% between 2015 and 2023",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": false,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9312,
+              "rerank_margin": 0.754,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 43,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e025",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 19.18,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e025",
+          "index": 0,
+          "quote": "Italy's Gini index fell from 33.4 in 2018 to 31.0 in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "gini_index",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gini_index",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it starts at a peak (2018): from the usual level around then, 32.8, the change is -1.75 percentage points rather than -2.4 percentage points.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9951,
+              "rerank_margin": 0.3312,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 22,
+              "boundary_distance": 1.0,
+              "fallback_steps": 3
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e026",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 7.39,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e026",
+          "index": 0,
+          "quote": "Spanish house prices rose 88% between 2013 and 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "house_price_index",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "house_price_index",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9457,
+              "rerank_margin": 0.0234,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 20,
+              "boundary_distance": 0.9218,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e027",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 34.66,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e027",
+          "index": 0,
+          "quote": "Italy's employment rate for people aged 20 to 64 rose from 59.1% in 2013 to 67.6% in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "employment_rate_20_64",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_rate_20_64",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.0021,
+              "rerank_margin": -0.0468,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e028",
+      "error": null,
+      "labelled": 1,
+      "extracted": 0,
+      "linked": 0,
+      "seconds": 0.51,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e028",
+          "index": 0,
+          "quote": "Italians are among the biggest savers in Europe",
+          "expected": "cant_check",
+          "expected_indicator": null,
+          "status": "scored",
+          "note": "",
+          "found": false,
+          "geo_ok": null,
+          "start_ok": null,
+          "end_ok": null,
+          "indicator": null,
+          "match_ok": null,
+          "in_top8": null,
+          "verdict": "missed",
+          "verdict_ok": false,
+          "reason": "",
+          "stopped_at": null,
+          "explanation": null,
+          "failed_step": "extract",
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e029",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 10.15,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e029",
+          "index": 0,
+          "quote": "Italy's employment rate for people aged 20 to 64 was 57% in 2005",
+          "expected": "cant_check",
+          "expected_indicator": "employment_rate_20_64",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_rate_20_64",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: IT has no value within 1 periods of 2005 (nearest is 2009).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e030",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 27.21,
+      "model_calls": 2,
+      "outcomes": [
+        {
+          "text_id": "e030",
+          "index": 0,
+          "quote": "Germany's minimum wage was 1,200 euros a month in 2012",
+          "expected": "cant_check",
+          "expected_indicator": "minimum_wage_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "minimum_wage_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: DE has no value within 1 periods of 2012 (nearest is 2015).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e031",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 46.63,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e031",
+          "index": 0,
+          "quote": "The United States emitted 5.2 billion tonnes of CO2 in 2019",
+          "expected": "supported",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9913,
+              "rerank_margin": 0.3422,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 226,
+              "boundary_distance": 0.6287,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e033",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.35,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e033",
+          "index": 0,
+          "quote": "Italy had 59.6 million inhabitants in 2020",
+          "expected": "supported",
+          "expected_indicator": "population_total",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9892,
+              "rerank_margin": 0.9674,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.9358,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e035",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.27,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e035",
+          "index": 0,
+          "quote": "France's minimum wage was 1,730 euros a month in 2023",
+          "expected": "supported",
+          "expected_indicator": "minimum_wage_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "minimum_wage_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9994,
+              "rerank_margin": 0.8392,
+              "definition_mismatch": false,
+              "data_age_years": -0.08,
+              "series_length": 28,
+              "boundary_distance": 0.0449,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e036",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.76,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e036",
+          "index": 0,
+          "quote": "Households in Italy paid 0.34 euros per kWh for electricity in 2022",
+          "expected": "supported",
+          "expected_indicator": "household_electricity_price",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "household_electricity_price",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9961,
+              "rerank_margin": 0.9929,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 18,
+              "boundary_distance": 0.7381,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e037",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.15,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e037",
+          "index": 0,
+          "quote": "The average net wage in Italy was 21,300 euros in 2018",
+          "expected": "supported",
+          "expected_indicator": "net_earnings_average_wage",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "net_earnings_average_wage",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9714,
+              "rerank_margin": 0.9713,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 26,
+              "boundary_distance": 0.9757,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e039",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 31.19,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e039",
+          "index": 0,
+          "quote": "Real GDP per person in Italy was 32,700 euros in 2023",
+          "expected": "supported",
+          "expected_indicator": "real_gdp_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "rejected",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9648,
+              "rerank_margin": 0.5975,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.9389,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e040",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.86,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e040",
+          "index": 0,
+          "quote": "South Africa's unemployment rate was 28.5% in 2019",
+          "expected": "supported",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9962,
+              "rerank_margin": 0.9836,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.9045,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e041",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 12.46,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e041",
+          "index": 0,
+          "quote": "Germany's greenhouse gas emissions were 650 million tonnes of CO2 equivalent in 2024",
+          "expected": "supported",
+          "expected_indicator": "greenhouse_gas_emissions",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "greenhouse_gas_emissions",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.996,
+              "rerank_margin": 0.4348,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 35,
+              "boundary_distance": 0.9671,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e042",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 21.39,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e042",
+          "index": 0,
+          "quote": "US inflation was 8% in 2023",
+          "expected": "not_supported",
+          "expected_indicator": "cpi_inflation_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "cpi_inflation_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9935,
+              "rerank_margin": 0.9903,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e043",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.83,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e043",
+          "index": 0,
+          "quote": "About 400,000 babies were born in Italy in 2024",
+          "expected": "not_supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9959,
+              "rerank_margin": 0.9907,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e044",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.89,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e044",
+          "index": 0,
+          "quote": "South Africa's unemployment rate was 25% in 2021",
+          "expected": "not_supported",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.997,
+              "rerank_margin": 0.9848,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e045",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 6.92,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e045",
+          "index": 0,
+          "quote": "The US unemployment rate was 6% in 2010",
+          "expected": "not_supported",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9664,
+              "rerank_margin": 0.9564,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e046",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 14.98,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e046",
+          "index": 0,
+          "quote": "Italy's public spending was 48% of GDP in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "government_spending",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_spending",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9942,
+              "rerank_margin": 0.8727,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 30,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e049",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 11.19,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e049",
+          "index": 0,
+          "quote": "France's minimum wage was 2,000 euros a month in 2024",
+          "expected": "not_supported",
+          "expected_indicator": "minimum_wage_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "minimum_wage_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9995,
+              "rerank_margin": 0.8208,
+              "definition_mismatch": false,
+              "data_age_years": -0.08,
+              "series_length": 28,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e050",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 29.97,
+      "model_calls": 10,
+      "outcomes": [
+        {
+          "text_id": "e050",
+          "index": 0,
+          "quote": "Italy's population fell from 60.3 million in 2013 to 58.0 million in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "population_total",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9959,
+              "rerank_margin": 0.9547,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.1264,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e052",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.83,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e052",
+          "index": 0,
+          "quote": "Italian workers' average net pay rose 4.6% between 2021 and 2023",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "net_earnings_average_wage",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "net_earnings_average_wage",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but after inflation it fell: 23,512 in 2021, 21,519 in 2023 (euro per year, 2021 prices).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9686,
+              "rerank_margin": 0.9684,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 26,
+              "boundary_distance": 0.9877,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e053",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 12.08,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e053",
+          "index": 0,
+          "quote": "Italy's real GDP per person grew 15.4% from 2020 to 2022",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "real_gdp_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it starts at a trough (2020): from the usual level around then, 30,665, the change is +5.46% rather than +15.4%.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9835,
+              "rerank_margin": 0.2486,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.9693,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e056",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 14.75,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e056",
+          "index": 0,
+          "quote": "South Africa's unemployment rate rose from 22.3% in 2006 to 34.0% in 2021",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends at a peak (2021): from the usual level around then, 30.7, the change is +8.35 percentage points rather than +11.7 percentage points.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9949,
+              "rerank_margin": 0.9755,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.9853,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e059",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 31.37,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e059",
+          "index": 0,
+          "quote": "Italy spent 7% of GDP on health in 2005",
+          "expected": "cant_check",
+          "expected_indicator": "health_spending",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "health_spending",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: IT has no value within 1 periods of 2005 (nearest is 2012).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e060",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.18,
+      "model_calls": 2,
+      "outcomes": [
+        {
+          "text_id": "e060",
+          "index": 0,
+          "quote": "Italian families are wealthier than German families",
+          "expected": "cant_check",
+          "expected_indicator": null,
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": null,
+          "match_ok": true,
+          "in_top8": null,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp doesn't have a statistic that matches this claim yet.",
+          "stopped_at": "match",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e063",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 7.03,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e063",
+          "index": 0,
+          "quote": "Spain had 47.3 million inhabitants in 2020",
+          "expected": "supported",
+          "expected_indicator": "population_total",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9956,
+              "rerank_margin": 0.9508,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.9655,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e065",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.92,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e065",
+          "index": 0,
+          "quote": "There were 754,000 births in France in 2019",
+          "expected": "supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9892,
+              "rerank_margin": 0.9804,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 32,
+              "boundary_distance": 0.9989,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e066",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 8.05,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e066",
+          "index": 0,
+          "quote": "Spain had 19.6 million people in work in 2019",
+          "expected": "supported",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_persons",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.995,
+              "rerank_margin": 0.9947,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 0.8699,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e067",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 25.36,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e067",
+          "index": 0,
+          "quote": "Italy's public debt was 2.4 trillion euros in 2019",
+          "expected": "supported",
+          "expected_indicator": "government_debt_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9988,
+              "rerank_margin": 0.9941,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.7899,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e071",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 16.61,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e071",
+          "index": 0,
+          "quote": "5.4 million people living in Italy in 2015 were born abroad",
+          "expected": "supported",
+          "expected_indicator": "foreign_born_population",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "foreign_born_population",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9973,
+              "rerank_margin": 0.8227,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 24,
+              "boundary_distance": 0.839,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e072",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 9.03,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e072",
+          "index": 0,
+          "quote": "Germany's GDP was 3.9 trillion euros in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "nominal_gdp_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "nominal_gdp_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9854,
+              "rerank_margin": 0.7701,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 3.7453,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e075",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.13,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e075",
+          "index": 0,
+          "quote": "There were 800,000 births in France in 2023",
+          "expected": "not_supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9965,
+              "rerank_margin": 0.9817,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 32,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e076",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 64.23,
+      "model_calls": 9,
+      "outcomes": [
+        {
+          "text_id": "e076",
+          "index": 0,
+          "quote": "Tax revenue in Italy was 30% of GDP in 2005",
+          "expected": "not_supported",
+          "expected_indicator": "tax_revenue",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "tax_revenue",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.993,
+              "rerank_margin": 0.4932,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 3.125,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e077",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.01,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e077",
+          "index": 0,
+          "quote": "Italy's net migration rate was +2.0 per 1,000 inhabitants in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "net_migration_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "net_migration_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9947,
+              "rerank_margin": 0.7933,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e081",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.43,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e081",
+          "index": 0,
+          "quote": "Italy's public debt rose from 2.0 trillion euros in 2012 to 4.0 trillion in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "government_debt_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9965,
+              "rerank_margin": 0.9871,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.672,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e083",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.79,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e083",
+          "index": 0,
+          "quote": "Italy's public debt rose 7.3% between 2022 and 2024",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "government_debt_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9608,
+              "rerank_margin": 0.8228,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.8636,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e084",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 17.69,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e084",
+          "index": 0,
+          "quote": "Spain's unemployment rate fell 6.8% between 2015 and 2018",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": false,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9336,
+              "rerank_margin": 0.8433,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 39,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e086",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 7.62,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e086",
+          "index": 0,
+          "quote": "Italy's employment rose from 21.4 million people in 2013 to 23.3 million in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_persons",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9957,
+              "rerank_margin": 0.9901,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 0.8269,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e087",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 27.5,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e087",
+          "index": 0,
+          "quote": "Spain's employment fell from 19.0 million people in 2009 to 17.0 million in 2013",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_persons",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends at a trough (2013): from the usual level around then, 17,597, the change is -1,360 thousand persons rather than -1,955 thousand persons.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9952,
+              "rerank_margin": 0.9935,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 0.9377,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e089",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 10.63,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e089",
+          "index": 0,
+          "quote": "Italy's foreign-born population was 1.5 million in 1995",
+          "expected": "cant_check",
+          "expected_indicator": "foreign_born_population",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "foreign_born_population",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: IT has no value within 1 periods of 1995 (nearest is 2002).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e090",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 131.32,
+      "model_calls": 12,
+      "outcomes": [
+        {
+          "text_id": "e090",
+          "index": 0,
+          "quote": "Rome has the worst traffic in Europe",
+          "expected": "cant_check",
+          "expected_indicator": null,
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": null,
+          "match_ok": true,
+          "in_top8": null,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp doesn't have a statistic that matches this claim yet.",
+          "stopped_at": "match",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e091",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 60.71,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e091",
+          "index": 0,
+          "quote": "Italy's HICP inflation was 8.7% in 2022",
+          "expected": "supported",
+          "expected_indicator": "hicp_inflation_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "hicp_inflation_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9963,
+              "rerank_margin": 0.9636,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 29,
+              "boundary_distance": 0.8783,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e093",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.43,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e093",
+          "index": 0,
+          "quote": "Germany's GDP per person was 45,500 purchasing power standards in 2023",
+          "expected": "supported",
+          "expected_indicator": "gdp_per_capita_pps",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gdp_per_capita_pps",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9933,
+              "rerank_margin": 0.657,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.9578,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e094",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.53,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e094",
+          "index": 0,
+          "quote": "14.7% of 18-to-24-year-olds in Italy had left school early in 2015",
+          "expected": "supported",
+          "expected_indicator": "early_school_leavers",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "early_school_leavers",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.999,
+              "rerank_margin": 0.9943,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 34,
+              "boundary_distance": 1.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e095",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.25,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e095",
+          "index": 0,
+          "quote": "22.3% of Italians aged 15 to 29 were not in employment, education or training in 2019",
+          "expected": "supported",
+          "expected_indicator": "neet_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "neet_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9948,
+              "rerank_margin": 0.9005,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e096",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 7.01,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e096",
+          "index": 0,
+          "quote": "Long-term unemployment in Italy was 6.5% of the labour force in 2018",
+          "expected": "supported",
+          "expected_indicator": "long_term_unemployment_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "long_term_unemployment_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9934,
+              "rerank_margin": 0.4104,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e097",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 15.07,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e097",
+          "index": 0,
+          "quote": "Italy's median age was 47.2 years in 2020",
+          "expected": "supported",
+          "expected_indicator": "median_age",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "median_age",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9908,
+              "rerank_margin": 0.9848,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 1.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e099",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 21.79,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e099",
+          "index": 0,
+          "quote": "Italy's infant mortality rate was 3.0 deaths per 1,000 live births in 2010",
+          "expected": "supported",
+          "expected_indicator": "infant_mortality_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "infant_mortality_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9934,
+              "rerank_margin": 0.2584,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e101",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 13.03,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e101",
+          "index": 0,
+          "quote": "Renewables covered 20.4% of Italy's gross final energy consumption in 2020",
+          "expected": "supported",
+          "expected_indicator": "renewable_share_final_energy",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_final_energy",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9844,
+              "rerank_margin": 0.7837,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 22,
+              "boundary_distance": 0.8386,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e102",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 14.23,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e102",
+          "index": 0,
+          "quote": "Italy's employment rate for people aged 15 to 64 was 60% in 2013",
+          "expected": "not_supported",
+          "expected_indicator": "employment_rate_15_64",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_rate_15_64",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9217,
+              "rerank_margin": 0.1948,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 3.5455,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e103",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 57.23,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e103",
+          "index": 0,
+          "quote": "Unemployment among Italians aged 25 to 74 was 8% in 2014",
+          "expected": "not_supported",
+          "expected_indicator": "unemployment_rate_25_74_monthly",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_25_74_monthly",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9178,
+              "rerank_margin": 0.1466,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 43,
+              "boundary_distance": 3.7845,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e105",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.18,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e105",
+          "index": 0,
+          "quote": "Italy's population grew by 1.0 per 1,000 inhabitants in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "population_growth",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_growth",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9678,
+              "rerank_margin": 0.1766,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e107",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.75,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e107",
+          "index": 0,
+          "quote": "Renewables supplied 20% of Italy's primary energy in 2010",
+          "expected": "not_supported",
+          "expected_indicator": "renewable_share_primary_energy",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_primary_energy",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9722,
+              "rerank_margin": 0.9106,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 61,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e108",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.68,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e108",
+          "index": 0,
+          "quote": "Italy's gender employment gap was 15 percentage points in 2012",
+          "expected": "not_supported",
+          "expected_indicator": "gender_employment_gap",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gender_employment_gap",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9973,
+              "rerank_margin": 0.9867,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e109",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 8.54,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e109",
+          "index": 0,
+          "quote": "Italy's median age fell between 2000 and 2025",
+          "expected": "not_supported",
+          "expected_indicator": "median_age",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "median_age",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9881,
+              "rerank_margin": 0.9712,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": null,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e110",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 14.8,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e110",
+          "index": 0,
+          "quote": "Early school leaving in Italy fell from 25% in 2000 to 5% in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "early_school_leavers",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "early_school_leavers",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9962,
+              "rerank_margin": 0.9956,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 34,
+              "boundary_distance": 0.8667,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e113",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 44.5,
+      "model_calls": 12,
+      "outcomes": [
+        {
+          "text_id": "e113",
+          "index": 0,
+          "quote": "Italy's NEET rate for people aged 15 to 24 was 15.2% in 2024",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "neet_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "neet_rate_world",
+          "match_ok": false,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": false,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "match",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.6272,
+              "rerank_margin": -0.3608,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 43,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e115",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.5,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e115",
+          "index": 0,
+          "quote": "Early school leaving in Italy fell from 25.9% in 2001 to 8.2% in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "early_school_leavers",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "early_school_leavers",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9962,
+              "rerank_margin": 0.9955,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 34,
+              "boundary_distance": 1.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e116",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 15.23,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e116",
+          "index": 0,
+          "quote": "Italy's NEET rate fell 8.3% between 2016 and 2023",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "neet_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "neet_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": false,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9433,
+              "rerank_margin": 0.8446,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 5.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e118",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 13.67,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e118",
+          "index": 0,
+          "quote": "Italy's NEET rate was 15% in 2005",
+          "expected": "cant_check",
+          "expected_indicator": "neet_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "neet_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: IT has no value within 1 periods of 2005 (nearest is 2009).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e119",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.09,
+      "model_calls": 2,
+      "outcomes": [
+        {
+          "text_id": "e119",
+          "index": 0,
+          "quote": "Italian house prices rose 5% in 2005",
+          "expected": "cant_check",
+          "expected_indicator": "house_price_change",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "house_price_change",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: IT has no value within 1 periods of 2005 (nearest is 2011).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e121",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 12.77,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e121",
+          "index": 0,
+          "quote": "The United States had 331.6 million inhabitants in 2020",
+          "expected": "supported",
+          "expected_indicator": "population_total_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8653,
+              "rerank_margin": 0.8648,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.9935,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e122",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 16.96,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e122",
+          "index": 0,
+          "quote": "China had 1.38 billion people in 2015",
+          "expected": "supported",
+          "expected_indicator": "population_total_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.988,
+              "rerank_margin": 0.9749,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.9926,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e124",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 7.55,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e124",
+          "index": 0,
+          "quote": "US GDP per person was 65,200 international dollars at purchasing power parity in 2019",
+          "expected": "supported",
+          "expected_indicator": "gdp_per_capita_ppp_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gdp_per_capita_ppp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance, but the claim is per person; the figures are a total (current international $).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9985,
+              "rerank_margin": 0.9983,
+              "definition_mismatch": true,
+              "data_age_years": 0.92,
+              "series_length": 36,
+              "boundary_distance": 0.9572,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e125",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.25,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e125",
+          "index": 0,
+          "quote": "China's GDP per person was 13,500 international dollars at purchasing power parity in 2015",
+          "expected": "supported",
+          "expected_indicator": "gdp_per_capita_ppp_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gdp_per_capita_ppp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e126",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.47,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e126",
+          "index": 0,
+          "quote": "Brazil's Gini index was 51.9 in 2015",
+          "expected": "supported",
+          "expected_indicator": "gini_index_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gini_index_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e127",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.01,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e127",
+          "index": 0,
+          "quote": "The United States spent 16.2% of GDP on health in 2010",
+          "expected": "supported",
+          "expected_indicator": "health_spending_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "health_spending_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e128",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.12,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e128",
+          "index": 0,
+          "quote": "US tax revenue was 11.2% of GDP in 2015",
+          "expected": "supported",
+          "expected_indicator": "tax_revenue_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "tax_revenue_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9969,
+              "rerank_margin": 0.9797,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 53,
+              "boundary_distance": 0.894,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e129",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 62.74,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e129",
+          "index": 0,
+          "quote": "China's exports were 33.4% of GDP in 2005",
+          "expected": "supported",
+          "expected_indicator": "exports_pct_gdp_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "exports_pct_gdp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e130",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.76,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e130",
+          "index": 0,
+          "quote": "The US economy grew 6.2% in 2021",
+          "expected": "supported",
+          "expected_indicator": "real_gdp_growth_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_growth_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e131",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.89,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e131",
+          "index": 0,
+          "quote": "Brazil's homicide rate was 19.3 per 100,000 people in 2023",
+          "expected": "supported",
+          "expected_indicator": "homicide_rate_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "homicide_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e134",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.38,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e134",
+          "index": 0,
+          "quote": "Brazil's Gini index was 58 in 2015",
+          "expected": "not_supported",
+          "expected_indicator": "gini_index_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gini_index_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e135",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.47,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e135",
+          "index": 0,
+          "quote": "The United States spent 20% of GDP on health in 2010",
+          "expected": "not_supported",
+          "expected_indicator": "health_spending_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "health_spending_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e136",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.94,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e136",
+          "index": 0,
+          "quote": "China's economy grew 8% in 2022",
+          "expected": "not_supported",
+          "expected_indicator": "real_gdp_growth_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_growth_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e137",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.67,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e137",
+          "index": 0,
+          "quote": "The US homicide rate was 4.5 per 100,000 people in 2021",
+          "expected": "not_supported",
+          "expected_indicator": "homicide_rate_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "homicide_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9934,
+              "rerank_margin": 0.9917,
+              "definition_mismatch": false,
+              "data_age_years": 2.92,
+              "series_length": 31,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e139",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.17,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e139",
+          "index": 0,
+          "quote": "China's exports as a share of GDP rose between 2006 and 2019",
+          "expected": "not_supported",
+          "expected_indicator": "exports_pct_gdp_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "exports_pct_gdp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e140",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.67,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e140",
+          "index": 0,
+          "quote": "India's infant mortality rate fell from 66.3 in 2000 to 15 in 2024",
+          "expected": "partly_supported",
+          "expected_indicator": "infant_mortality_rate_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "infant_mortality_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e141",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.29,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e141",
+          "index": 0,
+          "quote": "Brazil's Gini index fell from 58.4 in 2001 to 45 in 2024",
+          "expected": "partly_supported",
+          "expected_indicator": "gini_index_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gini_index_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e142",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.85,
+      "model_calls": 2,
+      "outcomes": [
+        {
+          "text_id": "e142",
+          "index": 0,
+          "quote": "Brazil gets 77.4% of its electricity from renewable sources",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "renewable_share_electricity_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_electricity_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e143",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.77,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e143",
+          "index": 0,
+          "quote": "India's poverty rate is 21.9%",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "poverty_rate_national_lines_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "poverty_rate_national_lines_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e144",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 6.22,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e144",
+          "index": 0,
+          "quote": "Japan's government spends 20.1% of GDP",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "government_spending_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_spending_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but the latest figure is for 2022, 2 or more years before today.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8696,
+              "rerank_margin": 0.7515,
+              "definition_mismatch": false,
+              "data_age_years": 3.92,
+              "series_length": 48,
+              "boundary_distance": 0.8335,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e145",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.29,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e145",
+          "index": 0,
+          "quote": "The US homicide rate is 5.8 per 100,000 people",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "homicide_rate_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "homicide_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but the latest figure is for 2023, 2 or more years before today.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.999,
+              "rerank_margin": 0.9972,
+              "definition_mismatch": false,
+              "data_age_years": 2.92,
+              "series_length": 31,
+              "boundary_distance": 0.6612,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e146",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.6,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e146",
+          "index": 0,
+          "quote": "China's exports fell from 35.5% of GDP in 2006 to 18.1% in 2019",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "exports_pct_gdp_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "exports_pct_gdp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e149",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.35,
+      "model_calls": 1,
+      "outcomes": [
+        {
+          "text_id": "e149",
+          "index": 0,
+          "quote": "Brazil got 85% of its electricity from renewables in 2024",
+          "expected": "cant_check",
+          "expected_indicator": "renewable_share_electricity_world",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "renewable_share_electricity_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e150",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.98,
+      "model_calls": 2,
+      "outcomes": [
+        {
+          "text_id": "e150",
+          "index": 0,
+          "quote": "Japan's government spending was 25% of GDP in 2024",
+          "expected": "cant_check",
+          "expected_indicator": "government_spending_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_spending_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: JP has no value within 1 periods of 2024 (nearest is 2022).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    }
+  ]
+}
