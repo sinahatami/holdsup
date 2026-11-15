@@ -5,6 +5,7 @@
 import { createServer } from "node:http";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
+  benchmarkResponse,
   catalogEntry,
   checkResult,
   checkView,
@@ -63,6 +64,8 @@ const server = createServer(async (req, res) => {
   }
 
   if (pathname === "/v1/tolerances") return send(res, 200, tolerances);
+
+  if (pathname === "/v1/eval") return send(res, 200, benchmarkResponse);
 
   if (pathname === "/v1/catalog") {
     return send(res, 200, {

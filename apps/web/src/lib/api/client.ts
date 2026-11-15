@@ -28,6 +28,13 @@ export type RecheckOf = components["schemas"]["RecheckOf"];
 export type StatusResponse = components["schemas"]["StatusResponse"];
 export type ProviderStatus = components["schemas"]["ProviderStatus"];
 export type ProviderState = components["schemas"]["ProviderState"];
+export type Benchmark = components["schemas"]["Benchmark"];
+export type BenchmarkRun = components["schemas"]["Run"];
+export type Comparison = components["schemas"]["Comparison"];
+export type Loss = components["schemas"]["Loss"];
+export type FailureCause = components["schemas"]["FailureCause"];
+export type ModelReport = components["schemas"]["ModelReport"];
+export type Rate = components["schemas"]["Rate"];
 
 /** One line of the live trace (the `step_started` / `step_done` event data). */
 export interface StepEvent {
@@ -194,6 +201,8 @@ export function createApiClient(baseUrl: string) {
     /** The model providers as the router sees them now. */
     status: (init?: RequestInit) => request<StatusResponse>("/status", init),
     catalog: () => request<CatalogResponse>("/catalog"),
+    /** The benchmark's results: the head-to-head, every run and the trained models' reports. */
+    benchmark: () => request<Benchmark>("/eval"),
     /** The allowed gaps and thresholds every verdict is judged by. */
     tolerances: () => request<Tolerances>("/tolerances"),
     getCheck: (id: string, init?: RequestInit) =>
