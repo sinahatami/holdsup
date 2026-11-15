@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # The reranker export (D030): the image bakes it into /opt/reranker; locally, training or
     # `make reranker-fetch` puts it here. Its files must match holdsup/ml/reranker_pin.json.
     reranker_dir: Path = REPO_ROOT / "ml" / "reranker" / "artifacts" / "onnx"
+    # The committed evaluation reports and the ML folder the /eval page reads (P4.6).
+    reports_dir: Path = REPO_ROOT / "eval" / "reports"
+    ml_dir: Path = REPO_ROOT / "ml"
     # New (not cached) checks per client address per hour.
     checks_per_hour: int = 10
     # Reports of a wrong match per client address per hour.
