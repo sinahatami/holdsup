@@ -7,7 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-instrument-serif);
+  --font-hand: var(--font-caveat);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -46,95 +48,101 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-instrument-serif);
+  --color-pen: var(--pen);
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
-  /* Neutral on purpose: colour is kept for verdicts and the one primary action. */
-  --shadow-soft:
-    0 1px 2px oklch(0.2 0.01 275 / 0.05),
-    0 8px 24px -8px oklch(0.2 0.01 275 / 0.1);
+  /* Paper, not glass: edges do the work, so shadows stay faint and flat. */
+  --shadow-soft: 0 1px 0 oklch(0.2 0.012 265 / 0.06);
   --shadow-lift:
-    0 2px 4px oklch(0.2 0.01 275 / 0.06),
-    0 16px 36px -14px oklch(0.2 0.01 275 / 0.26);
+    0 1px 0 oklch(0.2 0.012 265 / 0.08),
+    0 10px 24px -18px oklch(0.2 0.012 265 / 0.3);
 }
 
 :root {
-  --radius: 0.875rem;
-  --brand: oklch(0.52 0.22 277);
-  --brand-2: oklch(0.62 0.2 320);
-  --card: oklch(1 0 0 / 0.78);
-  --card-foreground: oklch(0.2 0.03 275);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.03 275);
-  --primary: oklch(0.5 0.23 277);
+  /* The edited denominator: ink on paper. Blue is the official record and the one main
+     action; the red "pen" is only for notes about the claim. */
+  --radius: 0.375rem;
+  --brand: oklch(0.45 0.17 265);
+  --brand-2: oklch(0.45 0.17 265);
+  --pen: oklch(0.5 0.18 27);
+  --rule-line: oklch(0.89 0.015 85);
+  --card: oklch(0.993 0.006 85);
+  --card-foreground: oklch(0.2 0.012 265);
+  --popover: oklch(0.993 0.006 85);
+  --popover-foreground: oklch(0.2 0.012 265);
+  --primary: oklch(0.45 0.17 265);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.015 277);
-  --secondary-foreground: oklch(0.3 0.08 277);
-  --muted: oklch(0.96 0.012 277);
-  --muted-foreground: oklch(0.34 0.03 275);
-  --accent: oklch(0.95 0.03 277);
-  --accent-foreground: oklch(0.3 0.1 277);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.02 277);
+  --secondary: oklch(0.93 0.015 85);
+  --secondary-foreground: oklch(0.2 0.012 265);
+  --muted: oklch(0.935 0.014 85);
+  --muted-foreground: oklch(0.4 0.015 265);
+  --accent: oklch(0.92 0.03 265);
+  --accent-foreground: oklch(0.3 0.12 265);
+  --destructive: oklch(0.5 0.18 27);
+  --border: oklch(0.85 0.02 85);
   /* 3:1 against the page and the card, for the edge of the claim box (WCAG 1.4.11). */
-  --border-strong: oklch(0.2 0.03 275 / 0.5);
-  --input: oklch(0.88 0.025 277);
-  --ring: oklch(0.6 0.2 277);
-  --background: oklch(0.985 0.006 277);
-  --foreground: oklch(0.2 0.03 275);
-  /* The page's single background tint: a soft indigo wash at the top, nothing else. */
-  --tint: oklch(0.8 0.1 277 / 0.55);
+  --border-strong: oklch(0.2 0.012 265 / 0.6);
+  --input: oklch(0.8 0.02 85);
+  --ring: oklch(0.5 0.17 265);
+  --background: oklch(0.963 0.011 85);
+  --foreground: oklch(0.2 0.012 265);
+  --tint: transparent;
 }
 
 .dark {
-  --brand: oklch(0.72 0.17 277);
-  --brand-2: oklch(0.74 0.17 320);
-  --background: oklch(0.16 0.02 275);
-  --foreground: oklch(0.96 0.01 275);
-  --card: oklch(0.23 0.03 275 / 0.6);
-  --card-foreground: oklch(0.96 0.01 275);
-  --popover: oklch(0.23 0.03 275);
-  --popover-foreground: oklch(0.96 0.01 275);
-  --primary: oklch(0.55 0.22 277);
+  --brand: oklch(0.76 0.11 265);
+  --brand-2: oklch(0.76 0.11 265);
+  --pen: oklch(0.76 0.13 30);
+  --rule-line: oklch(0.3 0.01 85);
+  --background: oklch(0.19 0.008 85);
+  --foreground: oklch(0.95 0.01 85);
+  --card: oklch(0.235 0.008 85);
+  --card-foreground: oklch(0.95 0.01 85);
+  --popover: oklch(0.235 0.008 85);
+  --popover-foreground: oklch(0.95 0.01 85);
+  --primary: oklch(0.55 0.17 265);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.27 0.04 275);
-  --secondary-foreground: oklch(0.96 0.01 275);
-  --muted: oklch(0.26 0.03 275);
-  --muted-foreground: oklch(0.78 0.03 275);
-  --accent: oklch(0.3 0.06 277);
-  --accent-foreground: oklch(0.96 0.01 275);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 12%);
-  --border-strong: oklch(0.96 0.01 275 / 0.4);
+  --secondary: oklch(0.28 0.01 85);
+  --secondary-foreground: oklch(0.95 0.01 85);
+  --muted: oklch(0.27 0.01 85);
+  --muted-foreground: oklch(0.8 0.012 85);
+  --accent: oklch(0.3 0.04 265);
+  --accent-foreground: oklch(0.95 0.01 85);
+  --destructive: oklch(0.76 0.13 30);
+  --border: oklch(1 0 0 / 13%);
+  --border-strong: oklch(0.95 0.01 85 / 0.45);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.7 0.17 277);
-  --tint: oklch(0.5 0.16 277 / 0.4);
+  --ring: oklch(0.72 0.13 265);
+  --tint: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --brand: oklch(0.72 0.17 277);
-    --brand-2: oklch(0.74 0.17 320);
-    --background: oklch(0.16 0.02 275);
-    --foreground: oklch(0.96 0.01 275);
-    --card: oklch(0.23 0.03 275 / 0.6);
-    --card-foreground: oklch(0.96 0.01 275);
-    --popover: oklch(0.23 0.03 275);
-    --popover-foreground: oklch(0.96 0.01 275);
-    --primary: oklch(0.55 0.22 277);
+    --brand: oklch(0.76 0.11 265);
+    --brand-2: oklch(0.76 0.11 265);
+    --pen: oklch(0.76 0.13 30);
+    --rule-line: oklch(0.3 0.01 85);
+    --background: oklch(0.19 0.008 85);
+    --foreground: oklch(0.95 0.01 85);
+    --card: oklch(0.235 0.008 85);
+    --card-foreground: oklch(0.95 0.01 85);
+    --popover: oklch(0.235 0.008 85);
+    --popover-foreground: oklch(0.95 0.01 85);
+    --primary: oklch(0.55 0.17 265);
     --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.27 0.04 275);
-    --secondary-foreground: oklch(0.96 0.01 275);
-    --muted: oklch(0.26 0.03 275);
-    --muted-foreground: oklch(0.78 0.03 275);
-    --accent: oklch(0.3 0.06 277);
-    --accent-foreground: oklch(0.96 0.01 275);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 12%);
-    --border-strong: oklch(0.96 0.01 275 / 0.4);
+    --secondary: oklch(0.28 0.01 85);
+    --secondary-foreground: oklch(0.95 0.01 85);
+    --muted: oklch(0.27 0.01 85);
+    --muted-foreground: oklch(0.8 0.012 85);
+    --accent: oklch(0.3 0.04 265);
+    --accent-foreground: oklch(0.95 0.01 85);
+    --destructive: oklch(0.76 0.13 30);
+    --border: oklch(1 0 0 / 13%);
+    --border-strong: oklch(0.95 0.01 85 / 0.45);
     --input: oklch(1 0 0 / 16%);
-    --ring: oklch(0.7 0.17 277);
-    --tint: oklch(0.5 0.16 277 / 0.4);
+    --ring: oklch(0.72 0.13 265);
+    --tint: transparent;
   }
 }
 
@@ -246,17 +254,18 @@
   html {
     @apply font-sans;
   }
+  /* Page titles are set in the display serif. It has one weight, so never fake a bold. */
+  h1 {
+    font-family: var(--font-display), serif;
+    font-weight: 400;
+    font-synthesis: none;
+    letter-spacing: -0.01em;
+  }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(
-      60rem 26rem at 50% -4%,
-      var(--tint),
-      transparent 70%
-    );
-    background-repeat: no-repeat;
   }
   ::selection {
-    background: oklch(0.7 0.17 277 / 0.35);
+    background: color-mix(in oklch, var(--brand) 25%, transparent);
   }
 }
 
@@ -265,13 +274,32 @@
     background: var(--card);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px) saturate(1.4);
   }
+  /* Kept for old call sites: headings are plain ink now. */
   .text-gradient {
-    background-image: linear-gradient(100deg, var(--brand), var(--brand-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--foreground);
+  }
+  /* A note in the editor's hand. Short, and always said again in plain text nearby. */
+  .pen {
+    font-family: var(--font-hand), cursive;
+    color: var(--pen);
+    line-height: 1.1;
+  }
+  /* The editor's underline under a figure in the claim. */
+  .pen-mark {
+    text-decoration-line: underline;
+    text-decoration-color: var(--pen);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.22em;
+    text-decoration-skip-ink: none;
+  }
+  /* Ruled writing paper, for the claim box. */
+  .ruled {
+    background-image: repeating-linear-gradient(
+      transparent 0 calc(2rem - 1px),
+      var(--rule-line) calc(2rem - 1px) 2rem
+    );
+    background-attachment: local;
   }
   .rise {
     animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -288,7 +316,8 @@
 /* ---------- Scrollbar ---------- */
 html {
   scrollbar-width: thin;
-  scrollbar-color: oklch(0.62 0.12 277 / 0.6) transparent;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 35%, transparent)
+    transparent;
 }
 ::-webkit-scrollbar {
   width: 12px;

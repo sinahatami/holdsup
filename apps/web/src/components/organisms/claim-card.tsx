@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { Eyebrow } from "@/components/atoms/eyebrow";
+import { MarkedQuote } from "@/components/atoms/marked-quote";
 import { ClaimVerdict } from "@/components/molecules/claim-verdict";
 import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
@@ -50,11 +51,8 @@ export function ClaimCard({
         style={{ background: "var(--v)" }}
       />
       <h2 className="sr-only">{strings.check.claimOf(order + 1, total)}</h2>
-      <blockquote
-        className="border-s-4 ps-4 text-xl leading-8 font-medium text-balance"
-        style={{ borderColor: "var(--v)" }}
-      >
-        {c.claim.quote}
+      <blockquote className="font-heading text-[1.75rem] leading-[1.35] text-balance sm:text-[2rem]">
+        <MarkedQuote text={c.claim.quote} />
       </blockquote>
       <ClaimVerdict claim={c} />
       {c.claim.speaker && <NeutralityNote />}

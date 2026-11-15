@@ -24,7 +24,10 @@ export function TitledSection({
       className={cn("flex flex-col gap-5", className)}
     >
       <div className="flex flex-wrap items-baseline gap-x-3">
-        <h2 id={headingId} className="text-2xl font-bold tracking-tight">
+        <h2
+          id={headingId}
+          className="font-heading text-3xl font-normal [font-synthesis:none]"
+        >
           {title}
         </h2>
         {aside && (

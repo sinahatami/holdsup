@@ -10,7 +10,7 @@ describe("Home page", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
     render(await Home());
     expect(
-      screen.getByRole("heading", { level: 1, name: strings.appName }),
+      screen.getByRole("heading", { level: 1, name: strings.tagline }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(strings.home.inputLabel)).toBeInTheDocument();
     for (const ex of strings.home.examples) {

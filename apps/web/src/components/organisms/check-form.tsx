@@ -123,7 +123,7 @@ export function CheckForm({
           onKeyDown={onKeyDown}
           placeholder={t.placeholder}
           rows={3}
-          className="placeholder:text-muted-foreground/85 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
+          className="ruled placeholder:text-muted-foreground/85 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
           aria-describedby={
             message
               ? `${LANG_ID} ${HINT_ID} ${ERROR_ID}`

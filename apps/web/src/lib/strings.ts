@@ -4,6 +4,8 @@ export const strings = {
   dir: "ltr",
   appName: "HoldsUp",
   tagline: "Every number has a denominator.",
+  // The logo sets the name as a fraction: the first part over a bar over the second.
+  logoParts: ["Holds", "Up"] as [string, string],
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
   errors: {
@@ -120,6 +122,23 @@ export const strings = {
     running: "Result not seen yet",
   },
   home: {
+    // The page title is the tagline, with its last word set apart.
+    titleLead: "Every number has a",
+    titleEnd: "denominator.",
+    // A fixed example figure with its denominator. Yearly average of Eurostat une_rt_m, Italy.
+    denominator: {
+      aside: "a number alone says little…",
+      value: "7.68%",
+      caption:
+        "Italy's unemployment rate in 2023, with the four questions every figure has to answer.",
+      partsLabel: "What the figure is measured against",
+      parts: [
+        { question: "where?", label: "Place", value: "Italy" },
+        { question: "when?", label: "Period", value: "2023 average" },
+        { question: "of whom?", label: "Population", value: "Labour force" },
+        { question: "says who?", label: "Source", value: "Eurostat" },
+      ],
+    },
     howHeading: "How it works",
     howMore: "Read the full method",
     // Short on purpose: the sample receipt shows the figures, the methodology page the detail.
