@@ -364,3 +364,13 @@ def test_the_report_names_its_data_scores_threshold_and_weights(tmp_path: Path) 
     json_path, md_path = write_report(report, tmp_path / "reports")
     assert json.loads(json_path.read_text(encoding="utf-8"))["data"]["rows"] == 80
     assert md_path.read_text(encoding="utf-8") == md
+
+    # A model that misses the base rate is not exported, and the report says so.
+    failing = report.model_copy(
+        update={
+            "cross_validation": report.cross_validation.model_copy(
+                update={"beats_base_rate": False}
+            )
+        }
+    )
+    assert "so it is not exported: the API serves no confidence model" in markdown(failing)

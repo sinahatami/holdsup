@@ -250,8 +250,10 @@ def markdown(r: Report) -> str:
     )
     out += [
         (
-            f"- The served model {'beats' if cv.beats_base_rate else 'does not beat'} the base rate "
-            "on the Brier score."
+            "- The served model beats the base rate on the Brier score."
+            if cv.beats_base_rate
+            else "- The served model does not beat the base rate on the Brier score, so it is not "
+            "exported: the API serves no confidence model and never abstains."
         ),
         (
             f"- Gradient boosting is {'clearly better (serve it instead: P4.7)' if cv.boosting_clearly_better else 'not clearly better'}"
