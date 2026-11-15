@@ -22,7 +22,8 @@ describe("HeadToHead", () => {
     );
     expect(rows[0]).toHaveTextContent("75.0%");
     expect(rows[0]).toHaveTextContent("36/48");
-    expect(rows[1]).toHaveTextContent(t.who.chatbot);
+    // The chatbot is named by its model, so a reader knows which one HoldsUp is up against.
+    expect(rows[1]).toHaveTextContent(t.chatbotOn("GPT-OSS 120B (Groq)"));
     expect(rows[1]).toHaveTextContent("54.2%");
     expect(rows[1]).toHaveTextContent("26/48");
   });
@@ -121,13 +122,18 @@ describe("BenchmarkRuns", () => {
     const rows = within(screen.getByRole("table", { name: t.runs.caption }))
       .getAllByRole("row")
       .slice(1);
-    expect(
-      rows.map((r) => within(r).getByRole("rowheader").textContent),
-    ).toEqual([
-      "HoldsUp",
-      "HoldsUp, GPT-OSS 120B (Groq) only",
-      "Plain chatbot",
-    ]);
+    const titles = rows.map((r) => within(r).getByRole("rowheader"));
+    expect(titles[0]).toHaveTextContent(/^HoldsUp$/);
+    expect(titles[1]).toHaveTextContent(
+      /^HoldsUp, GPT-OSS 120B \(Groq\) only$/,
+    );
+    // A chatbot run says whether it is the one compared above or a weaker model than it.
+    expect(titles[2]).toHaveTextContent(
+      `Plain chatbot, GPT-OSS 120B (Groq) only${t.runs.roles.compared}`,
+    );
+    expect(titles[3]).toHaveTextContent(
+      `Plain chatbot, Ministral 14B (Mistral) only${t.runs.roles.weaker}`,
+    );
     expect(rows[0]).toHaveTextContent(
       "GPT-OSS 120B (Groq), Ministral 14B (Mistral)",
     );

@@ -1,6 +1,12 @@
 import { DataTable } from "@/components/molecules/data-table";
 import type { BenchmarkRun } from "@/lib/api/client";
-import { modelsText, rateText, runTitle, splitText } from "@/lib/benchmark";
+import {
+  modelsText,
+  rateText,
+  roleText,
+  runTitle,
+  splitText,
+} from "@/lib/benchmark";
 import { strings } from "@/lib/strings";
 
 const t = strings.benchmark;
@@ -22,7 +28,7 @@ export function BenchmarkRuns({ runs }: { runs: BenchmarkRun[] }) {
       rows={runs.map((r) => ({
         key: r.name,
         cells: [
-          runTitle(r),
+          <RunName key="run" run={r} />,
           splitText(r.split),
           modelsText(r),
           rateText(r.accuracy),
@@ -32,5 +38,20 @@ export function BenchmarkRuns({ runs }: { runs: BenchmarkRun[] }) {
         ],
       }))}
     />
+  );
+}
+
+/** A run's title, with a short note under a chatbot run that is the compared one or a weaker model. */
+function RunName({ run }: { run: BenchmarkRun }) {
+  const note = roleText(run);
+  return (
+    <>
+      {runTitle(run)}
+      {note !== null && (
+        <span className="text-muted-foreground block text-xs font-normal">
+          {note}
+        </span>
+      )}
+    </>
   );
 }

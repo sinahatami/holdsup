@@ -43,6 +43,21 @@ export function runTitle(run: BenchmarkRun): string {
   return run.provider === "router" ? who : t.runOn(who, modelsText(run));
 }
 
+/** The chatbot in a comparison: named by its model when one model answered, so a reader knows
+ * which chatbot HoldsUp is up against. */
+export function chatbotName(run: BenchmarkRun): string {
+  return run.provider === "router"
+    ? t.who.chatbot
+    : t.chatbotOn(modelsText(run));
+}
+
+/** The note on a chatbot run in the runs list, if it has one. */
+export function roleText(run: BenchmarkRun): string | null {
+  return run.role === "compared" || run.role === "weaker"
+    ? t.runs.roles[run.role]
+    : null;
+}
+
 /** The split in words: the one the models were tuned on, or the held-out one. */
 export function splitText(split: string): string {
   return split === "test" ? t.splits.test : t.splits.dev;

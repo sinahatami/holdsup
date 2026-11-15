@@ -1,7 +1,13 @@
 import { RateBar } from "@/components/atoms/rate-bar";
 import { DataTable } from "@/components/molecules/data-table";
 import type { Comparison } from "@/lib/api/client";
-import { labelText, percent, rateText, splitText } from "@/lib/benchmark";
+import {
+  chatbotName,
+  labelText,
+  percent,
+  rateText,
+  splitText,
+} from "@/lib/benchmark";
 import { strings } from "@/lib/strings";
 
 const t = strings.benchmark;
@@ -11,7 +17,7 @@ export function HeadToHead({ comparison: c }: { comparison: Comparison }) {
   const split = splitText(c.split);
   const answered = [
     { key: "holdsup", who: t.who.holdsup, rate: c.holdsup_right },
-    { key: "chatbot", who: t.who.chatbot, rate: c.chatbot_right },
+    { key: "chatbot", who: chatbotName(c.chatbot), rate: c.chatbot_right },
   ];
   const labels = c.holdsup.labels.filter((l) => l in c.holdsup.per_label);
   return (
@@ -54,7 +60,7 @@ export function HeadToHead({ comparison: c }: { comparison: Comparison }) {
       </p>
       {[
         { n: c.holdsup.left_out, who: t.who.holdsup },
-        { n: c.chatbot.left_out, who: t.who.chatbot },
+        { n: c.chatbot.left_out, who: chatbotName(c.chatbot) },
       ]
         .filter(({ n }) => n > 0)
         .map(({ n, who }) => (

@@ -5,6 +5,8 @@ import {
   modelsText,
   percent,
   rateText,
+  chatbotName,
+  roleText,
   runTitle,
   splitText,
   stepText,
@@ -64,5 +66,32 @@ describe("benchmark figures in words", () => {
   it("says which claims a split is", () => {
     expect(splitText("dev")).toBe("Development claims");
     expect(splitText("test")).toBe("Held-out claims");
+  });
+
+  it("names the chatbot by its model, and notes a chatbot run's role", () => {
+    const groq = benchmarkRun({
+      kind: "chatbot",
+      provider: "groq-gpt-oss-120b",
+      models: [
+        {
+          provider: "groq-gpt-oss-120b",
+          model: "m",
+          label: "GPT-OSS",
+          calls: 1,
+        },
+      ],
+    });
+    expect(chatbotName(groq)).toBe("Plain chatbot (GPT-OSS)");
+    // A run on the whole router mixes models: no single name to give.
+    expect(chatbotName(benchmarkRun({ kind: "chatbot" }))).toBe(
+      "Plain chatbot",
+    );
+    expect(roleText(benchmarkRun({ role: "weaker" }))).toBe(
+      "A weaker model than the one compared above",
+    );
+    expect(roleText(benchmarkRun({ role: "compared" }))).toBe(
+      "The one compared above",
+    );
+    expect(roleText(benchmarkRun())).toBeNull();
   });
 });

@@ -661,13 +661,15 @@ export const benchmarkResponse: Benchmark = {
       split: "dev",
       holdsup: benchmarkRun(),
       chatbot: benchmarkRun({
-        name: "dev.chatbot",
+        name: "dev.chatbot.groq-gpt-oss-120b",
         kind: "chatbot",
+        provider: "groq-gpt-oss-120b",
+        role: "compared",
         models: [
           {
-            provider: "gemini-flash",
-            model: "gemini-3.5-flash",
-            label: "Gemini 3.5 Flash (Google)",
+            provider: "groq-gpt-oss-120b",
+            model: "openai/gpt-oss-120b",
+            label: "GPT-OSS 120B (Groq)",
             calls: 40,
           },
         ],
@@ -731,9 +733,36 @@ export const benchmarkResponse: Benchmark = {
       accuracy: rate(34, 49),
     }),
     benchmarkRun({
-      name: "dev.chatbot",
+      name: "dev.chatbot.groq-gpt-oss-120b",
       kind: "chatbot",
+      provider: "groq-gpt-oss-120b",
+      role: "compared",
+      models: [
+        {
+          provider: "groq-gpt-oss-120b",
+          model: "openai/gpt-oss-120b",
+          label: "GPT-OSS 120B (Groq)",
+          calls: 40,
+        },
+      ],
       accuracy: rate(27, 50),
+      calls_per_claim: null,
+      seconds_per_claim: null,
+    }),
+    benchmarkRun({
+      name: "dev.chatbot.mistral-ministral-14b",
+      kind: "chatbot",
+      provider: "mistral-ministral-14b",
+      role: "weaker",
+      models: [
+        {
+          provider: "mistral-ministral-14b",
+          model: "ministral-14b-2512",
+          label: "Ministral 14B (Mistral)",
+          calls: 106,
+        },
+      ],
+      accuracy: rate(19, 50),
       calls_per_claim: null,
       seconds_per_claim: null,
     }),

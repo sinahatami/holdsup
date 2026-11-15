@@ -534,6 +534,8 @@ export const strings = {
       chatbot: "Plain chatbot",
     },
     runOn: (who: string, models: string) => `${who}, ${models} only`,
+    // The chatbot set against HoldsUp, named by the model that answered.
+    chatbotOn: (models: string) => `Plain chatbot (${models})`,
     headToHead: {
       heading: "Head to head",
       caption: (split: string) =>
@@ -609,6 +611,11 @@ export const strings = {
         leftOut: "Left out",
         calls: "Model calls per claim",
         seconds: "Seconds per claim",
+      },
+      // Chatbot runs: which one is set against HoldsUp above, and which model is weaker than it.
+      roles: {
+        compared: "The one compared above",
+        weaker: "A weaker model than the one compared above",
       },
     },
     models: {
