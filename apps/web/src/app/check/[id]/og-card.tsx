@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { CheckResult, Label } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { sourceName } from "@/lib/format";
 import { headlineFigure } from "@/lib/receipt";
 import { clip, verdictLine } from "@/lib/receipt-meta";
@@ -88,14 +89,14 @@ function Figure({
 export function ReceiptCard({ result }: { result: CheckResult }) {
   const single = result.claims.length === 1;
   const [first] = result.claims;
-  const tone = VERDICT[single ? first.verdict.label : "cant_check"];
+  const tone = VERDICT[single ? shownLabel(first) : "cant_check"];
   const text = clip(single ? first.claim.quote : result.text, 200);
   const figure = single ? headlineFigure(first) : null;
   const size = figure ? figureSize(figure.claimed, figure.official) : 0;
   const source = single && first.data ? sourceName(first.data.source) : null;
   const verdict = single
-    ? strings.verdicts[first.verdict.label]
-    : verdictLine(result.claims.map((c) => ({ label: c.verdict.label })));
+    ? strings.verdicts[shownLabel(first)]
+    : verdictLine(result.claims.map((c) => ({ label: shownLabel(c) })));
   return (
     <div style={frame}>
       <div style={{ ...column, gap: 32 }}>

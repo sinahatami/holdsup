@@ -11,14 +11,19 @@ from scripts.evaluation.cli import RigFactory, main
 from scripts.evaluation.report import Report
 from scripts.evaluation.run import Rig
 
+from holdsup.adapters.base import FetchedSeries, Filters
 from holdsup.catalog.schema import Catalog
+from holdsup.pipeline.run import Fetcher
 from holdsup.router import RouterConfig, Use
 from holdsup.verdict import Label, Tolerances
 from tests.evaluation.helpers import FALL, fall_script, label, make_rig, text
+from tests.pipeline.test_regressions import RecordedFetcher
 
 
-def factory(config_seen: list[RouterConfig] | None = None) -> RigFactory:
-    """A rig of fakes, freshly scripted for every run."""
+def factory(
+    config_seen: list[RouterConfig] | None = None, *, texts: int = 1, fetcher: Fetcher | None = None
+) -> RigFactory:
+    """A rig of fakes, freshly scripted for every run: the provider answers `texts` texts."""
 
     @asynccontextmanager
     async def build(
@@ -26,10 +31,32 @@ def factory(config_seen: list[RouterConfig] | None = None) -> RigFactory:
     ) -> AsyncIterator[Rig]:
         if config_seen is not None:
             config_seen.append(config)
-        rig, _, _ = make_rig(fall_script())
+        rig, _, _ = make_rig(fall_script() * texts, fetcher=fetcher)
         yield rig
 
     return build
+
+
+class StopsAfter:
+    """Serves `fetches` recorded series, then fails: a run stopped part-way (by the OOM killer,
+    say). Each text fetches one series, so `StopsAfter(1)` stops the run in its second text."""
+
+    def __init__(self, fetches: int) -> None:
+        self._left = fetches
+        self._inner = RecordedFetcher()
+
+    async def fetch_series(self, source: str, dataset: str, filters: Filters) -> FetchedSeries:
+        if self._left == 0:
+            raise RuntimeError("killed")
+        self._left -= 1
+        return await self._inner.fetch_series(source, dataset, filters)
+
+
+def stopped_run(tmp_path: Path, claims: Path, *, after: int) -> Path:
+    """Run until the run is stopped after `after` texts; the partial run it left."""
+    with pytest.raises(RuntimeError, match="killed"):
+        run(tmp_path, claims, fake=factory(texts=after + 1, fetcher=StopsAfter(after)))
+    return tmp_path / "out" / "dev.partial.jsonl"
 
 
 def benchmark(tmp_path: Path, *texts: dict[str, Any], version: str | None = "0.1.0") -> Path:
@@ -69,6 +96,7 @@ def test_a_run_writes_the_report_and_says_how_it_went(
     )
     assert report.provider == "router" and report.metrics.verdict.accuracy.rate == 1.0
     assert (tmp_path / "out" / "dev.md").exists()
+    assert not (tmp_path / "out" / "dev.partial.jsonl").exists()  # finished: nothing to resume
 
 
 def test_the_held_out_split_is_refused_unless_the_run_is_final(
@@ -237,3 +265,69 @@ def test_a_baseline_cannot_come_from_a_run_that_judged_nothing(
     assert run(tmp_path, benchmark(tmp_path, entry()), "--update-baseline", fake=no_keys) == 2
     assert "no judged claim" in capsys.readouterr().err
     assert not (tmp_path / "baseline.json").exists()
+
+
+def test_a_stopped_run_keeps_the_texts_it_finished_and_writes_no_report(tmp_path: Path) -> None:
+    claims = benchmark(tmp_path, entry("a"), entry("b"), entry("c"))
+
+    partial = stopped_run(tmp_path, claims, after=1)
+
+    assert not (tmp_path / "out" / "dev.json").exists()
+    header, *finished = partial.read_text(encoding="utf-8").splitlines()
+    assert json.loads(header)["split"] == "dev"
+    assert [json.loads(line)["outcome"]["id"] for line in finished] == ["a"]
+
+
+def test_resume_runs_only_what_is_left_and_reports_every_text(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    claims = benchmark(tmp_path, entry("a"), entry("b"), entry("c"))
+    partial = stopped_run(tmp_path, claims, after=1)
+    capsys.readouterr()
+
+    assert run(tmp_path, claims, "--resume", fake=factory(texts=2)) == 0
+
+    err = capsys.readouterr().err
+    assert "resuming dev.partial.jsonl: 1 of 3 texts already ran" in err
+    assert "[1/2] b: 1/1 verdicts right" in err and "[2/2] c: 1/1 verdicts right" in err
+    assert " a: " not in err  # not run again
+    report = Report.model_validate_json((tmp_path / "out" / "dev.json").read_text())
+    assert [t.id for t in report.texts] == ["a", "b", "c"]
+    assert report.metrics.verdict.accuracy.rate == 1.0
+    assert report.metrics.cost.model_calls == 12  # a's 4 calls in the first run, 8 now
+    assert not partial.exists()
+
+
+def test_resume_with_no_partial_run_is_a_whole_run(tmp_path: Path) -> None:
+    assert run(tmp_path, benchmark(tmp_path, entry()), "--resume") == 0
+    assert (tmp_path / "out" / "dev.json").exists()
+
+
+def test_without_resume_a_run_starts_over_and_says_so(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    claims = benchmark(tmp_path, entry("a"), entry("b"))
+    stopped_run(tmp_path, claims, after=1)
+
+    assert run(tmp_path, claims, fake=factory(texts=2)) == 0
+
+    assert "starting over: replacing the partial run in dev.partial.jsonl" in (
+        capsys.readouterr().err
+    )
+    report = Report.model_validate_json((tmp_path / "out" / "dev.json").read_text())
+    assert report.metrics.cost.model_calls == 8  # both texts in this run
+
+
+def test_a_partial_run_of_another_benchmark_version_is_not_resumed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    claims = benchmark(tmp_path, entry("a"), entry("b"))
+    partial = stopped_run(tmp_path, claims, after=1)
+    (tmp_path / "VERSION").write_text("0.2.0\n", encoding="utf-8")
+
+    assert run(tmp_path, claims, "--resume") == 2
+
+    err = capsys.readouterr().err
+    assert "versions.eval '0.1.0' there, '0.2.0' now" in err
+    assert "run without --resume to start over" in err
+    assert partial.exists() and not (tmp_path / "out" / "dev.json").exists()

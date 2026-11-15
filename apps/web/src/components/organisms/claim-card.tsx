@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Eyebrow } from "@/components/atoms/eyebrow";
-import { VerdictBadge } from "@/components/atoms/verdict-badge";
+import { ClaimVerdict } from "@/components/molecules/claim-verdict";
 import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
 import { FramingChecks } from "@/components/organisms/framing-checks";
@@ -10,6 +10,7 @@ import { ReportMatch } from "@/components/organisms/report-match";
 import { SeriesChart } from "@/components/organisms/series-chart";
 import { WindowHeatmap } from "@/components/organisms/window-heatmap";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { chartOf } from "@/lib/series-chart";
 import { strings } from "@/lib/strings";
 
@@ -38,7 +39,7 @@ export function ClaimCard({
   const chart = c.verdict.label === "cant_check" ? null : chartOf(c);
   return (
     <article
-      data-verdict={c.verdict.label}
+      data-verdict={shownLabel(c)}
       className="glass rise relative flex flex-col gap-5 overflow-hidden rounded-3xl p-6 shadow-(--shadow-lift) sm:p-8"
       style={{ "--i": order } as CSSProperties}
       aria-label={c.claim.quote}
@@ -55,9 +56,7 @@ export function ClaimCard({
       >
         {c.claim.quote}
       </blockquote>
-      <div>
-        <VerdictBadge label={c.verdict.label} large />
-      </div>
+      <ClaimVerdict claim={c} />
       {c.claim.speaker && <NeutralityNote />}
       <p className="text-muted-foreground">{c.verdict.reason}</p>
       {c.explanation && (

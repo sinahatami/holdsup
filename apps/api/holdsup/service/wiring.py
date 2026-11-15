@@ -6,6 +6,7 @@ that needs it (the routes' `get_runner` dependency).
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import httpx
 import structlog
@@ -18,6 +19,7 @@ from holdsup.catalog.schema import load_catalog
 from holdsup.catalog.search import vector_search
 from holdsup.config import Settings
 from holdsup.db.session import get_sessionmaker
+from holdsup.ml.confidence import MODEL_FILE, ConfidenceModel, load_confidence
 from holdsup.ml.reranker import OnnxReranker, load_reranker
 from holdsup.pipeline.ledger import Ledger
 from holdsup.pipeline.run import Pipeline
@@ -56,6 +58,7 @@ def build_runner(settings: Settings) -> Built:  # pragma: no cover (needs Postgr
         fetcher=fetcher,
         tolerances=load_tolerances(),
         reranker=optional_reranker(settings),
+        confidence=optional_confidence(),
     )
     store = SqlCheckStore(sessionmaker)
     runner = CheckRunner(
@@ -80,3 +83,16 @@ def optional_reranker(settings: Settings) -> OnnxReranker | None:
         )
         return None
     return load_reranker(settings.reranker_dir)
+
+
+def optional_confidence(path: Path = MODEL_FILE) -> ConfidenceModel | None:
+    """The trained confidence model, or None (logged) before the first one is trained: claims
+    then carry their signals with no confidence label and nothing is withheld."""
+    model = load_confidence(path)
+    if model is None:
+        log.info(
+            "confidence_model_missing",
+            file=str(path),
+            hint="make eval, then make confidence-train",
+        )
+    return model

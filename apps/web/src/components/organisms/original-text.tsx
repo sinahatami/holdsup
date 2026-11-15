@@ -1,5 +1,6 @@
 import { Eyebrow } from "@/components/atoms/eyebrow";
 import type { CheckResult } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
 import { annotate } from "@/lib/receipt";
 import { strings } from "@/lib/strings";
 
@@ -19,7 +20,7 @@ export function OriginalText({ result }: { result: CheckResult }) {
       <p className="glass rounded-2xl p-4 leading-7">
         {segments.map((s, i) => {
           if (s.claim === null) return s.text;
-          const verdict = result.claims[s.claim].verdict.label;
+          const verdict = shownLabel(result.claims[s.claim]);
           return (
             <span key={i}>
               <mark

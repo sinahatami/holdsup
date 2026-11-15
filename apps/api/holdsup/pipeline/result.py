@@ -12,6 +12,7 @@ from holdsup.adapters.base import FetchedSeries, Observation
 from holdsup.catalog.schema import IndicatorSpec
 from holdsup.checks import ChangePoints, DistortionCheck, Sweep
 from holdsup.config import get_settings
+from holdsup.ml.confidence import Confidence
 from holdsup.ops import OpRecord, Series
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.trace import ModelUse, Step
@@ -136,6 +137,9 @@ class ClaimResult(BaseModel):
     # points, definition, stale data, the start and end. A flagged one is a framing caveat.
     distortion_checks: list[DistortionCheck] = Field(default_factory=list)
     verdict: Verdict
+    # How sure the check is of the verdict, and whether it abstains (P4.5); None for a claim
+    # with no verdict to be sure of (cant_check).
+    confidence: Confidence | None = None
     explanation: str
     explanation_source: Literal["model", "template"] = "template"
     models: list[ModelUse] = Field(default_factory=list)

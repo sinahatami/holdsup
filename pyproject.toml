@@ -44,4 +44,4 @@ module = ["onnxruntime.*"]  # ships no type information (the reranker, holdsup/m
 ignore_missing_imports = true
 
 [tool.ruff.lint.isort]
-known-first-party = ["holdsup", "reranker"]
+known-first-party = ["confidence", "holdsup", "reranker"]
