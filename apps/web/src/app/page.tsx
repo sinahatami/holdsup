@@ -20,8 +20,11 @@ export default async function Home() {
   const real = items?.find((it) => it.text === strings.home.sample.claim);
   return (
     <PageShell layout="home">
-      <header className="rise grid items-center gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
-        <div className="flex flex-col gap-5">
+      {/* One grid so the order can change with the width without repeating anything. In the
+          page (and on a phone) it is title, claim box, figure: the box comes before the
+          picture. From lg up the figure moves beside the title and the box spans below. */}
+      <div className="grid items-center gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-y-12 lg:[grid-template-areas:'title_figure'_'form_form']">
+        <header className="rise flex flex-col gap-5 lg:[grid-area:title]">
           <h1 className="text-[clamp(3rem,7vw,5rem)] leading-[0.98]">
             {strings.home.titleLead}{" "}
             <em className="text-brand">{strings.home.titleEnd}</em>
@@ -29,16 +32,21 @@ export default async function Home() {
           <p className="text-foreground/80 max-w-xl text-lg leading-7 text-pretty">
             {strings.home.intro}
           </p>
+        </header>
+        <div
+          className="rise mx-auto w-full max-w-3xl lg:[grid-area:form]"
+          style={{ "--i": 2 } as CSSProperties}
+        >
+          <CheckForm>
+            <SampleReceipt href={real && routes.check(real.id)} />
+          </CheckForm>
         </div>
-        <DenominatorFigure />
-      </header>
-      <div
-        className="rise mx-auto w-full max-w-3xl"
-        style={{ "--i": 2 } as CSSProperties}
-      >
-        <CheckForm>
-          <SampleReceipt href={real && routes.check(real.id)} />
-        </CheckForm>
+        <div
+          className="rise lg:[grid-area:figure]"
+          style={{ "--i": 1 } as CSSProperties}
+        >
+          <DenominatorFigure />
+        </div>
       </div>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-12">
         <HistoryList />

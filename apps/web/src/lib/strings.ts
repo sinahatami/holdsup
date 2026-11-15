@@ -130,11 +130,11 @@ export const strings = {
       aside: "a number alone says little…",
       value: "7.68%",
       caption:
-        "Italy's unemployment rate in 2023, with the four questions every figure has to answer.",
+        "Italy's unemployment rate as a yearly average for 2023, with the four questions every figure has to answer.",
       partsLabel: "What the figure is measured against",
       parts: [
         { question: "where?", label: "Place", value: "Italy" },
-        { question: "when?", label: "Period", value: "2023 average" },
+        { question: "when?", label: "Period", value: "2023" },
         { question: "of whom?", label: "Population", value: "Labour force" },
         { question: "says who?", label: "Source", value: "Eurostat" },
       ],
