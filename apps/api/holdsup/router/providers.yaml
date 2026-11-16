@@ -126,6 +126,7 @@ steps:
   # The head-to-head baseline (P4.6, eval only): a plain "is this claim true?" to a general model.
   baseline:
     - groq-gpt-oss-120b
+    - cerebras-gpt-oss-120b
     - gemini-flash
     - mistral-ministral-14b
     - openrouter-nemotron-free
