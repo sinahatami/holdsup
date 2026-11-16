@@ -1,7 +1,7 @@
-import { ShieldCheck } from "lucide-react";
 import type { CSSProperties } from "react";
 import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
+import { DenominatorFigure } from "@/components/organisms/denominator-figure";
 import { Gallery } from "@/components/organisms/gallery";
 import { HistoryList } from "@/components/organisms/history-list";
 import { HowItWorks } from "@/components/organisms/how-it-works";
@@ -20,32 +20,45 @@ export default async function Home() {
   const real = items?.find((it) => it.text === strings.home.sample.claim);
   return (
     <PageShell layout="home">
-      <header className="rise flex flex-col items-center gap-4 text-center">
-        <span className="glass text-muted-foreground inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium">
-          <ShieldCheck className="size-4" aria-hidden />
-          {strings.tagline}
-        </span>
-        <h1 className="text-foreground text-5xl font-bold tracking-tight sm:text-6xl">
-          {strings.appName}
-        </h1>
-        <p className="text-foreground/80 max-w-xl text-lg leading-7 text-balance sm:text-xl sm:leading-8">
-          {strings.home.intro}
-        </p>
-      </header>
-      <div className="rise" style={{ "--i": 2 } as CSSProperties}>
-        <CheckForm>
-          <SampleReceipt href={real && routes.check(real.id)} />
-        </CheckForm>
+      {/* One grid so the order can change with the width without repeating anything. In the
+          page (and on a phone) it is title, claim box, figure: the box comes before the
+          picture. From lg up the figure moves beside the title and the box spans below. */}
+      <div className="grid items-center gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-y-12 lg:[grid-template-areas:'title_figure'_'form_form']">
+        <header className="rise flex flex-col gap-5 lg:[grid-area:title]">
+          <h1 className="text-[clamp(3rem,7vw,5rem)] leading-[0.98]">
+            {strings.home.titleLead}{" "}
+            <em className="text-brand">{strings.home.titleEnd}</em>
+          </h1>
+          <p className="text-foreground/80 max-w-xl text-lg leading-7 text-pretty">
+            {strings.home.intro}
+          </p>
+        </header>
+        <div
+          className="rise mx-auto w-full max-w-3xl lg:[grid-area:form]"
+          style={{ "--i": 2 } as CSSProperties}
+        >
+          <CheckForm>
+            <SampleReceipt href={real && routes.check(real.id)} />
+          </CheckForm>
+        </div>
+        <div
+          className="rise lg:[grid-area:figure]"
+          style={{ "--i": 1 } as CSSProperties}
+        >
+          <DenominatorFigure />
+        </div>
       </div>
-      <HistoryList />
-      <div className="reveal">
-        <HowItWorks />
-      </div>
-      <div className="reveal">
-        <CanCheck entries={catalog?.indicators} />
-      </div>
-      <div className="reveal">
-        <Gallery items={items} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-12">
+        <HistoryList />
+        <div className="reveal">
+          <HowItWorks />
+        </div>
+        <div className="reveal">
+          <CanCheck entries={catalog?.indicators} />
+        </div>
+        <div className="reveal">
+          <Gallery items={items} />
+        </div>
       </div>
     </PageShell>
   );

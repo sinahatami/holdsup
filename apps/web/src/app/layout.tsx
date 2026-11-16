@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Caveat, Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
 import { CustomCursor } from "@/components/atoms/custom-cursor";
 import { SiteFooter } from "@/components/organisms/site-footer";
 import { SiteHeader } from "@/components/organisms/site-header";
@@ -8,9 +8,25 @@ import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body text.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+});
+
+// Headings and big figures: the printed record.
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
+// The editor's red pen: short notes about a claim, never the only place a fact is said.
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: "600",
 });
 
 const geistMono = Geist_Mono({
@@ -34,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       lang={strings.locale}
       dir={strings.dir}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${instrumentSerif.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script

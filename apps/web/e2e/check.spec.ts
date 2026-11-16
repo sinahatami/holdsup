@@ -14,7 +14,10 @@ test("submit → trace → result", async ({ page }) => {
   await mockApi(page);
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { level: 1, name: "HoldsUp" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Every number has a denominator.",
+    }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: /Italy's unemployment rate fell/ })

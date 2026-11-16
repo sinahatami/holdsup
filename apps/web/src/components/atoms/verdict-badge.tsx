@@ -20,6 +20,10 @@ export const verdictIcon: Record<Label, LucideIcon> = {
   cant_check: CircleHelp,
 };
 
+/**
+ * A verdict as a rubber stamp: a double rule, capitals, a slight tilt. `large` is the stamp
+ * on a claim; the small one sits in lists.
+ */
 export function VerdictBadge({
   label,
   large = false,
@@ -37,14 +41,16 @@ export function VerdictBadge({
       style={{
         color: "var(--v)",
         background: "var(--vbg)",
-        borderColor: "color-mix(in oklch, var(--v) 30%, transparent)",
+        borderColor: "var(--v)",
       }}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border font-semibold",
-        large ? "px-4 py-1.5 text-base" : "px-3 py-1 text-sm",
+        "inline-flex items-center gap-2 border-double font-semibold tracking-[0.08em] uppercase",
+        large
+          ? "-rotate-2 border-4 px-4 py-1.5 text-base"
+          : "border-[3px] px-2.5 py-0.5 text-xs",
       )}
     >
-      <Icon className={large ? "size-5" : "size-4"} aria-hidden />
+      <Icon className={large ? "size-5" : "size-3.5"} aria-hidden />
       {text ?? strings.verdicts[label]}
     </span>
   );
