@@ -387,6 +387,23 @@ def test_shipped_providers_yaml_never_offers_gemini_for_live() -> None:
     assert any("gemini" in p.name for p in router.candidates("extract", Use.OFFLINE, set()))
 
 
+@pytest.mark.parametrize("step", load_router_config().steps)
+async def test_shipped_providers_yaml_falls_back_to_gpt_oss_on_cerebras(step: str) -> None:
+    """When Groq's model for a step is out for the day, the same GPT-OSS family on Cerebras
+    answers before a model from another family (Mistral, OpenRouter)."""
+    cfg = load_router_config()
+    client = FakeClient()
+    router = Router(cfg, client, clock=FakeClock())
+    first = router.candidates(step, Use.LIVE, set())[0].name
+    assert first.startswith("groq-gpt-oss"), step
+    client.script(first, [RateLimited(daily=True, message="tokens per day (TPD)")])
+
+    result = await router.complete(step, MSG, use=Use.LIVE)
+
+    assert client.called() == [first, "cerebras-gpt-oss-120b"]
+    assert result.model == "gpt-oss-120b"
+
+
 def test_config_rejects_unknown_and_duplicate_providers() -> None:
     with pytest.raises(ValueError, match="unknown providers"):
         config(provider("a"), steps={"extract": ["a", "ghost"]})

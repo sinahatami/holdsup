@@ -29,6 +29,26 @@ providers:
     limits: { requests_per_minute: 30, requests_per_day: 1000 }
     allowed_use: live
 
+  # The same model as groq-gpt-oss-120b on a second host, so a Groq limit falls back to the
+  # same model rather than a weaker one (D034). Free Trial: $5 of credit for 30 days, after a
+  # card is added; the API stops when it runs out, so unset CEREBRAS_API_KEY then.
+  # Trial limits (inference-docs.cerebras.ai/support/rate-limits, read 2026-11-16): 5 requests
+  # a minute; 30K uncached / 90K total tokens a minute; 1M tokens an hour and a day; 65K context.
+  # json_object, not json_schema: without strict mode Cerebras takes a schema as a hint only,
+  # strict mode needs additionalProperties: false on every object (ours don't set it), and a
+  # schema may be at most 5,000 characters (extraction's is 4,915). So the router puts the
+  # schema in the prompt and validates the reply, as for any json_object provider. This model
+  # also rejects tools and a response format in one request; no step sends both.
+  - name: cerebras-gpt-oss-120b
+    base_url: https://api.cerebras.ai/v1
+    model: gpt-oss-120b
+    label: GPT-OSS 120B (Cerebras)
+    api_key_env: CEREBRAS_API_KEY
+    capabilities: [json_object, tools]
+    context_window: 65536
+    limits: { requests_per_minute: 5 }
+    allowed_use: live
+
   - name: mistral-ministral-14b
     base_url: https://api.mistral.ai/v1
     model: ministral-14b-2512
@@ -69,30 +89,36 @@ providers:
 # Preference per pipeline step, first choice first. The router skips providers that are not
 # allowed for the call's use, lack a needed capability, or are cooling down / out of budget.
 steps:
+  # When Groq cannot answer, the same GPT-OSS family on Cerebras comes before another family.
   extract:
     - groq-gpt-oss-20b
+    - cerebras-gpt-oss-120b
     - mistral-ministral-14b
     - groq-gpt-oss-120b
     - openrouter-nemotron-free
     - gemini-flash
   match:
     - groq-gpt-oss-120b
+    - cerebras-gpt-oss-120b
     - mistral-ministral-14b
     - openrouter-nemotron-free
     - gemini-flash
   plan:
     - groq-gpt-oss-120b
+    - cerebras-gpt-oss-120b
     - mistral-ministral-14b
     - openrouter-nemotron-free
     - gemini-flash
   explain:
     - groq-gpt-oss-20b
+    - cerebras-gpt-oss-120b
     - mistral-ministral-14b
     - groq-gpt-oss-120b
     - openrouter-nemotron-free
     - gemini-flash
   smoke:
     - groq-gpt-oss-120b
+    - cerebras-gpt-oss-120b
     - groq-gpt-oss-20b
     - mistral-ministral-14b
     - openrouter-nemotron-free
