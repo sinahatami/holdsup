@@ -9,6 +9,7 @@ full texts.
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -16,6 +17,7 @@ from holdsup.router import RouterConfig
 from scripts.evaluation.score import (
     MISSED,
     ClaimOutcome,
+    CostMetrics,
     Metrics,
     Rate,
     TextOutcome,
@@ -23,6 +25,7 @@ from scripts.evaluation.score import (
 
 SCHEMA_VERSION = 1
 ROUTER = "router"  # a run on each step's whole preference list, not one provider
+Kind = Literal["pipeline", "chatbot"]  # the HoldsUp pipeline, or the plain chatbot baseline (P4.6)
 
 
 class Stamp(BaseModel):
@@ -34,7 +37,10 @@ class Stamp(BaseModel):
 
 class Report(BaseModel):
     schema_version: int = SCHEMA_VERSION
-    name: str  # "smoke", "dev", "test", "dev.groq-gpt-oss-120b"
+    # Reports from before P4.6 are all pipeline runs. A chatbot run has no extraction, matching
+    # or explanation figures: only verdicts and cost.
+    kind: Kind = "pipeline"
+    name: str  # "smoke", "dev", "test", "dev.groq-gpt-oss-120b", "dev.chatbot"
     created_at: datetime
     benchmark: str  # the claims file's name
     split: str
@@ -66,9 +72,11 @@ def build_report(
     config: RouterConfig,
     metrics: Metrics,
     texts: Sequence[TextOutcome],
+    kind: Kind = "pipeline",
     now: datetime | None = None,
 ) -> Report:
     return Report(
+        kind=kind,
         name=name,
         created_at=(now or datetime.now(UTC)).replace(microsecond=0),
         benchmark=benchmark,
@@ -112,6 +120,8 @@ def _table(header: Sequence[str], rows: Sequence[Sequence[str]]) -> list[str]:
 
 
 def markdown(report: Report) -> str:
+    if report.kind == "chatbot":
+        return _chatbot_markdown(report)
     m, v = report.metrics, report.versions
     out = [
         f"# Evaluation: {report.name}",
@@ -145,9 +155,47 @@ def markdown(report: Report) -> str:
     out += ["## Verdicts: expected (rows) against answered (columns)", ""]
     out += _confusion(m)
     out += _failures(report)
-    out += ["## Cost", ""]
-    c = m.cost
-    out += [
+    out += ["## Cost", "", *_cost_lines(m.cost), ""]
+    out += _table(*_by_step_provider(m.cost))
+    return "\n".join(out)
+
+
+def _chatbot_markdown(report: Report) -> str:
+    m, v = report.metrics, report.versions
+    out = [
+        f"# Chatbot baseline: {report.name}",
+        "",
+        (
+            f"- Benchmark `{report.benchmark}` ({report.split} split) at eval {v.eval}: "
+            f"{m.texts} texts, {m.labelled_claims} labelled claims."
+        ),
+        (
+            "- One plain prompt per text, no tools and no web search; the same five labels. "
+            f"Models: {_providers(report)}. Run {report.created_at:%Y-%m-%d %H:%M} UTC."
+        ),
+        "",
+    ]
+    out += _excluded(m)
+    out += ["## Verdict", "", f"- Accuracy: {pct(m.verdict.accuracy)}.", ""]
+    out += ["## Verdicts: expected (rows) against answered (columns)", ""]
+    out += _confusion(m)
+    wrong = [o for t in report.texts for o in t.outcomes if o.verdict_ok is False]
+    out += ["## Wrong verdicts", ""]
+    out += (
+        _table(
+            ["Claim", "Expected", "Answered"],
+            [[_name(o), str(o.expected), o.verdict or MISSED] for o in wrong],
+        )
+        if wrong
+        else ["None.", ""]
+    )
+    out += ["## Cost", "", *_cost_lines(m.cost, series=False), ""]
+    out += _table(*_by_step_provider(m.cost))
+    return "\n".join(out)
+
+
+def _cost_lines(c: CostMetrics, *, series: bool = True) -> list[str]:
+    return [
         (
             f"- {c.model_calls} model calls ({c.failed_calls} failed), "
             f"{_num(c.calls_per_claim)} per claim; {c.prompt_tokens} prompt and "
@@ -157,14 +205,23 @@ def markdown(report: Report) -> str:
             f"- {c.seconds:.1f} s in all: {_num(c.seconds_per_claim)} s per claim; per text "
             f"median {_num(c.seconds_p50_per_text)} s, 95th percentile {_num(c.seconds_p95_per_text)} s."
         ),
-        (
-            f"- Source series: {c.series_requests} requests, {c.series_cache_hits} served from the "
-            f"cache ({_rate(c.series_cache_hit_rate)}). The answer cache is not used in a run."
+        *(
+            [
+                (
+                    f"- Source series: {c.series_requests} requests, {c.series_cache_hits} served "
+                    f"from the cache ({_rate(c.series_cache_hit_rate)}). The answer cache is not "
+                    "used in a run."
+                )
+            ]
+            if series
+            else []
         ),
         *_daily_limited(c.daily_limited),
-        "",
     ]
-    out += _table(
+
+
+def _by_step_provider(c: CostMetrics) -> tuple[list[str], list[list[str]]]:
+    return (
         ["Step", "Provider", "Model", "Calls", "Failed", "Tokens", "Mean latency"],
         [
             [s.step, s.provider, s.model, str(s.calls), str(s.failed), str(s.tokens),
@@ -172,10 +229,12 @@ def markdown(report: Report) -> str:
             for s in c.by_step_provider
         ],
     )  # fmt: skip
-    return "\n".join(out)
 
 
 def _providers(report: Report) -> str:
+    if report.kind == "chatbot":
+        models = report.steps.get("baseline", [])
+        return ", ".join(models[:1]) + (" …" if len(models) > 1 else "") or "none"
     if report.provider != ROUTER:
         return f"every step on {report.provider}"
     return (

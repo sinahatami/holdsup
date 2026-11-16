@@ -36,4 +36,19 @@ How the steps are scored. Each step counts only the claims that reached it; the 
 
 A text the router cannot serve, and a claim whose data source is down, leave the accuracy figures but are counted and shown: an outage is not a wrong answer. The gate refuses to judge (exit 3) when more than 20% of the claims dropped out, when there is no baseline, or when the baseline is for another benchmark version; bump `VERSION`, then `make eval-baseline`. With a small set one claim is worth several points, so read the report before blaming a change.
 
+## The chatbot baseline (P4.6)
+
+```bash
+make eval-chatbot                                   # the dev split -> reports/dev.chatbot.{json,md}
+make eval-chatbot ARGS="--provider gemini-flash"    # one model -> reports/dev.chatbot.gemini-flash.json
+make eval-chatbot ARGS=--resume                     # continue a stopped run
+make eval-chatbot ARGS="--provider mistral-ministral-14b --resume --wait-budget 9000"
+```
+
+A run waits out rate limits for ten minutes in all, then leaves the texts it could not serve as "not run" (`--wait-budget SECONDS`). A provider held to about a call a minute, such as Mistral's Experiment plan, needs about two hours for the 106 dev texts, so give it a budget of that size and run it from a restartable unit with `--resume`.
+
+A general chatbot gets the text and the labelled claims in one plain question ("is each claim true?", the five labels with a line each) and answers from what it knows: no tools, no data, no web search. Its answers are scored against the same labels, with the same confusion matrix and cost figures, as a report of `kind: chatbot` (verdicts and cost only: it has no extraction, matching or explanation). The router step is `baseline` in `providers.yaml`; the run allows the offline-only provider (`--use offline`). A claim it gives no answer for counts as wrong ("no answer"); a text no provider could serve is left out and counted.
+
+`GET /v1/eval` joins `<split>.json` with the split's chatbot run (the one that answered the most claims, whether `<split>.chatbot.json` or one provider's `<split>.chatbot.<provider>.json`) on the claims both could be scored on, and the `/eval` page shows the result, with the claims HoldsUp loses and the first step that broke in each.
+
 The test split is held out: `--split test` and `--split all` are refused without `--final` (P4.7). Tuning uses dev only.

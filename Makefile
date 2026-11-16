@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -106,6 +106,9 @@ eval-baseline: ## Accept the current smoke run as eval/baseline.json (after read
 
 eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run)
 	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
+
+eval-chatbot: ## The head-to-head baseline: a plain chatbot answers the same claims -> eval/reports/dev.chatbot.{json,md} (P4.6; manual; ARGS="--provider NAME", --resume; the test split needs --final, P4.7)
+	cd $(API_DIR) && uv run python -m scripts.evaluation.chatbot_cli $(ARGS)
 
 ml-setup: ## ml/ environment with the training libraries (torch CPU wheels, sentence-transformers, onnx)
 	cd $(ML_DIR) && uv sync --locked --group train

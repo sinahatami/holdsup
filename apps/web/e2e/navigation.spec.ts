@@ -5,6 +5,7 @@ const PAGES = [
   { name: "What it can check", url: /\/indicators$/ },
   { name: "Recent checks", url: /\/recent$/ },
   { name: "Methodology", url: /\/methodology$/ },
+  { name: "How it compares", url: /\/eval$/ },
   { name: "About", url: /\/about$/ },
 ];
 
