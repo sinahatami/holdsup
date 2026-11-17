@@ -202,6 +202,50 @@ def test_a_pay_rise_above_inflation_passes() -> None:
     assert check.text.startswith("after inflation it also rose: 30,000 in 2015, 30,724 in 2020")
 
 
+def test_a_rise_that_is_flat_after_inflation_is_flagged() -> None:
+    # Up 5% in five years, prices up 0.9% a year: 31,500 is about 30,120 in 2015 prices, +0.4%,
+    # inside the 2% flat band. It still "rose" by the sign, but it is not the claimed story.
+    check = after_inflation(0.9)
+    assert check is not None and check.flagged
+    assert check.text.startswith("after inflation it stayed flat: 30,000 in 2015, 30,1")
+    assert check.text.endswith(" in 2020 (euro per year, 2015 prices)")
+
+
+def test_a_rise_that_stays_a_rise_after_inflation_passes() -> None:
+    # Prices up 0.4% a year: the real rise is 3%, outside the flat band.
+    check = after_inflation(0.4)
+    assert check is not None and not check.flagged
+    assert check.text.startswith("after inflation it also rose: 30,000 in 2015, 30,8")
+
+
+def real_version(
+    nominal: tuple[float, float], real: tuple[float, float], direction: Direction
+) -> DistortionCheck | None:
+    gdp = annual({2015: nominal[0], 2020: nominal[1]}, "million euro (current prices)")
+    deflated = related("real_gdp_volume", {2015: real[0], 2020: real[1]})
+    r = change(gdp, "2015", "2020", ChangeKind.PERCENT)
+    return real_check(inp(claim(direction=direction), "nominal_gdp_eur", r, gdp, real=deflated))
+
+
+def test_a_fall_that_is_flat_after_inflation_is_flagged_too() -> None:
+    check = real_version((110.0, 100.0), (100.0, 99.0), Direction.DOWN)  # -1% in real terms
+    assert check is not None and check.flagged
+    assert check.text.startswith("after inflation it stayed flat: 100 in 2015, 99 in 2020")
+
+
+def test_a_claim_of_flat_is_not_failed_for_being_flat_after_inflation() -> None:
+    check = real_version((100.0, 101.0), (100.0, 100.5), Direction.FLAT)
+    assert check is not None and not check.flagged
+    assert check.text.startswith("after inflation it also stayed flat: 100 in 2015")
+
+
+def test_the_flat_band_is_only_for_the_real_terms_check() -> None:
+    # Per person, up 1% is still "it also rose": only inflation turns a rise into "flat".
+    check = per_person({2015: 50e6, 2023: 50e6 * 1.0909})  # debt +10%, people +9.09% → +0.8%
+    assert check is not None and not check.flagged
+    assert check.text.startswith("per person it also rose")
+
+
 def test_the_real_version_is_read_when_the_catalog_has_one() -> None:
     gdp = annual({2015: 100.0, 2020: 110.0}, "million euro (current prices)")
     real = related("real_gdp_volume", {2015: 100.0, 2020: 98.0})
