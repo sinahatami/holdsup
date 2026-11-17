@@ -23,7 +23,7 @@ from holdsup.pipeline.trace import Step
 from holdsup.verdict import Label
 from scripts.evaluation.align import align, end_ok, geo_ok, start_ok
 from scripts.evaluation.benchmark import BenchmarkText, LabelledClaim
-from scripts.evaluation.meter import Call
+from scripts.evaluation.meter import RATE_LIMITED, Call
 
 MISSED = "missed"  # a labelled claim the extractor never found
 LABELS = [str(label) for label in Label]
@@ -256,6 +256,9 @@ class CallStats(BaseModel):
     failed: int
     tokens: int
     mean_latency_ms: float
+    # Calls refused for a rate limit (per minute or per day): the router moved on to the next
+    # choice. Reports from before this field read as none.
+    rate_limited: int = 0
 
 
 class CostMetrics(BaseModel):
@@ -434,6 +437,7 @@ def _cost(
                 failed=sum(not c.ok for c in group),
                 tokens=sum(c.prompt_tokens + c.completion_tokens for c in group),
                 mean_latency_ms=round(sum(c.latency_ms for c in group) / len(group), 1),
+                rate_limited=sum(c.error == RATE_LIMITED for c in group),
             )
             for (step, provider, model), group in sorted(grouped.items())
         ],

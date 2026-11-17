@@ -4,7 +4,7 @@ Benchmark claims, splits, the evaluation runner, and reports. The benchmark has 
 
 ## Smoke set
 
-`smoke_claims.jsonl` is the start of the 30-claim smoke set that `make eval-smoke` runs on every PR touching `apps/api`, `ml/`, `eval/` or the catalog, and every night. One JSON object per line: `id`, `text`, `source_url`, `added`, `why` (for regressions), an optional `split` (`dev` or `test`; no split counts as dev), and `claims`, each with `quote`, `indicator` (catalog id, or `null` when the catalog has nothing for it), `geo`, `window` (`[start, end]`; `latest` for the present), `expected` (a verdict label) and `justification` (the numbers behind it). A claim that once came out wrong goes in here with the fix, and stays, so it cannot quietly break again. Expected labels that depend on "today" change when the source publishes new data; the justification names the period and the source's update date.
+`smoke_claims.jsonl` is the start of the 30-claim smoke set that `make eval-smoke` runs on every PR that can change a verdict (the API's code, the evaluation scripts, this file, `baseline.json`, `VERSION`, the catalog or the dependencies), and every night. One JSON object per line: `id`, `text`, `source_url`, `added`, `why` (for regressions), an optional `split` (`dev` or `test`; no split counts as dev), and `claims`, each with `quote`, `indicator` (catalog id, or `null` when the catalog has nothing for it), `geo`, `window` (`[start, end]`; `latest` for the present), `expected` (a verdict label) and `justification` (the numbers behind it). A claim that once came out wrong goes in here with the fix, and stays, so it cannot quietly break again. Expected labels that depend on "today" change when the source publishes new data; the justification names the period and the source's update date.
 
 The runner validates the file strictly (unknown keys, bad periods, unknown labels, duplicate ids, indicators missing from the catalog) and reports every problem at once, so a typo cannot pass as a model failure.
 
@@ -34,7 +34,9 @@ How the steps are scored. Each step counts only the claims that reached it; the 
 | Explanation | Share of model explanations whose numbers were all in the computed results |
 | Cost | Model calls, tokens and seconds per claim and per text, by step and provider; source-series cache hits |
 
-A text the router cannot serve, and a claim whose data source is down, leave the accuracy figures but are counted and shown: an outage is not a wrong answer. The gate refuses to judge (exit 3) when more than 20% of the claims dropped out, when there is no baseline, or when the baseline is for another benchmark version; bump `VERSION`, then `make eval-baseline`. With a small set one claim is worth several points, so read the report before blaming a change.
+A text the router cannot serve, and a claim whose data source is down, leave the accuracy figures but are counted and shown: an outage is not a wrong answer. The gate refuses to judge (exit 3) when more than 20% of the claims dropped out, when there is no baseline, or when the baseline is for another benchmark version (bump `VERSION`, then `make eval-baseline`), and when a rate limit sent a step's first-choice model to a fallback that answered (the baseline measures the first choices). With a small set one claim is worth several points, so read the report before blaming a change.
+
+`--replay DIR` answers each model request that has a saved reply in `DIR` from it and asks the providers only for the rest (a changed prompt, another model, new data in a plan prompt), saving what they say; `--record DIR` asks everything afresh and saves it. In CI the nightly run records into the Actions cache and pull requests replay from it, so a PR that changes no prompt spends no free-tier quota, and its gate measures the code rather than the models' day-to-day variation. Locally: `make eval-smoke ARGS="--replay .cache/eval-replies"`.
 
 ## The chatbot baseline (P4.6)
 

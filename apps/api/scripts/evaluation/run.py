@@ -27,7 +27,7 @@ from holdsup.ml.reranker import load_reranker
 from holdsup.pipeline.result import PipelineOutput
 from holdsup.pipeline.run import Pipeline
 from holdsup.router import RouterConfig, RouterError, Use
-from holdsup.router.client import OpenAICompatibleClient
+from holdsup.router.client import OpenAICompatibleClient, SupportsChat
 from holdsup.verdict import Tolerances
 from scripts.evaluation.benchmark import BenchmarkText
 from scripts.evaluation.meter import (
@@ -49,6 +49,14 @@ def only_provider(config: RouterConfig, name: str) -> RouterConfig:
     return config.model_copy(update={"steps": {step: (name,) for step in config.steps}})
 
 
+# Wraps the providers' client before the meter does (replay.py: answer from saved replies).
+ClientWrap = Callable[[SupportsChat], SupportsChat]
+
+
+def unwrapped(client: SupportsChat) -> SupportsChat:
+    return client
+
+
 @dataclass
 class Rig:
     """Everything a run needs, built once."""
@@ -60,7 +68,11 @@ class Rig:
 
 @asynccontextmanager
 async def live_rig(
-    catalog: Catalog, config: RouterConfig, tolerances: Tolerances, use: Use
+    catalog: Catalog,
+    config: RouterConfig,
+    tolerances: Tolerances,
+    use: Use,
+    wrap: ClientWrap = unwrapped,
 ) -> AsyncIterator[Rig]:  # pragma: no cover (live providers, live sources, the embedding model)
     """The real pipeline: live providers, live sources (cached in memory for the run) and the
     catalog in an in-memory index, so a run needs no database. The pinned reranker is
@@ -77,7 +89,7 @@ async def live_rig(
         pipeline = Pipeline(
             router=PatientRouter(
                 config,
-                MeteredClient(OpenAICompatibleClient(), meter),
+                MeteredClient(wrap(OpenAICompatibleClient()), meter),
                 progress=lambda line: print(line, file=sys.stderr),
             ),
             catalog=catalog,

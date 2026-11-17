@@ -17,6 +17,7 @@ from holdsup.router.config import ProviderConfig
 from holdsup.router.errors import ProviderError, RateLimited
 
 NO_STEP = "none"
+RATE_LIMITED = RateLimited.__name__  # a Call's error when the provider refused for a limit
 
 
 @dataclass(frozen=True)

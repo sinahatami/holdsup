@@ -8,7 +8,7 @@ from typing import Any
 from scripts.evaluation.benchmark import BenchmarkText, LabelledClaim
 from scripts.evaluation.meter import Call, Meter, MeteredClient
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report
-from scripts.evaluation.run import Rig
+from scripts.evaluation.run import ClientWrap, Rig, unwrapped
 from scripts.evaluation.score import TextOutcome, score_text, summarize
 from scripts.evaluation.score import not_run as not_run_text
 
@@ -44,15 +44,17 @@ def make_rig(
     *,
     fetcher: Fetcher | None = None,
     keys: set[str] | None = None,
+    wrap: ClientWrap = unwrapped,
 ) -> tuple[Rig, FakeClient, Meter]:
-    """A rig whose one provider, "fake", replays `script`; every step uses it."""
+    """A rig whose one provider, "fake", replays `script`; every step uses it. `wrap` goes
+    round the provider's client, under the meter, as in the live rig."""
     client = FakeClient(keys=keys)
     client.script("fake", script)
     meter = Meter()
     pipeline = Pipeline(
         router=Router(
             config(provider("fake"), steps={s: ["fake"] for s in STEPS}),
-            MeteredClient(client, meter),
+            MeteredClient(wrap(client), meter),
             clock=FakeClock(),
         ),
         catalog=CATALOG,

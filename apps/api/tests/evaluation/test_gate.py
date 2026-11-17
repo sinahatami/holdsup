@@ -9,6 +9,7 @@ from scripts.evaluation.gate import (
     Outcome,
     baseline_of,
     check,
+    fallbacks_after_limits,
     first_choices_spent,
     read_baseline,
     write_baseline,
@@ -159,6 +160,42 @@ def test_a_fallback_reaching_its_daily_limit_is_judged_as_usual() -> None:
 def test_a_run_whose_first_choice_reached_its_daily_limit_is_not_a_baseline() -> None:
     with pytest.raises(ValueError, match="Daily limit reached by fake"):
         baseline_of(make_report(16, 20, calls=spent()))
+
+
+def turned_away(error: str = "RateLimited", step: str = "match") -> list[Call]:
+    """The first choice refusing a call in `step` (a per-minute limit by default), then the
+    next choice answering."""
+    return [
+        Call(step, "fake", "m", False, 50.0, error=error),
+        Call(step, "spare", "m", True, 900.0),
+    ]
+
+
+def test_a_run_where_a_per_minute_limit_sent_a_step_to_a_fallback_cannot_be_judged() -> None:
+    gate = check(make_report(14, 20, calls=turned_away()), baseline(0.8))  # else a 10-point drop
+
+    assert gate.outcome is Outcome.INCONCLUSIVE
+    assert "Rate limits turned away fake (first choice for match)" in gate.message
+    assert "once the limits reset" in gate.message
+
+
+def test_a_fallback_answering_after_a_rejected_reply_is_judged_as_usual() -> None:
+    gate = check(make_report(14, 20, calls=turned_away(error="ProviderRejected")), baseline(0.8))
+
+    assert gate.outcome is Outcome.REGRESSION
+
+
+def test_a_limit_the_first_choice_waited_out_is_judged_as_usual() -> None:
+    calls = [Call("match", "fake", "m", False, 50.0, error="RateLimited")]
+    calls.append(Call("match", "fake", "m", True, 900.0))
+
+    assert fallbacks_after_limits(make_report(14, 20, calls=calls)) == {}
+    assert check(make_report(14, 20, calls=calls), baseline(0.8)).outcome is Outcome.REGRESSION
+
+
+def test_a_run_where_a_fallback_answered_after_a_limit_is_not_a_baseline() -> None:
+    with pytest.raises(ValueError, match="Rate limits turned away fake"):
+        baseline_of(make_report(16, 20, calls=turned_away()))
 
 
 def test_the_exit_codes_are_the_documented_ones() -> None:
