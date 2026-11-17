@@ -38,6 +38,7 @@ from holdsup.checks import (
     Sweep,
     change_points,
     distortion_checks,
+    points_reading,
     said_between,
     sweep,
     wants_real_terms,
@@ -574,10 +575,15 @@ class Pipeline:
 
     async def _verdict(self, c: _ClaimRun, plan: ValidPlan, execution: Execution) -> None:
         await c.start(Step.VERDICT)
+        claim, records, answer = c.claim, execution.records, plan.answer
+        # A number wrong as stated but right as the other kind (percent or points) is judged
+        # there; the points check's flag then makes it "framing matters", not "not supported".
+        if (reading := points_reading(c.claim, c.out.distortion_checks)) is not None:
+            claim, records, answer = reading[0], reading[1], [0]
         verdict = decide(
-            c.claim,
-            execution.records,
-            plan.answer,
+            claim,
+            records,
+            answer,
             unit=execution.unit,
             tolerances=self.tolerances,
             window_share=c.out.sweep.share if c.out.sweep else None,

@@ -126,6 +126,78 @@ async def test_a_pay_rise_above_inflation_stays_supported() -> None:
     assert c.verdict.label is Label.SUPPORTED
 
 
+NEET = CATALOG.get("neet_rate")  # annual, % of the age group
+
+
+async def run_neet(stated: float, kind: str) -> ClaimResult:
+    """The same rate (24.4 in 2016, 16.1 in 2023: down 8.3 points, or 34% in percent) with the
+    claim stating `stated` as a change of `kind`. The number is in the text: the extractor drops
+    one that is not."""
+    text = f"Italy's NEET rate fell {stated:g}% between 2016 and 2023."
+    claim = {
+        "quote": text[:-1], "indicator_phrase": "NEET rate", "geo": "IT", "geo_named": True,
+        "peers": [], "start": "2016", "start_named": True, "end": "2023", "lookback": None,
+        "office": None,
+        "assertion": {"type": kind, "value": stated, "direction": "down", "unit": "%",
+                      "start_value": None, "end_value": None},
+    }  # fmt: skip
+    change = {"op": "change", "geo": "IT", "start": "2016", "end": "2023", "kind": kind}
+    script = [
+        reply({"speaker": None, "said_on": None, "claims": [claim]}),
+        reply({"indicator_id": NEET.id, "confidence": "high", "reason": "Same.",
+               "alternatives": []}),
+        reply({"calls": [change], "answer": [0], "reason": f"A change in {kind}."}),
+        explain_answer("The rate fell from 24.4% in 2016 to 16.1% in 2023."),
+    ]  # fmt: skip
+    rows = {NEET.source_code: [Observation("IT", "2016", 24.4), Observation("IT", "2023", 16.1)]}
+    client = FakeClient()
+    client.script("fake", script)
+    steps = {s: ["fake"] for s in ("extract", "match", "plan", "explain")}
+
+    async def neet_search(phrase: str, k: int) -> list[IndicatorHit]:
+        return [IndicatorHit(id=NEET.id, name=NEET.name, source=str(NEET.source),
+                             source_code=NEET.source_code, unit=NEET.unit,
+                             frequency=str(NEET.frequency), definition=NEET.definition,
+                             score=1.0)]  # fmt: skip
+
+    pipeline = Pipeline(
+        router=Router(config(provider("fake"), steps=steps), client, clock=FakeClock()),
+        catalog=CATALOG,
+        search=neet_search,
+        fetcher=ByDataset(rows),
+        tolerances=load_tolerances(),
+        today=lambda: date(2026, 11, 12),
+    )
+
+    async def emit(_: StepEvent) -> None:
+        return None
+
+    return (await pipeline.run(text, emit)).claims[0]
+
+
+async def test_points_stated_as_a_percent_hold_but_the_framing_matters() -> None:
+    """A rate that fell 8.3 points (34% in percent), said to have fallen 8.3%: the number is
+    right as points, so the claim is not "not supported"; it blurs points and percent."""
+    c = await run_neet(8.3, "percent")
+    [points] = [ch for ch in c.distortion_checks if ch.kind is CheckKind.POINTS]
+    assert points.flagged
+    assert c.verdict.label is Label.SUPPORTED_FRAMING_MATTERS
+    assert c.verdict.reason.endswith(f"but {points.text}.")
+    assert all(p.holds for p in c.verdict.parts)
+
+
+async def test_a_number_wrong_as_percent_and_as_points_is_still_not_supported() -> None:
+    c = await run_neet(5.0, "percent")
+    [points] = [ch for ch in c.distortion_checks if ch.kind is CheckKind.POINTS]
+    assert not points.flagged
+    assert c.verdict.label is Label.NOT_SUPPORTED
+
+
+async def test_percent_stated_right_as_percent_stays_supported() -> None:
+    c = await run_neet(34, "percent")
+    assert c.verdict.label is Label.SUPPORTED
+
+
 async def test_no_prices_leaves_the_check_out_and_the_claim_checked() -> None:
     c, fetcher = await run(inflation=None)
     assert fetcher.calls == [WAGES.source_code, PRICES.source_code]

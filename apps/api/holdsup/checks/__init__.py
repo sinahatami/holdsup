@@ -13,6 +13,7 @@ from holdsup.checks.distortions import (
     DistortionCheck,
     Related,
     distortion_checks,
+    points_reading,
     said_between,
     wants_real_terms,
 )
@@ -29,6 +30,7 @@ __all__ = [
     "change_points",
     "distortion_checks",
     "flag_text",
+    "points_reading",
     "said_between",
     "sweep",
     "wants_real_terms",

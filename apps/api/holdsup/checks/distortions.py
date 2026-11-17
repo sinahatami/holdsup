@@ -48,7 +48,7 @@ from holdsup.ops import (
     unit_scale,
 )
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, says_now
-from holdsup.pipeline.population import wants_population
+from holdsup.pipeline.population import PER_PERSON, wants_population
 from holdsup.verdict.rules import assertion_judge, direction_judge
 from holdsup.verdict.tolerances import Tolerances
 
@@ -337,6 +337,21 @@ def points_check(inp: CheckInput) -> DistortionCheck | None:
     return DistortionCheck(kind=CheckKind.POINTS, flagged=flagged, text=text, records=[again])
 
 
+def points_reading(
+    claim: ClaimSpec, checks: Sequence[DistortionCheck]
+) -> tuple[ClaimSpec, list[OpRecord]] | None:
+    """The claim as the points check reads it, when it flagged one: a number stated as a percent
+    that is right as points, or the other way round ("fell by 4.3%" of a rate that fell 4.3
+    points). The number holds in that other kind, so the verdict judges it there and carries the
+    flag as framing, instead of calling it wrong. None when the check did not flag the claim."""
+    for check in checks:
+        if check.kind is CheckKind.POINTS and check.flagged and len(check.records) == 1:
+            kind = str(check.records[0].args["kind"])
+            read = claim.assertion.model_copy(update={"type": AssertionType(kind)})
+            return claim.model_copy(update={"assertion": read}), list(check.records)
+    return None
+
+
 # --- definition ----------------------------------------------------------------------------
 
 OPEN = math.inf  # an age range with no upper end ("65 and over")
@@ -411,9 +426,6 @@ def _one_range(found: set[AgeRange]) -> AgeRange | None:
     return groups[0] if len(groups) == 1 else None
 
 
-_PER_PERSON = re.compile(
-    r"\bper[- ](?:capita|person|head|inhabitant|resident)\b|\ba head\b", re.IGNORECASE
-)
 _CURRENCIES = {
     "euro": re.compile(r"\beuros?\b|€|\beur\b", re.IGNORECASE),
     "dollars": re.compile(r"\bdollars?\b|\$|\busd\b", re.IGNORECASE),
@@ -447,9 +459,9 @@ def definition_check(inp: CheckInput) -> DistortionCheck | None:
                 f"ages {_ages_text(covered)}"
             )
 
-    if _PER_PERSON.search(stated):
+    if PER_PERSON.search(stated):
         read = inp.unit or spec.unit  # a plan that divided by population reads "per person"
-        if _PER_PERSON.search(read):
+        if PER_PERSON.search(read) or PER_PERSON.search(spec.name):
             matched.append("per person")
         elif wants_population(spec):
             differs.append(f"the claim is per person; the figures are a total ({read})")

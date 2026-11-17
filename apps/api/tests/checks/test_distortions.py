@@ -23,6 +23,7 @@ from holdsup.checks.distortions import (
     endpoints_check,
     per_capita_check,
     points_check,
+    points_reading,
     real_check,
     stale_check,
 )
@@ -262,6 +263,30 @@ def test_percent_stated_as_percent_passes() -> None:
     )
 
 
+def test_a_flagged_points_claim_is_read_in_the_kind_its_number_holds_in() -> None:
+    c = claim(type=AssertionType.PERCENT, value=2, direction=Direction.UP, unit="%")
+    check = points(2)
+    assert check is not None
+    reading = points_reading(c, [check])
+    assert reading is not None
+    read, records = reading
+    assert read.assertion.type is AssertionType.PERCENTAGE_POINTS
+    assert read.assertion.value == 2  # only the kind changes, never the number
+    assert c.assertion.type is AssertionType.PERCENT  # the claim itself is left as it was
+    assert [(r.op, r.args["kind"], r.value) for r in records] == [
+        ("change", "percentage_points", 2.0)
+    ]
+
+
+def test_a_points_claim_that_is_not_flagged_is_read_as_stated() -> None:
+    c = claim(type=AssertionType.PERCENT, value=20, direction=Direction.UP, unit="%")
+    right, wrong_both = points(20), points(7)
+    assert right is not None and wrong_both is not None
+    assert points_reading(c, [right]) is None
+    assert points_reading(c, [wrong_both]) is None
+    assert points_reading(c, []) is None
+
+
 def test_a_number_wrong_both_ways_is_not_a_points_mix_up() -> None:
     check = points(7)
     assert check is not None and not check.flagged
@@ -336,6 +361,16 @@ def test_per_person_read_per_person_passes() -> None:
         inp(debt_claim, DEBT, change(made, "2015", "2023", ChangeKind.PERCENT), made)
     )
     assert check is not None and not check.flagged and "(per person)" in check.text
+
+
+def test_a_per_person_claim_against_a_per_person_series_passes() -> None:
+    """The series is per person by name; its unit ("current international $") says nothing."""
+    gdp = annual({2015: 60000.0, 2019: 65228.0}, CATALOG.get("gdp_per_capita_ppp_world").unit)
+    said = claim(phrase="US GDP per person", type=AssertionType.LEVEL, value=65200,
+                 direction=None, unit="international dollars")  # fmt: skip
+    check = definition_check(inp(said, "gdp_per_capita_ppp_world", value_at(gdp, "2019"), gdp))
+    assert check is not None and not check.flagged
+    assert "per person" in check.text
 
 
 def test_another_currency_is_flagged_and_the_same_one_passes() -> None:
