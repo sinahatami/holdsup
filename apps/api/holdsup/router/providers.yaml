@@ -81,8 +81,9 @@ providers:
     api_key_env: GEMINI_API_KEY
     capabilities: [json_object, json_schema, tools]
     context_window: 1048576
-    # Per-project limits are shown in AI Studio; conservative placeholders until recorded.
-    limits: { requests_per_minute: 10, requests_per_day: 250 }
+    # The free tier allows 20 requests a day, so a forced-Gemini eval cannot finish a
+    # full split; it only backs up the other providers offline.
+    limits: { requests_per_minute: 10, requests_per_day: 20 }
     timeout_s: 60
     allowed_use: offline
 
