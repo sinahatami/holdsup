@@ -313,3 +313,12 @@ def test_the_verdicts_answered_and_held_back_are_scored_apart() -> None:
     assert (c.abstained.hits, c.abstained.total) == (1, 4)
     assert (c.answered_accuracy.hits, c.answered_accuracy.total) == (2, 3)
     assert (c.abstained_accuracy.hits, c.abstained_accuracy.total) == (0, 1)
+
+
+def test_rate_limited_calls_are_counted_per_step_and_provider() -> None:
+    limited = Call("match", "groq", "gpt", False, 50.0, error="RateLimited")
+    calls = [limited, limited, call("match", ok=False), call("match")]
+
+    [stats] = summarize(two_texts(), calls).cost.by_step_provider
+
+    assert (stats.calls, stats.failed, stats.rate_limited) == (4, 3, 2)

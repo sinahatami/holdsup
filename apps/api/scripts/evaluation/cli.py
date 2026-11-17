@@ -6,8 +6,11 @@ stops part-way is continued with --resume (checkpoint.py).
 Exit codes: 0 done (and, with --gate, within 5 points of the baseline); 1 the gate found a
 regression; 2 the command could not run (bad file, wrong flags, a partial run of something
 else to resume); 3 the gate could not judge
-(no baseline, a different benchmark version, too many claims dropped out, or a step's
-first-choice model reached its daily limit).
+(no baseline, a different benchmark version, too many claims dropped out, or a rate limit
+sent a step's first-choice model to a fallback).
+
+--replay DIR answers each model request it has a saved reply for from DIR and saves the rest;
+--record DIR asks every request afresh and saves the replies (replay.py).
 """
 
 import argparse
@@ -32,15 +35,18 @@ from scripts.evaluation.benchmark import (
     select,
 )
 from scripts.evaluation.checkpoint import Checkpoint, CheckpointError, Header, checkpoint_path
+from scripts.evaluation.replay import ReplayClient, ReplayStore
 from scripts.evaluation.report import ROUTER, Report, Stamp, build_report, write_report
 from scripts.evaluation.run import (
     DEFAULT_RETRIES,
+    ClientWrap,
     OnText,
     Rig,
     TextRun,
     evaluate,
     live_rig,
     only_provider,
+    unwrapped,
 )
 from scripts.evaluation.score import summarize
 
@@ -49,7 +55,9 @@ DEFAULT_OUT = Path("eval/reports")
 SPLITS: tuple[Selection, ...] = ("dev", "test", "all")
 
 # How the live rig is made; tests pass a rig of fakes instead.
-RigFactory = Callable[[Catalog, RouterConfig, Tolerances, Use], AbstractAsyncContextManager[Rig]]
+RigFactory = Callable[
+    [Catalog, RouterConfig, Tolerances, Use, ClientWrap], AbstractAsyncContextManager[Rig]
+]
 
 
 class UsageError(Exception):
@@ -86,6 +94,21 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--gate", action="store_true", help="fail on a drop of more than 5 points")
     p.add_argument("--max-drop", type=float, default=gate.MAX_DROP_POINTS)
     p.add_argument("--update-baseline", action="store_true", help="accept this run as baseline")
+    replies = p.add_mutually_exclusive_group()
+    replies.add_argument(
+        "--replay",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="answer requests from replies saved in DIR; ask (and save) only the new ones",
+    )
+    replies.add_argument(
+        "--record",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="ask every request afresh and save the replies in DIR",
+    )
     p.add_argument(
         "--resume",
         action="store_true",
@@ -156,6 +179,7 @@ async def _evaluate(
     factory: RigFactory,
     retries: int,
     on_text: OnText,
+    wrap: ClientWrap = unwrapped,
 ) -> list[TextRun]:
     runs: list[TextRun] = []
 
@@ -163,9 +187,18 @@ async def _evaluate(
         on_text(run)
         runs.append(run)
 
-    async with factory(catalog, config, tolerances, use) as rig:
+    async with factory(catalog, config, tolerances, use, wrap) as rig:
         await evaluate(rig, texts, _stderr, retries=retries, on_text=keep)
     return runs
+
+
+def _replies(args: argparse.Namespace) -> tuple[ReplayStore | None, ClientWrap]:
+    directory: Path | None = args.replay or args.record
+    if directory is None:
+        return None, unwrapped
+    store = ReplayStore(_resolve(directory))
+    replay = args.replay is not None
+    return store, lambda client: ReplayClient(client, store, replay=replay)
 
 
 def _checkpoint(path: Path, header: Header, resume: bool) -> Checkpoint:
@@ -219,10 +252,19 @@ def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
     todo = [t for t in texts if t.id not in done]
     if done:
         _stderr(f"resuming {checkpoint.path.name}: {len(done)} of {len(texts)} texts already ran")
+    store, wrap = _replies(args)
     ran = (
         asyncio.run(
             _evaluate(
-                todo, catalog, config, tolerances, use, factory, args.retries, checkpoint.record
+                todo,
+                catalog,
+                config,
+                tolerances,
+                use,
+                factory,
+                args.retries,
+                checkpoint.record,
+                wrap,
             )
         )
         if todo
@@ -252,6 +294,13 @@ def main(argv: Sequence[str], factory: RigFactory = live_rig) -> int:
     checkpoint.remove()
     print(summary(report))
     print(f"wrote {json_path} and {md_path.name}")
+    if store is not None:
+        # Only a whole run knows which replies are still wanted.
+        removed = store.prune() if not (done or args.limit or args.provider) else 0
+        print(
+            f"model replies: {store.hits} replayed, {store.saved} asked and saved, "
+            f"{removed} unused removed ({store.directory})"
+        )
 
     baseline = _resolve(args.baseline) if args.baseline else claims.parent / "baseline.json"
     if args.update_baseline:
