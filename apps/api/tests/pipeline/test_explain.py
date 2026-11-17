@@ -25,8 +25,8 @@ from holdsup.pipeline.explain import (
     explain_message,
     invented_numbers,
     template_explanation,
-    written_numbers,
 )
+from holdsup.pipeline.numerals import written_numbers
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse
 from holdsup.verdict import Label, Verdict, cant_check, decide, load_tolerances

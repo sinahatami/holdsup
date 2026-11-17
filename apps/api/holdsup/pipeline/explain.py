@@ -5,7 +5,6 @@ a computed result (at the precision written). One retry names the offending numb
 second failure code writes the explanation itself, so a user never sees an invented number.
 """
 
-import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
@@ -17,6 +16,7 @@ from holdsup.fmt import fmt
 from holdsup.ops import OpRecord, parse_period, unit_scale
 from holdsup.ops.record import OpError
 from holdsup.pipeline.claim import ClaimSpec
+from holdsup.pipeline.numerals import written_numbers
 from holdsup.router import Router, Use
 from holdsup.verdict import Label, Verdict
 
@@ -27,44 +27,6 @@ LABEL_TEXT = {
     Label.PARTLY_SUPPORTED: "Partly supported",
     Label.CANT_CHECK: "Can't check",
 }
-
-_SCALE_WORDS = r"thousand|million|billion|trillion"
-# A numeral, optionally followed by a scale word: "1,660,000", "28.1", "-12", "1.7 trillion".
-_NUMERAL = re.compile(
-    rf"(?<![\w.])-?(\d{{1,3}}(?:,\d{{3}})+|\d+)(\.\d+)?(?:\s*({_SCALE_WORDS})s?\b)?",
-    re.IGNORECASE,
-)
-# Period labels written as dates, not quantities: "2024-Q1", "Q1 2024", "2024-S1", "2024-03".
-_PERIODS = re.compile(
-    r"\b\d{4}-(?:Q[1-4]|S[12])\b|\b(?:Q[1-4]|S[12])\b|\b\d{4}-(?:0[1-9]|1[0-2])\b",
-    re.IGNORECASE,
-)
-
-
-@dataclass(frozen=True)
-class Written:
-    """One numeral in a text, with how precisely it is written."""
-
-    text: str
-    value: float  # with the scale word applied ("1.7 trillion" → 1.7e12)
-    half_unit: float  # with the scale word applied
-
-
-def written_numbers(text: str) -> list[Written]:
-    out = []
-    for m in _NUMERAL.finditer(_PERIODS.sub(" ", text)):
-        grouped, frac, word = m.group(1), m.group(2) or "", m.group(3)
-        whole = grouped.replace(",", "")
-        number = float(whole + frac)
-        if frac:
-            half = 0.5 * 10.0 ** -(len(frac) - 1)
-        elif "," in grouped and (zeros := len(whole) - len(whole.rstrip("0"))):
-            half = 0.5 * 10.0**zeros  # "28,000" is a rounded figure; "2020" is a year
-        else:
-            half = 0.5
-        scale = unit_scale(word)
-        out.append(Written(m.group(0).strip(), number * scale, half * scale))
-    return out
 
 
 def allowed_numbers(
