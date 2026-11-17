@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from scripts.evaluation.cli import RigFactory, main
 from scripts.evaluation.report import Report
-from scripts.evaluation.run import Rig
+from scripts.evaluation.run import ClientWrap, Rig
 
 from holdsup.adapters.base import FetchedSeries, Filters
 from holdsup.catalog.schema import Catalog
@@ -27,11 +27,15 @@ def factory(
 
     @asynccontextmanager
     async def build(
-        catalog: Catalog, config: RouterConfig, tolerances: Tolerances, use: Use
+        catalog: Catalog,
+        config: RouterConfig,
+        tolerances: Tolerances,
+        use: Use,
+        wrap: ClientWrap,
     ) -> AsyncIterator[Rig]:
         if config_seen is not None:
             config_seen.append(config)
-        rig, _, _ = make_rig(fall_script() * texts, fetcher=fetcher)
+        rig, _, _ = make_rig(fall_script() * texts, fetcher=fetcher, wrap=wrap)
         yield rig
 
     return build
@@ -257,7 +261,11 @@ def test_a_baseline_cannot_come_from_a_run_that_judged_nothing(
 ) -> None:
     @asynccontextmanager
     async def no_keys(
-        catalog: Catalog, config: RouterConfig, tolerances: Tolerances, use: Use
+        catalog: Catalog,
+        config: RouterConfig,
+        tolerances: Tolerances,
+        use: Use,
+        wrap: ClientWrap,
     ) -> AsyncIterator[Rig]:
         rig, _, _ = make_rig([], keys=set())
         yield rig

@@ -5,10 +5,13 @@ end-to-end verdict accuracy drops by more than `MAX_DROP_POINTS`, and refuses to
 (`inconclusive`) when the run is not comparable or too much of it dropped out: a provider
 outage must not read as a pass. A run in which a step's first-choice model reached its daily
 limit is not comparable either: the fallback models answered, and the baseline is a measure of
-the first choices. With a small smoke set one claim is worth several points, so a single flip
+the first choices. Nor is one in which a per-minute limit sent a step to a fallback that then
+answered. A fallback that answers after the first choice's output was rejected still counts:
+that is the first choice failing, which the gate is there to catch. With a small smoke set one claim is worth several points, so a single flip
 can trip the gate; look at the report before updating the baseline.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
@@ -16,6 +19,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from scripts.evaluation.report import Report
+from scripts.evaluation.score import CallStats
 
 MAX_DROP_POINTS = 5.0
 MAX_EXCLUDED_SHARE = 0.2
@@ -57,6 +61,8 @@ def baseline_of(report: Report) -> Baseline:
         )
     if spent := first_choices_spent(report):
         raise ValueError(f"{_spent(spent)}: not a baseline worth keeping. Run it again.")
+    if limited := fallbacks_after_limits(report):
+        raise ValueError(f"{_limited(limited)}: not a baseline worth keeping. Run it again.")
     return Baseline(
         eval=report.versions.eval,
         benchmark=report.benchmark,
@@ -78,6 +84,29 @@ def first_choices_spent(report: Report) -> dict[str, list[str]]:
         if step in called and models and (first := models[0].split("/", 1)[0]) in spent:
             out.setdefault(first, []).append(step)
     return out
+
+
+def fallbacks_after_limits(report: Report) -> dict[str, list[str]]:
+    """Each first-choice provider a rate limit turned away in a step where another provider
+    then answered, with those steps: the answers there came from a fallback model."""
+    by_step: dict[str, dict[str, CallStats]] = defaultdict(dict)
+    for stats in report.metrics.cost.by_step_provider:
+        by_step[stats.step][stats.provider] = stats
+    out: dict[str, list[str]] = {}
+    for step, models in report.steps.items():  # models: "provider/model", first choice first
+        if not models or not (seen := by_step.get(step)):
+            continue
+        first = models[0].split("/", 1)[0]
+        limited = first in seen and seen[first].rate_limited > 0
+        answered = any(p != first and s.calls > s.failed for p, s in seen.items())
+        if limited and answered:
+            out.setdefault(first, []).append(step)
+    return out
+
+
+def _limited(limited: dict[str, list[str]]) -> str:
+    named = "; ".join(f"{p} (first choice for {', '.join(s)})" for p, s in limited.items())
+    return f"Rate limits turned away {named}, so fallback models answered"
 
 
 def _spent(spent: dict[str, list[str]]) -> str:
@@ -124,6 +153,12 @@ def check(
             Outcome.INCONCLUSIVE,
             f"{_spent(spent)}; the baseline measures the first choices, so this run cannot be "
             "compared with it. Run it again once the limits reset.",
+        )
+    if limited := fallbacks_after_limits(report):
+        return Gate(
+            Outcome.INCONCLUSIVE,
+            f"{_limited(limited)}; the baseline measures the first choices, so this run cannot "
+            "be compared with it. Run it again once the limits reset.",
         )
     drop = round((baseline.verdict_accuracy - accuracy) * 100, 6)
     summary = (
