@@ -29,7 +29,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from holdsup.catalog.schema import Frequency, IndicatorSpec
-from holdsup.checks.changepoints import ChangePoints, checks_endpoints, flag_text
+from holdsup.checks.changepoints import ChangePoints, endpoint_values, flag_text
 from holdsup.checks.cherry_pick import SWEPT_OPS, own_window, rerun
 from holdsup.fmt import fmt, signed, unit_suffix
 from holdsup.ops import (
@@ -131,12 +131,14 @@ def endpoints_check(inp: CheckInput) -> DistortionCheck | None:
     if inp.changepoints is None or len(inp.answer) != 1 or inp.series is None:
         return None
     record = inp.answer[0]
-    if not checks_endpoints(inp.claim, record, inp.series):
+    read = endpoint_values(inp.claim, record, inp.series)
+    if read is None:
         return None
+    unit = inp.series.unit if record.op == "trend" else record.unit  # a trend's is per year
     if inp.changepoints.flags:
-        text = "; ".join(flag_text(f, record.unit) for f in inp.changepoints.flags)
+        text = "; ".join(flag_text(f, unit) for f in inp.changepoints.flags)
         return DistortionCheck(kind=CheckKind.ENDPOINTS, flagged=True, text=text)
-    start, end = record.inputs[0].period, record.inputs[1].period
+    start, end = read[0], read[1]
     text = (
         f"neither the start ({start}) nor the end ({end}) is at a peak, a trough or a turn in "
         "the trend that carries the claim"

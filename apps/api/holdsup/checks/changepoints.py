@@ -8,7 +8,8 @@ Peaks and troughs come from `ops.extremes`.
 The flag: the claim's start or end is a peak or a trough, or within one period of a break, and
 that value carries the claim. With it replaced by the typical level around it, the claim's
 change goes the other way or shrinks by more than `changepoints.shrink`. A start or end that
-makes the change look smaller is never flagged, and neither is a level, a rank or a trend.
+makes the change look smaller is never flagged, and neither is a level or a rank. A trend is
+read from its first value to its last.
 """
 
 import math
@@ -18,6 +19,7 @@ import numpy as np
 import ruptures as rpt  # type: ignore[import-untyped]  # ships no type hints
 from pydantic import BaseModel
 
+from holdsup.checks.cherry_pick import own_window
 from holdsup.fmt import fmt, signed, unit_suffix
 from holdsup.ops import (
     ChangeKind,
@@ -27,7 +29,6 @@ from holdsup.ops import (
     Series,
     change_between,
     compound_rate,
-    parse_period,
     years_between,
 )
 from holdsup.ops.extremes import Extreme, extreme_at, noise_scale, typical_level
@@ -36,8 +37,9 @@ from holdsup.verdict.tolerances import Tolerances
 
 # Fewer values than this show no trend worth splitting.
 MIN_POINTS = 6
-# Operations whose answer depends on two values, so a start or end can carry it.
-FLAGGED_OPS = frozenset({"change", "cagr"})
+# Operations whose answer depends on two values, so a start or end can carry it. A trend is read
+# over its window: from its first value to its last, as an absolute change.
+FLAGGED_OPS = frozenset({"change", "cagr", "trend"})
 # Operations whose series the heatmap shows: their breaks are marked on its axes.
 SERIES_OPS = frozenset({"change", "cagr", "trend"})
 
@@ -104,11 +106,11 @@ def endpoint_flags(
 ) -> list[EndpointFlag]:
     """The claim's start and end that sit on a break or an extreme and carry the claim."""
     direction = claim.assertion.direction
-    if direction is None or not checks_endpoints(claim, record, series):
+    read = endpoint_values(claim, record, series)
+    if direction is None or read is None:
         return []
-    start, end = parse_period(record.inputs[0].period), parse_period(record.inputs[1].period)
+    start, end, a, b = read
     reach = tolerances.sweep.reach * series.frequency.per_year
-    a, b = record.inputs[0].value, record.inputs[1].value
     claimed = _rerun(record, a, b, start, end)
     flags = []
     for which, at in (("start", start), ("end", end)):
@@ -138,15 +140,25 @@ def endpoint_flags(
     return flags
 
 
-def checks_endpoints(claim: ClaimSpec, record: OpRecord, series: Series) -> bool:
-    """Whether the claim's start and end are looked at: a change or growth rate claimed to rise
-    or fall, read from the series at its own frequency."""
+def endpoint_values(
+    claim: ClaimSpec, record: OpRecord, series: Series
+) -> tuple[Period, Period, float, float] | None:
+    """The start and end the claim's answer leans on, and the series' values there; None when
+    they are not looked at: a change, growth rate or trend claimed to rise or fall, read from
+    the series at its own frequency, with a value at both ends."""
     if record.op not in FLAGGED_OPS or claim.assertion.direction not in (
         Direction.UP,
         Direction.DOWN,
     ):
-        return False
-    return parse_period(record.inputs[0].period).frequency is series.frequency
+        return None
+    try:
+        start, end = own_window(record, series)
+    except OpError:
+        return None
+    if record.op == "trend":
+        a, b = series.get(start), series.get(end)
+        return None if a is None or b is None else (start, end, a, b)
+    return start, end, record.inputs[0].value, record.inputs[1].value
 
 
 def flag_text(flag: EndpointFlag, unit: str | None) -> str:
@@ -173,6 +185,8 @@ def _rerun(record: OpRecord, a: float, b: float, start: Period, end: Period) -> 
     """The claim's change from `a` to `b` over its own window, by its own operation."""
     if record.op == "cagr":
         return compound_rate(a, b, years_between(start, end))
+    if record.op == "trend":
+        return change_between(a, b, ChangeKind.ABSOLUTE)
     return change_between(a, b, ChangeKind(str(record.args["kind"])))
 
 

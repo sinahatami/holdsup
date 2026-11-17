@@ -116,6 +116,37 @@ def test_a_steady_fall_passes_the_start_and_end_check() -> None:
     )
 
 
+def trend_endpoints(series: Series, end: str = "2023") -> DistortionCheck | None:
+    c = claim(type=AssertionType.TREND, direction=Direction.DOWN)
+    r = trend(series, "2015", end)
+    points = change_points(c, r, series, tolerances=TOL)
+    return endpoints_check(inp(c, "unemployment_rate_ilo", r, series, changepoints=points))
+
+
+def test_a_trend_starting_on_a_spike_is_flagged_in_the_series_unit() -> None:
+    check = trend_endpoints(SPIKE)
+    assert check is not None and check.kind is CheckKind.ENDPOINTS and check.flagged
+    c = claim(type=AssertionType.TREND, direction=Direction.DOWN)
+    points = change_points(c, trend(SPIKE, "2015", "2023"), SPIKE, tolerances=TOL)
+    assert points is not None
+    assert check.text == flag_text(points.flags[0], RATE)  # not "... per year", the trend's
+    assert "per year" not in check.text
+
+
+def test_a_steady_trend_passes_and_names_its_window() -> None:
+    check = trend_endpoints(STEADY)
+    assert check is not None and not check.flagged
+    # The window's ends, not the first two values the trend was fitted through.
+    assert check.text.startswith("neither the start (2015) nor the end (2023) is at a peak")
+
+
+def test_a_trend_with_no_value_at_its_end_has_no_start_and_end_check() -> None:
+    gap = annual({y: v for y, v in zip(range(2013, 2024), [7.0, 7.5, 11.9, 8.0, 7.9, 8.1, 8.3,
+                                                           8.4, 8.2, 8.0, 7.9], strict=True)
+                  if y != 2022}, RATE)  # fmt: skip
+    assert trend_endpoints(gap, end="2022") is None
+
+
 def test_a_level_has_no_start_and_end_check() -> None:
     c = claim(type=AssertionType.LEVEL, value=7.9, direction=None)
     r = value_at(STEADY, "2023")
