@@ -33,8 +33,8 @@ LIMITATIONS = (
         "(P4.7) is the honest check of its calibration."
     ),
     (
-        "About a hundred rows, most of them right: one claim moves the figures by about a point, "
-        "and the threshold can move with them."
+        "Few rows, most of them right, and many are one claim in two runs: one claim moves the "
+        "figures by about a point, and the threshold can move with them."
     ),
     (
         "Rows come from the runs named above; a run on backup models (a provider at its daily "
