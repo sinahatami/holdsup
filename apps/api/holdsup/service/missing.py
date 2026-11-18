@@ -44,6 +44,7 @@ def topic_key(phrase: str) -> str:
     return _NOT_WORD.sub(" ", phrase.casefold()).strip()
 
 
+# Any: each result is a stored CheckResult as JSON (read-only here).
 def summarize(results: Iterable[Mapping[str, Any]], limit: int = 20) -> Report:
     """Rank the topics of can't-check claims, most frequent first (ties: A to Z).
 

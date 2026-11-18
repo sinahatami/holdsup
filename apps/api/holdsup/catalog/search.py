@@ -15,7 +15,9 @@ CatalogSearch = Callable[[str, int], Awaitable[list[IndicatorHit]]]
 
 
 def vector_search(
-    index_search: Callable[[Sequence[float], int], Any], embedder: Embedder
+    # Any: hits as a list (in-memory index) or an awaitable of one (Postgres); see below.
+    index_search: Callable[[Sequence[float], int], Any],
+    embedder: Embedder,
 ) -> CatalogSearch:
     """Wrap an index's `search` (sync in memory, async in Postgres) as a phrase search."""
 

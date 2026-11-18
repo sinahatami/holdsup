@@ -9,11 +9,12 @@ themselves, so a copy cannot keep an old result alive past the ledger's age limi
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Protocol
+from typing import Protocol
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.ledger import LedgerEntry, LedgerStore
 from holdsup.pipeline.result import ClaimResult, Suggestion, Versions
 from holdsup.pipeline.trace import ModelUse
@@ -82,8 +83,8 @@ class StoredCheck:
     status: CheckStatus
     created_at: datetime
     finished_at: datetime | None = None
-    result: dict[str, Any] | None = None  # CheckResult as JSON
-    error: dict[str, Any] | None = None  # Problem as JSON
+    result: JsonObject | None = None  # CheckResult as JSON
+    error: JsonObject | None = None  # Problem as JSON
     cached_from: UUID | None = None
     featured: bool = False
 
@@ -109,7 +110,7 @@ class CheckStore(LedgerStore, Protocol):
         """The newest reports first."""
         ...
 
-    async def finished_results(self) -> list[dict[str, Any]]:
+    async def finished_results(self) -> list[JsonObject]:
         """The result (CheckResult as JSON) of every finished check that was computed, not copied
         from the ledger, so a claim asked again is not counted twice."""
         ...

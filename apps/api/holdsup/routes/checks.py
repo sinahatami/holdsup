@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncIterator, Mapping
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, StringConstraints
 
 from holdsup.catalog.schema import Theme
 from holdsup.config import get_settings
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
 from holdsup.problems import Problem, ProblemError, not_found, not_offered, unknown_claim
@@ -265,7 +266,7 @@ def _gallery_claim(c: ClaimResult, themes: Mapping[str, Theme] | None = None) ->
     )
 
 
-def _gallery_item(result: dict[str, Any], themes: Mapping[str, Theme]) -> GalleryItem:
+def _gallery_item(result: JsonObject, themes: Mapping[str, Theme]) -> GalleryItem:
     r = CheckResult.model_validate(result)
     return GalleryItem(
         id=r.id,

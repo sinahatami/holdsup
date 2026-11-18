@@ -14,9 +14,10 @@ import unicodedata
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Any, Protocol
+from typing import Protocol
 
 from holdsup.catalog.embed import Embedder
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.extract.numbers import numbers_in
 
 SIMILARITY_THRESHOLD = 0.95
@@ -100,7 +101,7 @@ def fingerprint(normalized: str) -> tuple[frozenset[float], frozenset[str]]:
 class LedgerEntry:
     normalized: str
     embedding: list[float]
-    result: dict[str, Any]  # the stored check result (JSON-able)
+    result: JsonObject  # the stored check result (JSON-able)
     created_at: datetime
 
 
@@ -187,7 +188,7 @@ class Ledger:
         [vector] = await asyncio.to_thread(self.embedder.embed, [normalized])
         return vector
 
-    async def entry(self, text: str, result: dict[str, Any]) -> LedgerEntry:
+    async def entry(self, text: str, result: JsonObject) -> LedgerEntry:
         """The entry `remember` would store, without storing it (a check store keeps it with
         the check's own row)."""
         normalized = normalize_text(text)
@@ -198,15 +199,15 @@ class Ledger:
             created_at=self.now(),
         )
 
-    async def remember(self, text: str, result: dict[str, Any]) -> LedgerEntry:
+    async def remember(self, text: str, result: JsonObject) -> LedgerEntry:
         entry = await self.entry(text, result)
         await self.store.add(entry)
         return entry
 
 
 async def check_with_ledger(
-    ledger: Ledger, text: str, check: Callable[[str], Awaitable[dict[str, Any]]]
-) -> tuple[dict[str, Any], LedgerHit | None]:
+    ledger: Ledger, text: str, check: Callable[[str], Awaitable[JsonObject]]
+) -> tuple[JsonObject, LedgerHit | None]:
     """The stored result on a hit (no model call), else run `check` and store its result."""
     if (hit := await ledger.lookup(text)) is not None:
         return hit.entry.result, hit
