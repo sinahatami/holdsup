@@ -1,4 +1,4 @@
-import { Eyebrow } from "@/components/atoms/eyebrow";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { RecheckList } from "@/components/molecules/recheck-list";
 import type { ClaimResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
@@ -22,9 +22,7 @@ export function RecheckOptions({
   const headingId = `recheck-${c.index}`;
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <Eyebrow as="h3" id={headingId}>
-        {t.heading}
-      </Eyebrow>
+      <SectionTitle id={headingId}>{t.heading}</SectionTitle>
       <p className="text-muted-foreground text-sm leading-6">{t.intro}</p>
       <RecheckList
         checkId={checkId}

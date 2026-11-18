@@ -62,7 +62,8 @@
 :root {
   /* The edited denominator: ink on paper. Blue is the official record and the one main
      action; the red "pen" is only for notes about the claim. */
-  --radius: 0.375rem;
+  /* Paper has corners: a sliver of rounding, so cards and buttons read as cut sheets. */
+  --radius: 0.125rem;
   --brand: oklch(0.45 0.17 265);
   --brand-2: oklch(0.45 0.17 265);
   --pen: oklch(0.5 0.18 27);
@@ -184,23 +185,20 @@
     --v-cant-bg: oklch(0.3 0.02 255);
   }
 }
-/* The series chart (P3.5): blue dots for the values the check used, orange hollow diamonds for
-   the values the claim states. Shape tells them apart as well as hue; the band is a light tint. */
+/* The series chart: the official record in blue (line and filled dots), the claim's own figures
+   circled in the editor's pen. Shape tells them apart as well as hue: a filled dot against an
+   open ring. The claimed window is a light blue tint. */
 :root {
-  --chart-used: oklch(0.5 0.14 250);
-  --chart-claimed: oklch(0.56 0.15 50);
-  --chart-window: oklch(0.94 0.025 250);
+  --chart-used: var(--brand);
+  --chart-claimed: var(--pen);
+  --chart-window: oklch(0.935 0.03 265);
 }
 .dark {
-  --chart-used: oklch(0.66 0.13 250);
-  --chart-claimed: oklch(0.67 0.14 58);
-  --chart-window: oklch(0.32 0.04 255);
+  --chart-window: oklch(0.31 0.045 265);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --chart-used: oklch(0.66 0.13 250);
-    --chart-claimed: oklch(0.67 0.14 58);
-    --chart-window: oklch(0.32 0.04 255);
+    --chart-window: oklch(0.31 0.045 265);
   }
 }
 /* The cherry-pick heatmap (P3.2): blue where the claim's direction holds, orange with a hatch
@@ -374,32 +372,6 @@ html {
     opacity: 0;
     transform: translateY(28px) scale(0.98);
   }
-}
-
-/* ---------- Button shine ---------- */
-.shine {
-  position: relative;
-  overflow: hidden;
-}
-.shine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    oklch(1 0 0 / 0.35) 50%,
-    transparent 65%
-  );
-  transform: translateX(-120%);
-  transition: transform 0.7s ease;
-}
-.shine:hover::after {
-  transform: translateX(120%);
-}
-.shine:disabled::after,
-.shine[aria-disabled="true"]::after {
-  display: none;
 }
 
 /* ---------- Custom cursor ---------- */

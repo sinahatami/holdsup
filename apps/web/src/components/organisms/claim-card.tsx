@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
-import { Eyebrow } from "@/components/atoms/eyebrow";
 import { MarkedQuote } from "@/components/atoms/marked-quote";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { ClaimVerdict } from "@/components/molecules/claim-verdict";
+import { MarginNotes } from "@/components/molecules/margin-notes";
 import { NeutralityNote } from "@/components/molecules/neutrality-note";
 import { CantCheckHelp } from "@/components/organisms/cant-check-help";
+import { ClaimDenominator } from "@/components/organisms/claim-denominator";
 import { FramingChecks } from "@/components/organisms/framing-checks";
 import { Receipt } from "@/components/organisms/receipt";
 import { RecheckOptions } from "@/components/organisms/recheck-options";
@@ -12,12 +14,17 @@ import { SeriesChart } from "@/components/organisms/series-chart";
 import { WindowHeatmap } from "@/components/organisms/window-heatmap";
 import type { CheckResult, ClaimResult } from "@/lib/api/client";
 import { shownLabel } from "@/lib/confidence";
+import { marginNotes } from "@/lib/receipt";
 import { chartOf } from "@/lib/series-chart";
 import { strings } from "@/lib/strings";
 
 type Models = NonNullable<CheckResult["models"]>;
 
-/** One checked claim: the quote, the verdict, why, the data, other time windows, the framing checks, the receipt, and other statistics to re-check with. */
+/**
+ * One checked claim, as an edited sheet: the quote with its verdict stamped on it and the
+ * editor's notes in the margin, the claim over its denominator, why, the data, other time
+ * windows, the framing checks, the receipt, and other statistics to re-check with.
+ */
 export function ClaimCard({
   claim: c,
   versions,
@@ -41,31 +48,30 @@ export function ClaimCard({
   return (
     <article
       data-verdict={shownLabel(c)}
-      className="glass rise relative flex flex-col gap-5 overflow-hidden rounded-3xl p-6 shadow-(--shadow-lift) sm:p-8"
+      className="glass rise relative flex flex-col gap-10 p-6 shadow-(--shadow-lift) sm:p-10"
       style={{ "--i": order } as CSSProperties}
       aria-label={c.claim.quote}
     >
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-1.5"
-        style={{ background: "var(--v)" }}
-      />
       <h2 className="sr-only">{strings.check.claimOf(order + 1, total)}</h2>
-      <blockquote className="font-heading text-[1.75rem] leading-[1.35] text-balance sm:text-[2rem]">
-        <MarkedQuote text={c.claim.quote} />
-      </blockquote>
-      <ClaimVerdict claim={c} />
-      {c.claim.speaker && <NeutralityNote />}
-      <p className="text-muted-foreground">{c.verdict.reason}</p>
+      {/* The sheet, then its margin: beside it from lg up, under it on a phone. */}
+      <div className="grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_14rem]">
+        <div className="flex flex-col gap-5">
+          <blockquote className="font-heading text-[1.875rem] leading-[1.3] text-balance sm:text-[2.375rem]">
+            <MarkedQuote text={c.claim.quote} />
+          </blockquote>
+          <ClaimVerdict claim={c} />
+          {c.claim.speaker && <NeutralityNote />}
+          <p className="text-muted-foreground">{c.verdict.reason}</p>
+        </div>
+        <MarginNotes notes={marginNotes(c)} />
+      </div>
+      <ClaimDenominator claim={c} />
       {c.explanation && (
-        <section
-          aria-labelledby={whyId}
-          className="bg-muted/60 rounded-2xl p-5"
-        >
-          <Eyebrow as="h3" id={whyId} className="mb-2">
+        <section aria-labelledby={whyId} className="flex flex-col gap-2">
+          <SectionTitle id={whyId}>
             {strings.check.explanationHeading}
-          </Eyebrow>
-          <p className="leading-7">{c.explanation}</p>
+          </SectionTitle>
+          <p className="max-w-prose text-lg leading-8">{c.explanation}</p>
         </section>
       )}
       {chart && <SeriesChart chart={chart} />}

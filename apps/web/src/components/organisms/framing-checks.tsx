@@ -1,4 +1,4 @@
-import { Eyebrow } from "@/components/atoms/eyebrow";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { FramingCheckRow } from "@/components/molecules/framing-check-row";
 import type { ClaimResult } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
@@ -20,9 +20,7 @@ export function FramingChecks({ claim }: { claim: ClaimResult }) {
   const id = `framing-${claim.index}`;
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3">
-      <Eyebrow as="h3" id={id}>
-        {t.heading}
-      </Eyebrow>
+      <SectionTitle id={id}>{t.heading}</SectionTitle>
       <p className="text-muted-foreground text-sm">{t.intro}</p>
       <ul className="flex flex-col gap-3">
         {ordered.map((check) => (

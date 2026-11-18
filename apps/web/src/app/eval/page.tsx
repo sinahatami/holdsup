@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { BackLink } from "@/components/molecules/back-link";
 import { BenchmarkRuns } from "@/components/organisms/benchmark-runs";
 import { HeadToHead } from "@/components/organisms/head-to-head";
@@ -38,12 +39,13 @@ export default async function Page() {
             aria-labelledby="head-to-head-heading"
             className="flex flex-col gap-8"
           >
-            <h2
+            <SectionTitle
+              as="h2"
               id="head-to-head-heading"
-              className="text-2xl font-bold tracking-tight"
+              className="text-3xl"
             >
               {t.headToHead.heading}
-            </h2>
+            </SectionTitle>
             {comparisons.map((c) => (
               <HeadToHead key={c.split} comparison={c} />
             ))}
@@ -53,9 +55,9 @@ export default async function Page() {
       )}
       {benchmark !== null && benchmark.runs.length > 0 && (
         <section aria-labelledby="runs-heading" className="flex flex-col gap-4">
-          <h2 id="runs-heading" className="text-2xl font-bold tracking-tight">
+          <SectionTitle as="h2" id="runs-heading" className="text-3xl">
             {t.runs.heading}
-          </h2>
+          </SectionTitle>
           <p className="text-muted-foreground leading-7">{t.runs.intro}</p>
           <BenchmarkRuns runs={benchmark.runs} />
         </section>
@@ -65,17 +67,17 @@ export default async function Page() {
           aria-labelledby="models-heading"
           className="flex flex-col gap-4"
         >
-          <h2 id="models-heading" className="text-2xl font-bold tracking-tight">
+          <SectionTitle as="h2" id="models-heading" className="text-3xl">
             {t.models.heading}
-          </h2>
+          </SectionTitle>
           <p className="text-muted-foreground leading-7">{t.models.intro}</p>
           <ModelReports reports={benchmark.models} />
         </section>
       )}
       <section aria-labelledby="limits-heading" className="flex flex-col gap-4">
-        <h2 id="limits-heading" className="text-2xl font-bold tracking-tight">
+        <SectionTitle as="h2" id="limits-heading" className="text-3xl">
           {t.limits.heading}
-        </h2>
+        </SectionTitle>
         <ul className="flex list-disc flex-col gap-2 ps-6 leading-7">
           {t.limits.items.map((item) => (
             <li key={item}>{item}</li>

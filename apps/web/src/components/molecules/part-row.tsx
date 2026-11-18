@@ -1,4 +1,5 @@
 import { CheckCircle2, CircleSlash } from "lucide-react";
+import { StatusChip } from "@/components/atoms/status-chip";
 import type { PartView } from "@/lib/receipt";
 import { strings } from "@/lib/strings";
 
@@ -21,7 +22,7 @@ function Figure({ label, value }: { label: string; value: string }) {
 export function PartRow({ part }: { part: PartView }) {
   const Icon = part.holds ? CheckCircle2 : CircleSlash;
   return (
-    <li className="bg-muted/50 flex flex-col gap-2 rounded-xl border p-3">
+    <li className="bg-card flex flex-col gap-2 border p-4">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="font-medium">
           {part.label}
@@ -32,14 +33,12 @@ export function PartRow({ part }: { part: PartView }) {
             </span>
           )}
         </p>
-        <span
-          data-verdict={part.holds ? "supported" : "not_supported"}
-          style={{ color: "var(--v)", background: "var(--vbg)" }}
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold"
+        <StatusChip
+          verdict={part.holds ? "supported" : "not_supported"}
+          icon={Icon}
         >
-          <Icon className="size-4" aria-hidden />
           {part.holds ? t.holds : t.fails}
-        </span>
+        </StatusChip>
       </div>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
         <Figure label={t.claimed} value={part.claimed} />

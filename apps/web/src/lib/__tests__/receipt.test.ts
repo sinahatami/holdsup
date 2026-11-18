@@ -5,14 +5,17 @@ import {
   claimReading,
   comparison,
   decidingOp,
+  denominatorOf,
   framingPercent,
   windowsCompared,
   hasMoreThanQuotes,
   headlineFigure,
+  marginNotes,
   opGloss,
   sourceLinks,
   stopCause,
 } from "@/lib/receipt";
+import { strings } from "@/lib/strings";
 import {
   checkResult,
   holdingClaim,
@@ -192,6 +195,59 @@ describe("comparison", () => {
 
   it("is empty when nothing was compared", () => {
     expect(comparison(unmatchedClaim)).toEqual([]);
+  });
+});
+
+describe("marginNotes", () => {
+  const t = strings.claim.margin;
+
+  it("says each compared part in a few words: the direction, then each figure by its year", () => {
+    expect(marginNotes(holdingClaim)).toEqual([
+      t.direction("-4.34 points", true),
+      t.figure("2015", "12.02%", true),
+      t.figure("2023", "7.68%", true),
+    ]);
+  });
+
+  it("adds a word on framing when the verdict says it matters", () => {
+    const framing: ClaimResult = {
+      ...holdingClaim,
+      verdict: { ...holdingClaim.verdict, label: "supported_framing_matters" },
+    };
+    expect(marginNotes(framing).at(-1)).toBe(t.framing);
+  });
+
+  it("has nothing to say about a claim that could not be checked", () => {
+    expect(marginNotes(unmatchedClaim)).toEqual([]);
+  });
+});
+
+describe("denominatorOf", () => {
+  it("sets a from-to claim over the official start and end, with where and when they are for", () => {
+    const d = denominatorOf(holdingClaim);
+    expect(d).toMatchObject({
+      claimed: ["11.9%", "7.7%"],
+      official: ["12.02%", "7.68%"],
+      unstated: [],
+      where: "Italy · 2015 to 2023",
+    });
+    expect(d?.source).toMatch(/une_rt_m/);
+  });
+
+  it("names what the claim left out, which HoldsUp filled in", () => {
+    const vague: ClaimResult = {
+      ...holdingClaim,
+      claim: {
+        ...holdingClaim.claim,
+        geo_basis: "inferred",
+        start_basis: "lookback",
+      },
+    };
+    expect(denominatorOf(vague)?.unstated).toEqual(["place", "period"]);
+  });
+
+  it("is null for a claim with no figure to set over the official one", () => {
+    expect(denominatorOf(unmatchedClaim)).toBeNull();
   });
 });
 

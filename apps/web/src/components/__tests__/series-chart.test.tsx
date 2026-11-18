@@ -53,8 +53,9 @@ describe("SeriesChart", () => {
       "2015",
       "2023",
     ]);
-    // Each claimed value has its allowed gap as a bar and a hollow diamond.
-    expect(claimed[0].querySelectorAll("path")).toHaveLength(2);
+    // Each claimed value has its allowed gap as a bar and an open ring in pen.
+    expect(claimed[0].querySelectorAll("path")).toHaveLength(1);
+    expect(claimed[0].querySelector("circle")).toHaveAttribute("fill", "none");
     expect(screen.queryByTestId("chart-fit")).toBeNull();
   });
 

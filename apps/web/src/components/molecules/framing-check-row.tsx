@@ -1,3 +1,4 @@
+import { StatusChip } from "@/components/atoms/status-chip";
 import { verdictIcon } from "@/components/atoms/verdict-badge";
 import type { DistortionCheck } from "@/lib/api/client";
 import { strings } from "@/lib/strings";
@@ -18,17 +19,12 @@ export function FramingCheckRow({ check }: { check: DistortionCheck }) {
   const label = check.flagged ? "supported_framing_matters" : "supported";
   const Icon = verdictIcon[label];
   return (
-    <li className="bg-muted/50 flex flex-col gap-2 rounded-xl border p-3">
+    <li className="bg-card flex flex-col gap-2 border p-4">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="font-medium">{t.kinds[check.kind]}</p>
-        <span
-          data-verdict={label}
-          style={{ color: "var(--v)", background: "var(--vbg)" }}
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm font-semibold"
-        >
-          <Icon className="size-4" aria-hidden />
+        <StatusChip verdict={label} icon={Icon}>
           {check.flagged ? t.flagged : t.passed}
-        </span>
+        </StatusChip>
       </div>
       <p className="text-muted-foreground text-sm leading-6">
         {sentence(check.text)}

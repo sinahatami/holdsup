@@ -64,11 +64,11 @@ export function OperationItem({
   const flags = op.flags ?? [];
   const gloss = opGloss(op);
   return (
-    <li className="bg-muted/50 flex flex-col gap-2 rounded-xl border p-3">
+    <li className="bg-card flex flex-col gap-2 border p-4">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="font-semibold">{t.step(step)}</span>
         {decides && (
-          <span className="bg-background rounded-full border px-2 py-0.5 text-xs font-medium">
+          <span className="border-foreground/60 border px-2 py-0.5 text-xs font-semibold tracking-wide uppercase">
             {t.decides}
           </span>
         )}

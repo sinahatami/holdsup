@@ -10,7 +10,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { Eyebrow } from "@/components/atoms/eyebrow";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { formatAmount, formatPeriod, placeName } from "@/lib/format";
 import {
   describePoint,
@@ -43,7 +43,7 @@ const DIGIT = 6.6;
 
 /**
  * The series the check read, as a line over time: the claim's window shaded, the values the
- * check used as dots, the values the claim states as hollow diamonds with their allowed gap,
+ * check used as blue dots, the values the claim states as open rings in pen with their allowed gap,
  * and a trend's fitted line. Every number comes from the API; the scales only place them.
  * The picture is for the eye; the focusable frame takes the arrow keys and says each value
  * in words, and the table holds every value with its notes.
@@ -115,9 +115,7 @@ export function SeriesChart({ chart }: { chart: Chart }) {
 
   return (
     <section aria-labelledby={ids.heading} className="flex flex-col gap-3">
-      <Eyebrow as="h3" id={ids.heading}>
-        {t.heading}
-      </Eyebrow>
+      <SectionTitle id={ids.heading}>{t.heading}</SectionTitle>
       <p className="leading-7">
         {t.summary(
           placeName(chart.geo),
@@ -240,10 +238,15 @@ export function SeriesChart({ chart }: { chart: Chart }) {
                     className="stroke-(--chart-claimed)"
                   />
                 )}
-                <path
-                  d={`M${cx},${cy - 6}l6,6l-6,6l-6,-6z`}
+                {/* An open ring in pen, as an editor circles a figure: around the official
+                    dot when they match, apart from it when they do not. */}
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r="8"
+                  fill="none"
                   strokeWidth="2"
-                  className="fill-background stroke-(--chart-claimed)"
+                  className="stroke-(--chart-claimed)"
                 />
               </g>
             );
@@ -313,7 +316,7 @@ export function SeriesChart({ chart }: { chart: Chart }) {
         {chart.claimed.length > 0 && (
           <Key
             swatch={
-              <span className="size-2.5 rotate-45 border-2 border-(--chart-claimed)" />
+              <span className="size-3 rounded-full border-2 border-(--chart-claimed)" />
             }
           >
             {t.legend.claimed}
