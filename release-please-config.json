@@ -5,6 +5,7 @@
   "include-v-in-tag": true,
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": false,
+  "initial-version": "0.1.0",
   "changelog-path": "CHANGELOG.md",
   "packages": {
     ".": {
@@ -20,6 +21,11 @@
           "type": "toml",
           "path": "apps/api/pyproject.toml",
           "jsonpath": "$.project.version"
+        },
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='holdsup')].version"
         }
       ]
     }
