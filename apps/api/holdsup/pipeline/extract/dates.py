@@ -69,7 +69,11 @@ def normalize_period(period: str | None, *, allow_latest: bool = False) -> str |
 @dataclass(frozen=True)
 class SaidOn:
     text: str | None  # as normalized: "YYYY", "YYYY-MM", "YYYY-MM-DD"; None if unknown
-    by: date  # latest day it can have been said (today when unknown)
+    # Latest day it can have been said (today when unknown). A year alone is read as its last day,
+    # and "latest" is then the last period published by the end of that year. Reading it at
+    # mid-year instead was tried (P4.7) and gave a claim the fact-check found right (c006, Italy's
+    # debt at 133% of GDP, said in 2013) the figure for 2013-Q1 (129.7), not 2013-Q2 (132.6).
+    by: date
 
 
 def parse_said_on(said_on: str | None, today: date) -> SaidOn:

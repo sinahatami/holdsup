@@ -118,10 +118,12 @@ def _as_of(
         if cut is None or full is None or cut.last == full.last:
             return []
         months = f"{lag} month{'s' if lag != 1 else ''}"
+        said_on = ctx.claim.said_on or ""
+        read_as = " (a year alone is read as 31 December)" if len(said_on) == 4 else ""
         return [
             Flag(
                 code=FlagCode.AS_OF,
-                detail=f"claim date {ctx.claim.said_on}: latest is the last period published by "
+                detail=f"claim date {said_on}{read_as}: latest is the last period published by "
                 f"then, {cut.last} (a release about {months} after a period ends); its value is "
                 "today's revised figure, which may differ from the one first published",
                 requested="latest",
