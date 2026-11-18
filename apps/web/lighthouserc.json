@@ -11,7 +11,7 @@
       "assertMatrix": [
         {
           "matchingUrlPattern": "^http://127\\.0\\.0\\.1:3200/$",
-          "aggregationMethod": "median-run",
+          "aggregationMethod": "median",
           "assertions": {
             "categories:performance": [
               "error",
