@@ -4,6 +4,7 @@ import { RotateCw } from "lucide-react";
 import { pill } from "@/components/atoms/pill";
 import { useCountdown } from "@/hooks/use-countdown";
 import { useSubmitCheck } from "@/hooks/use-submit-check";
+import { shortWait } from "@/lib/format";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export function RetryButton({
           className={cn("size-4", busy && "motion-safe:animate-spin")}
           aria-hidden
         />
-        {wait > 0 ? t.retryIn(wait) : t.retry}
+        {wait > 0 ? t.retryIn(shortWait(wait)) : t.retry}
       </button>
       {error && (
         <p role="alert" className="text-destructive text-sm font-medium">

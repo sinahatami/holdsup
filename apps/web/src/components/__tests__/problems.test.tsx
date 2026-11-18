@@ -16,6 +16,7 @@ import { CheckReport } from "@/components/organisms/check-report";
 import type { CheckState } from "@/hooks/use-check";
 import { useCheck } from "@/hooks/use-check";
 import {
+  AT_CAPACITY_TYPE,
   ApiError,
   browserApi,
   type ApiClient,
@@ -33,6 +34,14 @@ const problem = (status: number, over: Partial<Problem> = {}): Problem => ({
   title: "Title",
   status,
   ...over,
+});
+/** What the API sends when every provider is busy: its detail carries its own wait. */
+const atCapacity = problem(503, {
+  type: AT_CAPACITY_TYPE,
+  title: "At capacity",
+  detail:
+    "Every free model provider is busy or out of quota. Try again in about 10 minutes.",
+  retry_after: 600,
 });
 
 beforeEach(() => push.mockReset());
@@ -60,8 +69,24 @@ describe("ProblemAlert", () => {
       />,
     );
     expect(screen.getByText("Too many.")).toBeInTheDocument();
-    expect(screen.getByText(strings.check.retryAfter(30))).toBeInTheDocument();
+    expect(
+      screen.getByText(strings.check.retryAfter("about 30 seconds")),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Do it" })).toBeInTheDocument();
+  });
+
+  it("at capacity, says so in its own words and when HoldsUp is back, once", () => {
+    render(<ProblemAlert problem={atCapacity} />);
+    expect(
+      screen.getByRole("heading", { name: t.heading.at_capacity }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(t.capacity.body)).toBeInTheDocument();
+    expect(
+      screen.getByText(t.capacity.backIn("about 10 minutes")),
+    ).toBeInTheDocument();
+    // The API's own detail has its wait in it too; it is not shown beside the page's.
+    expect(screen.queryByText(/out of quota/)).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).not.toHaveTextContent(/seconds/);
   });
 });
 
@@ -81,14 +106,25 @@ describe("RetryButton", () => {
     render(<RetryButton text="x" retryAfter={3} />);
     const button = () => screen.getByRole("button");
     expect(button()).toBeDisabled();
-    expect(button()).toHaveTextContent(t.retryIn(3));
+    expect(button()).toHaveTextContent(t.retryIn("3 s"));
     act(() => vi.advanceTimersByTime(1000));
-    expect(button()).toHaveTextContent(t.retryIn(2));
+    expect(button()).toHaveTextContent(t.retryIn("2 s"));
     act(() => vi.advanceTimersByTime(1000));
-    expect(button()).toHaveTextContent(t.retryIn(1));
+    expect(button()).toHaveTextContent(t.retryIn("1 s"));
     act(() => vi.advanceTimersByTime(1000));
     expect(button()).toBeEnabled();
     expect(button()).toHaveTextContent(t.retry);
+  });
+
+  it("counts a long wait down in minutes, not thousands of seconds", () => {
+    vi.useFakeTimers();
+    render(<RetryButton text="x" retryAfter={600} />);
+    const button = () => screen.getByRole("button");
+    expect(button()).toHaveTextContent(t.retryIn("10 min"));
+    // The countdown sets its next timer after each render, so time moves a second at a time.
+    for (let i = 0; i < 61; i++) act(() => vi.advanceTimersByTime(1000));
+    expect(button()).toHaveTextContent(t.retryIn("9 min"));
+    expect(button()).toBeDisabled();
   });
 
   it("says why when the new try fails too, and can be pressed again", async () => {
@@ -98,7 +134,7 @@ describe("RetryButton", () => {
     render(<RetryButton text="x" />);
     fireEvent.click(screen.getByRole("button"));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      `Hourly limit. ${strings.check.retryAfter(20)}`,
+      `Hourly limit. ${strings.check.retryAfter("about 20 seconds")}`,
     );
     expect(screen.getByRole("button")).toBeEnabled();
   });
@@ -118,6 +154,27 @@ describe("CheckReport when something goes wrong", () => {
   it("offers to try the same text again after a failure that trying again can fix", () => {
     render(<CheckReport state={state({ error: problem(503) })} />);
     expect(screen.getByRole("button", { name: t.retry })).toBeInTheDocument();
+  });
+
+  it("at capacity, shows the checks done earlier below the problem, and a retry", () => {
+    render(
+      <CheckReport
+        state={state({ error: atCapacity })}
+        whileYouWait={<p>earlier checks</p>}
+      />,
+    );
+    expect(screen.getByText("earlier checks")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Try again in/ })).toBeDisabled();
+  });
+
+  it("keeps the earlier checks for at capacity, not for any other failure", () => {
+    render(
+      <CheckReport
+        state={state({ error: problem(503) })}
+        whileYouWait={<p>earlier checks</p>}
+      />,
+    );
+    expect(screen.queryByText("earlier checks")).not.toBeInTheDocument();
   });
 
   it("does not offer it for a text the API refused as it is", () => {

@@ -6,7 +6,9 @@ import {
   formatPeriod,
   formatTimestamp,
   placeName,
+  shortWait,
   sourceName,
+  waitText,
   withUnit,
 } from "@/lib/format";
 
@@ -129,5 +131,27 @@ describe("withUnit", () => {
     );
     expect(withUnit("8", null)).toBe("8");
     expect(withUnit("8", "")).toBe("8");
+  });
+});
+
+describe("waitText", () => {
+  it("rounds a wait up to what a reader needs", () => {
+    expect(waitText(0.2)).toBe("about 1 second");
+    expect(waitText(14.2)).toBe("about 15 seconds");
+    expect(waitText(61)).toBe("about 2 minutes");
+    expect(waitText(7900)).toBe("about 2 hours");
+    expect(waitText(3600)).toBe("about 1 hour");
+  });
+});
+
+describe("shortWait", () => {
+  it("counts seconds under a minute, then minutes, then hours, always rounded up", () => {
+    expect(shortWait(0.2)).toBe("1 s");
+    expect(shortWait(59)).toBe("59 s");
+    expect(shortWait(60)).toBe("1 min");
+    expect(shortWait(61)).toBe("2 min");
+    expect(shortWait(3599)).toBe("60 min");
+    expect(shortWait(3600)).toBe("1 h");
+    expect(shortWait(3601)).toBe("2 h");
   });
 });

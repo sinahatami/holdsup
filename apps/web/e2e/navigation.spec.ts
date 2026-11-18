@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { axeViolations } from "./axe";
+import { DONE_ID, UNSURE_ID } from "./ids";
 
 const PAGES = [
   { name: "What it can check", url: /\/indicators$/ },
@@ -93,4 +94,30 @@ test("on a desktop the header shows the pages and no menu button", async ({
   await expect(
     page.getByRole("button", { name: "Open the menu" }),
   ).toBeHidden();
+});
+
+test.describe("every page on a 360px phone", () => {
+  test.use({ viewport: { width: 360, height: 740 } });
+
+  // A finished receipt (chart, window heatmap, tables) is the widest thing the site draws.
+  for (const path of [
+    "/",
+    `/check/${DONE_ID}`,
+    `/check/${UNSURE_ID}`,
+    "/recent",
+    "/indicators",
+    "/methodology",
+    "/eval",
+    "/status",
+    "/about",
+  ]) {
+    test(`${path} fits without scrolling sideways`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  }
 });

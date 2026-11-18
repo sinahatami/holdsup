@@ -150,3 +150,23 @@ const localMoment = new Intl.DateTimeFormat(strings.locale, {
 export function formatLocalMoment(epochMs: number): string {
   return localMoment.format(new Date(epochMs));
 }
+
+/** A wait in words, rounded up to what a reader needs: "about 15 seconds", "about 3 hours". */
+export function waitText(seconds: number): string {
+  const w = strings.wait;
+  if (seconds < 60) return w.seconds(Math.max(1, Math.ceil(seconds)));
+  if (seconds < 3600) return w.minutes(Math.ceil(seconds / 60));
+  return w.hours(Math.round(seconds / 3600));
+}
+
+/**
+ * A wait as a button counting it down shows it: whole seconds under a minute, then minutes
+ * rounded up, then hours rounded up, so it never reads 0 before the wait is over.
+ */
+export function shortWait(seconds: number): string {
+  const w = strings.wait.short;
+  const s = Math.max(1, Math.ceil(seconds));
+  if (s < 60) return w.seconds(s);
+  if (s < 3600) return w.minutes(Math.ceil(s / 60));
+  return w.hours(Math.ceil(s / 3600));
+}

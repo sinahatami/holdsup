@@ -1,4 +1,5 @@
 import { WifiOff } from "lucide-react";
+import type { ReactNode } from "react";
 import { StatusText } from "@/components/atoms/status-text";
 import { Notice } from "@/components/molecules/notice";
 import { ProblemAlert } from "@/components/molecules/problem-alert";
@@ -7,20 +8,24 @@ import { CheckResultView } from "@/components/organisms/check-result";
 import { ProgressSteps } from "@/components/organisms/progress-steps";
 import { Trace } from "@/components/organisms/trace";
 import type { CheckState } from "@/hooks/use-check";
-import { isRetryable } from "@/lib/api/client";
+import { isRetryable, problemKind } from "@/lib/api/client";
 import { progressOf } from "@/lib/progress";
 import { strings } from "@/lib/strings";
 
 /**
  * Everything known about a check so far: status, problems, the trace, the result.
  * `onReconnect` follows the check again after its live connection was lost.
+ * `whileYouWait` is shown under the problem when HoldsUp is at capacity (the page fills it
+ * with checks done earlier).
  */
 export function CheckReport({
   state,
   onReconnect,
+  whileYouWait,
 }: {
   state: CheckState;
   onReconnect?: () => void;
+  whileYouWait?: ReactNode;
 }) {
   const { loading, text, trace, result, error, connectionLost } = state;
   // A check being followed live shows its progress; one that was read whole has no trace to show.
@@ -38,6 +43,7 @@ export function CheckReport({
           }
         />
       )}
+      {error && problemKind(error) === "at_capacity" && whileYouWait}
       {connectionLost && !result && (
         <Notice icon={WifiOff}>
           {strings.check.connectionLost}

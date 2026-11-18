@@ -22,9 +22,9 @@ def test_read_claims_skips_comments_and_blank_lines(tmp_path: Path) -> None:
     assert read_claims(path) == ["First claim 5%.", "Second claim 7%."]
 
 
-def test_the_curated_list_has_ten_claims() -> None:
+def test_the_curated_list_has_twenty_claims() -> None:
     claims = read_claims(REPO_ROOT / "eval" / "gallery_claims.txt")
-    assert len(claims) == 10 and len(set(claims)) == 10
+    assert len(claims) == 20 and len(set(claims)) == 20
     assert all(len(c) <= 2000 for c in claims)
 
 
