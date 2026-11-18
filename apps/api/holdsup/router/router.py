@@ -18,7 +18,13 @@ from pydantic import BaseModel, ValidationError
 
 from holdsup.router.breaker import CircuitBreaker
 from holdsup.router.budgets import Budgets, InMemoryUsageStore, UsageStore, budget_cap
-from holdsup.router.client import ChatRequest, ChatResponse, SupportsChat, ToolCall
+from holdsup.router.client import (
+    AnswersFromStore,
+    ChatRequest,
+    ChatResponse,
+    SupportsChat,
+    ToolCall,
+)
 from holdsup.router.clock import Clock, SystemClock, next_utc_midnight
 from holdsup.router.config import Capability, ProviderConfig, RouterConfig, Use
 from holdsup.router.errors import (
@@ -72,6 +78,10 @@ class Router:
     ) -> None:
         self.config = config
         self._client = client
+        # Set only for a client that can answer from saved replies (the evaluation's replay).
+        self._answers_from_store = (
+            client.answers_from_store if isinstance(client, AnswersFromStore) else None
+        )
         self._clock = clock or SystemClock()
         self._sleep = sleep
         self._last_call: dict[str, float] = {}
@@ -257,8 +267,10 @@ class Router:
                 tool_choice=tool_choice,
             )
             started = time.perf_counter()
-            self._last_call[provider.name] = self._clock.now()
-            await self.budgets.record(provider, self._clock.now())
+            # A saved reply asks no provider, so it spends no quota and waits for no limit.
+            if self._answers_from_store is None or not self._answers_from_store(provider, request):
+                self._last_call[provider.name] = self._clock.now()
+                await self.budgets.record(provider, self._clock.now())
             try:
                 response = await self._client.complete(provider, request)
             except ProviderError as exc:

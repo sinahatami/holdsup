@@ -11,6 +11,7 @@ from holdsup.router import Router, RouterError, Use, load_router_config
 from holdsup.router.budgets import InMemoryUsageStore, budget_cap
 from holdsup.router.client import ChatRequest, ChatResponse
 from holdsup.router.clock import utc_day
+from holdsup.router.config import ProviderConfig
 from holdsup.router.errors import (
     ProviderRejected,
     ProviderTimeout,
@@ -147,6 +148,24 @@ async def test_minute_budget_stops_at_90_percent_and_frees_after_a_minute() -> N
 
     clock.advance(60)
     assert (await router.complete("extract", MSG, use=Use.LIVE)).provider == "a"
+
+
+class SavedReplies(FakeClient):
+    """A client that answers every request from saved replies (the evaluation's replay)."""
+
+    def answers_from_store(self, provider: ProviderConfig, request: ChatRequest) -> bool:
+        return True
+
+
+async def test_a_request_answered_from_a_saved_reply_counts_against_no_limit() -> None:
+    client, clock = SavedReplies(), FakeClock()
+    router = Router(config(provider("a", rpm=10, rpd=100), provider("b")), client, clock=clock)
+
+    used = [(await router.complete("extract", MSG, use=Use.LIVE)).provider for _ in range(30)]
+
+    assert used == ["a"] * 30  # an ordinary client moves to b after 9 (the test above)
+    a, _ = router.config.providers
+    assert await router.budgets.remaining_today(a, clock.now()) == 90
 
 
 async def test_remaining_today_reports_budget_left() -> None:

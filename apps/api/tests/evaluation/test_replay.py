@@ -125,3 +125,24 @@ def test_a_recorded_run_replays_with_no_provider_call(
 def test_replay_and_record_together_are_refused(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         run(tmp_path, benchmark(tmp_path, entry()), "--replay", "a", "--record", "b")
+
+
+async def test_it_says_which_requests_it_will_answer_from_a_saved_reply(tmp_path: Path) -> None:
+    store = ReplayStore(tmp_path)
+    client = FakeClient()
+    client.script("groq", [REPLY])
+    replaying = ReplayClient(client, store)
+    assert not replaying.answers_from_store(groq(), REQUEST)  # nothing saved yet
+
+    await replaying.complete(groq(), REQUEST)
+
+    assert replaying.answers_from_store(groq(), REQUEST)
+    assert not replaying.answers_from_store(groq(model="another-model"), REQUEST)
+    assert not ReplayClient(client, store, replay=False).answers_from_store(groq(), REQUEST)
+    assert store.hits == 0  # asking does not count a reply as used
+
+
+async def test_a_damaged_reply_is_not_a_saved_one(tmp_path: Path) -> None:
+    store = ReplayStore(tmp_path)
+    (tmp_path / f"{request_key(groq(), REQUEST)}.json").write_text("{", encoding="utf-8")
+    assert not ReplayClient(FakeClient(), store).answers_from_store(groq(), REQUEST)

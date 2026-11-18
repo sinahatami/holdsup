@@ -50,13 +50,13 @@ class ReplayStore:
     saved: int = 0
     _used: set[str] = field(default_factory=set)
 
-    def get(self, key: str) -> ChatResponse | None:
+    def _load(self, key: str) -> ChatResponse | None:
         path = self._path(key)
         if not path.exists():
             return None
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            response = ChatResponse(
+            return ChatResponse(
                 content=data["content"],
                 tool_calls=tuple(ToolCall(**t) for t in data["tool_calls"]),
                 prompt_tokens=data["prompt_tokens"],
@@ -64,9 +64,17 @@ class ReplayStore:
             )
         except (ValueError, KeyError, TypeError):  # a damaged file: ask the provider again
             return None
-        self.hits += 1
-        self._used.add(key)
+
+    def get(self, key: str) -> ChatResponse | None:
+        response = self._load(key)
+        if response is not None:
+            self.hits += 1
+            self._used.add(key)
         return response
+
+    def has(self, key: str) -> bool:
+        """Whether a readable reply is saved for `key` (not counted as used)."""
+        return self._load(key) is not None
 
     def put(self, key: str, response: ChatResponse) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -102,6 +110,11 @@ class ReplayClient:
 
     def has_key(self, provider: ProviderConfig) -> bool:
         return self._inner.has_key(provider)
+
+    def answers_from_store(self, provider: ProviderConfig, request: ChatRequest) -> bool:
+        """Whether `complete` will answer from a saved reply, which asks no provider (the router
+        then counts it against no limit)."""
+        return self._replay and self._store.has(request_key(provider, request))
 
     async def complete(self, provider: ProviderConfig, request: ChatRequest) -> ChatResponse:
         key = request_key(provider, request)
