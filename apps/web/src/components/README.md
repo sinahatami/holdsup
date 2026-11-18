@@ -5,7 +5,7 @@ Each layer may import only from layers below it. ESLint enforces this
 
 | Layer        | What belongs here                                                               | Examples                                        |
 | ------------ | ------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `ui/`        | Vendored shadcn/Base UI primitives. Leave as generated.                         | `button`                                        |
+| `ui/`        | shadcn primitives from `shadcn add`, left as generated. Empty for now.          | (none yet)                                      |
 | `atoms/`     | One element or one style: no layout of other components, no data fetching.      | `verdict-badge`, `eyebrow`, `logo`, `pill`      |
 | `molecules/` | A few atoms forming one small unit with one job.                                | `field-list`, `trace-step`, `theme-toggle`      |
 | `organisms/` | A self-contained region of a page made of molecules and atoms.                  | `check-form`, `receipt`, `trace`, `site-header` |
