@@ -14,3 +14,6 @@ export const RECHECK_ID = "55555555-5555-4555-8555-555555555555";
 
 /** A finished check of two claims: one the check is sure of, one it holds back (P4.5). */
 export const UNSURE_ID = "66666666-6666-4666-8666-666666666666";
+
+/** A check that failed because every model provider was busy (the API's at-capacity problem). */
+export const CAPACITY_ID = "77777777-7777-4777-8777-777777777777";

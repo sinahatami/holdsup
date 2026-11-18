@@ -22,6 +22,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/app/check/[id]/check-live", () => ({
   CheckLive: ({ id }: { id: string }) => <p>following {id} live</p>,
 }));
+// The gallery read is the home page's (tested there); here it only has to be placed.
+vi.mock("@/app/check/[id]/while-you-wait", () => ({
+  WhileYouWait: () => <p>checks done earlier</p>,
+}));
 
 const lookup = vi.mocked(readCheck);
 const found = (view: ReturnType<typeof checkView>) =>
@@ -71,6 +75,32 @@ describe("CheckPage", () => {
     expect(
       screen.getByRole("button", { name: strings.problem.retry }),
     ).toBeInTheDocument();
+    // Earlier checks are for a reader waiting on busy providers, not for any failure.
+    expect(screen.queryByText("checks done earlier")).not.toBeInTheDocument();
+  });
+
+  it("at capacity, shows when HoldsUp is back and the checks done earlier", async () => {
+    found(
+      checkView({
+        status: "failed",
+        error: {
+          type: "/problems/at-capacity",
+          title: "At capacity",
+          status: 503,
+          detail: "Every free model provider is busy or out of quota.",
+          retry_after: 1800,
+        },
+      }),
+    );
+    render(await CheckPage({ id: "c1" }));
+    const t = strings.problem;
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      t.capacity.backIn("about 30 minutes"),
+    );
+    expect(
+      screen.getByRole("button", { name: t.retryIn("30 min") }),
+    ).toBeDisabled();
+    expect(await screen.findByText("checks done earlier")).toBeInTheDocument();
   });
 
   it("offers no retry for a text the API refused as it is", async () => {

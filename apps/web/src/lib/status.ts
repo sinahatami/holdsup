@@ -1,14 +1,8 @@
 import type { ProviderStatus, StatusResponse } from "@/lib/api/client";
+import { waitText } from "@/lib/format";
 import { strings } from "@/lib/strings";
 
 const t = strings.status;
-
-/** A wait in words, rounded up to what a reader needs: "about 15 seconds", "about 3 hours". */
-export function waitText(seconds: number): string {
-  if (seconds < 60) return t.wait.seconds(Math.max(1, Math.ceil(seconds)));
-  if (seconds < 3600) return t.wait.minutes(Math.ceil(seconds / 60));
-  return t.wait.hours(Math.round(seconds / 3600));
-}
 
 /** A provider's state in words; a state that ends has its wait in it. */
 export function stateText(p: ProviderStatus): string {

@@ -1,5 +1,10 @@
 import type { Page } from "@playwright/test";
-import { checkResult, checkView, holdingClaim } from "../src/test/fixtures";
+import {
+  atCapacityProblem,
+  checkResult,
+  checkView,
+  holdingClaim,
+} from "../src/test/fixtures";
 import { CHECK_ID, RECHECK_ID } from "./ids";
 
 const API = "http://api.test";
@@ -30,10 +35,13 @@ const sse = (events: [string, object][]) =>
     )
     .join("");
 
-/** Mocks the browser's calls to the API: submit, read, and the SSE stream. */
+/**
+ * Mocks the browser's calls to the API: submit, read, and the SSE stream. The stream ends
+ * with the result, a failure, or the at-capacity problem (every model provider busy).
+ */
 export async function mockApi(
   page: Page,
-  outcome: "result" | "error" | "rate-limit" = "result",
+  outcome: "result" | "error" | "at-capacity" | "rate-limit" = "result",
 ) {
   await page.route(`${API}/**`, async (route) => {
     const req = route.request();
@@ -72,13 +80,15 @@ export async function mockApi(
               "error",
               {
                 type: "about:blank",
-                title: "At capacity",
+                title: "Service Unavailable",
                 status: 503,
                 detail: "All model providers are busy.",
                 retry_after: 30,
               },
             ]
-          : ["result", result];
+          : outcome === "at-capacity"
+            ? ["error", atCapacityProblem]
+            : ["result", result];
       return route.fulfill({
         status: 200,
         headers: { ...CORS, "content-type": "text/event-stream" },

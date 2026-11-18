@@ -1,6 +1,6 @@
-# Curated claims for the home-page gallery (P2.8), one per line. Edit freely, then `make seed-gallery`.
-# Drawn from eval/seed_claims.csv: claims whose indicator matched correctly in the pivot test and
-# whose assertion type the checker supports today. A mix of outcomes is the point.
+# Curated claims for the home-page gallery (P2.8, P5.1), one per line. Edit freely, then `make seed-gallery`.
+# The first ten are drawn from eval/seed_claims.csv: claims whose indicator matched correctly in the pivot
+# test and whose assertion type the checker supports today. A mix of outcomes is the point.
 Renzi, 2018: Since I took office, youth unemployment has fallen 12 points, from 44% to 32%.
 Letta, 2013: Italy's youth unemployment has reached 37% and has been rising for years.
 In 2011 Italy's youth unemployment was 29%; today it is 43.3%.
@@ -11,3 +11,17 @@ Renzi, December 2015: Italy's greenhouse gas emissions are down 23% compared wit
 Chloe Smith: Unemployment rose to 30% under the last Labour government.
 EPA, 2017: US per capita carbon dioxide emissions fell more than 18% between 2000 and 2014.
 Facebook post, 2013: Unemployment in South Africa has increased by 60% in the past 19 years.
+# P5.1: the three example claims on the home page (the first is also the sample receipt's claim), so a
+# click on one is answered from the ledger at once, with no model call.
+Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.
+Italy's public debt is 133% of GDP.
+Youth unemployment in Italy has risen every year since 2008.
+# P5.1: dev-split claims (never the held-out split) from other countries and topics, none of them a row
+# the pipeline got wrong in the P4.7 dev runs. Ids in eval/claims.jsonl: e007 e087 e013 e042 e140 e142 e122.
+Germany got 52% of its electricity from renewables in 2023.
+Spain's employment fell from 19.0 million people in 2009 to 17.0 million in 2013.
+France's public debt reached 120% of GDP in 2019.
+US inflation was 8% in 2023.
+India's infant mortality rate fell from 66.3 in 2000 to 15 in 2024.
+Brazil gets 77.4% of its electricity from renewable sources.
+China had 1.38 billion people in 2015.

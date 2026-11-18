@@ -7,6 +7,7 @@ import type {
   ClaimResult,
   GalleryClaim,
   GalleryItem,
+  Problem,
   StatusResponse,
   Tolerances,
 } from "@/lib/api/client";
@@ -466,6 +467,19 @@ export function checkView(
     ...over,
   };
 }
+
+/**
+ * What the API sends when every model provider is busy or out of today's requests: its own
+ * detail carries the wait too, which the site does not repeat (it words the wait itself).
+ */
+export const atCapacityProblem: Problem = {
+  type: "/problems/at-capacity",
+  title: "At capacity",
+  status: 503,
+  detail:
+    "Every free model provider is busy or out of quota. Try again in about 10 minutes.",
+  retry_after: 600,
+};
 
 /** One catalog entry as the API lists it; a test overrides only what it is about. */
 export function catalogEntry(

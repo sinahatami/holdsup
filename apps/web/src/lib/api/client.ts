@@ -1,3 +1,4 @@
+import { waitText } from "@/lib/format";
 import { strings } from "@/lib/strings";
 import type { components } from "./schema";
 
@@ -84,6 +85,8 @@ export class ApiError extends Error {
 export const REQUEST_TIMEOUT_MS = 20_000;
 
 const TIMEOUT_TYPE = "/problems/timeout";
+/** The API's problem when every model provider is busy or out of today's requests. */
+export const AT_CAPACITY_TYPE = "/problems/at-capacity";
 
 /** The problem shown when the API could not be reached at all. */
 export function networkProblem(): Problem {
@@ -105,10 +108,16 @@ export function toProblem(err: unknown): Problem {
 
 /** What kind of failure it is, which decides the wording and whether trying again can help. */
 export type ProblemKind =
-  "network" | "timeout" | "rate_limited" | "unavailable" | "other";
+  | "network"
+  | "timeout"
+  | "rate_limited"
+  | "at_capacity"
+  | "unavailable"
+  | "other";
 
 export function problemKind(problem: Problem): ProblemKind {
   if (problem.type === TIMEOUT_TYPE) return "timeout";
+  if (problem.type === AT_CAPACITY_TYPE) return "at_capacity";
   if (problem.status === 0) return "network";
   if (problem.status === 429) return "rate_limited";
   if (problem.status >= 500) return "unavailable";
@@ -120,16 +129,30 @@ export function isRetryable(problem: Problem): boolean {
   return problemKind(problem) !== "other";
 }
 
-/** The one line a person should read about a problem. */
+/**
+ * The one line a person should read about a problem: the API's own detail, except at
+ * capacity, which the site words itself (the API's detail carries its own wait, and the
+ * wait is said once, by `problemWait`).
+ */
 export function problemMessage(problem: Problem): string {
+  if (problemKind(problem) === "at_capacity")
+    return strings.problem.capacity.body;
   return problem.detail ?? problem.title;
+}
+
+/** When the API says how long to wait, that wait in a sentence; otherwise null. */
+export function problemWait(problem: Problem): string | null {
+  if (!problem.retry_after) return null;
+  const wait = waitText(problem.retry_after);
+  return problemKind(problem) === "at_capacity"
+    ? strings.problem.capacity.backIn(wait)
+    : strings.check.retryAfter(wait);
 }
 
 /** The message, and when the API says when to try again, that too. */
 export function problemText(problem: Problem): string {
-  return problem.retry_after
-    ? `${problemMessage(problem)} ${strings.check.retryAfter(problem.retry_after)}`
-    : problemMessage(problem);
+  const wait = problemWait(problem);
+  return wait ? `${problemMessage(problem)} ${wait}` : problemMessage(problem);
 }
 
 async function problemFrom(res: Response): Promise<Problem> {

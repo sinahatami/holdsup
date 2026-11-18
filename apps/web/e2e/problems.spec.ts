@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { axeViolations } from "./axe";
-import { CHECK_ID } from "./ids";
+import { CAPACITY_ID, CHECK_ID } from "./ids";
 import { mockApi } from "./mock-api";
 
 const alert = (page: import("@playwright/test").Page) =>
@@ -57,6 +57,51 @@ test.describe("when something goes wrong", () => {
     const retry = page.getByRole("button", { name: /^Try again in \d+ s$/ });
     await expect(retry).toBeVisible();
     await expect(retry).toBeDisabled();
+  });
+});
+
+test.describe("at capacity", () => {
+  // Every model provider busy: the page says when HoldsUp is back (once, in minutes), the
+  // retry waits that long, and checks done earlier fill the wait. Checked at phone width.
+  async function expectAtCapacity(page: import("@playwright/test").Page) {
+    await expect(
+      page.getByRole("heading", { name: "HoldsUp is at capacity" }),
+    ).toBeVisible();
+    await expect(alert(page)).toContainText("Back in about 10 minutes.");
+    await expect(alert(page)).not.toContainText("seconds");
+    await expect(
+      page.getByRole("button", { name: "Try again in 10 min" }),
+    ).toBeDisabled();
+    const waiting = page.getByRole("region", { name: "While you wait" });
+    // Four cards (each card lists its own claims inside it, so count the cards only).
+    await expect(
+      waiting.locator("ul").first().locator(":scope > li"),
+    ).toHaveCount(4);
+    await expect(
+      waiting.getByRole("link", { name: "See all recent checks" }),
+    ).toHaveAttribute("href", "/recent");
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    expect(await axeViolations(page)).toEqual([]);
+  }
+
+  test("a live check that finds every provider busy says when HoldsUp is back and shows checks done earlier", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await mockApi(page, "at-capacity");
+    await page.goto(`/check/${CHECK_ID}`);
+    await expectAtCapacity(page);
+  });
+
+  test("the link of a check that failed at capacity shows the same, drawn by the server", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto(`/check/${CAPACITY_ID}`);
+    await expectAtCapacity(page);
   });
 });
 

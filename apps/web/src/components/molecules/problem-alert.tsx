@@ -1,6 +1,11 @@
 import { OctagonAlert } from "lucide-react";
 import type { ReactNode } from "react";
-import { problemKind, problemMessage, type Problem } from "@/lib/api/client";
+import {
+  problemKind,
+  problemMessage,
+  problemWait,
+  type Problem,
+} from "@/lib/api/client";
 import { strings } from "@/lib/strings";
 
 /**
@@ -14,6 +19,7 @@ export function ProblemAlert({
   problem: Problem;
   action?: ReactNode;
 }) {
+  const wait = problemWait(problem);
   return (
     <div
       role="alert"
@@ -32,11 +38,7 @@ export function ProblemAlert({
             {strings.problem.heading[problemKind(problem)]}
           </h2>
           <p className="text-muted-foreground">{problemMessage(problem)}</p>
-          {problem.retry_after ? (
-            <p className="text-muted-foreground">
-              {strings.check.retryAfter(problem.retry_after)}
-            </p>
-          ) : null}
+          {wait && <p className="text-muted-foreground">{wait}</p>}
         </div>
         {action}
       </div>

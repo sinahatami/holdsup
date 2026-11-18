@@ -9,16 +9,27 @@ import { strings } from "@/lib/strings";
 /** How many cards the home page shows; the Recent checks page lists them all, with filters. */
 export const HOME_CARDS = 4;
 
-/** The latest checks; `items` is null when they could not be loaded, as opposed to none yet. */
+/**
+ * The latest checks; `items` is null when they could not be loaded, as opposed to none yet.
+ * The home page shows it as "Recent checks"; a check that found HoldsUp at capacity shows it
+ * under its own heading and `intro`, as something to read while the wait runs.
+ */
 export function Gallery({
   items,
   limit = HOME_CARDS,
+  id = "gallery",
+  title = strings.home.galleryHeading,
+  intro,
 }: {
   items: GalleryItem[] | null;
   limit?: number;
+  id?: string;
+  title?: string;
+  intro?: string;
 }) {
   return (
-    <TitledSection id="gallery" title={strings.home.galleryHeading}>
+    <TitledSection id={id} title={title}>
+      {intro && <p className="text-muted-foreground">{intro}</p>}
       <NeutralityNote />
       {items === null || items.length === 0 ? (
         <p className="glass text-muted-foreground rounded-2xl border-dashed p-6 text-center text-sm">

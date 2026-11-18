@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  AT_CAPACITY_TYPE,
   ApiError,
   REQUEST_TIMEOUT_MS,
   createApiClient,
@@ -34,6 +35,12 @@ describe("problemKind", () => {
     expect(problemKind(problem(status))).toBe(kind);
   });
 
+  it("recognises the API's at-capacity problem by its type, and it can be tried again", () => {
+    const busy = problem(503, { type: AT_CAPACITY_TYPE });
+    expect(problemKind(busy)).toBe("at_capacity");
+    expect(isRetryable(busy)).toBe(true);
+  });
+
   it("recognises the timeout the client raises itself", () => {
     expect(
       problemKind(toProblem(new DOMException("slow", "TimeoutError"))),
@@ -59,7 +66,19 @@ describe("problemText", () => {
     ).toBe("All providers are busy.");
     expect(
       problemText(problem(429, { detail: "Hourly limit.", retry_after: 30 })),
-    ).toBe(`Hourly limit. ${strings.check.retryAfter(30)}`);
+    ).toBe(`Hourly limit. ${strings.check.retryAfter("about 30 seconds")}`);
+  });
+
+  it("at capacity, words the problem itself and says the wait once, as when it is back", () => {
+    const busy = problem(503, {
+      type: AT_CAPACITY_TYPE,
+      title: "At capacity",
+      detail:
+        "Every free model provider is busy or out of quota. Try again in about 120 minutes.",
+      retry_after: 7200,
+    });
+    const t = strings.problem.capacity;
+    expect(problemText(busy)).toBe(`${t.body} ${t.backIn("about 2 hours")}`);
   });
 
   it("falls back to the title", () => {

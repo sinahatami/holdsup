@@ -5,6 +5,7 @@
 import { createServer } from "node:http";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
+  atCapacityProblem,
   benchmarkResponse,
   catalogEntry,
   checkResult,
@@ -16,7 +17,13 @@ import {
   tolerances,
   unsureClaim,
 } from "../src/test/fixtures.ts";
-import { CHECK_ID, DONE_ID, RECHECK_ID, UNSURE_ID } from "./ids.ts";
+import {
+  CAPACITY_ID,
+  CHECK_ID,
+  DONE_ID,
+  RECHECK_ID,
+  UNSURE_ID,
+} from "./ids.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -113,6 +120,13 @@ const server = createServer(async (req, res) => {
 
   if (id === CHECK_ID) {
     return send(res, 200, checkView({ id, status: "running" }));
+  }
+  if (id === CAPACITY_ID) {
+    return send(
+      res,
+      200,
+      checkView({ id, status: "failed", error: atCapacityProblem }),
+    );
   }
   if (id === DONE_ID) {
     const result = checkResult([holdingClaim], { id });

@@ -8,6 +8,17 @@ export const strings = {
   logoParts: ["Holds", "Up"] as [string, string],
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
+  // A wait in words: "about 15 seconds" in a sentence, "15 s" on a button that counts down.
+  wait: {
+    seconds: (n: number) => `about ${n} second${n === 1 ? "" : "s"}`,
+    minutes: (n: number) => `about ${n} minute${n === 1 ? "" : "s"}`,
+    hours: (n: number) => `about ${n} hour${n === 1 ? "" : "s"}`,
+    short: {
+      seconds: (n: number) => `${n} s`,
+      minutes: (n: number) => `${n} min`,
+      hours: (n: number) => `${n} h`,
+    },
+  },
   errors: {
     network:
       "HoldsUp could not be reached. Check your connection and try again.",
@@ -18,11 +29,21 @@ export const strings = {
       network: "Could not reach HoldsUp",
       timeout: "HoldsUp took too long",
       rate_limited: "Too many checks for now",
+      at_capacity: "HoldsUp is at capacity",
       unavailable: "HoldsUp could not finish this check",
       other: "This check could not be completed",
     },
     retry: "Try again",
-    retryIn: (s: number) => `Try again in ${s} s`,
+    // The wait is short ("42 s", "12 min"): the button counts it down.
+    retryIn: (wait: string) => `Try again in ${wait}`,
+    // Every model provider is busy or out of today's requests (the API's at-capacity problem).
+    capacity: {
+      body: "Every free model provider HoldsUp uses is busy or has run out of today's requests.",
+      backIn: (wait: string) => `Back in ${wait}.`,
+      galleryHeading: "While you wait",
+      galleryIntro:
+        "These claims were checked earlier, so their receipts open now, with no model needed.",
+    },
     offline: {
       heading: "You are offline",
       body: "Pages and checks that need HoldsUp will not load until your connection is back.",
@@ -239,7 +260,7 @@ export const strings = {
     explanationHeading: "Why",
     loading: "Loading the check…",
     connectionLost: "Lost the connection to the live trace.",
-    retryAfter: (s: number) => `Try again in about ${s} seconds.`,
+    retryAfter: (wait: string) => `Try again in ${wait}.`,
     cached: "Answered from an earlier check of the same claim.",
     cachedLink: "See that check",
     back: "Check another claim",
@@ -696,11 +717,6 @@ export const strings = {
     left: (left: number, cap: number) => `${left} of ${cap}`,
     capNote:
       "Each cap is 90% of the provider's published daily limit, so HoldsUp stops before the provider says no.",
-    wait: {
-      seconds: (n: number) => `about ${n} second${n === 1 ? "" : "s"}`,
-      minutes: (n: number) => `about ${n} minute${n === 1 ? "" : "s"}`,
-      hours: (n: number) => `about ${n} hour${n === 1 ? "" : "s"}`,
-    },
   },
   share: {
     heading: "Share this check",

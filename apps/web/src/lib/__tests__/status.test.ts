@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProviderStatus } from "@/lib/api/client";
-import {
-  leftText,
-  stateText,
-  statusSummary,
-  stepsText,
-  waitText,
-} from "@/lib/status";
+import { leftText, stateText, statusSummary, stepsText } from "@/lib/status";
 import { strings } from "@/lib/strings";
 import { statusResponse } from "@/test/fixtures";
 
@@ -14,14 +8,6 @@ const t = strings.status;
 const [groq, mistral, openrouter] = statusResponse.providers;
 
 describe("status in words", () => {
-  it("rounds a wait up to what a reader needs", () => {
-    expect(waitText(0.2)).toBe("about 1 second");
-    expect(waitText(14.2)).toBe("about 15 seconds");
-    expect(waitText(61)).toBe("about 2 minutes");
-    expect(waitText(7900)).toBe("about 2 hours");
-    expect(waitText(3600)).toBe("about 1 hour");
-  });
-
   it("says each state, with its wait when it ends", () => {
     expect(stateText(groq)).toBe("Ready");
     expect(stateText(mistral)).toBe("Cooling down, ready in about 15 seconds");
