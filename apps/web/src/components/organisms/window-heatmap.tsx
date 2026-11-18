@@ -11,7 +11,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { Eyebrow } from "@/components/atoms/eyebrow";
+import { SectionTitle } from "@/components/atoms/section-title";
 import { formatPeriod } from "@/lib/format";
 import { strings } from "@/lib/strings";
 import {
@@ -58,8 +58,8 @@ const HATCH: CSSProperties = {
 
 /**
  * The cherry-pick heatmap: every start year (rows) by every end year (columns), each window
- * coloured by whether the claim's direction holds there. The claim's own window is outlined
- * and the nearby windows the verdict counts are boxed. The picture is for the eye; the
+ * coloured by whether the claim's direction holds there. The claim's own window is ringed in
+ * pen and the nearby windows the verdict counts are boxed. The picture is for the eye; the
  * focusable frame takes the arrow keys and says each window in words, and the table holds
  * every figure.
  */
@@ -140,9 +140,7 @@ export function WindowHeatmap({
 
   return (
     <section aria-labelledby={ids.heading} className="flex flex-col gap-3">
-      <Eyebrow as="h3" id={ids.heading}>
-        {t.heading}
-      </Eyebrow>
+      <SectionTitle id={ids.heading}>{t.heading}</SectionTitle>
       <p className="leading-7">{sweepSummary(sweep, direction, threshold)}</p>
       <p className="text-muted-foreground text-sm leading-6">
         {t.howToRead}
@@ -307,13 +305,21 @@ export function WindowHeatmap({
               className="stroke-foreground pointer-events-none"
             />
           )}
+          {/* The claim's own window, ringed in the editor's pen over a paper halo: the pen is
+              as light as the blue cells, so the halo keeps the ring visible on any fill. */}
           {own.row >= 0 && own.col >= 0 && (
-            <rect
-              {...box(own, -0.8)}
-              fill="none"
-              strokeWidth="1.8"
-              className="stroke-foreground pointer-events-none"
-            />
+            <g className="pointer-events-none" fill="none">
+              <rect
+                {...box(own, -0.8)}
+                strokeWidth="4.4"
+                className="stroke-background"
+              />
+              <rect
+                {...box(own, -0.8)}
+                strokeWidth="2.2"
+                className="stroke-pen"
+              />
+            </g>
           )}
           {(focused || pointing) && (
             <rect
@@ -348,7 +354,7 @@ export function WindowHeatmap({
         <Key swatch={<span className="size-3 rounded-sm bg-(--sweep-empty)" />}>
           {t.legend.empty}
         </Key>
-        <Key swatch={<span className="border-foreground size-3 border-2" />}>
+        <Key swatch={<span className="border-pen size-3 border-2" />}>
           {t.legend.own}
         </Key>
         {near && (

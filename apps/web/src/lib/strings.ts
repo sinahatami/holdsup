@@ -371,7 +371,7 @@ export const strings = {
     noShare:
       "The claim covers too short a span for other windows to count towards the verdict. The chart shows them for context.",
     howToRead:
-      "Each square is a time window: it starts in the year of its row and ends in the year of its column. The claim's own window has a thick outline, and the dashed box holds the nearby windows that count towards the verdict.",
+      "Each square is a time window: it starts in the year of its row and ends in the year of its column. The claim's own window is ringed in red, and the dashed box holds the nearby windows that count towards the verdict.",
     subYear: (start: string, end: string) =>
       `Each window starts and ends at the same point in the year as the claim's own, ${start} to ${end}.`,
     start: "Start ↓",
@@ -1146,6 +1146,30 @@ export const strings = {
     gap: "How far the official figure may be from the one claimed and still count as a match. It depends on the kind of claim: a figure stated as a level allows for rounding and a small margin for later data revisions, a change allows a few per cent, and a position in a ranking allows none. Each figure's own gap is listed in its receipt above.",
     version: (n: number) => `Tolerances version ${n}.`,
     method: "How HoldsUp judges a claim",
+  },
+  // The head of a checked claim: the editor's notes in its margin and the claim set over its
+  // denominator. Every pen note is said again in plain text in the receipt.
+  claim: {
+    margin: {
+      figure: (when: string, official: string, holds: boolean) =>
+        `${when}: ${official}. ${holds ? "Close enough." : "Too far off."}`,
+      direction: (official: string, holds: boolean) =>
+        `Official change: ${official}. ${holds ? "Right way." : "Wrong way."}`,
+      framing: "Other years tell another story.",
+    },
+    denominator: {
+      heading: "The claim, with its denominator",
+      claimed: "Claimed",
+      official: "Official",
+      // What the claim left out, which HoldsUp had to fill in.
+      unstatedNames: { place: "place", period: "years" },
+      unstated: (names: string) =>
+        `The claim does not name its ${names}. The receipt says how HoldsUp read it.`,
+      stated: "As the claim states it.",
+      question: (name: string) => `${name}?`,
+      // Said in place of the arrow between a start and an end figure.
+      to: "to",
+    },
   },
   receipt: {
     heading: "Receipt",

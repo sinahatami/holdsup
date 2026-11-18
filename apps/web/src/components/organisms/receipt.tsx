@@ -1,3 +1,4 @@
+import { SectionTitle } from "@/components/atoms/section-title";
 import { ClaimReading } from "@/components/organisms/claim-reading";
 import { Recomputation } from "@/components/organisms/recomputation";
 import { SeriesDetails } from "@/components/organisms/series-details";
@@ -13,7 +14,7 @@ const t = strings.receipt;
  * The receipt of one claim, open on the page: how the claim was read, the
  * official series it was matched to, every calculation, what the verdict
  * compared, and how to check it again (or run its notebook). The technical
- * details fold away.
+ * details fold away. A double rule across its top, as on a till slip.
  */
 export function Receipt({
   claim,
@@ -33,12 +34,10 @@ export function Receipt({
     <section
       aria-labelledby={`${id}-heading`}
       data-testid="receipt"
-      className="flex flex-col gap-6 border-t pt-6"
+      className="border-foreground/70 flex flex-col gap-6 border-t-4 border-double pt-8"
     >
-      <div>
-        <h3 id={`${id}-heading`} className="text-xl font-semibold">
-          {t.heading}
-        </h3>
+      <div className="flex flex-col gap-1">
+        <SectionTitle id={`${id}-heading`}>{t.heading}</SectionTitle>
         <p className="text-muted-foreground">{t.intro}</p>
       </div>
       <ClaimReading id={`${id}-reading`} spec={claim.claim} />

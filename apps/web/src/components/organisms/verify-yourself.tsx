@@ -1,9 +1,11 @@
 import { Download } from "lucide-react";
+import { pill } from "@/components/atoms/pill";
 import { ExternalLink } from "@/components/atoms/external-link";
 import { ReceiptSection } from "@/components/molecules/receipt-section";
 import { notebookUrl, type ClaimResult } from "@/lib/api/client";
 import { formatDate, sourceName } from "@/lib/format";
 import { strings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 const t = strings.receipt.verify;
 
@@ -54,15 +56,20 @@ export function VerifyYourself({
         )}
         {hasSteps && checkId && (
           <li>
-            <strong>{t.notebook}</strong> {t.notebookBody}{" "}
-            <a
-              href={notebookUrl(checkId)}
-              download
-              className="text-brand inline-flex items-center gap-1 font-medium underline underline-offset-4"
-            >
-              <Download className="size-3.5" aria-hidden />
-              {t.notebookLink}
-            </a>
+            <strong>{t.notebook}</strong> {t.notebookBody}
+            {/* The receipt's one main action: solid blue, on its own line. */}
+            <span className="mt-3 flex">
+              <a
+                href={notebookUrl(checkId)}
+                download
+                // Its label may wrap: inside the numbered list on a 360px phone it is wider
+                // than the line.
+                className={cn(pill({ tone: "primary" }), "whitespace-normal")}
+              >
+                <Download className="size-4" aria-hidden />
+                {t.notebookLink}
+              </a>
+            </span>
           </li>
         )}
       </ol>

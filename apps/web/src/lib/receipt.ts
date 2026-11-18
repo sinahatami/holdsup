@@ -217,6 +217,74 @@ export function comparison(c: ClaimResult): PartView[] {
   return (c.verdict.parts ?? []).map((p) => partView(c, p));
 }
 
+/**
+ * The editor's notes in the claim's margin: each compared part in a few words, and a word on
+ * framing when the verdict says it matters. The receipt says each in plain text, so the page
+ * shows these as handwriting only.
+ */
+export function marginNotes(c: ClaimResult): string[] {
+  const t = strings.claim.margin;
+  const notes = comparison(c).map((p) =>
+    p.note === null
+      ? t.figure(p.period ?? p.label, p.official, p.holds)
+      : t.direction(p.official, p.holds),
+  );
+  if (c.verdict.label === "supported_framing_matters") notes.push(t.framing);
+  return notes.slice(0, 4);
+}
+
+type Unstated = keyof typeof strings.claim.denominator.unstatedNames;
+
+/** The claim's figures over the official ones, as the result page sets them over two bars. */
+export interface Denominator {
+  /** The figures as the claim states them: a start and an end, or the one it states. */
+  claimed: string[];
+  official: string[];
+  /** What the claim does not name, which HoldsUp filled in. */
+  unstated: Unstated[];
+  /** Where and when the official figures are for: "Italy · 2015 to 2023". */
+  where: string;
+  /** The dataset they come from: "Eurostat une_rt_m". */
+  source: string | null;
+}
+
+/**
+ * The claim beside the official figures: a start and an end value as "from → to", or the one
+ * figure a claim states. Null when the claim states no figure (only a direction) or could not
+ * be checked.
+ */
+export function denominatorOf(c: ClaimResult): Denominator | null {
+  const figures = comparison(c).filter((p) => p.note === null);
+  const start = figures.find((p) => p.name === "start value");
+  const end = figures.find((p) => p.name === "end value");
+  const one =
+    figures.find((p) => p.name === "assertion") ??
+    (figures.length === 1 ? figures[0] : undefined);
+  const shown = start && end ? [start, end] : one ? [one] : [];
+  if (shown.length === 0) return null;
+  const spec = c.claim;
+  const periods = [
+    ...new Set(shown.flatMap((p) => (p.period ? [p.period] : []))),
+  ];
+  const when =
+    periods.length > 1
+      ? reading.periodRange(periods[0], periods[periods.length - 1])
+      : (periods[0] ?? null);
+  const unstated: Unstated[] = [];
+  if (unusual(spec.geo_basis)) unstated.push("place");
+  if (unusual(spec.start_basis) || unusual(spec.end_basis))
+    unstated.push("period");
+  return {
+    claimed: shown.map((p) => p.claimed),
+    official: shown.map((p) => p.official),
+    unstated,
+    where: [spec.geo ? placeName(spec.geo) : null, when]
+      .filter(Boolean)
+      .join(" · "),
+    source: sourceLinks(c)[0]?.label ?? null,
+  };
+}
+
 /** A dataset the claim's figures came from, with the link to the data itself. */
 export interface SourceLink {
   label: string;

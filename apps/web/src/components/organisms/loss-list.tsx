@@ -1,3 +1,4 @@
+import { SectionTitle } from "@/components/atoms/section-title";
 import { DataTable } from "@/components/molecules/data-table";
 import type { Comparison } from "@/lib/api/client";
 import { labelText, percent, stepText } from "@/lib/benchmark";
@@ -11,9 +12,9 @@ export function LossList({ comparison: c }: { comparison: Comparison }) {
   return (
     <div className="flex flex-col gap-8">
       <section aria-labelledby="losses-heading" className="flex flex-col gap-4">
-        <h2 id="losses-heading" className="text-2xl font-bold tracking-tight">
+        <SectionTitle as="h2" id="losses-heading" className="text-3xl">
           {t.losses.heading}
-        </h2>
+        </SectionTitle>
         <p className="text-muted-foreground leading-7">{t.losses.intro}</p>
         {c.losses.length === 0 ? (
           <p className="glass rounded-2xl p-5">{t.losses.none}</p>
@@ -46,9 +47,9 @@ export function LossList({ comparison: c }: { comparison: Comparison }) {
         )}
       </section>
       <section aria-labelledby="causes-heading" className="flex flex-col gap-4">
-        <h2 id="causes-heading" className="text-2xl font-bold tracking-tight">
+        <SectionTitle as="h2" id="causes-heading" className="text-3xl">
           {t.causes.heading}
-        </h2>
+        </SectionTitle>
         {causes.length === 0 ? (
           <p className="glass rounded-2xl p-5">{t.causes.none}</p>
         ) : (

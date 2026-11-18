@@ -36,7 +36,7 @@ export function CantCheckHelp({
   return (
     <section
       aria-labelledby={headingId}
-      className="bg-muted/60 flex flex-col gap-4 rounded-2xl p-5 text-sm"
+      className="bg-card flex flex-col gap-4 border p-5 text-sm"
     >
       <Eyebrow as="h3" id={headingId}>
         {t.heading}

@@ -41,7 +41,7 @@ export function HeadToHead({ comparison: c }: { comparison: Comparison }) {
               <span className="w-12 shrink-0 font-semibold">
                 {percent(rate)}
               </span>
-              <RateBar rate={rate} />
+              <RateBar rate={rate} tone={key === "holdsup" ? "brand" : "ink"} />
               <span className="text-muted-foreground shrink-0">
                 {rate.hits}/{rate.total}
               </span>
