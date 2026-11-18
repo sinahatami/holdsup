@@ -29,7 +29,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from holdsup.catalog.schema import Frequency, IndicatorSpec
-from holdsup.checks.changepoints import ChangePoints, checks_endpoints, flag_text
+from holdsup.checks.changepoints import ChangePoints, endpoint_values, flag_text
 from holdsup.checks.cherry_pick import SWEPT_OPS, own_window, rerun
 from holdsup.fmt import fmt, signed, unit_suffix
 from holdsup.ops import (
@@ -48,7 +48,7 @@ from holdsup.ops import (
     unit_scale,
 )
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, says_now
-from holdsup.pipeline.population import wants_population
+from holdsup.pipeline.population import PER_PERSON, wants_population
 from holdsup.verdict.rules import assertion_judge, direction_judge
 from holdsup.verdict.tolerances import Tolerances
 
@@ -131,12 +131,14 @@ def endpoints_check(inp: CheckInput) -> DistortionCheck | None:
     if inp.changepoints is None or len(inp.answer) != 1 or inp.series is None:
         return None
     record = inp.answer[0]
-    if not checks_endpoints(inp.claim, record, inp.series):
+    read = endpoint_values(inp.claim, record, inp.series)
+    if read is None:
         return None
+    unit = inp.series.unit if record.op == "trend" else record.unit  # a trend's is per year
     if inp.changepoints.flags:
-        text = "; ".join(flag_text(f, record.unit) for f in inp.changepoints.flags)
+        text = "; ".join(flag_text(f, unit) for f in inp.changepoints.flags)
         return DistortionCheck(kind=CheckKind.ENDPOINTS, flagged=True, text=text)
-    start, end = record.inputs[0].period, record.inputs[1].period
+    start, end = read[0], read[1]
     text = (
         f"neither the start ({start}) nor the end ({end}) is at a peak, a trough or a turn in "
         "the trend that carries the claim"
@@ -219,7 +221,7 @@ def real_check(inp: CheckInput) -> DistortionCheck | None:
         return None
     return _direction_check(
         CheckKind.REAL, "after inflation", inp, again, real.unit, [*made, again],
-        uses=used.spec.id,
+        uses=used.spec.id, flat_fails=True,
     )  # fmt: skip
 
 
@@ -236,11 +238,16 @@ def _direction_check(
     records: list[OpRecord],
     *,
     uses: str,
+    flat_fails: bool = False,
 ) -> DistortionCheck:
     """Flagged when the rerun does not move the way the claim says (the verdict's own rules,
-    without the number); the line says what it did instead. `unit` is the rerun series'."""
+    without the number); the line says what it did instead. `unit` is the rerun series'.
+    With `flat_fails`, a rise or a fall that comes out flat (within the verdict's flat band)
+    does not hold either: after inflation, "up 7%" and "up 0.7%" are not the same story."""
     claim, tol = inp.claim, inp.tolerances
     holds = direction_judge(claim, unit=unit, tolerances=tol)(again)
+    if holds and flat_fails and claim.assertion.direction is not Direction.FLAT:
+        holds = not _moves(claim, Direction.FLAT, again, unit, tol)
     moved = claim.assertion.direction if holds else _movement(claim, again, unit, tol)
     also = "also " if holds else ""
     if again.op == "trend":
@@ -267,14 +274,19 @@ def _movement(
     """Which way the record moves when not the claimed way: a rise or a fall before "flat";
     None for a trend too weak to have a direction."""
     for d in (Direction.UP, Direction.DOWN, Direction.FLAT):
-        if d is claim.assertion.direction:
-            continue
-        turned = claim.model_copy(
-            update={"assertion": claim.assertion.model_copy(update={"direction": d})}
-        )
-        if direction_judge(turned, unit=unit, tolerances=tol)(record):
+        if d is not claim.assertion.direction and _moves(claim, d, record, unit, tol):
             return d
     return None
+
+
+def _moves(
+    claim: ClaimSpec, direction: Direction, record: OpRecord, unit: str | None, tol: Tolerances
+) -> bool:
+    """Whether `record` moves `direction`, by the verdict's own direction rules."""
+    turned = claim.model_copy(
+        update={"assertion": claim.assertion.model_copy(update={"direction": direction})}
+    )
+    return direction_judge(turned, unit=unit, tolerances=tol)(record)
 
 
 # --- percent or percentage points -------------------------------------------------------------
@@ -335,6 +347,21 @@ def points_check(inp: CheckInput) -> DistortionCheck | None:
         )
     flagged = right_other and not right
     return DistortionCheck(kind=CheckKind.POINTS, flagged=flagged, text=text, records=[again])
+
+
+def points_reading(
+    claim: ClaimSpec, checks: Sequence[DistortionCheck]
+) -> tuple[ClaimSpec, list[OpRecord]] | None:
+    """The claim as the points check reads it, when it flagged one: a number stated as a percent
+    that is right as points, or the other way round ("fell by 4.3%" of a rate that fell 4.3
+    points). The number holds in that other kind, so the verdict judges it there and carries the
+    flag as framing, instead of calling it wrong. None when the check did not flag the claim."""
+    for check in checks:
+        if check.kind is CheckKind.POINTS and check.flagged and len(check.records) == 1:
+            kind = str(check.records[0].args["kind"])
+            read = claim.assertion.model_copy(update={"type": AssertionType(kind)})
+            return claim.model_copy(update={"assertion": read}), list(check.records)
+    return None
 
 
 # --- definition ----------------------------------------------------------------------------
@@ -411,9 +438,6 @@ def _one_range(found: set[AgeRange]) -> AgeRange | None:
     return groups[0] if len(groups) == 1 else None
 
 
-_PER_PERSON = re.compile(
-    r"\bper[- ](?:capita|person|head|inhabitant|resident)\b|\ba head\b", re.IGNORECASE
-)
 _CURRENCIES = {
     "euro": re.compile(r"\beuros?\b|€|\beur\b", re.IGNORECASE),
     "dollars": re.compile(r"\bdollars?\b|\$|\busd\b", re.IGNORECASE),
@@ -447,9 +471,9 @@ def definition_check(inp: CheckInput) -> DistortionCheck | None:
                 f"ages {_ages_text(covered)}"
             )
 
-    if _PER_PERSON.search(stated):
+    if PER_PERSON.search(stated):
         read = inp.unit or spec.unit  # a plan that divided by population reads "per person"
-        if _PER_PERSON.search(read):
+        if PER_PERSON.search(read) or PER_PERSON.search(spec.name):
             matched.append("per person")
         elif wants_population(spec):
             differs.append(f"the claim is per person; the figures are a total ({read})")

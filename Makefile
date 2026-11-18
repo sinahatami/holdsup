@@ -98,14 +98,23 @@ list-models: ## List model ids each provider serves to your keys (needs keys; no
 pivot-test: ## Phase 1 pivot test over eval/seed_claims.csv -> eval/reports/pivot_test.csv (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.pivot_test $(ARGS)
 
-eval-smoke: ## Smoke evaluation (eval/smoke_claims.jsonl) -> eval/reports/smoke.{json,md}; fails on a verdict-accuracy drop over 5 points vs eval/baseline.json (needs keys; not CI's unit tests)
-	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --gate $(ARGS)
+# Local eval runs replay saved model replies (scripts/evaluation/replay.py): a request already asked
+# is answered from .cache, so only a changed prompt, model or series spends free-tier quota. A
+# whole run prunes the replies it did not use, so the smoke set and the dev split each get a
+# folder. Opt out with ARGS="--record DIR" (asks everything afresh), or ARGS="--replay DIR" for
+# another folder; the held-out run (--final) asks afresh unless it is given one of those.
+SMOKE_REPLIES ?= .cache/eval-replies
+DEV_REPLIES ?= .cache/eval-replies-dev
+replay_by_default = $(if $(or $(findstring --record,$(ARGS)),$(findstring --replay,$(ARGS)),$(findstring --final,$(ARGS))),,--replay $(1))
+
+eval-smoke: ## Smoke evaluation (eval/smoke_claims.jsonl) -> eval/reports/smoke.{json,md}; fails on a verdict-accuracy drop over 5 points vs eval/baseline.json; replays saved model replies from .cache/eval-replies (ARGS="--record DIR" asks afresh; needs keys; not CI's unit tests)
+	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --gate $(call replay_by_default,$(SMOKE_REPLIES)) $(ARGS)
 
 eval-baseline: ## Accept the current smoke run as eval/baseline.json (after reading the report; needs keys)
 	cd $(API_DIR) && uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --update-baseline $(ARGS)
 
-eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run)
-	cd $(API_DIR) && uv run python -m scripts.evaluation $(ARGS)
+eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers; replays saved model replies from .cache/eval-replies-dev (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run; ARGS="--record DIR" asks afresh)
+	cd $(API_DIR) && uv run python -m scripts.evaluation $(call replay_by_default,$(DEV_REPLIES)) $(ARGS)
 
 eval-chatbot: ## The head-to-head baseline: a plain chatbot answers the same claims -> eval/reports/dev.chatbot.{json,md} (P4.6; manual; ARGS="--provider NAME", --resume; the test split needs --final, P4.7)
 	cd $(API_DIR) && uv run python -m scripts.evaluation.chatbot_cli $(ARGS)

@@ -209,7 +209,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.period: round(p.value, 2) for p in c.series.points}["2015"] == 12.02
     assert c.changepoints is not None and c.changepoints.breaks == ["1998", "2007", "2014"]
     assert c.changepoints.flags == []
-    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 5
+    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 6
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:
@@ -308,7 +308,11 @@ async def test_c001_latest_is_the_last_month_published_by_the_claim_date() -> No
     assert inputs(op) == [("2014-02", 42.7), ("2018-11", 32.0)]
     assert op.value == pytest.approx(-10.7)
     note = flag(op, FlagCode.AS_OF)
-    assert note.startswith("claim date 2018: latest is the last period published by then, 2018-11")
+    # A year alone is read as its last day, and the receipt says so.
+    assert note.startswith(
+        "claim date 2018 (a year alone is read as 31 December): latest is the last period "
+        "published by then, 2018-11"
+    )
     assert "today's revised figure" in note
     assert points.verdict.label is Label.NOT_SUPPORTED  # 10.7 points, not 12
 
@@ -483,6 +487,8 @@ async def test_c018_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date
     assert c.operations[0].args["end"] == "latest"
     assert inputs(c.operations[0]) == [("1990", 520.63), ("2013", 450.51)]
     assert FlagCode.AS_OF in flags(c)
+    # Said in December 2015: the date is a month, so no year is being read as its last day.
+    assert "read as" not in flag(c.operations[0], FlagCode.AS_OF)
     assert c.verdict.label is Label.NOT_SUPPORTED
 
 

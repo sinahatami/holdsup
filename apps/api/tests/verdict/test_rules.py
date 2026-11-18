@@ -18,7 +18,7 @@ from holdsup.ops import (
     value_at,
 )
 from holdsup.pipeline.claim import Assertion, AssertionType, ClaimSpec, Direction, Operator
-from holdsup.verdict import Label, cant_check, combine, decide, load_tolerances
+from holdsup.verdict import Label, Verdict, cant_check, combine, decide, load_tolerances
 from holdsup.verdict.rules import direction_judge
 from holdsup.verdict.tolerances import ValueTolerance, half_unit
 
@@ -32,9 +32,10 @@ def claim(
     unit: str | None = None,
     start_value: float | None = None,
     end_value: float | None = None,
+    quote: str = "a claim",
 ) -> ClaimSpec:
     base: dict[str, Any] = {
-        "quote": "a claim",
+        "quote": quote,
         "indicator_phrase": "x",
         "geo": "IT",
         "geo_basis": "stated",
@@ -77,7 +78,38 @@ def test_supported() -> None:
     assert v.label is Label.SUPPORTED
     [part] = v.parts
     assert (part.computed, part.asserted, part.tolerance) == (-12.0, -12.0, 0.5)
-    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (5, 0.7, 0.9)
+    assert (v.tolerances_version, v.framing_threshold, v.window_share) == (6, 0.7, 0.9)
+
+
+POPULATION = Series.from_values("IT", {"2013": 60_277_309.0, "2025": 58_943_464.0}, "persons")
+
+
+def population_verdict(quote: str) -> Verdict:
+    """Population fell 60.28 m → 58.94 m; the claim says it fell from 60.3 m to 58.0 m."""
+    c = claim(AssertionType.ABSOLUTE, None, Direction.DOWN, "million",
+              start_value=60.3, end_value=58.0, quote=quote)  # fmt: skip
+    r = change(POPULATION, "2013", "2025", ChangeKind.ABSOLUTE)
+    return decide(c, [r], [0], unit="persons", tolerances=TOL)
+
+
+def test_a_stated_value_is_held_to_the_digits_it_was_written_with() -> None:
+    """Written "58.0 million", the value is held to a tenth of a million: ±0.05 plus 1% of 58, so
+    58.94 m is out. The model's float 58.0 alone cannot say it had a decimal (it reads as 58)."""
+    v = population_verdict("Population fell from 60.3 million in 2013 to 58.0 million in 2025")
+    assert v.label is Label.PARTLY_SUPPORTED
+    start, end = (next(p for p in v.parts if p.name == n) for n in ("start value", "end value"))
+    assert start.holds and not end.holds
+    assert end.tolerance == pytest.approx(630_000)
+
+
+def test_the_same_value_written_as_a_whole_number_has_the_wider_band() -> None:
+    v = population_verdict("Population fell from 60.3 million in 2013 to 58 million in 2025")
+    assert v.label is Label.SUPPORTED  # ±0.5 plus 1%: 58.94 m is within 1.08 m of 58 m
+
+
+def test_a_value_the_quote_does_not_write_keeps_the_digits_of_the_float() -> None:
+    v = population_verdict("Population fell a lot between 2013 and 2025")
+    assert v.label is Label.SUPPORTED  # as before: 58.0 reads as the whole number 58
 
 
 def test_the_sweep_judges_direction_only_and_needs_one() -> None:

@@ -5,11 +5,18 @@ rest. The per-capita operation reads it through the plan's `others`; the distort
 (P3.4) asks the same question, so both use `population_for`.
 """
 
+import re
+
 from holdsup.catalog.coverage import covers
 from holdsup.catalog.schema import Catalog, Frequency, IndicatorSpec
 
 # Preference order: the first entry that covers the place.
 POPULATION_IDS = ("population_total", "population_total_world")
+
+# How a text says a figure is already per person.
+PER_PERSON = re.compile(
+    r"\bper[- ](?:capita|person|head|inhabitant|resident)\b|\ba head\b", re.IGNORECASE
+)
 
 
 def population_for(catalog: Catalog, geo: str | None) -> IndicatorSpec | None:
@@ -33,4 +40,5 @@ def wants_population(spec: IndicatorSpec) -> bool:
         and not unit.startswith("%")
         and " per " not in unit
         and "index" not in unit
+        and not PER_PERSON.search(spec.name)  # "GDP per capita" in "current international $"
     )

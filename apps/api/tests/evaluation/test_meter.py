@@ -109,3 +109,14 @@ async def test_a_second_request_for_the_same_series_is_a_cache_hit() -> None:
 
     assert adapter.source == "eurostat"
     assert (meter.series_requests, meter.series_fetches) == (3, 2)
+
+
+def test_a_metered_replay_client_still_says_which_requests_it_answers_from_a_saved_reply() -> None:
+    class Saved(FakeClient):
+        def answers_from_store(self, provider: ProviderConfig, request: ChatRequest) -> bool:
+            return request is REQUEST
+
+    assert MeteredClient(Saved(), Meter()).answers_from_store(a_provider(), REQUEST)
+    other = ChatRequest(messages=[{"role": "user", "content": "other"}])
+    assert not MeteredClient(Saved(), Meter()).answers_from_store(a_provider(), other)
+    assert not MeteredClient(FakeClient(), Meter()).answers_from_store(a_provider(), REQUEST)

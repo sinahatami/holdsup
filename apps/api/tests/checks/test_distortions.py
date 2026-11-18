@@ -23,6 +23,7 @@ from holdsup.checks.distortions import (
     endpoints_check,
     per_capita_check,
     points_check,
+    points_reading,
     real_check,
     stale_check,
 )
@@ -115,6 +116,37 @@ def test_a_steady_fall_passes_the_start_and_end_check() -> None:
     )
 
 
+def trend_endpoints(series: Series, end: str = "2023") -> DistortionCheck | None:
+    c = claim(type=AssertionType.TREND, direction=Direction.DOWN)
+    r = trend(series, "2015", end)
+    points = change_points(c, r, series, tolerances=TOL)
+    return endpoints_check(inp(c, "unemployment_rate_ilo", r, series, changepoints=points))
+
+
+def test_a_trend_starting_on_a_spike_is_flagged_in_the_series_unit() -> None:
+    check = trend_endpoints(SPIKE)
+    assert check is not None and check.kind is CheckKind.ENDPOINTS and check.flagged
+    c = claim(type=AssertionType.TREND, direction=Direction.DOWN)
+    points = change_points(c, trend(SPIKE, "2015", "2023"), SPIKE, tolerances=TOL)
+    assert points is not None
+    assert check.text == flag_text(points.flags[0], RATE)  # not "... per year", the trend's
+    assert "per year" not in check.text
+
+
+def test_a_steady_trend_passes_and_names_its_window() -> None:
+    check = trend_endpoints(STEADY)
+    assert check is not None and not check.flagged
+    # The window's ends, not the first two values the trend was fitted through.
+    assert check.text.startswith("neither the start (2015) nor the end (2023) is at a peak")
+
+
+def test_a_trend_with_no_value_at_its_end_has_no_start_and_end_check() -> None:
+    gap = annual({y: v for y, v in zip(range(2013, 2024), [7.0, 7.5, 11.9, 8.0, 7.9, 8.1, 8.3,
+                                                           8.4, 8.2, 8.0, 7.9], strict=True)
+                  if y != 2022}, RATE)  # fmt: skip
+    assert trend_endpoints(gap, end="2022") is None
+
+
 def test_a_level_has_no_start_and_end_check() -> None:
     c = claim(type=AssertionType.LEVEL, value=7.9, direction=None)
     r = value_at(STEADY, "2023")
@@ -201,6 +233,50 @@ def test_a_pay_rise_above_inflation_passes() -> None:
     assert check.text.startswith("after inflation it also rose: 30,000 in 2015, 30,724 in 2020")
 
 
+def test_a_rise_that_is_flat_after_inflation_is_flagged() -> None:
+    # Up 5% in five years, prices up 0.9% a year: 31,500 is about 30,120 in 2015 prices, +0.4%,
+    # inside the 2% flat band. It still "rose" by the sign, but it is not the claimed story.
+    check = after_inflation(0.9)
+    assert check is not None and check.flagged
+    assert check.text.startswith("after inflation it stayed flat: 30,000 in 2015, 30,1")
+    assert check.text.endswith(" in 2020 (euro per year, 2015 prices)")
+
+
+def test_a_rise_that_stays_a_rise_after_inflation_passes() -> None:
+    # Prices up 0.4% a year: the real rise is 3%, outside the flat band.
+    check = after_inflation(0.4)
+    assert check is not None and not check.flagged
+    assert check.text.startswith("after inflation it also rose: 30,000 in 2015, 30,8")
+
+
+def real_version(
+    nominal: tuple[float, float], real: tuple[float, float], direction: Direction
+) -> DistortionCheck | None:
+    gdp = annual({2015: nominal[0], 2020: nominal[1]}, "million euro (current prices)")
+    deflated = related("real_gdp_volume", {2015: real[0], 2020: real[1]})
+    r = change(gdp, "2015", "2020", ChangeKind.PERCENT)
+    return real_check(inp(claim(direction=direction), "nominal_gdp_eur", r, gdp, real=deflated))
+
+
+def test_a_fall_that_is_flat_after_inflation_is_flagged_too() -> None:
+    check = real_version((110.0, 100.0), (100.0, 99.0), Direction.DOWN)  # -1% in real terms
+    assert check is not None and check.flagged
+    assert check.text.startswith("after inflation it stayed flat: 100 in 2015, 99 in 2020")
+
+
+def test_a_claim_of_flat_is_not_failed_for_being_flat_after_inflation() -> None:
+    check = real_version((100.0, 101.0), (100.0, 100.5), Direction.FLAT)
+    assert check is not None and not check.flagged
+    assert check.text.startswith("after inflation it also stayed flat: 100 in 2015")
+
+
+def test_the_flat_band_is_only_for_the_real_terms_check() -> None:
+    # Per person, up 1% is still "it also rose": only inflation turns a rise into "flat".
+    check = per_person({2015: 50e6, 2023: 50e6 * 1.0909})  # debt +10%, people +9.09% → +0.8%
+    assert check is not None and not check.flagged
+    assert check.text.startswith("per person it also rose")
+
+
 def test_the_real_version_is_read_when_the_catalog_has_one() -> None:
     gdp = annual({2015: 100.0, 2020: 110.0}, "million euro (current prices)")
     real = related("real_gdp_volume", {2015: 100.0, 2020: 98.0})
@@ -260,6 +336,30 @@ def test_percent_stated_as_percent_passes() -> None:
         "the claimed 20% is right as a change in percent (+20%); in percentage points it is "
         "+2 points"
     )
+
+
+def test_a_flagged_points_claim_is_read_in_the_kind_its_number_holds_in() -> None:
+    c = claim(type=AssertionType.PERCENT, value=2, direction=Direction.UP, unit="%")
+    check = points(2)
+    assert check is not None
+    reading = points_reading(c, [check])
+    assert reading is not None
+    read, records = reading
+    assert read.assertion.type is AssertionType.PERCENTAGE_POINTS
+    assert read.assertion.value == 2  # only the kind changes, never the number
+    assert c.assertion.type is AssertionType.PERCENT  # the claim itself is left as it was
+    assert [(r.op, r.args["kind"], r.value) for r in records] == [
+        ("change", "percentage_points", 2.0)
+    ]
+
+
+def test_a_points_claim_that_is_not_flagged_is_read_as_stated() -> None:
+    c = claim(type=AssertionType.PERCENT, value=20, direction=Direction.UP, unit="%")
+    right, wrong_both = points(20), points(7)
+    assert right is not None and wrong_both is not None
+    assert points_reading(c, [right]) is None
+    assert points_reading(c, [wrong_both]) is None
+    assert points_reading(c, []) is None
 
 
 def test_a_number_wrong_both_ways_is_not_a_points_mix_up() -> None:
@@ -336,6 +436,16 @@ def test_per_person_read_per_person_passes() -> None:
         inp(debt_claim, DEBT, change(made, "2015", "2023", ChangeKind.PERCENT), made)
     )
     assert check is not None and not check.flagged and "(per person)" in check.text
+
+
+def test_a_per_person_claim_against_a_per_person_series_passes() -> None:
+    """The series is per person by name; its unit ("current international $") says nothing."""
+    gdp = annual({2015: 60000.0, 2019: 65228.0}, CATALOG.get("gdp_per_capita_ppp_world").unit)
+    said = claim(phrase="US GDP per person", type=AssertionType.LEVEL, value=65200,
+                 direction=None, unit="international dollars")  # fmt: skip
+    check = definition_check(inp(said, "gdp_per_capita_ppp_world", value_at(gdp, "2019"), gdp))
+    assert check is not None and not check.flagged
+    assert "per person" in check.text
 
 
 def test_another_currency_is_flagged_and_the_same_one_passes() -> None:

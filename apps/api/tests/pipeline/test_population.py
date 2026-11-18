@@ -4,7 +4,7 @@ import pytest
 
 from holdsup.catalog.schema import Source, load_catalog
 from holdsup.config import REPO_ROOT
-from holdsup.pipeline.population import population_for, wants_population
+from holdsup.pipeline.population import PER_PERSON, population_for, wants_population
 from holdsup.pipeline.result import app_version
 from holdsup.places import place_name
 
@@ -50,6 +50,13 @@ def test_only_yearly_amounts_and_counts_are_divided_by_population() -> None:
         "government_debt_pct_gdp",
         "hicp_inflation_monthly",
     }
+
+
+def test_a_series_that_is_per_person_by_name_is_not_divided_again() -> None:
+    """Its unit can be a bare currency ("current international $"), which looks like a total."""
+    per_person = [s.id for s in CATALOG.indicators if PER_PERSON.search(s.name)]
+    assert "gdp_per_capita_ppp_world" in per_person
+    assert not [i for i in per_person if wants_population(CATALOG.get(i))]
 
 
 def test_place_names_for_readers() -> None:

@@ -8,6 +8,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 
 from holdsup.ops import ChangeKind, OpRecord, is_rate, unit_scale
 from holdsup.pipeline.claim import AssertionType, ClaimSpec, Direction, Operator
+from holdsup.pipeline.numerals import written_half_unit
 from holdsup.verdict.model import Label, Part, Verdict, cant_check
 from holdsup.verdict.tolerances import Tolerances, ValueTolerance
 
@@ -36,6 +37,7 @@ def unsupported_reason(kind: AssertionType) -> str:
 class _Rules:
     def __init__(self, claim: ClaimSpec, unit: str | None, tolerances: Tolerances) -> None:
         self.a = claim.assertion
+        self.quote = claim.quote
         self.unit = unit
         self.tol = tolerances
         self.rate = is_rate(unit)
@@ -54,7 +56,9 @@ class _Rules:
         period: str | None = None,
     ) -> Part:
         factor = self.factor if scaled else 1.0
-        target, band = asserted * factor, tol.band(asserted) * factor
+        # The digits as the claim wrote them: the model's float cannot tell "58.0" from "58".
+        written = written_half_unit(self.quote, asserted, unit_scale(self.a.unit))
+        target, band = asserted * factor, tol.band(asserted, written) * factor
         # Only the main assertion carries a bound ("fell more than 18%"); stated levels are
         # always "about".
         op = self.a.operator if name == "assertion" else Operator.ABOUT

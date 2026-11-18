@@ -9,7 +9,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from email.utils import parsedate_to_datetime
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import httpx2
 import openai
@@ -76,6 +76,14 @@ class SupportsChat(Protocol):
     def has_key(self, provider: ProviderConfig) -> bool: ...
 
     async def complete(self, provider: ProviderConfig, request: ChatRequest) -> ChatResponse: ...
+
+
+@runtime_checkable
+class AnswersFromStore(SupportsChat, Protocol):
+    """A client that can answer some requests from saved replies (the evaluation's `--replay`).
+    Such a request asks no provider, so the router does not count it against a limit."""
+
+    def answers_from_store(self, provider: ProviderConfig, request: ChatRequest) -> bool: ...
 
 
 def parse_retry_after(headers: Mapping[str, str], now: float) -> float | None:

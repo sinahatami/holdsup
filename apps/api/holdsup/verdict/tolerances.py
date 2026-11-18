@@ -23,9 +23,13 @@ class ValueTolerance(BaseModel):
     # Added on top of the rest, as a share of the asserted value: room for data revisions.
     plus_relative: float = Field(default=0.0, ge=0)
 
-    def band(self, asserted: float) -> float:
-        """The largest |computed - asserted| that still holds."""
-        rounding = half_unit(asserted) if self.rounding else 0.0
+    def band(self, asserted: float, written_half: float | None = None) -> float:
+        """The largest |computed - asserted| that still holds. `written_half` is half a unit of
+        the last digit as the claim wrote the number ("58.0" → 0.05); without it, the float's
+        own digits stand in, which cannot tell "58.0" from "58"."""
+        rounding = 0.0
+        if self.rounding:
+            rounding = half_unit(asserted) if written_half is None else written_half
         base = max(self.relative * abs(asserted), self.absolute, rounding)
         return base + self.plus_relative * abs(asserted)
 

@@ -68,7 +68,8 @@ def test_a_short_series_has_no_break() -> None:
 # --- the flag --------------------------------------------------------------------------------
 
 # 2013 to 2023: steady around 8, with a one-year spike to 11.9 in 2015.
-SPIKE = annual([7.0, 7.5, 11.9, 8.0, 7.9, 8.1, 8.3, 8.4, 8.2, 8.0, 7.9], first=2013)
+SPIKE_VALUES = [7.0, 7.5, 11.9, 8.0, 7.9, 8.1, 8.3, 8.4, 8.2, 8.0, 7.9]
+SPIKE = annual(SPIKE_VALUES, first=2013)
 
 
 def test_a_fall_from_a_spike_is_flagged() -> None:
@@ -167,12 +168,42 @@ def test_change_points_for_a_window_and_none_for_a_single_value() -> None:
     cp = change_points(claim(Direction.DOWN), r, SPIKE, tolerances=TOL)
     assert cp is not None and [f.period for f in cp.flags] == ["2015"]
     assert all(isinstance(b, str) for b in cp.breaks)
-    fitted = change_points(claim(Direction.DOWN, AssertionType.TREND), trend(SPIKE, "2015", "2023"),
-                           SPIKE, tolerances=TOL)  # fmt: skip
-    assert fitted is not None and fitted.flags == []  # a trend's breaks, but no flag
     assert (
         change_points(claim(Direction.DOWN), value_at(SPIKE, "2015"), SPIKE, tolerances=TOL) is None
     )
+
+
+def test_a_trend_is_read_from_its_first_value_to_its_last() -> None:
+    # "Fell from 11.9 in 2015 to 7.9 in 2023", planned as a trend: the start is the spike.
+    c = claim(Direction.DOWN, AssertionType.TREND)
+    cp = change_points(c, trend(SPIKE, "2015", "2023"), SPIKE, tolerances=TOL)
+    assert cp is not None and [f.period for f in cp.flags] == ["2015"]
+    [f] = cp.flags
+    assert (f.end, f.why, f.value, f.typical) == ("start", "peak", 11.9, 7.7)
+    assert f.claimed == pytest.approx(-4.0)  # an absolute change, 7.9 - 11.9
+    assert f.shifted == pytest.approx(0.2)  # 7.9 - 7.7: it did not fall
+
+
+def test_a_trend_is_not_flagged_when_it_is_flat_or_has_no_value_at_an_end() -> None:
+    r = trend(SPIKE, "2015", "2023")
+    assert flags(claim(Direction.FLAT, AssertionType.TREND), SPIKE, r) == []
+    assert flags(claim(None, AssertionType.TREND), SPIKE, r) == []
+    values = dict(zip(range(2013, 2024), SPIKE_VALUES, strict=True))
+    del values[2022]  # no value at the end the claim names
+    gap = Series.from_values("IT", {str(y): v for y, v in values.items()}, "%")
+    assert flags(claim(Direction.DOWN, AssertionType.TREND), gap, trend(gap, "2015", "2022")) == []
+
+
+def test_a_trend_with_a_steady_fall_has_no_flag() -> None:
+    steady = annual([12 - 0.5 * i for i in range(11)], 2013)
+    c = claim(Direction.DOWN, AssertionType.TREND)
+    assert flags(c, steady, trend(steady, "2015", "2023")) == []
+
+
+def test_a_trend_at_another_frequency_than_the_series_is_not_read() -> None:
+    monthly = Series.from_values("IT", {f"2020-{m:02d}": float(m) for m in range(1, 13)})
+    r = trend(SPIKE, "2015", "2023")  # an annual record against a monthly series
+    assert flags(claim(Direction.UP, AssertionType.TREND), monthly, r) == []
 
 
 def test_the_flag_turns_supported_into_framing_matters() -> None:

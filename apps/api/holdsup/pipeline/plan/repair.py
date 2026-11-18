@@ -24,8 +24,29 @@ from holdsup.pipeline.plan.periods import (
     period_order,
     yearly_allowed,
 )
+from holdsup.places import place_code
 
 Repair = Callable[[ModelPlan, PlanContext], list[str]]
+
+
+def _place_codes(plan: ModelPlan, ctx: PlanContext) -> list[str]:
+    """A place the model wrote as a name or a short form ("Italy", "the UK", "the Germans")
+    is its claim code (IT, GB, DE): the same reading the extraction gives a claim's place. A
+    place nobody knows is left as written, and the check on the data reports it."""
+    notes: list[str] = []
+    for i, call in enumerate(plan.calls):
+        for name in ("geo", "geo_b"):
+            written = getattr(call, name)
+            code = place_code(written)
+            if written is not None and code is not None and code != written:
+                setattr(call, name, code)
+                notes.append(f"call {i}: {name} {written!r} → {code}")
+        for j, written in enumerate(call.geos or []):
+            code = place_code(written)
+            if code is not None and code != written and call.geos is not None:
+                call.geos[j] = code
+                notes.append(f"call {i}: geos {written!r} → {code}")
+    return notes
 
 
 def _whole_years(plan: ModelPlan, ctx: PlanContext) -> list[str]:
@@ -178,8 +199,10 @@ def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     return [note]
 
 
-# Order matters: merge value_at pairs first, then fix windows, then periods, then the answer.
+# Order matters: read the places first, merge value_at pairs, then fix windows, then periods,
+# then the answer.
 REPAIRS: tuple[Repair, ...] = (
+    _place_codes,
     _values_as_change,
     _assumed_start,
     _latest_cutoff,

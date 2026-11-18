@@ -774,6 +774,33 @@ def test_a_level_claim_keeps_its_one_value_at_as_the_answer() -> None:
         validate_plan(plan(*two, answer=[0, 1]), ctx(c))
 
 
+# --- a place written as a name, not a code ---------------------------------------------------
+
+
+def test_a_place_name_in_a_call_becomes_its_code() -> None:
+    valid = validate_plan(plan({**CHANGE, "geo": "Italy"}), ctx())
+    assert valid.calls[0].geo == "IT"
+    assert valid.notes == ["call 0: geo 'Italy' → IT"]
+
+
+def test_both_places_of_a_comparison_and_a_ranking_are_read_as_codes() -> None:
+    both = {"op": "compare", "geo": "Italy", "geo_b": "the Germans", "period": "2020"}
+    valid = validate_plan(plan(both), ctx(claim(AssertionType.COMPARE, None, None)))
+    assert (valid.calls[0].geo, valid.calls[0].geo_b) == ("IT", "DE")
+    ranked = {"op": "rank", "geo": "Italy", "geos": ["Italy", "Germany", "FR"], "period": "2020"}
+    valid = validate_plan(plan(ranked), ctx(claim(AssertionType.RANK, None, None)))
+    assert valid.calls[0].geos == ["IT", "DE", "FR"]
+    assert valid.notes == ["call 0: geo 'Italy' → IT", "call 0: geos 'Italy' → IT",
+                           "call 0: geos 'Germany' → DE"]  # fmt: skip
+
+
+def test_a_code_is_left_alone_and_a_place_nobody_knows_is_still_an_error() -> None:
+    assert validate_plan(plan(CHANGE), ctx()).notes == []
+    with pytest.raises(PlanInvalid) as err:
+        validate_plan(plan({**CHANGE, "geo": "Narnia"}), ctx())
+    assert "no data for geo 'Narnia'" in "; ".join(err.value.errors)
+
+
 # --- two value_at calls for a "from X to Y" change -------------------------------------------
 
 VALUES = [{"op": "value_at", "geo": "IT", "period": "2015"},

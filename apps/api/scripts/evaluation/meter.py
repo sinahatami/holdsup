@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from holdsup.adapters.base import FetchedSeries, Filters, SeriesAdapter
 from holdsup.adapters.cache import CachedFetcher
 from holdsup.pipeline.trace import StepEvent
-from holdsup.router.client import ChatRequest, ChatResponse, SupportsChat
+from holdsup.router.client import AnswersFromStore, ChatRequest, ChatResponse, SupportsChat
 from holdsup.router.config import ProviderConfig
 from holdsup.router.errors import ProviderError, RateLimited
 
@@ -55,6 +55,12 @@ class MeteredClient:
 
     def has_key(self, provider: ProviderConfig) -> bool:
         return self._inner.has_key(provider)
+
+    def answers_from_store(self, provider: ProviderConfig, request: ChatRequest) -> bool:
+        """Passes on whether the inner client will answer from a saved reply (the router then
+        counts the request against no limit); False for a client that has none."""
+        inner = self._inner
+        return isinstance(inner, AnswersFromStore) and inner.answers_from_store(provider, request)
 
     async def complete(self, provider: ProviderConfig, request: ChatRequest) -> ChatResponse:
         started = time.perf_counter()
