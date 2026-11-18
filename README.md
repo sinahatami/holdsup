@@ -46,16 +46,16 @@ Language models do the parts that need language: reading the claim, picking the 
 
 ```mermaid
 flowchart TD
-    A["Pasted text"] --> L["1 · Ledger lookup: the same claim checked before returns its stored result"]
-    L --> E["2 · Extract each numeric claim"]
-    E --> M["3 · Match an official indicator: vector search top 8, then the reranker; the model picks only when the margin is narrow (at most 4 tool calls)"]
-    M --> F["4 · Fetch the raw series from the source"]
-    F --> P["5 · Plan the operations"]
-    P --> X["6 · Run the operations and the framing checks"]
-    X --> V["7 · Decide the verdict by rule"]
-    V --> W["8 · Explain in plain English"]
-    W --> C{"Every number in the text is in the results or the claim?"}
-    C -->|yes| R["Verdict, chart, heatmap, receipt, notebook"]
+    A["Pasted text"] --> L["1 · Ledger lookup"]
+    L --> E["2 · Extract claims"]
+    E --> M["3 · Match an indicator"]
+    M --> F["4 · Fetch the series"]
+    F --> P["5 · Plan operations"]
+    P --> X["6 · Run operations and framing checks"]
+    X --> V["7 · Verdict by rule"]
+    V --> W["8 · Explain"]
+    W --> C{"Numbers only from the results or the claim?"}
+    C -->|yes| R["Result page and receipt"]
     C -->|"no, twice"| T["Code-written explanation"] --> R
     M -->|no confident match| N["Can't check"]
 
@@ -63,21 +63,23 @@ flowchart TD
     class E,M,P,W model
 ```
 
-Dashed steps call a language model. Every other step is deterministic code. The API streams each step to the browser as Server-Sent Events (`step_started`, `step_done`, `result`, `error`), so you watch the check happen.
+Dashed steps call a language model. Every other step is deterministic code.
+
+- **Ledger lookup:** a claim checked before returns its stored result with no model call.
+- **Matching:** it starts with vector search over the catalog (top 8) and the reranker. The model picks only when the reranker's margin is narrow, with at most 4 tool calls.
+- **Streaming:** the API sends each step to the browser as Server-Sent Events (`step_started`, `step_done`, `result`, `error`), so you watch the check happen.
 
 ### The system
 
 ```mermaid
-flowchart LR
+flowchart TD
     B(["Browser"]) -->|pages| WEB["Next.js · apps/web"]
     B -->|"submit, live trace (SSE), notebook"| API["FastAPI · apps/api"]
     WEB -->|server-side reads| API
-    API --> ROUTER["Model router"]
-    ROUTER --> GROQ["Groq"] & CEREBRAS["Cerebras"] & MISTRAL["Mistral"] & OPENROUTER["OpenRouter"]
-    API --> ADAPTERS["Data adapters"]
-    ADAPTERS --> EUROSTAT["Eurostat"] & WB["World Bank"] & OWID["Our World in Data"]
+    API --> ROUTER["Model router"] --> MODELS["Groq · Cerebras · Mistral · OpenRouter"]
+    API --> ADAPTERS["Data adapters"] --> SOURCES["Eurostat · World Bank · Our World in Data"]
     API --> DB[("Postgres + pgvector")]
-    API --> LOCAL["fastembed embeddings, ONNX reranker (in process)"]
+    API --> LOCAL["Embeddings and reranker, in process"]
 ```
 
 - **Model router** ([`apps/api/holdsup/router/`](apps/api/holdsup/router)): every model call goes through it.
@@ -126,7 +128,7 @@ Other useful commands:
 | `apps/web`         | Next.js 16 App Router site in TypeScript; components follow atomic design                                                 |
 | `packages/catalog` | The indicator catalog as YAML, with its own version                                                                       |
 | `eval`             | Benchmark claims, splits, the evaluation runner and reports, with its own version                                         |
-| `ml`               | Training code for the reranker and the confidence model; not part of the served app                                     |
+| `ml`               | Training code for the reranker and the confidence model; not part of the served app                                       |
 
 ## Data sources and licenses
 
