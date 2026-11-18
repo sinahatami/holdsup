@@ -132,4 +132,7 @@ jobs:
         with:
           name: lighthouse
           path: apps/web/.lighthouseci/
+          # The folder's name starts with a dot, and upload-artifact skips hidden files
+          # unless asked: without this, no report was ever uploaded.
+          include-hidden-files: true
           if-no-files-found: warn

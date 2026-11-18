@@ -5,6 +5,16 @@ import { axeViolations } from "./axe";
 const names = (page: import("@playwright/test").Page) =>
   page.getByRole("heading", { level: 3 });
 
+/**
+ * Opens the catalog once React has taken the page over. The filters arrive as streamed
+ * HTML, so they are on screen before they work: keys typed into them earlier never reach
+ * React, and the list stays unfiltered (seen in CI on 2026-11-18).
+ */
+async function openCatalog(page: import("@playwright/test").Page) {
+  await page.goto("/indicators");
+  await page.waitForLoadState("networkidle");
+}
+
 test.describe("the catalog page", () => {
   test("lists every statistic with its source and the places it covers", async ({
     page,
@@ -22,7 +32,7 @@ test.describe("the catalog page", () => {
   test("narrows by words, topic, place and years together, and says when nothing is left", async ({
     page,
   }) => {
-    await page.goto("/indicators");
+    await openCatalog(page);
     await page.getByLabel("Search").fill("rate");
     await expect(page.getByRole("status")).toHaveText("2 of 3 statistics");
 
@@ -49,7 +59,7 @@ test.describe("the catalog page", () => {
   test("keeps the filter in the address, so a link opens the same view", async ({
     page,
   }) => {
-    await page.goto("/indicators");
+    await openCatalog(page);
     await page.getByLabel("Search").fill("rent");
     await expect.poll(() => new URL(page.url()).search).toBe("?q=rent");
 
@@ -62,7 +72,7 @@ test.describe("the catalog page", () => {
   });
 
   test("works with the keyboard alone", async ({ page }) => {
-    await page.goto("/indicators");
+    await openCatalog(page);
     await page.getByLabel("Search").focus();
     await page.keyboard.type("poverty");
     await expect(page.getByRole("status")).toHaveText("1 of 3 statistics");
@@ -75,7 +85,7 @@ test.describe("the catalog page", () => {
   test("has no accessibility violations, filtered or empty", async ({
     page,
   }) => {
-    await page.goto("/indicators");
+    await openCatalog(page);
     const scan = () => axeViolations(page);
     expect(await scan()).toEqual([]);
     await page.getByLabel("From year").fill("2020");
