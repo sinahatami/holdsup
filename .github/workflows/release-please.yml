@@ -1,0 +1,34 @@
+name: Release
+
+# On each push to main, release-please reads the Conventional Commits since the last release
+# and keeps one release pull request up to date: CHANGELOG.md and the version in package.json,
+# apps/web/package.json, apps/api/pyproject.toml and uv.lock (release-please-config.json,
+# D011). Nothing is tagged until a person merges that pull request; the merge tags vX.Y.Z
+# and publishes the GitHub release.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One run at a time and none cancelled: each run rebuilds the release pull request from main.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release pull request and tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # the release branch, the tag and the GitHub release
+      pull-requests: write # opens and updates the release pull request
+      issues: write # its "autorelease: pending" label goes through the issues API
+    steps:
+      # With the default token, the release pull request starts no other workflow, so CI
+      # does not run on it by itself. Close and reopen it before merging to run CI on it.
+      - uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
