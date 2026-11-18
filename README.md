@@ -1,1 +1,141 @@
-# holdsup
+# HoldsUp
+
+_Every number has a denominator._
+
+HoldsUp audits statistical claims. Paste a sentence with a number in it, such as _"Italy's youth unemployment has halved since 2015"_. HoldsUp finds the official statistic behind the claim and recomputes it from the raw series with plain code. It then tests whether the framing is fair and gives you a verdict with a receipt you can rerun yourself.
+
+> **Status:** in development. The live site and the benchmark results arrive with the first tagged release.
+
+<!-- Media: a GIF of the live trace and the cherry-pick heatmap goes here once the site is live. -->
+
+## Why
+
+When UNICEF tested six language models on questions about development indicators, they averaged 21.2% accuracy ([TechCrunch](https://techcrunch.com/2026/09/17/un-turns-to-google-to-make-its-global-data-ready-for-ai-agents/)). Figures in the news get repeated without the series behind them. A general chatbot checks them with arithmetic done in prose, and its answer can change from one try to the next.
+
+HoldsUp does the opposite. It uses the official series, computes the figure in code, and returns the same answer every time. It also runs framing checks nobody asked for, and every check has a page you can link to.
+
+## What a check returns
+
+- **A verdict** from fixed rules and stated tolerances: _Holds up_, _Holds up, but the framing matters_, _Partly holds up_, _Does not hold up_ or _Can't check_.
+- **A chart** of the series the claim is about.
+- **A cherry-pick heatmap.** It reruns the claim's own calculation for every start and end the series allows, to show whether the claim's direction depends on the window someone picked.
+- **Framing checks**:
+  - a start or end that carries the claim because it sits at a peak, a trough or a turn in the trend (change points found with [ruptures](https://github.com/deepcharles/ruptures))
+  - per capita compared with a raw total
+  - real compared with nominal money
+  - percentage points compared with percent
+  - a definition that differs from the claim's (age ranges, for example)
+  - data that is out of date
+- **A receipt** listing the source, the series code, the date the data was fetched and a fingerprint of the data. It also shows every calculation step, and the provider and model behind each model step.
+- **A Jupyter notebook** that repeats every calculation from the values it read. It needs only Python 3.10 or later: no HoldsUp code and no network.
+
+## How it works
+
+### The rule: the model never computes a number you see
+
+Language models do the parts that need language: reading the claim, picking the statistic and wording the explanation. They never produce a figure.
+
+- **Extract:** the model turns text into a structured spec, checked with Pydantic.
+  - Example: indicator phrase "youth unemployment", place `IT`, from 2015 to the latest year, asserted change "halved".
+- **Plan:** the model chooses named operations from a fixed registry (`value_at`, `change`, `cagr`, `trend`, `compare`, `rank`, `per_capita`, `deflate`) and their arguments. It outputs a plan, never a value.
+- **Compute:** code runs every plan. All arithmetic lives in [`apps/api/holdsup/ops/`](apps/api/holdsup/ops) as pure, typed functions with full line coverage and property tests.
+- **Verdict:** rules compare the computed value with the asserted one, within the tolerances in [`verdict/tolerances.yaml`](apps/api/holdsup/verdict/tolerances.yaml).
+- **Explain:** the model writes two or three sentences from the computed results only. A post-check reads every numeral in the text and rejects the explanation if one is in neither the results nor the claim. After two rejected tries, a code-written explanation replaces it.
+
+### The pipeline
+
+```mermaid
+flowchart TD
+    A["Pasted text"] --> L["1 · Ledger lookup: the same claim checked before returns its stored result"]
+    L --> E["2 · Extract each numeric claim"]
+    E --> M["3 · Match an official indicator: vector search top 8, then the reranker; the model picks only when the margin is narrow (at most 4 tool calls)"]
+    M --> F["4 · Fetch the raw series from the source"]
+    F --> P["5 · Plan the operations"]
+    P --> X["6 · Run the operations and the framing checks"]
+    X --> V["7 · Decide the verdict by rule"]
+    V --> W["8 · Explain in plain English"]
+    W --> C{"Every number in the text is in the results or the claim?"}
+    C -->|yes| R["Verdict, chart, heatmap, receipt, notebook"]
+    C -->|"no, twice"| T["Code-written explanation"] --> R
+    M -->|no confident match| N["Can't check"]
+
+    classDef model stroke-dasharray: 6 4, stroke-width: 2px
+    class E,M,P,W model
+```
+
+Dashed steps call a language model. Every other step is deterministic code. The API streams each step to the browser as Server-Sent Events (`step_started`, `step_done`, `result`, `error`), so you watch the check happen.
+
+### The system
+
+```mermaid
+flowchart LR
+    B(["Browser"]) -->|pages| WEB["Next.js · apps/web"]
+    B -->|"submit, live trace (SSE), notebook"| API["FastAPI · apps/api"]
+    WEB -->|server-side reads| API
+    API --> ROUTER["Model router"]
+    ROUTER --> GROQ["Groq"] & CEREBRAS["Cerebras"] & MISTRAL["Mistral"] & OPENROUTER["OpenRouter"]
+    API --> ADAPTERS["Data adapters"]
+    ADAPTERS --> EUROSTAT["Eurostat"] & WB["World Bank"] & OWID["Our World in Data"]
+    API --> DB[("Postgres + pgvector")]
+    API --> LOCAL["fastembed embeddings, ONNX reranker (in process)"]
+```
+
+- **Model router** ([`apps/api/holdsup/router/`](apps/api/holdsup/router)): every model call goes through it.
+  - It tracks each provider's free-tier budget and moves to the next provider on a rate limit, an error or invalid output.
+  - A circuit breaker rests a provider that keeps failing.
+  - When all providers are out, the site says it is at capacity and offers finished checks to read.
+  - Gemini is used only offline, for evaluation and training data, never for live users.
+- **Catalog** ([`packages/catalog/`](packages/catalog)): 80 hand-checked indicators. Each has its aliases, a one-sentence definition, its unit and its related series (the per-capita and real versions, for example). It is embedded for vector search in Postgres.
+- **Reranker:** a cross-encoder fine-tuned on the benchmark's dev split and served with onnxruntime. Its training is in [`ml/`](ml) and its card is [`ml/reranker/MODEL_CARD.md`](ml/reranker/MODEL_CARD.md). It is published on the [Hugging Face Hub](https://huggingface.co/sinahatami/holdsup-reranker).
+- **Planned hosting:** free tiers only. The web app on Vercel, the API in a Docker container on Hugging Face Spaces, and Postgres on Neon.
+
+## Evaluation
+
+The benchmark is 150 hand-labelled texts with real numeric claims ([`eval/`](eval)).
+
+- 106 texts form the **dev split**, used for every threshold, tolerance and training choice.
+- 44 texts are **held out** and run once, at the end.
+- The same claims also go to a plain chatbot, for a head-to-head comparison.
+- A 30-claim smoke subset runs on every pull request that can change a verdict. It fails if verdict accuracy drops by more than 5 points.
+
+<!-- Results table (held-out verdict accuracy vs. the chatbot, extraction recall, match top-1, top failure causes) goes here after the held-out head-to-head run. -->
+
+## Run it locally
+
+You need Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 26 with pnpm, Docker, and a free [Groq](https://console.groq.com) API key.
+
+```bash
+docker run -d --name holdsup-db -e POSTGRES_PASSWORD=dev -p 5432:5432 pgvector/pgvector:pg17
+make setup                   # Python and JS dependencies, git hooks
+cp .env.example .env         # add GROQ_API_KEY; DATABASE_URL already points at the container
+make db-migrate catalog dev  # tables, the indicator catalog, then the API on :8000 and the site on :3000
+```
+
+Other useful commands:
+
+- `make reranker-fetch` downloads the pinned reranker. Without it, the model picks every indicator.
+- `make test` runs pytest and vitest; no test touches the network.
+- `make e2e` runs Playwright and axe against a mocked API, so it needs no keys.
+- `make help` lists everything else.
+
+## Repository
+
+| Path               | What is there                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api`         | FastAPI backend: pipeline, model router, data adapters, operations, framing checks, verdict rules, receipts (Python 3.13) |
+| `apps/web`         | Next.js 16 App Router site in TypeScript; components follow atomic design                                                 |
+| `packages/catalog` | The indicator catalog as YAML, with its own version                                                                       |
+| `eval`             | Benchmark claims, splits, the evaluation runner and reports, with its own version                                         |
+| `ml`               | Training code for the reranker and the confidence model; not part of the served app                                     |
+
+## Data sources and licenses
+
+| Source                                          | Indicators | Terms                                                                                                                                                                                           |
+| ----------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Eurostat](https://ec.europa.eu/eurostat)       | 52         | Free reuse with attribution, under CC BY 4.0 ([copyright notice](https://ec.europa.eu/eurostat/web/main/help/copyright-notice))                                                                 |
+| [World Bank](https://data.worldbank.org)        | 24         | CC BY 4.0 for most datasets ([terms of use](https://www.worldbank.org/en/about/legal/terms-of-use-for-datasets))                                                                                |
+| [Our World in Data](https://ourworldindata.org) | 4          | CC BY 4.0 for Our World in Data's own work; data from other sources keeps its own license ([FAQ](https://ourworldindata.org/faqs)). HoldsUp refuses charts whose data may not be redistributed. |
+
+HoldsUp publishes no statistics of its own. Every result page and receipt names the source, the series code and the date the data was fetched.
+
+The code and the catalog are released under the [MIT license](LICENSE).
