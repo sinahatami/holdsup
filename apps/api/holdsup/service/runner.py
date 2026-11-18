@@ -12,11 +12,12 @@ from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import partial
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID, uuid4
 
 import structlog
 
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.claim import ClaimSpec
 from holdsup.pipeline.ledger import Ledger
 from holdsup.pipeline.result import Suggestion
@@ -44,7 +45,7 @@ KEEP_CHANNEL_S = 600.0  # a finished check's events stay in memory this long
 class Event:
     index: int  # the SSE id; Last-Event-ID resumes after it
     name: EventName
-    data: dict[str, Any]
+    data: JsonObject
 
 
 @dataclass
@@ -53,7 +54,7 @@ class Channel:
     closed: bool = False
     _changed: asyncio.Condition = field(default_factory=asyncio.Condition)
 
-    async def publish(self, name: EventName, data: dict[str, Any]) -> None:
+    async def publish(self, name: EventName, data: JsonObject) -> None:
         async with self._changed:
             self.events.append(Event(len(self.events), name, data))
             self._changed.notify_all()

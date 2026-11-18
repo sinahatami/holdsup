@@ -8,11 +8,11 @@ and a mention in the system prompt.
 import json
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
 
 from openai.types.chat import ChatCompletionToolUnionParam
 
 from holdsup.catalog.schema import IndicatorSpec
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.match.candidates import CandidatePool
 from holdsup.pipeline.match.model import MatchRun, ToolUse
 from holdsup.pipeline.match.prompt import describe
@@ -20,13 +20,13 @@ from holdsup.router.client import ToolCall
 
 MAX_TOOL_CALLS = 4
 
-ToolHandler = Callable[[CandidatePool, MatchRun, dict[str, Any]], Awaitable[dict[str, Any]]]
+ToolHandler = Callable[[CandidatePool, MatchRun, JsonObject], Awaitable[JsonObject]]
 
 
 @dataclass(frozen=True)
 class Tool:
     description: str
-    parameters: dict[str, Any]
+    parameters: JsonObject
     run: ToolHandler
 
 
@@ -34,12 +34,12 @@ class _ToolError(Exception):
     """A call the tool cannot answer; the model reads the message as `{"error": ...}`."""
 
 
-def _takes(name: str) -> dict[str, Any]:
+def _takes(name: str) -> JsonObject:
     """JSON schema of a tool with one required string argument."""
     return {"type": "object", "properties": {name: {"type": "string"}}, "required": [name]}
 
 
-def _entry(pool: CandidatePool, run: MatchRun, args: dict[str, Any]) -> tuple[IndicatorSpec, bool]:
+def _entry(pool: CandidatePool, run: MatchRun, args: JsonObject) -> tuple[IndicatorSpec, bool]:
     """The entry the call names and whether it covers the claim's place. An entry that does
     becomes one the model may pick."""
     indicator_id = str(args.get("indicator_id", ""))
@@ -53,9 +53,7 @@ def _entry(pool: CandidatePool, run: MatchRun, args: dict[str, Any]) -> tuple[In
     return spec, fits
 
 
-async def _search_catalog(
-    pool: CandidatePool, run: MatchRun, args: dict[str, Any]
-) -> dict[str, Any]:
+async def _search_catalog(pool: CandidatePool, run: MatchRun, args: JsonObject) -> JsonObject:
     hits, _ = await pool.covering(str(args.get("query", "")), run.claim.geo)
     for h in hits:
         run.eligible.setdefault(h.id, pool.catalog.get(h.id))
@@ -76,14 +74,12 @@ _META_FIELDS = {
 }
 
 
-async def _indicator_meta(
-    pool: CandidatePool, run: MatchRun, args: dict[str, Any]
-) -> dict[str, Any]:
+async def _indicator_meta(pool: CandidatePool, run: MatchRun, args: JsonObject) -> JsonObject:
     spec, fits = _entry(pool, run, args)
     return {**spec.model_dump(mode="json", include=_META_FIELDS), "covers_claim_place": fits}
 
 
-async def _list_geos(pool: CandidatePool, run: MatchRun, args: dict[str, Any]) -> dict[str, Any]:
+async def _list_geos(pool: CandidatePool, run: MatchRun, args: JsonObject) -> JsonObject:
     spec, fits = _entry(pool, run, args)
     return {"geo_coverage": spec.geo_coverage, "covers_claim_place": fits}
 

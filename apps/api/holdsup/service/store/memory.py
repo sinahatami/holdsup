@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.ledger import LedgerEntry
 from holdsup.problems import Problem
 from holdsup.service.store.model import (
@@ -63,7 +63,7 @@ class InMemoryCheckStore:
     async def reports(self, limit: int) -> list[StoredReport]:
         return sorted(self.saved_reports, key=lambda r: r.created_at, reverse=True)[:limit]
 
-    async def finished_results(self) -> list[dict[str, Any]]:
+    async def finished_results(self) -> list[JsonObject]:
         return [
             c.result
             for c in self.checks.values()

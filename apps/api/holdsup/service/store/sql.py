@@ -9,6 +9,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from holdsup.db.models import Check, ClaimRow, OperationRow, ReportRow
+from holdsup.jsontypes import JsonObject
 from holdsup.pipeline.ledger import LedgerEntry
 from holdsup.problems import Problem
 from holdsup.service.store.model import (
@@ -105,6 +106,7 @@ class SqlCheckStore:
             )
 
     async def finish(self, result: CheckResult, ledger: LedgerEntry | None) -> None:
+        # Any: column values of several types (status, time, JSON, vector) for one UPDATE.
         values: dict[str, Any] = {
             "status": str(CheckStatus.DONE),
             "finished_at": result.finished_at,
@@ -185,7 +187,7 @@ class SqlCheckStore:
             for r in rows
         ]
 
-    async def finished_results(self) -> list[dict[str, Any]]:
+    async def finished_results(self) -> list[JsonObject]:
         stmt = select(Check.result).where(
             Check.status == str(CheckStatus.DONE),
             Check.cached_from.is_(None),
