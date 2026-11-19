@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
+  "kind": "pipeline",
   "name": "dev",
-  "created_at": "2026-11-15T17:10:29Z",
+  "created_at": "2026-11-17T22:03:25Z",
   "benchmark": "claims.jsonl",
   "split": "dev",
   "provider": "router",
@@ -15,6 +16,7 @@
   "steps": {
     "extract": [
       "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
       "mistral-ministral-14b/ministral-14b-2512",
       "groq-gpt-oss-120b/openai/gpt-oss-120b",
       "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
@@ -22,18 +24,21 @@
     ],
     "match": [
       "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
       "mistral-ministral-14b/ministral-14b-2512",
       "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
       "gemini-flash/gemini-3.5-flash"
     ],
     "plan": [
       "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
       "mistral-ministral-14b/ministral-14b-2512",
       "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
       "gemini-flash/gemini-3.5-flash"
     ],
     "explain": [
       "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
       "mistral-ministral-14b/ministral-14b-2512",
       "groq-gpt-oss-120b/openai/gpt-oss-120b",
       "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
@@ -41,10 +46,18 @@
     ],
     "smoke": [
       "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
       "groq-gpt-oss-20b/openai/gpt-oss-20b",
       "mistral-ministral-14b/ministral-14b-2512",
       "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
       "gemini-flash/gemini-3.5-flash"
+    ],
+    "baseline": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "gemini-flash/gemini-3.5-flash",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free"
     ]
   },
   "metrics": {
@@ -54,8 +67,8 @@
     "excluded": {
       "texts_not_run": 0,
       "claims_not_run": 0,
-      "claims_verdict_unavailable": 16,
-      "share": 0.1509
+      "claims_verdict_unavailable": 14,
+      "share": 0.1321
     },
     "extraction": {
       "precision": {
@@ -74,19 +87,19 @@
         "rate": 1.0
       },
       "start": {
-        "hits": 105,
+        "hits": 104,
         "total": 105,
-        "rate": 1.0
+        "rate": 0.9905
       },
       "end": {
-        "hits": 105,
+        "hits": 104,
         "total": 105,
-        "rate": 1.0
+        "rate": 0.9905
       },
       "window": {
-        "hits": 105,
+        "hits": 104,
         "total": 105,
-        "rate": 1.0
+        "rate": 0.9905
       }
     },
     "matching": {
@@ -104,13 +117,13 @@
     "verdict": {
       "accuracy": {
         "hits": 76,
-        "total": 90,
-        "rate": 0.8444
+        "total": 92,
+        "rate": 0.8261
       },
       "accuracy_given_found": {
         "hits": 76,
-        "total": 89,
-        "rate": 0.8539
+        "total": 91,
+        "rate": 0.8352
       },
       "labels": [
         "supported",
@@ -122,15 +135,15 @@
       ],
       "confusion": {
         "supported": {
-          "supported": 32,
-          "supported_framing_matters": 1,
+          "supported": 30,
+          "supported_framing_matters": 2,
           "not_supported": 0,
           "partly_supported": 0,
           "cant_check": 0,
           "missed": 0
         },
         "supported_framing_matters": {
-          "supported": 7,
+          "supported": 8,
           "supported_framing_matters": 7,
           "not_supported": 4,
           "partly_supported": 0,
@@ -140,7 +153,7 @@
         "not_supported": {
           "supported": 0,
           "supported_framing_matters": 0,
-          "not_supported": 24,
+          "not_supported": 26,
           "partly_supported": 0,
           "cant_check": 0,
           "missed": 0
@@ -164,18 +177,18 @@
       },
       "per_label": {
         "supported": {
-          "hits": 32,
-          "total": 33,
-          "rate": 0.9697
+          "hits": 30,
+          "total": 32,
+          "rate": 0.9375
         },
         "supported_framing_matters": {
           "hits": 7,
-          "total": 18,
-          "rate": 0.3889
+          "total": 19,
+          "rate": 0.3684
         },
         "not_supported": {
-          "hits": 24,
-          "total": 24,
+          "hits": 26,
+          "total": 26,
           "rate": 1.0
         },
         "partly_supported": {
@@ -192,144 +205,208 @@
     },
     "explanation": {
       "pass_rate": {
-        "hits": 79,
-        "total": 80,
-        "rate": 0.9875
+        "hits": 81,
+        "total": 81,
+        "rate": 1.0
       }
     },
     "cost": {
-      "model_calls": 457,
-      "failed_calls": 142,
-      "calls_per_claim": 4.31,
-      "prompt_tokens": 403315,
-      "completion_tokens": 128398,
-      "seconds": 1650.8,
-      "seconds_per_claim": 15.57,
-      "seconds_p50_per_text": 7.03,
-      "seconds_p95_per_text": 51.7,
-      "series_requests": 132,
-      "series_cache_hits": 54,
-      "series_cache_hit_rate": 0.4091,
+      "model_calls": 450,
+      "failed_calls": 123,
+      "calls_per_claim": 4.25,
+      "prompt_tokens": 440441,
+      "completion_tokens": 139098,
+      "seconds": 2779.5,
+      "seconds_per_claim": 26.22,
+      "seconds_p50_per_text": 11.74,
+      "seconds_p95_per_text": 93.17,
+      "series_requests": 137,
+      "series_cache_hits": 56,
+      "series_cache_hit_rate": 0.4088,
       "by_step_provider": [
+        {
+          "step": "explain",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 23,
+          "failed": 4,
+          "tokens": 16859,
+          "mean_latency_ms": 384.2,
+          "rate_limited": 4
+        },
         {
           "step": "explain",
           "provider": "groq-gpt-oss-120b",
           "model": "openai/gpt-oss-120b",
-          "calls": 23,
-          "failed": 3,
-          "tokens": 17667,
-          "mean_latency_ms": 863.1
+          "calls": 12,
+          "failed": 2,
+          "tokens": 8835,
+          "mean_latency_ms": 691.2,
+          "rate_limited": 2
         },
         {
           "step": "explain",
           "provider": "groq-gpt-oss-20b",
           "model": "openai/gpt-oss-20b",
-          "calls": 68,
-          "failed": 11,
-          "tokens": 53426,
-          "mean_latency_ms": 639.4
+          "calls": 46,
+          "failed": 6,
+          "tokens": 37849,
+          "mean_latency_ms": 618.1,
+          "rate_limited": 5
         },
         {
           "step": "explain",
           "provider": "mistral-ministral-14b",
           "model": "ministral-14b-2512",
-          "calls": 11,
+          "calls": 24,
           "failed": 4,
-          "tokens": 3614,
-          "mean_latency_ms": 761.7
+          "tokens": 11382,
+          "mean_latency_ms": 887.7,
+          "rate_limited": 4
+        },
+        {
+          "step": "explain",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 1,
+          "failed": 1,
+          "tokens": 0,
+          "mean_latency_ms": 55.9,
+          "rate_limited": 1
+        },
+        {
+          "step": "extract",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 47,
+          "failed": 2,
+          "tokens": 143224,
+          "mean_latency_ms": 656.6,
+          "rate_limited": 2
         },
         {
           "step": "extract",
           "provider": "groq-gpt-oss-120b",
           "model": "openai/gpt-oss-120b",
-          "calls": 57,
-          "failed": 32,
-          "tokens": 68811,
-          "mean_latency_ms": 785.5
+          "calls": 30,
+          "failed": 20,
+          "tokens": 27323,
+          "mean_latency_ms": 561.7,
+          "rate_limited": 20
         },
         {
           "step": "extract",
           "provider": "groq-gpt-oss-20b",
           "model": "openai/gpt-oss-20b",
-          "calls": 95,
-          "failed": 42,
-          "tokens": 155975,
-          "mean_latency_ms": 719.2
+          "calls": 60,
+          "failed": 28,
+          "tokens": 95471,
+          "mean_latency_ms": 756.7,
+          "rate_limited": 27
         },
         {
           "step": "extract",
           "provider": "mistral-ministral-14b",
           "model": "ministral-14b-2512",
           "calls": 28,
-          "failed": 8,
-          "tokens": 22141,
-          "mean_latency_ms": 1505.5
+          "failed": 12,
+          "tokens": 17724,
+          "mean_latency_ms": 1373.8,
+          "rate_limited": 12
         },
         {
           "step": "extract",
           "provider": "openrouter-nemotron-free",
           "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 9,
+          "calls": 5,
           "failed": 1,
-          "tokens": 17716,
-          "mean_latency_ms": 23551.2
+          "tokens": 10274,
+          "mean_latency_ms": 10005.6,
+          "rate_limited": 1
         },
         {
           "step": "match",
-          "provider": "groq-gpt-oss-120b",
-          "model": "openai/gpt-oss-120b",
-          "calls": 38,
-          "failed": 16,
-          "tokens": 28468,
-          "mean_latency_ms": 584.1
-        },
-        {
-          "step": "match",
-          "provider": "mistral-ministral-14b",
-          "model": "ministral-14b-2512",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
           "calls": 11,
-          "failed": 2,
-          "tokens": 16116,
-          "mean_latency_ms": 718.9
+          "failed": 1,
+          "tokens": 15834,
+          "mean_latency_ms": 425.9,
+          "rate_limited": 1
         },
         {
           "step": "match",
-          "provider": "openrouter-nemotron-free",
-          "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 3,
-          "failed": 0,
-          "tokens": 6086,
-          "mean_latency_ms": 10276.5
-        },
-        {
-          "step": "plan",
           "provider": "groq-gpt-oss-120b",
           "model": "openai/gpt-oss-120b",
-          "calls": 96,
+          "calls": 33,
           "failed": 18,
-          "tokens": 128626,
-          "mean_latency_ms": 813.5
+          "tokens": 21502,
+          "mean_latency_ms": 472.7,
+          "rate_limited": 13
+        },
+        {
+          "step": "match",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 8,
+          "failed": 2,
+          "tokens": 8999,
+          "mean_latency_ms": 643.0,
+          "rate_limited": 2
+        },
+        {
+          "step": "match",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 5,
+          "failed": 0,
+          "tokens": 9538,
+          "mean_latency_ms": 2748.2,
+          "rate_limited": 0
+        },
+        {
+          "step": "plan",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 30,
+          "failed": 4,
+          "tokens": 48337,
+          "mean_latency_ms": 539.9,
+          "rate_limited": 4
+        },
+        {
+          "step": "plan",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 70,
+          "failed": 14,
+          "tokens": 94129,
+          "mean_latency_ms": 913.9,
+          "rate_limited": 14
         },
         {
           "step": "plan",
           "provider": "mistral-ministral-14b",
           "model": "ministral-14b-2512",
-          "calls": 11,
-          "failed": 5,
-          "tokens": 4774,
-          "mean_latency_ms": 937.6
+          "calls": 13,
+          "failed": 4,
+          "tokens": 6916,
+          "mean_latency_ms": 1206.2,
+          "rate_limited": 4
         },
         {
           "step": "plan",
           "provider": "openrouter-nemotron-free",
           "model": "nvidia/nemotron-3.5-super-vl:free",
-          "calls": 7,
+          "calls": 4,
           "failed": 0,
-          "tokens": 8293,
-          "mean_latency_ms": 11492.7
+          "tokens": 5343,
+          "mean_latency_ms": 5610.5,
+          "rate_limited": 0
         }
       ],
       "daily_limited": [
+        "groq-gpt-oss-120b",
         "groq-gpt-oss-20b",
         "openrouter-nemotron-free"
       ]
@@ -353,7 +430,7 @@
       }
     },
     "failures": {
-      "verdict": 12,
+      "verdict": 14,
       "extract": 1,
       "match": 1
     }
@@ -365,7 +442,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.63,
+      "seconds": 4.85,
       "model_calls": 5,
       "outcomes": [
         {
@@ -414,7 +491,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.83,
+      "seconds": 4.13,
       "model_calls": 5,
       "outcomes": [
         {
@@ -463,8 +540,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.94,
-      "model_calls": 5,
+      "seconds": 2.6,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e005",
@@ -512,8 +589,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 51.7,
-      "model_calls": 4,
+      "seconds": 65.05,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e006",
@@ -561,7 +638,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 2.54,
+      "seconds": 2.63,
       "model_calls": 3,
       "outcomes": [
         {
@@ -610,7 +687,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 2.45,
+      "seconds": 3.37,
       "model_calls": 3,
       "outcomes": [
         {
@@ -659,7 +736,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.78,
+      "seconds": 2.89,
       "model_calls": 4,
       "outcomes": [
         {
@@ -708,7 +785,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.16,
+      "seconds": 2.96,
       "model_calls": 4,
       "outcomes": [
         {
@@ -757,7 +834,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 29.18,
+      "seconds": 5.52,
       "model_calls": 5,
       "outcomes": [
         {
@@ -806,8 +883,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 17.64,
-      "model_calls": 6,
+      "seconds": 21.03,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e013",
@@ -838,7 +915,7 @@
               "data_age_years": 0.92,
               "series_length": 31,
               "boundary_distance": 5.0,
-              "fallback_steps": 2
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -855,8 +932,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 21.81,
-      "model_calls": 7,
+      "seconds": 14.15,
+      "model_calls": 8,
       "outcomes": [
         {
           "text_id": "e014",
@@ -887,7 +964,7 @@
               "data_age_years": 0.92,
               "series_length": 34,
               "boundary_distance": 3.0,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -904,7 +981,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.3,
+      "seconds": 11.0,
       "model_calls": 4,
       "outcomes": [
         {
@@ -953,8 +1030,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 49.56,
-      "model_calls": 7,
+      "seconds": 15.06,
+      "model_calls": 9,
       "outcomes": [
         {
           "text_id": "e017",
@@ -985,7 +1062,7 @@
               "data_age_years": 0.92,
               "series_length": 20,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -1002,8 +1079,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.59,
-      "model_calls": 3,
+      "seconds": 4.16,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e018",
@@ -1034,7 +1111,7 @@
               "data_age_years": 1.92,
               "series_length": 65,
               "boundary_distance": 0.5065,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -1051,8 +1128,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.6,
-      "model_calls": 4,
+      "seconds": 15.45,
+      "model_calls": 7,
       "outcomes": [
         {
           "text_id": "e019",
@@ -1077,13 +1154,13 @@
           "failed_step": null,
           "confidence": {
             "signals": {
-              "rerank_probability": 0.9931,
-              "rerank_margin": 0.5161,
+              "rerank_probability": 0.0415,
+              "rerank_margin": -0.4145,
               "definition_mismatch": false,
               "data_age_years": 0.92,
               "series_length": 39,
               "boundary_distance": 0.1444,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -1100,7 +1177,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 23.39,
+      "seconds": 22.65,
       "model_calls": 5,
       "outcomes": [
         {
@@ -1109,8 +1186,8 @@
           "quote": "Italy's unemployment rate fell from 12.4% in 2013 to 6.0% in 2023",
           "expected": "partly_supported",
           "expected_indicator": "unemployment_rate_monthly",
-          "status": "scored",
-          "note": "",
+          "status": "verdict_unavailable",
+          "note": "HoldsUp couldn't work out how to calculate this claim from the data. Trying again may help.",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -1118,28 +1195,13 @@
           "indicator": "unemployment_rate_monthly",
           "match_ok": true,
           "in_top8": true,
-          "verdict": "partly_supported",
-          "verdict_ok": true,
-          "reason": "Holds for assertion, start value; not for end value.",
-          "stopped_at": null,
-          "explanation": "passed",
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "plan",
+          "explanation": "not_asked",
           "failed_step": null,
-          "confidence": {
-            "signals": {
-              "rerank_probability": 0.8936,
-              "rerank_margin": 0.6838,
-              "definition_mismatch": false,
-              "data_age_years": 0.92,
-              "series_length": 43,
-              "boundary_distance": 0.8084,
-              "fallback_steps": 1
-            },
-            "probability": null,
-            "label": null,
-            "abstain": false,
-            "reason": null,
-            "model": null
-          }
+          "confidence": null
         }
       ]
     },
@@ -1149,7 +1211,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.14,
+      "seconds": 11.78,
       "model_calls": 4,
       "outcomes": [
         {
@@ -1198,8 +1260,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 19.48,
-      "model_calls": 5,
+      "seconds": 3.81,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e022",
@@ -1224,8 +1286,8 @@
           "failed_step": "verdict",
           "confidence": {
             "signals": {
-              "rerank_probability": 0.9148,
-              "rerank_margin": 0.8363,
+              "rerank_probability": 0.915,
+              "rerank_margin": 0.8369,
               "definition_mismatch": false,
               "data_age_years": 0.92,
               "series_length": 39,
@@ -1247,7 +1309,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.04,
+      "seconds": 6.83,
       "model_calls": 5,
       "outcomes": [
         {
@@ -1279,7 +1341,7 @@
               "data_age_years": 0.92,
               "series_length": 35,
               "boundary_distance": 0.9057,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -1296,8 +1358,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 28.11,
-      "model_calls": 4,
+      "seconds": 10.72,
+      "model_calls": 8,
       "outcomes": [
         {
           "text_id": "e024",
@@ -1322,8 +1384,8 @@
           "failed_step": "verdict",
           "confidence": {
             "signals": {
-              "rerank_probability": 0.9312,
-              "rerank_margin": 0.754,
+              "rerank_probability": 0.9186,
+              "rerank_margin": 0.7678,
               "definition_mismatch": false,
               "data_age_years": 0.92,
               "series_length": 43,
@@ -1345,8 +1407,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 19.18,
-      "model_calls": 8,
+      "seconds": 37.56,
+      "model_calls": 9,
       "outcomes": [
         {
           "text_id": "e025",
@@ -1377,7 +1439,7 @@
               "data_age_years": 0.92,
               "series_length": 22,
               "boundary_distance": 1.0,
-              "fallback_steps": 3
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -1394,8 +1456,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 7.39,
-      "model_calls": 6,
+      "seconds": 26.79,
+      "model_calls": 10,
       "outcomes": [
         {
           "text_id": "e026",
@@ -1426,7 +1488,7 @@
               "data_age_years": 0.92,
               "series_length": 20,
               "boundary_distance": 0.9218,
-              "fallback_steps": 1
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -1443,8 +1505,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 34.66,
-      "model_calls": 7,
+      "seconds": 7.42,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e027",
@@ -1469,13 +1531,13 @@
           "failed_step": "verdict",
           "confidence": {
             "signals": {
-              "rerank_probability": 0.0021,
-              "rerank_margin": -0.0468,
+              "rerank_probability": 0.9738,
+              "rerank_margin": 0.8724,
               "definition_mismatch": false,
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 1.0,
-              "fallback_steps": 2
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -1492,8 +1554,8 @@
       "labelled": 1,
       "extracted": 0,
       "linked": 0,
-      "seconds": 0.51,
-      "model_calls": 1,
+      "seconds": 13.71,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e028",
@@ -1526,7 +1588,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 10.15,
+      "seconds": 18.32,
       "model_calls": 4,
       "outcomes": [
         {
@@ -1560,7 +1622,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 27.21,
+      "seconds": 3.19,
       "model_calls": 2,
       "outcomes": [
         {
@@ -1594,8 +1656,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 46.63,
-      "model_calls": 5,
+      "seconds": 96.58,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e031",
@@ -1626,7 +1688,7 @@
               "data_age_years": 0.92,
               "series_length": 226,
               "boundary_distance": 0.6287,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -1692,8 +1754,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.27,
-      "model_calls": 4,
+      "seconds": 3.11,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e035",
@@ -1724,7 +1786,7 @@
               "data_age_years": -0.08,
               "series_length": 28,
               "boundary_distance": 0.0449,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -1741,7 +1803,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.76,
+      "seconds": 2.37,
       "model_calls": 4,
       "outcomes": [
         {
@@ -1773,7 +1835,7 @@
               "data_age_years": 0.92,
               "series_length": 18,
               "boundary_distance": 0.7381,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -1790,8 +1852,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.15,
-      "model_calls": 6,
+      "seconds": 5.74,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e037",
@@ -1839,8 +1901,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 31.19,
-      "model_calls": 5,
+      "seconds": 10.74,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e039",
@@ -1861,7 +1923,7 @@
           "verdict_ok": true,
           "reason": "Holds within tolerance.",
           "stopped_at": null,
-          "explanation": "rejected",
+          "explanation": "passed",
           "failed_step": null,
           "confidence": {
             "signals": {
@@ -1888,8 +1950,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.86,
-      "model_calls": 3,
+      "seconds": 21.41,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e040",
@@ -1937,8 +1999,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 12.46,
-      "model_calls": 6,
+      "seconds": 30.21,
+      "model_calls": 12,
       "outcomes": [
         {
           "text_id": "e041",
@@ -1986,8 +2048,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 21.39,
-      "model_calls": 4,
+      "seconds": 92.74,
+      "model_calls": 1,
       "outcomes": [
         {
           "text_id": "e042",
@@ -1995,8 +2057,8 @@
           "quote": "US inflation was 8% in 2023",
           "expected": "not_supported",
           "expected_indicator": "cpi_inflation_annual",
-          "status": "scored",
-          "note": "",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -2004,28 +2066,13 @@
           "indicator": "cpi_inflation_annual",
           "match_ok": true,
           "in_top8": true,
-          "verdict": "not_supported",
-          "verdict_ok": true,
-          "reason": "Outside tolerance for the stated window.",
-          "stopped_at": null,
-          "explanation": "passed",
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
           "failed_step": null,
-          "confidence": {
-            "signals": {
-              "rerank_probability": 0.9935,
-              "rerank_margin": 0.9903,
-              "definition_mismatch": false,
-              "data_age_years": 1.92,
-              "series_length": 65,
-              "boundary_distance": 5.0,
-              "fallback_steps": 1
-            },
-            "probability": null,
-            "label": null,
-            "abstain": false,
-            "reason": null,
-            "model": null
-          }
+          "confidence": null
         }
       ]
     },
@@ -2035,7 +2082,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 2.83,
+      "seconds": 2.77,
       "model_calls": 3,
       "outcomes": [
         {
@@ -2084,8 +2131,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.89,
-      "model_calls": 4,
+      "seconds": 2.37,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e044",
@@ -2116,7 +2163,7 @@
               "data_age_years": 0.92,
               "series_length": 35,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2133,8 +2180,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 6.92,
-      "model_calls": 5,
+      "seconds": 65.15,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e045",
@@ -2165,7 +2212,7 @@
               "data_age_years": 0.92,
               "series_length": 35,
               "boundary_distance": 5.0,
-              "fallback_steps": 2
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2182,8 +2229,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 14.98,
-      "model_calls": 7,
+      "seconds": 3.08,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e046",
@@ -2231,8 +2278,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 11.19,
-      "model_calls": 5,
+      "seconds": 2.4,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e049",
@@ -2263,7 +2310,7 @@
               "data_age_years": -0.08,
               "series_length": 28,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2280,8 +2327,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 29.97,
-      "model_calls": 10,
+      "seconds": 4.04,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e050",
@@ -2312,7 +2359,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 0.1264,
-              "fallback_steps": 2
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2329,8 +2376,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.83,
-      "model_calls": 3,
+      "seconds": 33.08,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e052",
@@ -2361,7 +2408,7 @@
               "data_age_years": 0.92,
               "series_length": 26,
               "boundary_distance": 0.9877,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2378,8 +2425,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 12.08,
-      "model_calls": 8,
+      "seconds": 3.65,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e053",
@@ -2410,7 +2457,7 @@
               "data_age_years": 0.92,
               "series_length": 31,
               "boundary_distance": 0.9693,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2427,8 +2474,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 14.75,
-      "model_calls": 6,
+      "seconds": 3.85,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e056",
@@ -2459,7 +2506,7 @@
               "data_age_years": 0.92,
               "series_length": 35,
               "boundary_distance": 0.9853,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2476,8 +2523,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 31.37,
-      "model_calls": 7,
+      "seconds": 4.97,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e059",
@@ -2510,8 +2557,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.18,
-      "model_calls": 2,
+      "seconds": 56.76,
+      "model_calls": 12,
       "outcomes": [
         {
           "text_id": "e060",
@@ -2523,8 +2570,8 @@
           "note": "",
           "found": true,
           "geo_ok": true,
-          "start_ok": true,
-          "end_ok": true,
+          "start_ok": false,
+          "end_ok": false,
           "indicator": null,
           "match_ok": true,
           "in_top8": null,
@@ -2544,8 +2591,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 7.03,
-      "model_calls": 5,
+      "seconds": 3.21,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e063",
@@ -2576,7 +2623,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 0.9655,
-              "fallback_steps": 2
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2593,8 +2640,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.92,
-      "model_calls": 4,
+      "seconds": 2.43,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e065",
@@ -2625,7 +2672,7 @@
               "data_age_years": 0.92,
               "series_length": 32,
               "boundary_distance": 0.9989,
-              "fallback_steps": 2
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2642,8 +2689,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 8.05,
-      "model_calls": 6,
+      "seconds": 4.98,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e066",
@@ -2674,7 +2721,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 0.8699,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2691,8 +2738,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 25.36,
-      "model_calls": 6,
+      "seconds": 5.84,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e067",
@@ -2740,8 +2787,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 16.61,
-      "model_calls": 5,
+      "seconds": 5.68,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e071",
@@ -2772,7 +2819,7 @@
               "data_age_years": 0.92,
               "series_length": 24,
               "boundary_distance": 0.839,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2789,7 +2836,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 9.03,
+      "seconds": 16.22,
       "model_calls": 5,
       "outcomes": [
         {
@@ -2821,7 +2868,7 @@
               "data_age_years": 0.92,
               "series_length": 35,
               "boundary_distance": 3.7453,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2838,8 +2885,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.13,
-      "model_calls": 4,
+      "seconds": 20.05,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e075",
@@ -2870,7 +2917,7 @@
               "data_age_years": 0.92,
               "series_length": 32,
               "boundary_distance": 5.0,
-              "fallback_steps": 2
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -2887,8 +2934,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 64.23,
-      "model_calls": 9,
+      "seconds": 8.15,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e076",
@@ -2919,7 +2966,7 @@
               "data_age_years": 0.92,
               "series_length": 31,
               "boundary_distance": 3.125,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -2936,8 +2983,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.01,
-      "model_calls": 3,
+      "seconds": 2.55,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e077",
@@ -2968,7 +3015,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 5.0,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -2985,8 +3032,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.43,
-      "model_calls": 4,
+      "seconds": 11.81,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e081",
@@ -3017,7 +3064,7 @@
               "data_age_years": 0.92,
               "series_length": 31,
               "boundary_distance": 0.672,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3034,7 +3081,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.79,
+      "seconds": 9.49,
       "model_calls": 4,
       "outcomes": [
         {
@@ -3066,7 +3113,7 @@
               "data_age_years": 0.92,
               "series_length": 31,
               "boundary_distance": 0.8636,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -3083,8 +3130,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 17.69,
-      "model_calls": 6,
+      "seconds": 12.01,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e084",
@@ -3115,7 +3162,7 @@
               "data_age_years": 0.92,
               "series_length": 39,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -3132,8 +3179,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 7.62,
-      "model_calls": 5,
+      "seconds": 22.92,
+      "model_calls": 7,
       "outcomes": [
         {
           "text_id": "e086",
@@ -3164,7 +3211,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 0.8269,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -3181,8 +3228,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 27.5,
-      "model_calls": 8,
+      "seconds": 6.12,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e087",
@@ -3230,8 +3277,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 10.63,
-      "model_calls": 4,
+      "seconds": 1.38,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e089",
@@ -3264,8 +3311,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 131.32,
-      "model_calls": 12,
+      "seconds": 10.28,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e090",
@@ -3298,8 +3345,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 60.71,
-      "model_calls": 4,
+      "seconds": 11.74,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e091",
@@ -3330,7 +3377,7 @@
               "data_age_years": 0.92,
               "series_length": 29,
               "boundary_distance": 0.8783,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -3347,8 +3394,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.43,
-      "model_calls": 3,
+      "seconds": 2.7,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e093",
@@ -3396,8 +3443,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.53,
-      "model_calls": 3,
+      "seconds": 35.18,
+      "model_calls": 7,
       "outcomes": [
         {
           "text_id": "e094",
@@ -3428,7 +3475,7 @@
               "data_age_years": 0.92,
               "series_length": 34,
               "boundary_distance": 1.0,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -3445,7 +3492,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.25,
+      "seconds": 1.95,
       "model_calls": 4,
       "outcomes": [
         {
@@ -3477,7 +3524,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 1.0,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3494,8 +3541,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 7.01,
-      "model_calls": 5,
+      "seconds": 19.38,
+      "model_calls": 7,
       "outcomes": [
         {
           "text_id": "e096",
@@ -3543,8 +3590,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 15.07,
-      "model_calls": 5,
+      "seconds": 15.88,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e097",
@@ -3575,7 +3622,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 1.0,
-              "fallback_steps": 0
+              "fallback_steps": 1
             },
             "probability": null,
             "label": null,
@@ -3592,8 +3639,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 21.79,
-      "model_calls": 8,
+      "seconds": 46.72,
+      "model_calls": 9,
       "outcomes": [
         {
           "text_id": "e099",
@@ -3624,7 +3671,7 @@
               "data_age_years": 1.92,
               "series_length": 65,
               "boundary_distance": 1.0,
-              "fallback_steps": 1
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -3641,8 +3688,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 13.03,
-      "model_calls": 5,
+      "seconds": 40.56,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e101",
@@ -3673,7 +3720,7 @@
               "data_age_years": 0.92,
               "series_length": 22,
               "boundary_distance": 0.8386,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3690,8 +3737,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 14.23,
-      "model_calls": 6,
+      "seconds": 59.91,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e102",
@@ -3722,7 +3769,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 3.5455,
-              "fallback_steps": 2
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -3739,8 +3786,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 57.23,
-      "model_calls": 7,
+      "seconds": 26.33,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e103",
@@ -3771,7 +3818,7 @@
               "data_age_years": 0.92,
               "series_length": 43,
               "boundary_distance": 3.7845,
-              "fallback_steps": 1
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -3788,8 +3835,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.18,
-      "model_calls": 4,
+      "seconds": 36.22,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e105",
@@ -3820,7 +3867,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 5.0,
-              "fallback_steps": 0
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -3837,7 +3884,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.75,
+      "seconds": 30.1,
       "model_calls": 3,
       "outcomes": [
         {
@@ -3869,7 +3916,7 @@
               "data_age_years": 0.92,
               "series_length": 61,
               "boundary_distance": 5.0,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3886,7 +3933,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.68,
+      "seconds": 33.98,
       "model_calls": 4,
       "outcomes": [
         {
@@ -3918,7 +3965,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3935,8 +3982,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 8.54,
-      "model_calls": 5,
+      "seconds": 60.01,
+      "model_calls": 6,
       "outcomes": [
         {
           "text_id": "e109",
@@ -3961,13 +4008,13 @@
           "failed_step": null,
           "confidence": {
             "signals": {
-              "rerank_probability": 0.9881,
-              "rerank_margin": 0.9712,
+              "rerank_probability": 0.9835,
+              "rerank_margin": 0.9734,
               "definition_mismatch": false,
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": null,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -3984,8 +4031,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 14.8,
-      "model_calls": 6,
+      "seconds": 1.42,
+      "model_calls": 2,
       "outcomes": [
         {
           "text_id": "e110",
@@ -4006,7 +4053,7 @@
           "verdict_ok": true,
           "reason": "Holds for assertion, start value; not for end value.",
           "stopped_at": null,
-          "explanation": "passed",
+          "explanation": "not_asked",
           "failed_step": null,
           "confidence": {
             "signals": {
@@ -4016,7 +4063,7 @@
               "data_age_years": 0.92,
               "series_length": 34,
               "boundary_distance": 0.8667,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -4033,8 +4080,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 44.5,
-      "model_calls": 12,
+      "seconds": 97.91,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e113",
@@ -4065,7 +4112,7 @@
               "data_age_years": 0.92,
               "series_length": 43,
               "boundary_distance": 5.0,
-              "fallback_steps": 2
+              "fallback_steps": 3
             },
             "probability": null,
             "label": null,
@@ -4082,8 +4129,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.5,
-      "model_calls": 3,
+      "seconds": 4.22,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e115",
@@ -4114,7 +4161,7 @@
               "data_age_years": 0.92,
               "series_length": 34,
               "boundary_distance": 1.0,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -4131,8 +4178,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 15.23,
-      "model_calls": 8,
+      "seconds": 5.64,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e116",
@@ -4163,7 +4210,7 @@
               "data_age_years": 0.92,
               "series_length": 17,
               "boundary_distance": 5.0,
-              "fallback_steps": 1
+              "fallback_steps": 0
             },
             "probability": null,
             "label": null,
@@ -4180,8 +4227,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 13.67,
-      "model_calls": 4,
+      "seconds": 1.82,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e118",
@@ -4214,8 +4261,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.09,
-      "model_calls": 2,
+      "seconds": 1.32,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e119",
@@ -4248,8 +4295,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 12.77,
-      "model_calls": 6,
+      "seconds": 3.38,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e121",
@@ -4280,7 +4327,7 @@
               "data_age_years": 0.92,
               "series_length": 66,
               "boundary_distance": 0.9935,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -4297,8 +4344,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 16.96,
-      "model_calls": 4,
+      "seconds": 148.43,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e122",
@@ -4306,8 +4353,8 @@
           "quote": "China had 1.38 billion people in 2015",
           "expected": "supported",
           "expected_indicator": "population_total_world",
-          "status": "scored",
-          "note": "",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4315,28 +4362,13 @@
           "indicator": "population_total_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": "supported",
-          "verdict_ok": true,
-          "reason": "Holds within tolerance.",
-          "stopped_at": null,
-          "explanation": "passed",
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
           "failed_step": null,
-          "confidence": {
-            "signals": {
-              "rerank_probability": 0.988,
-              "rerank_margin": 0.9749,
-              "definition_mismatch": false,
-              "data_age_years": 0.92,
-              "series_length": 66,
-              "boundary_distance": 0.9926,
-              "fallback_steps": 0
-            },
-            "probability": null,
-            "label": null,
-            "abstain": false,
-            "reason": null,
-            "model": null
-          }
+          "confidence": null
         }
       ]
     },
@@ -4346,8 +4378,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 7.55,
-      "model_calls": 4,
+      "seconds": 65.08,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e124",
@@ -4378,7 +4410,7 @@
               "data_age_years": 0.92,
               "series_length": 36,
               "boundary_distance": 0.9572,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -4395,8 +4427,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 33.25,
-      "model_calls": 1,
+      "seconds": 67.92,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e125",
@@ -4404,8 +4436,8 @@
           "quote": "China's GDP per person was 13,500 international dollars at purchasing power parity in 2015",
           "expected": "supported",
           "expected_indicator": "gdp_per_capita_ppp_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4413,13 +4445,28 @@
           "indicator": "gdp_per_capita_ppp_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
-          "failed_step": null,
-          "confidence": null
+          "verdict": "supported_framing_matters",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance, but the claim is per person; the figures are a total (current international $).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.999,
+              "rerank_margin": 0.9984,
+              "definition_mismatch": true,
+              "data_age_years": 0.92,
+              "series_length": 36,
+              "boundary_distance": 0.7294,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -4429,7 +4476,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.47,
+      "seconds": 93.84,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4463,7 +4510,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.01,
+      "seconds": 93.12,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4497,8 +4544,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.12,
-      "model_calls": 3,
+      "seconds": 93.09,
+      "model_calls": 1,
       "outcomes": [
         {
           "text_id": "e128",
@@ -4506,8 +4553,8 @@
           "quote": "US tax revenue was 11.2% of GDP in 2015",
           "expected": "supported",
           "expected_indicator": "tax_revenue_world",
-          "status": "scored",
-          "note": "",
+          "status": "verdict_unavailable",
+          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4515,28 +4562,13 @@
           "indicator": "tax_revenue_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": "supported",
-          "verdict_ok": true,
-          "reason": "Holds within tolerance.",
-          "stopped_at": null,
-          "explanation": "passed",
+          "verdict": null,
+          "verdict_ok": null,
+          "reason": "",
+          "stopped_at": "fetch",
+          "explanation": "not_asked",
           "failed_step": null,
-          "confidence": {
-            "signals": {
-              "rerank_probability": 0.9969,
-              "rerank_margin": 0.9797,
-              "definition_mismatch": false,
-              "data_age_years": 1.92,
-              "series_length": 53,
-              "boundary_distance": 0.894,
-              "fallback_steps": 0
-            },
-            "probability": null,
-            "label": null,
-            "abstain": false,
-            "reason": null,
-            "model": null
-          }
+          "confidence": null
         }
       ]
     },
@@ -4546,7 +4578,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 62.74,
+      "seconds": 92.74,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4580,7 +4612,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.76,
+      "seconds": 93.12,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4614,7 +4646,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 33.89,
+      "seconds": 93.17,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4648,8 +4680,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 33.38,
-      "model_calls": 1,
+      "seconds": 94.03,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e134",
@@ -4657,8 +4689,8 @@
           "quote": "Brazil's Gini index was 58 in 2015",
           "expected": "not_supported",
           "expected_indicator": "gini_index_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4666,13 +4698,28 @@
           "indicator": "gini_index_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
           "failed_step": null,
-          "confidence": null
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9905,
+              "rerank_margin": 0.9904,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 40,
+              "boundary_distance": 4.6481,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -4682,8 +4729,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 33.47,
-      "model_calls": 1,
+      "seconds": 2.26,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e135",
@@ -4691,8 +4738,8 @@
           "quote": "The United States spent 20% of GDP on health in 2010",
           "expected": "not_supported",
           "expected_indicator": "health_spending_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4700,13 +4747,28 @@
           "indicator": "health_spending_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
           "failed_step": null,
-          "confidence": null
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.996,
+              "rerank_margin": 0.9841,
+              "definition_mismatch": false,
+              "data_age_years": 2.92,
+              "series_length": 24,
+              "boundary_distance": 4.4325,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -4716,7 +4778,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.94,
+      "seconds": 5.19,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4750,8 +4812,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.67,
-      "model_calls": 3,
+      "seconds": 62.86,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e137",
@@ -4782,7 +4844,7 @@
               "data_age_years": 2.92,
               "series_length": 31,
               "boundary_distance": 5.0,
-              "fallback_steps": 0
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -4799,8 +4861,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 3.17,
-      "model_calls": 1,
+      "seconds": 65.44,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e139",
@@ -4808,8 +4870,8 @@
           "quote": "China's exports as a share of GDP rose between 2006 and 2019",
           "expected": "not_supported",
           "expected_indicator": "exports_pct_gdp_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4817,13 +4879,28 @@
           "indicator": "exports_pct_gdp_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
           "failed_step": null,
-          "confidence": null
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9947,
+              "rerank_margin": 0.9915,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": null,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -4833,7 +4910,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 33.67,
+      "seconds": 5.76,
       "model_calls": 1,
       "outcomes": [
         {
@@ -4867,8 +4944,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 5.29,
-      "model_calls": 1,
+      "seconds": 62.1,
+      "model_calls": 5,
       "outcomes": [
         {
           "text_id": "e141",
@@ -4876,8 +4953,8 @@
           "quote": "Brazil's Gini index fell from 58.4 in 2001 to 45 in 2024",
           "expected": "partly_supported",
           "expected_indicator": "gini_index_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -4885,13 +4962,28 @@
           "indicator": "gini_index_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
           "failed_step": null,
-          "confidence": null
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9898,
+              "rerank_margin": 0.9892,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 40,
+              "boundary_distance": 1.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -4901,8 +4993,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.85,
-      "model_calls": 2,
+      "seconds": 4.96,
+      "model_calls": 1,
       "outcomes": [
         {
           "text_id": "e142",
@@ -4935,8 +5027,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.77,
-      "model_calls": 1,
+      "seconds": 43.36,
+      "model_calls": 2,
       "outcomes": [
         {
           "text_id": "e143",
@@ -4969,7 +5061,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 6.22,
+      "seconds": 20.24,
       "model_calls": 4,
       "outcomes": [
         {
@@ -5001,7 +5093,7 @@
               "data_age_years": 3.92,
               "series_length": 48,
               "boundary_distance": 0.8335,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -5018,8 +5110,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.29,
-      "model_calls": 3,
+      "seconds": 43.66,
+      "model_calls": 4,
       "outcomes": [
         {
           "text_id": "e145",
@@ -5050,7 +5142,7 @@
               "data_age_years": 2.92,
               "series_length": 31,
               "boundary_distance": 0.6612,
-              "fallback_steps": 1
+              "fallback_steps": 2
             },
             "probability": null,
             "label": null,
@@ -5067,8 +5159,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.6,
-      "model_calls": 1,
+      "seconds": 22.68,
+      "model_calls": 3,
       "outcomes": [
         {
           "text_id": "e146",
@@ -5076,8 +5168,8 @@
           "quote": "China's exports fell from 35.5% of GDP in 2006 to 18.1% in 2019",
           "expected": "supported_framing_matters",
           "expected_indicator": "exports_pct_gdp_world",
-          "status": "verdict_unavailable",
-          "note": "The World Bank didn't answer just now. Please try again in a few minutes.",
+          "status": "scored",
+          "note": "",
           "found": true,
           "geo_ok": true,
           "start_ok": true,
@@ -5085,13 +5177,28 @@
           "indicator": "exports_pct_gdp_world",
           "match_ok": true,
           "in_top8": true,
-          "verdict": null,
-          "verdict_ok": null,
-          "reason": "",
-          "stopped_at": "fetch",
-          "explanation": "not_asked",
-          "failed_step": null,
-          "confidence": null
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9978,
+              "rerank_margin": 0.9908,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.8276,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
         }
       ]
     },
@@ -5101,8 +5208,8 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 4.35,
-      "model_calls": 1,
+      "seconds": 39.83,
+      "model_calls": 2,
       "outcomes": [
         {
           "text_id": "e149",
@@ -5135,7 +5242,7 @@
       "labelled": 1,
       "extracted": 1,
       "linked": 1,
-      "seconds": 2.98,
+      "seconds": 1.16,
       "model_calls": 2,
       "outcomes": [
         {
