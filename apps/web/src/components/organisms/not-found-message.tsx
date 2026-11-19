@@ -25,7 +25,7 @@ export function NotFoundMessage({
       <p className="text-gradient text-8xl font-bold">
         {strings.notFound.code}
       </p>
-      <h1 className="text-2xl font-bold">{heading}</h1>
+      <h1 className="text-2xl">{heading}</h1>
       <p className="text-muted-foreground">{body}</p>
       <Link href={routes.home} className={pill({ tone: "primary" })}>
         {strings.check.back}

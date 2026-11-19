@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Caveat, Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
+import { Caveat, Geist_Mono, Inter, Newsreader } from "next/font/google";
 import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
@@ -10,12 +10,13 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-// Headings and big figures: the printed record.
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+// Headings and big figures: the printed record, in the logo's typeface. A variable font with
+// an optical-size axis, so a large headline gets the display cut and a small one the text cut.
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
-  weight: "400",
   style: ["normal", "italic"],
+  axes: ["opsz"],
 });
 
 // The editor's red pen: short notes about a claim, never the only place a fact is said.
@@ -38,6 +39,8 @@ export const metadata: Metadata = {
   metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: strings.appName,
   description: strings.metaDescription,
+  // Pages share the large picture from opengraph-image.tsx; a check draws its own.
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -46,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       lang={strings.locale}
       dir={strings.dir}
-      className={`${inter.variable} ${instrumentSerif.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${newsreader.variable} ${caveat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script

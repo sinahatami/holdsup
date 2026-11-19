@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LogoLockup } from "@/components/atoms/logo-lockup";
 import { PageShell } from "@/components/templates/page-shell";
 import { strings } from "@/lib/strings";
 
@@ -15,8 +16,10 @@ export function EmbedTemplate({
 }) {
   return (
     <PageShell layout="embed">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 border-b pb-2">
-        <h1 className="font-heading text-xl leading-none">{strings.appName}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b pb-2">
+        <h1>
+          <LogoLockup label={strings.appName} className="h-6" />
+        </h1>
         <p className="text-muted-foreground text-sm">{strings.tagline}</p>
       </div>
       {children}

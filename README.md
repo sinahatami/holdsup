@@ -1,4 +1,9 @@
-# HoldsUp
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/holdsup-logo-dark.svg">
+    <img src="brand/holdsup-logo.svg" alt="HoldsUp" width="300">
+  </picture>
+</h1>
 
 _Every number has a denominator._
 

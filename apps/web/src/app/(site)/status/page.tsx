@@ -20,7 +20,7 @@ export default function Page() {
   return (
     <PageShell>
       <BackLink />
-      <h1 className="text-4xl font-bold tracking-tight">{t.heading}</h1>
+      <h1 className="text-4xl">{t.heading}</h1>
       <p className="text-muted-foreground leading-7">{t.intro}</p>
       {/* The state is read per request, so it streams in after the prerendered shell. */}
       <Suspense fallback={<StatusText>{t.loading}</StatusText>}>

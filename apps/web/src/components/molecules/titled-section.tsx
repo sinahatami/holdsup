@@ -26,7 +26,7 @@ export function TitledSection({
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h2
           id={headingId}
-          className="font-heading text-3xl font-normal [font-synthesis:none]"
+          className="font-heading text-3xl font-medium tracking-[-0.01em] [font-synthesis:none]"
         >
           {title}
         </h2>

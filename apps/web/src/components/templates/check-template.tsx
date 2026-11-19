@@ -13,9 +13,7 @@ export function CheckTemplate({
   return (
     <PageShell layout="content">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-gradient text-4xl font-bold tracking-tight">
-          {strings.check.heading}
-        </h1>
+        <h1 className="text-gradient text-4xl">{strings.check.heading}</h1>
         {actions}
       </div>
       {children}

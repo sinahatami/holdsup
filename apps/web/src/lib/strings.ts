@@ -4,8 +4,6 @@ export const strings = {
   dir: "ltr",
   appName: "HoldsUp",
   tagline: "Every number has a denominator.",
-  // The logo sets the name as a fraction: the first part over a bar over the second.
-  logoParts: ["Holds", "Up"] as [string, string],
   metaDescription:
     "HoldsUp checks numeric claims against official statistics and shows its work.",
   // A wait in words: "about 15 seconds" in a sentence, "15 s" on a button that counts down.
@@ -758,6 +756,8 @@ export const strings = {
   // The picture a chat or social app shows for a shared check.
   og: {
     alt: "A claim, how it came out, and the figure it was checked against",
+    brandAlt:
+      "The HoldsUp logo, a division sign whose upper dot is a quotation mark, over the words: Every number has a denominator.",
     claimed: "Claimed",
     official: "Official",
     source: (name: string) => `Checked against ${name}`,

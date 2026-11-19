@@ -23,7 +23,9 @@ describe("ReceiptCard", () => {
       "7.68%",
     );
     expect(screen.getByText("Checked against Eurostat")).toBeInTheDocument();
-    expect(screen.getByText(strings.appName)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: strings.appName }),
+    ).toBeInTheDocument();
   });
 
   it("states the claim's own figure when it has one", () => {
@@ -89,9 +91,11 @@ describe("ReceiptCard", () => {
 });
 
 describe("BrandCard", () => {
-  it("shows the name, the tagline and what the site does", () => {
+  it("shows the logo, the tagline and what the site does", () => {
     render(<BrandCard />);
-    expect(screen.getByText(strings.appName)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: strings.appName }),
+    ).toBeInTheDocument();
     expect(screen.getByText(strings.tagline)).toBeInTheDocument();
     expect(screen.getByText(strings.metaDescription)).toBeInTheDocument();
   });

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { readCheck } from "@/lib/api/check";
+import { ogFonts } from "@/lib/og-fonts";
 import { OG_IMAGE_SIZE } from "@/lib/routes";
 import { BrandCard, ReceiptCard } from "../og-card";
 
@@ -18,13 +19,17 @@ export async function GET(
   { params }: RouteContext<"/check/[id]/opengraph-image">,
 ) {
   const { id } = await params;
-  const found = await readCheck(id);
+  const [found, fonts] = await Promise.all([readCheck(id), ogFonts()]);
   const result = found.kind === "found" ? found.view.result : null;
   if (!result || result.claims.length === 0) {
     return new ImageResponse(<BrandCard />, {
       ...OG_IMAGE_SIZE,
+      fonts,
       headers: { "cache-control": "no-store" },
     });
   }
-  return new ImageResponse(<ReceiptCard result={result} />, OG_IMAGE_SIZE);
+  return new ImageResponse(<ReceiptCard result={result} />, {
+    ...OG_IMAGE_SIZE,
+    fonts,
+  });
 }
