@@ -725,8 +725,10 @@ export const strings = {
     image: "Download image",
     imageName: (id: string) => `holdsup-${id}.png`,
     native: "Share",
+    embed: "Copy embed code",
     linkCopied: "Link copied.",
     summaryCopied: "Summary copied.",
+    embedCopied: "Embed code copied. Paste it into a page's HTML.",
     failed:
       "Could not copy. You can copy the address from your browser's address bar instead.",
     // The text that is copied or shared: the claim, how it came out, and where.
@@ -759,6 +761,21 @@ export const strings = {
     claimed: "Claimed",
     official: "Official",
     source: (name: string) => `Checked against ${name}`,
+  },
+  // A check's verdict on another site, inside an iframe (/embed/[id]). Its links open HoldsUp
+  // in a new tab, so the reader keeps the page they were on.
+  embed: {
+    pageTitle: "Embedded check",
+    // The iframe's title, which a screen reader announces before entering it.
+    frameTitle: (title: string) => `HoldsUp: ${title}`,
+    fullReceipt: "See the full receipt on HoldsUp",
+    openCheck: "Open this check on HoldsUp",
+    openHoldsUp: "Go to HoldsUp",
+    running: "This check is still running.",
+    failed: "This check could not finish.",
+    unavailable: "HoldsUp could not load this check just now.",
+    noClaims: "HoldsUp found no claim with a number in this text.",
+    missing: "No check at this link.",
   },
   recent: {
     heading: "Recent checks",

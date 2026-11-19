@@ -51,6 +51,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           href: routes.checkImage(result.id),
           name: strings.share.imageName(result.id),
         }}
+        embed={{ id: result.id, claims: claims.length }}
       />
       {hasMoreThanQuotes(
         result.text,

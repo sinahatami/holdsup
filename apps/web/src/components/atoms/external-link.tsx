@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 /**
  * A link to a page outside HoldsUp, such as a source's data or the repository. It
  * always opens in a new tab, so the reader keeps their place, and says so to a screen
- * reader. Every link off the site goes through here.
+ * reader. Every link off the site goes through here, and so does every link out of an
+ * embedded verdict, which would otherwise open HoldsUp inside the other site's frame.
  *
  * `plain` leaves the look to the caller (a footer link, a button, an icon): no
  * underline, no arrow, only the new-tab behaviour and the spoken note.

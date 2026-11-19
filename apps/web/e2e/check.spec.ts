@@ -213,6 +213,34 @@ test.describe("sharing a check", () => {
     expect(summary.endsWith(page.url())).toBe(true);
   });
 
+  test("copies embed code that shows the verdict on another page", async ({
+    page,
+  }) => {
+    await page.goto(`/check/${DONE_ID}`);
+    const share = page.getByRole("region", { name: "Share this check" });
+    await share.getByRole("button", { name: "Copy embed code" }).click();
+    await expect(share.getByRole("status")).toContainText("Embed code copied.");
+    const code = await page.evaluate(() => navigator.clipboard.readText());
+    expect(code).toMatch(/^<iframe /);
+
+    // Pasted into a page of its own, the frame shows the verdict without the site around it.
+    await page.setContent(`<!doctype html><title>Blog</title>${code}`);
+    const frame = page.frameLocator("iframe");
+    await expect(
+      frame.getByRole("heading", { level: 1, name: "HoldsUp" }),
+    ).toBeVisible();
+    await expect(
+      frame.getByRole("article", {
+        name: "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
+      }),
+    ).toContainText("Holds up");
+    await expect(frame.getByRole("banner")).toHaveCount(0);
+    await expect(frame.getByRole("contentinfo")).toHaveCount(0);
+    const out = frame.getByRole("link", { name: /See the full receipt/ });
+    await expect(out).toHaveAttribute("href", `/check/${DONE_ID}`);
+    await expect(out).toHaveAttribute("target", "_blank");
+  });
+
   test("downloads the check's card image", async ({ page }) => {
     await page.goto(`/check/${DONE_ID}`);
     const share = page.getByRole("region", { name: "Share this check" });
@@ -224,6 +252,36 @@ test.describe("sharing a check", () => {
     expect([...bytes.subarray(0, 8)]).toEqual([
       137, 80, 78, 71, 13, 10, 26, 10,
     ]);
+  });
+});
+
+test.describe("an embedded verdict", () => {
+  for (const [what, id] of [
+    ["one claim", DONE_ID],
+    ["two claims", UNSURE_ID],
+  ]) {
+    test(`fits a 300px frame and passes the accessibility scan (${what})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 300, height: 600 });
+      await page.goto(`/embed/${id}`);
+      await expect(page.getByRole("link", { name: /HoldsUp/ })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth,
+        ),
+      ).toBe(false);
+      expect(await axeViolations(page)).toEqual([]);
+    });
+  }
+
+  test("says so in the frame when there is no such check", async ({ page }) => {
+    await page.goto(`/embed/${MISSING_ID}`);
+    await expect(page.getByText("No check at this link.")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Go to HoldsUp/ }),
+    ).toHaveAttribute("target", "_blank");
+    await expect(page.getByRole("banner")).toHaveCount(0);
   });
 });
 

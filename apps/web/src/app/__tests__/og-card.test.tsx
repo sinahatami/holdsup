@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { BrandCard, ReceiptCard } from "@/app/check/[id]/og-card";
+import { BrandCard, ReceiptCard } from "@/app/(site)/check/[id]/og-card";
 import { strings } from "@/lib/strings";
 import {
   checkResult,
