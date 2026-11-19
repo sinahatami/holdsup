@@ -1,6 +1,6 @@
 {
   "model": "holdsup-confidence",
-  "created": "2026-11-18",
+  "created": "2026-11-19",
   "seed": 13,
   "hyperparameters": {
     "model": "logistic regression (L2), standardized signals, mean imputation",
@@ -55,7 +55,7 @@
       },
       {
         "name": "logistic",
-        "label": "Logistic regression, every signal (served)",
+        "label": "Logistic regression, every signal (not served)",
         "brier": 0.11653324762765055,
         "log_loss": 0.4741621081838385,
         "auc": 0.46465638148667604

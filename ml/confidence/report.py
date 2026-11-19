@@ -133,6 +133,7 @@ def build_report(
     x, _ = matrix(rows)
     by_name = {s.name: s for s in table}
     served, base, boost = by_name[SERVED], by_name[BASE_RATE], by_name[BOOSTING]
+    beats = served.brier < base.brier  # only then is the model exported and served
     right = sum(y)
     return Report(
         model=NAME,
@@ -160,13 +161,19 @@ def build_report(
             fold_sizes=cv.fold_sizes,
             grouping="statistic and place (a claim's rows from several runs stay in one fold)",
             models=[
-                ModelRow(name=s.name, label=s.label, brier=s.brier, log_loss=s.log_loss, auc=s.auc)
+                ModelRow(
+                    name=s.name,
+                    label=_label(s, served=beats),
+                    brier=s.brier,
+                    log_loss=s.log_loss,
+                    auc=s.auc,
+                )
                 for s in table
             ],
             calibration=[BinRow(**vars(b)) for b in calibration(y, p)],
             coverage=[CoverageRow(**vars(c)) for c in coverage_curve(y, p)],
             threshold=threshold,
-            beats_base_rate=served.brier < base.brier,
+            beats_base_rate=beats,
             boosting_clearly_better=boost.brier <= served.brier - CLEAR_GAIN,
         ),
         served=Served(
@@ -186,6 +193,13 @@ def build_report(
         ),
         limitations=list(LIMITATIONS),
     )
+
+
+def _label(s: Score, *, served: bool) -> str:
+    """The candidate's name in the table; the logistic regression's says whether it ships."""
+    if s.name != SERVED:
+        return s.label
+    return f"{s.label} ({'served' if served else 'not served'})"
 
 
 def _pct(v: float | None) -> str:
@@ -250,9 +264,9 @@ def markdown(r: Report) -> str:
     )
     out += [
         (
-            "- The served model beats the base rate on the Brier score."
+            "- The logistic regression beats the base rate on the Brier score, so it is served."
             if cv.beats_base_rate
-            else "- The served model does not beat the base rate on the Brier score, so it is not "
+            else "- The logistic regression does not beat the base rate on the Brier score, so it is not "
             "exported: the API serves no confidence model and never abstains."
         ),
         (
@@ -260,7 +274,7 @@ def markdown(r: Report) -> str:
             f" (a clear gain is a Brier score {r.hyperparameters['clear_gain']} lower)."
         ),
         "",
-        "## Calibration (served model, out of fold)",
+        "## Calibration (logistic regression, out of fold)",
         "",
     ]
     out += _table(
@@ -270,7 +284,7 @@ def markdown(r: Report) -> str:
             for b in cv.calibration
         ],
     )
-    out += ["## Accuracy against coverage (served model, out of fold)", ""]
+    out += ["## Accuracy against coverage (logistic regression, out of fold)", ""]
     rows = []
     for share in COVERAGES:
         point = _at_coverage(cv.coverage, share)
@@ -298,7 +312,7 @@ def markdown(r: Report) -> str:
             "(abstain) below it."
         ),
         "",
-        "## Served coefficients (per standard deviation; trained on every row)",
+        "## Logistic regression coefficients (per standard deviation; trained on every row)",
         "",
     ]
     out += _table(

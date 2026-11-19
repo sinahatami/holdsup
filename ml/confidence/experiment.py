@@ -92,7 +92,8 @@ CANDIDATES = (
         (FEATURES.index("rerank_margin"),),
         lambda _: logistic(),
     ),
-    Candidate(LOGISTIC, "Logistic regression, every signal (served)", None, lambda _: logistic()),
+    # The report adds "(served)" or "(not served)": only a model that beats the base rate ships.
+    Candidate(LOGISTIC, "Logistic regression, every signal", None, lambda _: logistic()),
     Candidate(BOOSTING, "Gradient boosting, every signal", None, boosting),
 )
 
