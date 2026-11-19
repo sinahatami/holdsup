@@ -116,7 +116,7 @@ eval-baseline: ## Accept the current smoke run as eval/baseline.json (after read
 eval: ## Full dev-split evaluation of eval/claims.jsonl -> eval/reports/dev.{json,md}; manual, rate-limited providers; replays saved model replies from .cache/eval-replies-dev (ARGS="--provider NAME" for one provider; ARGS=--resume continues a stopped run; ARGS="--record DIR" asks afresh)
 	cd $(API_DIR) && uv run python -m scripts.evaluation $(call replay_by_default,$(DEV_REPLIES)) $(ARGS)
 
-eval-chatbot: ## The head-to-head baseline: a plain chatbot answers the same claims -> eval/reports/dev.chatbot.{json,md} (P4.6; manual; ARGS="--provider NAME", --resume; the test split needs --final, P4.7)
+eval-chatbot: ## The head-to-head baseline: one plain chatbot model answers the same claims -> eval/reports/dev.chatbot.<provider>.{json,md} (P4.6; manual; the baseline step's first model unless ARGS="--provider NAME"; --resume; the test split needs --final, P4.7)
 	cd $(API_DIR) && uv run python -m scripts.evaluation.chatbot_cli $(ARGS)
 
 ml-setup: ## ml/ environment with the training libraries (torch CPU wheels, sentence-transformers, onnx)

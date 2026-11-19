@@ -1,8 +1,11 @@
 """`make eval-chatbot`: the plain-chatbot baseline over the benchmark, as a report.
 
 The same benchmark file, split and report folder as `make eval`; the report is named
-`<split>.chatbot` (`<split>.chatbot.<provider>` with --provider) and is `kind: chatbot`.
-The held-out test split needs --final, as for the pipeline (P4.7).
+`<split>.chatbot.<provider>` and is `kind: chatbot`. One model answers every text: the first
+provider of the router's `baseline` step unless --provider names another. Failing over down
+that step would hand texts to weaker models whenever the first is rate-limited, and a baseline
+made of several models measures none of them (D033). The held-out test split needs --final,
+as for the pipeline (P4.7).
 
 Exit codes: 0 done; 2 the command could not run (bad file, wrong flags, a partial run of
 something else to resume).
@@ -18,7 +21,7 @@ from pathlib import Path
 from holdsup.catalog.schema import Catalog, CatalogError, load_catalog
 from holdsup.config import get_settings
 from holdsup.pipeline.result import app_version
-from holdsup.router import RouterConfig, Use
+from holdsup.router import RouterConfig, Use, load_router_config
 from holdsup.verdict import load_tolerances
 from scripts.evaluation.benchmark import (
     BenchmarkError,
@@ -27,7 +30,7 @@ from scripts.evaluation.benchmark import (
     load_benchmark,
     select,
 )
-from scripts.evaluation.chatbot import ChatRig, evaluate_chatbot, live_chat_rig
+from scripts.evaluation.chatbot import STEP, ChatRig, evaluate_chatbot, live_chat_rig
 from scripts.evaluation.checkpoint import Checkpoint, CheckpointError, Header, checkpoint_path
 from scripts.evaluation.cli import (
     DEFAULT_CLAIMS,
@@ -42,7 +45,7 @@ from scripts.evaluation.cli import (
     _stderr,
 )
 from scripts.evaluation.patient import BUDGET_S
-from scripts.evaluation.report import ROUTER, Report, Stamp, build_report, write_report
+from scripts.evaluation.report import Report, Stamp, build_report, write_report
 from scripts.evaluation.run import TextRun
 from scripts.evaluation.score import summarize
 
@@ -70,7 +73,11 @@ def _parser() -> argparse.ArgumentParser:
         help="allow the held-out test split: for the final report only (P4.7), never for tuning",
     )
     p.add_argument("--limit", type=int, default=None, help="only the first N texts")
-    p.add_argument("--provider", default=None, help="ask this one provider's model only")
+    p.add_argument(
+        "--provider",
+        default=None,
+        help="the one provider whose model answers; default: the first of the baseline step",
+    )
     # Offline tooling, so the offline-only provider (Gemini) may answer; D003 is about live users.
     p.add_argument("--use", choices=[u.value for u in Use], default=Use.OFFLINE.value)
     p.add_argument("--catalog", type=Path, default=None, help="default: packages/catalog")
@@ -122,6 +129,8 @@ def main(argv: Sequence[str], factory: ChatRigFactory = live_chat_rig) -> int:
         benchmark = load_benchmark(claims)
         check_indicators(benchmark, catalog)
         version = _eval_version(claims)
+        if args.provider is None:  # one model for every text, never a fall-over mix (D033)
+            args.provider = load_router_config().steps[STEP][0]
         config = _config(args)
     except (UsageError, BenchmarkError, CatalogError, FileNotFoundError) as exc:
         print(exc, file=sys.stderr)
@@ -133,12 +142,11 @@ def main(argv: Sequence[str], factory: ChatRigFactory = live_chat_rig) -> int:
 
     use = Use(args.use)
     tolerances = load_tolerances()
-    suffix = f".{args.provider}" if args.provider else ""
     header = Header(
-        name=(args.name or f"{args.split}.chatbot") + suffix,
+        name=f"{args.name or f'{args.split}.chatbot'}.{args.provider}",
         benchmark=claims.name,
         split=args.split,
-        provider=args.provider or ROUTER,
+        provider=args.provider,
         use=args.use,
         versions=Stamp(
             app=app_version(), catalog=catalog.version, tolerances=tolerances.version, eval=version
