@@ -11,6 +11,8 @@ const shell = cva("mx-auto flex w-full flex-1 flex-col", {
       /** A short centred message, such as 404. */
       message:
         "max-w-xl items-center justify-center gap-5 px-6 py-24 text-center",
+      /** A verdict inside another site's iframe: the frame's whole width, tight padding. */
+      embed: "gap-4 p-4 sm:p-5",
     },
   },
   defaultVariants: { layout: "content" },

@@ -28,6 +28,7 @@ HoldsUp does the opposite. It uses the official series, computes the figure in c
   - data that is out of date
 - **A receipt** listing the source, the series code, the date the data was fetched and a fingerprint of the data. It also shows every calculation step, and the provider and model behind each model step.
 - **A Jupyter notebook** that repeats every calculation from the values it read. It needs only Python 3.10 or later: no HoldsUp code and no network.
+- **An embeddable verdict.** "Copy embed code" gives an iframe that shows the claim, its verdict and its figures on another site, with a link to the full receipt. HoldsUp draws it from the stored check each time it loads.
 
 ## How it works
 

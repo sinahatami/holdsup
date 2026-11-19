@@ -9,21 +9,25 @@ const t = strings.claim.denominator;
 
 /**
  * One side of the fraction: a label, the figures over a bar, and what they stand on. A start
- * and an end figure are joined by an arrow (read as "to"); a figure never breaks inside.
+ * and an end figure are joined by an arrow (read as "to"). A unit in words goes under the
+ * figures in small type, so they stay short; a figure still too wide for its column (a
+ * phone, a long number) wraps at a space rather than run past the card.
  */
 function Side({
   label,
   figures,
+  unit,
   official = false,
   children,
 }: {
   label: string;
   figures: string[];
+  unit: string | null;
   official?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
+    <div className="flex min-w-0 flex-col items-center gap-1 text-center">
       <dt
         className={cn(
           "text-xs font-semibold tracking-widest uppercase",
@@ -35,7 +39,7 @@ function Side({
       <dd className="flex w-full flex-col items-center gap-1">
         <span
           className={cn(
-            "font-heading text-[clamp(2rem,4.2vw,3rem)] leading-none text-balance tabular-nums",
+            "font-heading max-w-full text-[clamp(2rem,4.2vw,3rem)] leading-none text-balance break-words tabular-nums",
             official && "text-brand",
           )}
         >
@@ -47,10 +51,20 @@ function Side({
                   <span className="sr-only"> {t.to} </span>
                 </>
               )}
-              <span className="whitespace-nowrap">{figure}</span>
+              {figure}
             </Fragment>
           ))}
         </span>
+        {unit && (
+          <span
+            className={cn(
+              "text-sm font-medium",
+              official ? "text-brand" : "text-muted-foreground",
+            )}
+          >
+            {unit}
+          </span>
+        )}
         <span
           aria-hidden
           className={cn(
@@ -78,7 +92,7 @@ export function ClaimDenominator({ claim }: { claim: ClaimResult }) {
     <section aria-labelledby={id} className="flex flex-col gap-6">
       <SectionTitle id={id}>{t.heading}</SectionTitle>
       <dl className="grid gap-x-12 gap-y-8 sm:grid-cols-2">
-        <Side label={t.claimed} figures={d.claimed}>
+        <Side label={t.claimed} figures={d.claimed} unit={d.unit}>
           {names.length > 0 && (
             <span aria-hidden className="pen text-2xl">
               {names.map(t.question).join("  ")}
@@ -88,7 +102,7 @@ export function ClaimDenominator({ claim }: { claim: ClaimResult }) {
             {names.length > 0 ? t.unstated(names.join(" or ")) : t.stated}
           </span>
         </Side>
-        <Side label={t.official} figures={d.official} official>
+        <Side label={t.official} figures={d.official} unit={d.unit} official>
           {d.where && <span className="font-semibold">{d.where}</span>}
           {d.source && (
             <span className="text-muted-foreground text-sm">{d.source}</span>

@@ -1,6 +1,6 @@
 import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Page from "@/app/methodology/page";
+import Page from "@/app/(site)/methodology/page";
 import { AllowedGaps } from "@/components/organisms/allowed-gaps";
 import { MethodSteps } from "@/components/organisms/method-steps";
 import { routes } from "@/lib/routes";

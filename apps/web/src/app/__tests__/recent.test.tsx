@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Page from "@/app/recent/page";
+import Page from "@/app/(site)/recent/page";
 import { strings } from "@/lib/strings";
 import { galleryClaim, galleryItem } from "@/test/fixtures";
 

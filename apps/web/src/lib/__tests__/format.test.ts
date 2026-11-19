@@ -10,6 +10,7 @@ import {
   sourceName,
   waitText,
   withUnit,
+  wordUnit,
 } from "@/lib/format";
 
 describe("formatFigures", () => {
@@ -40,6 +41,23 @@ describe("formatFigures", () => {
       claimed: a,
       official: b,
     });
+  });
+});
+
+describe("wordUnit", () => {
+  it.each([
+    ["deaths per 1,000 live births", "deaths per 1,000 live births"],
+    ["million euro", "million euro"],
+    ["%", null],
+    ["% of GDP", null],
+    ["% per year", null],
+    ["percentage points", null],
+    ["×", null],
+    ["", null],
+    [null, null],
+    [undefined, null],
+  ])("is the words of %s, or null for a sign", (unit, words) => {
+    expect(wordUnit(unit)).toBe(words);
   });
 });
 

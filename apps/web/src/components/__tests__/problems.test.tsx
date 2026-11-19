@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import GlobalError from "@/app/global-error";
-import ErrorPage from "@/app/error";
+import ErrorPage from "@/app/(site)/error";
 import { OfflineNotice } from "@/components/molecules/offline-notice";
 import { ProblemAlert } from "@/components/molecules/problem-alert";
 import { RetryButton } from "@/components/molecules/retry-button";

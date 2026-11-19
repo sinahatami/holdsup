@@ -11,6 +11,7 @@ import {
   formatPeriod,
   placeName,
   sourceName,
+  wordUnit,
 } from "@/lib/format";
 import { strings } from "@/lib/strings";
 
@@ -240,6 +241,11 @@ export interface Denominator {
   /** The figures as the claim states them: a start and an end, or the one it states. */
   claimed: string[];
   official: string[];
+  /**
+   * The unit when it is words ("deaths per 1,000 live births"): it is left off `official`
+   * and shown once under the figures, so they stay short. Null for a sign such as "%".
+   */
+  unit: string | null;
   /** What the claim does not name, which HoldsUp filled in. */
   unstated: Unstated[];
   /** Where and when the official figures are for: "Italy · 2015 to 2023". */
@@ -274,9 +280,16 @@ export function denominatorOf(c: ClaimResult): Denominator | null {
   if (unusual(spec.geo_basis)) unstated.push("place");
   if (unusual(spec.start_basis) || unusual(spec.end_basis))
     unstated.push("period");
+  const words = wordUnit(partUnit(c, shown[0].name));
+  const suffix = words ? ` ${words}` : null;
+  const unit =
+    suffix && shown.every((p) => p.official.endsWith(suffix)) ? words : null;
   return {
     claimed: shown.map((p) => p.claimed),
-    official: shown.map((p) => p.official),
+    official: shown.map((p) =>
+      unit ? p.official.slice(0, -` ${unit}`.length) : p.official,
+    ),
+    unit,
     unstated,
     where: [spec.geo ? placeName(spec.geo) : null, when]
       .filter(Boolean)

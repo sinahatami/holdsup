@@ -5,7 +5,7 @@ import { copyText } from "@/lib/clipboard";
 import { shareSummary } from "@/lib/share";
 
 /** What the last action did, for the status line: nothing yet, copied, or failed. */
-export type ShareStatus = "link" | "summary" | "failed" | null;
+export type ShareStatus = "link" | "summary" | "embed" | "failed" | null;
 
 const STATUS_MS = 3000;
 const noop = () => () => {};
@@ -16,9 +16,14 @@ const pageUrl = () => `${location.origin}${location.pathname}`;
 /**
  * Copy and share actions for the check on this page. `canShare` is whether the
  * browser has the native share sheet; it is false until hydration, so the markup
- * always matches. The status clears itself after a few seconds.
+ * always matches. The status clears itself after a few seconds. `embed` makes the
+ * iframe code for this site's address, which is only known in the browser.
  */
-export function useShare(title: string, text: string) {
+export function useShare(
+  title: string,
+  text: string,
+  embed?: (origin: string) => string,
+) {
   const [status, setStatus] = useState<ShareStatus>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const canShare = useSyncExternalStore(
@@ -41,6 +46,12 @@ export function useShare(title: string, text: string) {
     announce(ok ? what : "failed");
   }
 
+  async function copyEmbed() {
+    if (!embed) return;
+    const ok = await copyText(embed(location.origin));
+    announce(ok ? "embed" : "failed");
+  }
+
   async function share() {
     try {
       await navigator.share({ title, text, url: pageUrl() });
@@ -57,6 +68,7 @@ export function useShare(title: string, text: string) {
     status,
     copyLink: () => copy("link"),
     copySummary: () => copy("summary"),
+    copyEmbed,
     share,
   };
 }

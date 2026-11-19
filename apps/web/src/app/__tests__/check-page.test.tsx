@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CheckPage } from "@/app/check/[id]/check-page";
-import { generateMetadata } from "@/app/check/[id]/page";
+import { CheckPage } from "@/app/(site)/check/[id]/check-page";
+import { generateMetadata } from "@/app/(site)/check/[id]/page";
 import { readCheck } from "@/lib/api/check";
 import { strings } from "@/lib/strings";
 import {
@@ -19,11 +19,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 // The live follower is a client component with its own tests; here it only has to be chosen.
-vi.mock("@/app/check/[id]/check-live", () => ({
+vi.mock("@/app/(site)/check/[id]/check-live", () => ({
   CheckLive: ({ id }: { id: string }) => <p>following {id} live</p>,
 }));
 // The gallery read is the home page's (tested there); here it only has to be placed.
-vi.mock("@/app/check/[id]/while-you-wait", () => ({
+vi.mock("@/app/(site)/check/[id]/while-you-wait", () => ({
   WhileYouWait: () => <p>checks done earlier</p>,
 }));
 
@@ -161,6 +161,23 @@ describe("check page metadata", () => {
       siteName: "HoldsUp",
       title: `Partly holds up · “${partlyClaim.claim.quote}”`,
     });
+  });
+
+  it("points chat and social apps at the check's own picture, whatever its state", async () => {
+    const image = {
+      url: "/check/c1/opengraph-image",
+      width: 1200,
+      height: 630,
+      alt: strings.og.alt,
+    };
+    found(checkView({ status: "done", result: checkResult([partlyClaim]) }));
+    const done = await meta();
+    expect(done.openGraph?.images).toEqual([image]);
+    expect(done.twitter?.images).toEqual([image]);
+    lookup.mockResolvedValue({ kind: "missing" });
+    const missing = await meta();
+    expect(missing.openGraph?.images).toEqual([image]);
+    expect(missing.twitter).toMatchObject({ card: "summary_large_image" });
   });
 
   it.each([

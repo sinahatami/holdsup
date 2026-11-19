@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Page from "@/app/about/page";
+import Page from "@/app/(site)/about/page";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { externalLink } from "@/test/external";

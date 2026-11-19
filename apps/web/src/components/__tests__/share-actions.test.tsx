@@ -154,6 +154,35 @@ describe("ShareActions", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
   });
 
+  it("copies the iframe code for this site, only for a check that can be embedded", async () => {
+    const { unmount } = render(
+      <ShareActions
+        title="Holds up · “Debt is 133% of GDP.”"
+        text={TEXT}
+        embed={{ id: "abc-123", claims: 1 }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: t.embed }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+    const code = writeText.mock.calls[0][0] as string;
+    expect(code).toMatch(/^<iframe /);
+    expect(code).toContain(`src="${location.origin}/embed/abc-123"`);
+    expect(code).toContain("Debt is 133% of GDP.");
+    expect(await screen.findByRole("status")).toHaveTextContent(t.embedCopied);
+    unmount();
+    open();
+    expect(screen.queryByRole("button", { name: t.embed })).toBeNull();
+  });
+
+  it("says so when the embed code cannot be copied", async () => {
+    writeText.mockRejectedValue(new Error("denied"));
+    render(
+      <ShareActions title="t" text={TEXT} embed={{ id: "c1", claims: 2 }} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: t.embed }));
+    expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
+  });
+
   it("is a labelled region whose buttons can be reached by keyboard", () => {
     open();
     expect(screen.getByRole("region", { name: t.heading })).toBeInTheDocument();
