@@ -1,0 +1,2505 @@
+{
+  "schema_version": 1,
+  "kind": "pipeline",
+  "name": "test",
+  "created_at": "2026-11-18T12:54:41Z",
+  "benchmark": "claims.jsonl",
+  "split": "test",
+  "provider": "router",
+  "use": "live",
+  "versions": {
+    "app": "0.0.0",
+    "catalog": "0.8.0",
+    "tolerances": 6,
+    "eval": "0.2.0"
+  },
+  "steps": {
+    "extract": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "match": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "plan": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "explain": [
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "smoke": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "groq-gpt-oss-20b/openai/gpt-oss-20b",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free",
+      "gemini-flash/gemini-3.5-flash"
+    ],
+    "baseline": [
+      "groq-gpt-oss-120b/openai/gpt-oss-120b",
+      "cerebras-gpt-oss-120b/gpt-oss-120b",
+      "gemini-flash/gemini-3.5-flash",
+      "mistral-ministral-14b/ministral-14b-2512",
+      "openrouter-nemotron-free/nvidia/nemotron-3.5-super-vl:free"
+    ]
+  },
+  "metrics": {
+    "texts": 44,
+    "labelled_claims": 44,
+    "extracted_claims": 44,
+    "excluded": {
+      "texts_not_run": 0,
+      "claims_not_run": 0,
+      "claims_verdict_unavailable": 0,
+      "share": 0.0
+    },
+    "extraction": {
+      "precision": {
+        "hits": 44,
+        "total": 44,
+        "rate": 1.0
+      },
+      "recall": {
+        "hits": 44,
+        "total": 44,
+        "rate": 1.0
+      },
+      "geo": {
+        "hits": 44,
+        "total": 44,
+        "rate": 1.0
+      },
+      "start": {
+        "hits": 43,
+        "total": 44,
+        "rate": 0.9773
+      },
+      "end": {
+        "hits": 44,
+        "total": 44,
+        "rate": 1.0
+      },
+      "window": {
+        "hits": 43,
+        "total": 44,
+        "rate": 0.9773
+      }
+    },
+    "matching": {
+      "top1": {
+        "hits": 43,
+        "total": 44,
+        "rate": 0.9773
+      },
+      "recall_at_8": {
+        "hits": 43,
+        "total": 43,
+        "rate": 1.0
+      }
+    },
+    "verdict": {
+      "accuracy": {
+        "hits": 39,
+        "total": 44,
+        "rate": 0.8864
+      },
+      "accuracy_given_found": {
+        "hits": 39,
+        "total": 44,
+        "rate": 0.8864
+      },
+      "labels": [
+        "supported",
+        "supported_framing_matters",
+        "not_supported",
+        "partly_supported",
+        "cant_check",
+        "missed"
+      ],
+      "confusion": {
+        "supported": {
+          "supported": 16,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "supported_framing_matters": {
+          "supported": 2,
+          "supported_framing_matters": 6,
+          "not_supported": 0,
+          "partly_supported": 0,
+          "cant_check": 1,
+          "missed": 0
+        },
+        "not_supported": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 12,
+          "partly_supported": 0,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "partly_supported": {
+          "supported": 1,
+          "supported_framing_matters": 0,
+          "not_supported": 0,
+          "partly_supported": 2,
+          "cant_check": 0,
+          "missed": 0
+        },
+        "cant_check": {
+          "supported": 0,
+          "supported_framing_matters": 0,
+          "not_supported": 1,
+          "partly_supported": 0,
+          "cant_check": 3,
+          "missed": 0
+        }
+      },
+      "per_label": {
+        "supported": {
+          "hits": 16,
+          "total": 16,
+          "rate": 1.0
+        },
+        "supported_framing_matters": {
+          "hits": 6,
+          "total": 9,
+          "rate": 0.6667
+        },
+        "not_supported": {
+          "hits": 12,
+          "total": 12,
+          "rate": 1.0
+        },
+        "partly_supported": {
+          "hits": 2,
+          "total": 3,
+          "rate": 0.6667
+        },
+        "cant_check": {
+          "hits": 3,
+          "total": 4,
+          "rate": 0.75
+        }
+      }
+    },
+    "explanation": {
+      "pass_rate": {
+        "hits": 40,
+        "total": 40,
+        "rate": 1.0
+      }
+    },
+    "cost": {
+      "model_calls": 224,
+      "failed_calls": 70,
+      "calls_per_claim": 5.09,
+      "prompt_tokens": 198164,
+      "completion_tokens": 56130,
+      "seconds": 819.3,
+      "seconds_per_claim": 18.62,
+      "seconds_p50_per_text": 11.78,
+      "seconds_p95_per_text": 59.17,
+      "series_requests": 61,
+      "series_cache_hits": 23,
+      "series_cache_hit_rate": 0.377,
+      "by_step_provider": [
+        {
+          "step": "explain",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 10,
+          "failed": 1,
+          "tokens": 8483,
+          "mean_latency_ms": 406.8,
+          "rate_limited": 1
+        },
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 5,
+          "failed": 1,
+          "tokens": 3050,
+          "mean_latency_ms": 611.1,
+          "rate_limited": 1
+        },
+        {
+          "step": "explain",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 24,
+          "failed": 3,
+          "tokens": 21050,
+          "mean_latency_ms": 849.6,
+          "rate_limited": 3
+        },
+        {
+          "step": "explain",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 8,
+          "failed": 2,
+          "tokens": 3224,
+          "mean_latency_ms": 698.7,
+          "rate_limited": 2
+        },
+        {
+          "step": "extract",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 14,
+          "failed": 1,
+          "tokens": 41671,
+          "mean_latency_ms": 694.5,
+          "rate_limited": 1
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 19,
+          "failed": 14,
+          "tokens": 13626,
+          "mean_latency_ms": 425.6,
+          "rate_limited": 14
+        },
+        {
+          "step": "extract",
+          "provider": "groq-gpt-oss-20b",
+          "model": "openai/gpt-oss-20b",
+          "calls": 31,
+          "failed": 15,
+          "tokens": 45910,
+          "mean_latency_ms": 662.5,
+          "rate_limited": 15
+        },
+        {
+          "step": "extract",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 15,
+          "failed": 5,
+          "tokens": 11202,
+          "mean_latency_ms": 1392.3,
+          "rate_limited": 5
+        },
+        {
+          "step": "extract",
+          "provider": "openrouter-nemotron-free",
+          "model": "nvidia/nemotron-3.5-super-vl:free",
+          "calls": 1,
+          "failed": 1,
+          "tokens": 0,
+          "mean_latency_ms": 235.4,
+          "rate_limited": 1
+        },
+        {
+          "step": "match",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 9,
+          "failed": 0,
+          "tokens": 13870,
+          "mean_latency_ms": 405.1,
+          "rate_limited": 0
+        },
+        {
+          "step": "match",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 26,
+          "failed": 11,
+          "tokens": 18422,
+          "mean_latency_ms": 529.9,
+          "rate_limited": 7
+        },
+        {
+          "step": "match",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 4,
+          "failed": 1,
+          "tokens": 6266,
+          "mean_latency_ms": 603.9,
+          "rate_limited": 1
+        },
+        {
+          "step": "plan",
+          "provider": "cerebras-gpt-oss-120b",
+          "model": "gpt-oss-120b",
+          "calls": 13,
+          "failed": 2,
+          "tokens": 21083,
+          "mean_latency_ms": 550.2,
+          "rate_limited": 2
+        },
+        {
+          "step": "plan",
+          "provider": "groq-gpt-oss-120b",
+          "model": "openai/gpt-oss-120b",
+          "calls": 35,
+          "failed": 10,
+          "tokens": 40566,
+          "mean_latency_ms": 737.3,
+          "rate_limited": 10
+        },
+        {
+          "step": "plan",
+          "provider": "mistral-ministral-14b",
+          "model": "ministral-14b-2512",
+          "calls": 10,
+          "failed": 3,
+          "tokens": 5871,
+          "mean_latency_ms": 1152.5,
+          "rate_limited": 3
+        }
+      ],
+      "daily_limited": [
+        "groq-gpt-oss-120b",
+        "groq-gpt-oss-20b",
+        "openrouter-nemotron-free"
+      ]
+    },
+    "confidence": {
+      "scored": 0,
+      "abstained": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      },
+      "answered_accuracy": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      },
+      "abstained_accuracy": {
+        "hits": 0,
+        "total": 0,
+        "rate": null
+      }
+    },
+    "failures": {
+      "verdict": 4,
+      "match": 1
+    }
+  },
+  "texts": [
+    {
+      "id": "e003",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.96,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e003",
+          "index": 0,
+          "quote": "France's public debt was 99% of GDP in 2017",
+          "expected": "supported",
+          "expected_indicator": "government_debt_pct_gdp",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_debt_pct_gdp",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9344,
+              "rerank_margin": 0.1921,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.8658,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e004",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.37,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e004",
+          "index": 0,
+          "quote": "Italy's fertility rate was 1.36 children per woman in 2016",
+          "expected": "supported",
+          "expected_indicator": "total_fertility_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "total_fertility_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9931,
+              "rerank_margin": 0.9907,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 1.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e008",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.98,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e008",
+          "index": 0,
+          "quote": "China emitted 7.1 tonnes of CO2 per person in 2015",
+          "expected": "supported",
+          "expected_indicator": "co2_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9862,
+              "rerank_margin": 0.0342,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 119,
+              "boundary_distance": 0.8297,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e015",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.75,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e015",
+          "index": 0,
+          "quote": "Italy's fertility rate was 1.5 children per woman in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "total_fertility_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "total_fertility_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9833,
+              "rerank_margin": 0.982,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 3.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e032",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.77,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e032",
+          "index": 0,
+          "quote": "About 420,000 babies were born in Italy in 2019",
+          "expected": "supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9899,
+              "rerank_margin": 0.9869,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.9909,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e034",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.17,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e034",
+          "index": 0,
+          "quote": "Italy's public spending was 48.4% of GDP in 2019",
+          "expected": "supported",
+          "expected_indicator": "government_spending",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "government_spending",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9914,
+              "rerank_margin": 0.9199,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 30,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e038",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 18.21,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e038",
+          "index": 0,
+          "quote": "US inflation was 8% in 2022",
+          "expected": "supported",
+          "expected_indicator": "cpi_inflation_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "cpi_inflation_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9934,
+              "rerank_margin": 0.9901,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 0.9952,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e047",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 20.17,
+      "model_calls": 8,
+      "outcomes": [
+        {
+          "text_id": "e047",
+          "index": 0,
+          "quote": "Germany's CO2 emissions grew between 2010 and 2020",
+          "expected": "not_supported",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.2887,
+              "rerank_margin": 0.088,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 234,
+              "boundary_distance": null,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e048",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 16.18,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e048",
+          "index": 0,
+          "quote": "Italy emitted 400 million tonnes of greenhouse gases (CO2 equivalent) in 2024",
+          "expected": "not_supported",
+          "expected_indicator": "greenhouse_gas_emissions",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "greenhouse_gas_emissions",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9947,
+              "rerank_margin": 0.4161,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 35,
+              "boundary_distance": 0.8255,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e051",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 12.27,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e051",
+          "index": 0,
+          "quote": "Births in Italy fell from 560,000 in 2010 to 300,000 in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9896,
+              "rerank_margin": 0.961,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.0459,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e054",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 18.01,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e054",
+          "index": 0,
+          "quote": "US unemployment fell 4.2% between 2012 and 2018",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "unemployment_rate_ilo",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "unemployment_rate_ilo",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends where the trend turns (2018): from the usual level around then, 4.61, the change is -42.8% rather than -51.7%; the claimed 4.2% matches the change in percentage points (-4.17 points), not in percent (-51.7%).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.929,
+              "rerank_margin": 0.9289,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.946,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e055",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 33.23,
+      "model_calls": 10,
+      "outcomes": [
+        {
+          "text_id": "e055",
+          "index": 0,
+          "quote": "US CO2 emissions fell from 6.1 billion tonnes in 2005 to 4.7 billion tonnes in 2020",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends at a trough (2020): from the usual level around then, 5,151,931,300, the change is -973,278,700 tonnes rather than -1,431,329,000 tonnes.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9977,
+              "rerank_margin": 0.1537,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 226,
+              "boundary_distance": 0.7729,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e057",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.86,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e057",
+          "index": 0,
+          "quote": "Germany's CO2 emissions fell from 915 million tonnes in 2001 to 573 million tonnes in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9657,
+              "rerank_margin": 0.3814,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 234,
+              "boundary_distance": 0.9252,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e058",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 9.12,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e058",
+          "index": 0,
+          "quote": "France's minimum wage was 1,000 euros a month in 1990",
+          "expected": "cant_check",
+          "expected_indicator": "minimum_wage_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "minimum_wage_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: FR has no value within 1 periods of 1990 (nearest is 1999).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e061",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.62,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e061",
+          "index": 0,
+          "quote": "Italy emitted 501 million tonnes of CO2 in 2005",
+          "expected": "supported",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8434,
+              "rerank_margin": 0.2903,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 166,
+              "boundary_distance": 0.9337,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e062",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 47.95,
+      "model_calls": 15,
+      "outcomes": [
+        {
+          "text_id": "e062",
+          "index": 0,
+          "quote": "Italy emitted 6.65 tonnes of CO2 per person in 2012",
+          "expected": "supported",
+          "expected_indicator": "co2_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8879,
+              "rerank_margin": 0.2857,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 166,
+              "boundary_distance": 0.9805,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e064",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.85,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e064",
+          "index": 0,
+          "quote": "About 674,000 babies were born in Germany in 2012",
+          "expected": "supported",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9894,
+              "rerank_margin": 0.9836,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.937,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e068",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.88,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e068",
+          "index": 0,
+          "quote": "Italy's GDP was 1.8 trillion euros in 2019",
+          "expected": "supported",
+          "expected_indicator": "nominal_gdp_eur",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "nominal_gdp_eur",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9574,
+              "rerank_margin": 0.9171,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.9959,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e069",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 9.16,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e069",
+          "index": 0,
+          "quote": "Tax revenue in Italy was 30.1% of GDP in 2013",
+          "expected": "supported",
+          "expected_indicator": "tax_revenue",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "tax_revenue",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9914,
+              "rerank_margin": 0.656,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e070",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 4.09,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e070",
+          "index": 0,
+          "quote": "Italy's net migration rate was 4.5 per 1,000 inhabitants in 2023",
+          "expected": "supported",
+          "expected_indicator": "net_migration_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "net_migration_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9974,
+              "rerank_margin": 0.7198,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e073",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 11.78,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e073",
+          "index": 0,
+          "quote": "Italy emitted 6.5 tonnes of CO2 per person in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "co2_per_capita",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_per_capita",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.8748,
+              "rerank_margin": 0.2796,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 166,
+              "boundary_distance": 5.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e074",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 24.45,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e074",
+          "index": 0,
+          "quote": "Spain had 19 million people in work in 2013",
+          "expected": "not_supported",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_persons",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9983,
+              "rerank_margin": 0.9977,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.8957,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e078",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.72,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e078",
+          "index": 0,
+          "quote": "7 million people living in Italy in 2022 were born abroad",
+          "expected": "not_supported",
+          "expected_indicator": "foreign_born_population",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "foreign_born_population",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9977,
+              "rerank_margin": 0.8899,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 24,
+              "boundary_distance": 0.4719,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e079",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 15.79,
+      "model_calls": 9,
+      "outcomes": [
+        {
+          "text_id": "e079",
+          "index": 0,
+          "quote": "Italy's CO2 emissions rose between 2005 and 2025",
+          "expected": "not_supported",
+          "expected_indicator": "co2_emissions_annual",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "co2_emissions_annual",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.1666,
+              "rerank_margin": 0.0739,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 166,
+              "boundary_distance": null,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e080",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 20.9,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e080",
+          "index": 0,
+          "quote": "France's population grew from 65.6 million in 2013 to 72 million in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "population_total",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "partly_supported",
+          "verdict_ok": true,
+          "reason": "Holds for assertion, start value; not for end value.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9978,
+              "rerank_margin": 0.1731,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.9995,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e082",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 26.27,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e082",
+          "index": 0,
+          "quote": "Births in France rose 3.1% between 2000 and 2010",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "live_births",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "live_births",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends at a peak (2010): from the usual level around then, 824,914, the change is +2.06% rather than +3.14%; per person it fell: 0.01 in 2000, 0.01 in 2010 (births per person).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.397,
+              "rerank_margin": 0.3245,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 32,
+              "boundary_distance": 0.7212,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e085",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.64,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e085",
+          "index": 0,
+          "quote": "Italy's greenhouse gas emissions fell from 594 million tonnes in 2005 to 363 million tonnes in 2024",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "greenhouse_gas_emissions",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "greenhouse_gas_emissions",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9339,
+              "rerank_margin": 0.6491,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 35,
+              "boundary_distance": 0.8814,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e088",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.5,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e088",
+          "index": 0,
+          "quote": "Spain had 15 million people in work in 2005",
+          "expected": "cant_check",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_persons",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp found the data but couldn't finish the calculation: ES has no value within 1 periods of 2005 (nearest is 2009).",
+          "stopped_at": "execute",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e092",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 13.26,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e092",
+          "index": 0,
+          "quote": "Italy's GDP per person was 30,300 purchasing power standards in 2019",
+          "expected": "supported",
+          "expected_indicator": "gdp_per_capita_pps",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gdp_per_capita_pps",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9877,
+              "rerank_margin": 0.7816,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 0.9561,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e098",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.55,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e098",
+          "index": 0,
+          "quote": "In 2015 Italy had 34 people aged 65 or over for every 100 of working age",
+          "expected": "supported",
+          "expected_indicator": "old_age_dependency_ratio",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "old_age_dependency_ratio",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.944,
+              "rerank_margin": 0.8006,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 1.0,
+              "fallback_steps": 0
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e100",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 13.06,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e100",
+          "index": 0,
+          "quote": "Italy's death rate was 12.5 per 1,000 people in 2020",
+          "expected": "supported",
+          "expected_indicator": "crude_death_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "crude_death_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.3517,
+              "rerank_margin": 0.2808,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 1.0,
+              "fallback_steps": 1
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e104",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 32.57,
+      "model_calls": 7,
+      "outcomes": [
+        {
+          "text_id": "e104",
+          "index": 0,
+          "quote": "Italy's real GDP was 2.0 trillion euros in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "real_gdp_volume",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "real_gdp_volume",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.5003,
+              "rerank_margin": -0.2944,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 31,
+              "boundary_distance": 3.7717,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e106",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 9.16,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e106",
+          "index": 0,
+          "quote": "Italian house prices rose 3% in 2013",
+          "expected": "not_supported",
+          "expected_indicator": "house_price_change",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "house_price_change",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9238,
+              "rerank_margin": 0.0669,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 15,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e111",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 51.99,
+      "model_calls": 6,
+      "outcomes": [
+        {
+          "text_id": "e111",
+          "index": 0,
+          "quote": "Italy's median age rose from 40.1 in 2000 to 55.0 in 2025",
+          "expected": "partly_supported",
+          "expected_indicator": "median_age",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "median_age",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": false,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9786,
+              "rerank_margin": 0.9719,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": null,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e112",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 28.54,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e112",
+          "index": 0,
+          "quote": "Italy had 23.2 million employed people aged 20 to 64 in 2024",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "employment_persons",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": null,
+          "match_ok": false,
+          "in_top8": true,
+          "verdict": "cant_check",
+          "verdict_ok": false,
+          "reason": "HoldsUp doesn't have a statistic that matches this claim yet.",
+          "stopped_at": "match",
+          "explanation": "not_asked",
+          "failed_step": "match",
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e114",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 34.82,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e114",
+          "index": 0,
+          "quote": "Long-term unemployment in Italy fell from 8.2% in 2014 to 3.1% in 2025",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "long_term_unemployment_rate",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "long_term_unemployment_rate",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it starts at a peak (2014): from the usual level around then, 7.25, the change is -4.15 percentage points rather than -5.1 percentage points.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9904,
+              "rerank_margin": 0.5319,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e117",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 30.29,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e117",
+          "index": 0,
+          "quote": "Italy's gender employment gap widened from 18.9 points in 2014 to 19.9 points in 2016",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "gender_employment_gap",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gender_employment_gap",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but the rise shows in only 56% of nearby time windows; it starts at a trough (2014): from the usual level around then, 19.8, the change is +0.1 percentage points rather than +1 percentage points; it ends at a peak (2016): from the usual level around then, 19.7, the change is +0.8 percentage points rather than +1 percentage points.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9932,
+              "rerank_margin": 0.9902,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 17,
+              "boundary_distance": 1.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e120",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 31.15,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e120",
+          "index": 0,
+          "quote": "Italians ate a tenth less pasta last year",
+          "expected": "cant_check",
+          "expected_indicator": null,
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": false,
+          "end_ok": true,
+          "indicator": null,
+          "match_ok": true,
+          "in_top8": null,
+          "verdict": "cant_check",
+          "verdict_ok": true,
+          "reason": "HoldsUp doesn't have a statistic that matches this claim yet.",
+          "stopped_at": "match",
+          "explanation": "not_asked",
+          "failed_step": null,
+          "confidence": null
+        }
+      ]
+    },
+    {
+      "id": "e123",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 89.76,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e123",
+          "index": 0,
+          "quote": "India had 1.24 billion people in 2010",
+          "expected": "supported",
+          "expected_indicator": "population_total_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9293,
+              "rerank_margin": 0.9215,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 0.7999,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e132",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 2.21,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e132",
+          "index": 0,
+          "quote": "The United States had 300 million inhabitants in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "population_total_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "population_total_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.7246,
+              "rerank_margin": 0.7242,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 66,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e133",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 59.17,
+      "model_calls": 4,
+      "outcomes": [
+        {
+          "text_id": "e133",
+          "index": 0,
+          "quote": "China's GDP per person was 15,000 international dollars at purchasing power parity in 2005",
+          "expected": "not_supported",
+          "expected_indicator": "gdp_per_capita_ppp_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "gdp_per_capita_ppp_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9986,
+              "rerank_margin": 0.9979,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 36,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e138",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 5.92,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e138",
+          "index": 0,
+          "quote": "India's infant mortality rate was 40 deaths per 1,000 live births in 2020",
+          "expected": "not_supported",
+          "expected_indicator": "infant_mortality_rate_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "infant_mortality_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": true,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9956,
+              "rerank_margin": 0.9921,
+              "definition_mismatch": false,
+              "data_age_years": 1.92,
+              "series_length": 65,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e147",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 74.64,
+      "model_calls": 5,
+      "outcomes": [
+        {
+          "text_id": "e147",
+          "index": 0,
+          "quote": "The US employment rate rose 2.0% between 2013 and 2018",
+          "expected": "supported_framing_matters",
+          "expected_indicator": "employment_rate_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "employment_rate_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "supported_framing_matters",
+          "verdict_ok": true,
+          "reason": "Holds within tolerance, but it ends where the trend turns (2018): from the usual level around then, 59.6, the change is +2.58% rather than +3.52%; the claimed 2% matches the change in percentage points (+2.05 points), not in percent (+3.52%).",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": null,
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.0167,
+              "rerank_margin": -0.0288,
+              "definition_mismatch": false,
+              "data_age_years": 0.92,
+              "series_length": 35,
+              "boundary_distance": 0.91,
+              "fallback_steps": 3
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "e148",
+      "error": null,
+      "labelled": 1,
+      "extracted": 1,
+      "linked": 1,
+      "seconds": 3.53,
+      "model_calls": 3,
+      "outcomes": [
+        {
+          "text_id": "e148",
+          "index": 0,
+          "quote": "India's poverty rate was 15% in 2020",
+          "expected": "cant_check",
+          "expected_indicator": "poverty_rate_national_lines_world",
+          "status": "scored",
+          "note": "",
+          "found": true,
+          "geo_ok": true,
+          "start_ok": true,
+          "end_ok": true,
+          "indicator": "poverty_rate_national_lines_world",
+          "match_ok": true,
+          "in_top8": true,
+          "verdict": "not_supported",
+          "verdict_ok": false,
+          "reason": "Outside tolerance for the stated window.",
+          "stopped_at": null,
+          "explanation": "passed",
+          "failed_step": "verdict",
+          "confidence": {
+            "signals": {
+              "rerank_probability": 0.9794,
+              "rerank_margin": 0.979,
+              "definition_mismatch": false,
+              "data_age_years": 14.92,
+              "series_length": 4,
+              "boundary_distance": 5.0,
+              "fallback_steps": 2
+            },
+            "probability": null,
+            "label": null,
+            "abstain": false,
+            "reason": null,
+            "model": null
+          }
+        }
+      ]
+    }
+  ]
+}
