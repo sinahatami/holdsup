@@ -4,6 +4,7 @@ the export the API serves (scored the same as scikit-learn scores it), and the r
 import json
 import math
 import random
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -356,7 +357,7 @@ def test_the_report_names_its_data_scores_threshold_and_weights(tmp_path: Path) 
     assert "`dev.json` (sha256 aaaaaaaaaaaa)" in md
     assert "80 claims with a verdict other than cant_check" in md
     assert "cant_check (nothing to abstain from): 4" in md
-    assert "The served model beats the base rate on the Brier score." in md
+    assert "The logistic regression beats the base rate on the Brier score, so it is served." in md
     assert "| Logistic regression, every signal (served) |" in md
     assert f"Threshold {threshold.threshold:.3f}" in md
     assert "in-sample" in md  # the reranker caveat
@@ -365,12 +366,12 @@ def test_the_report_names_its_data_scores_threshold_and_weights(tmp_path: Path) 
     assert json.loads(json_path.read_text(encoding="utf-8"))["data"]["rows"] == 80
     assert md_path.read_text(encoding="utf-8") == md
 
-    # A model that misses the base rate is not exported, and the report says so.
-    failing = report.model_copy(
-        update={
-            "cross_validation": report.cross_validation.model_copy(
-                update={"beats_base_rate": False}
-            )
-        }
-    )
-    assert "so it is not exported: the API serves no confidence model" in markdown(failing)
+    # A model that misses the base rate is not exported, and the report says so, in the table too.
+    base = next(s for s in table if s.name == BASE_RATE)
+    worse = [replace(s, brier=base.brier + 0.01) if s.name == LOGISTIC else s for s in table]
+    failing = build_report(data, cv, worse, threshold, model, created="2026-11-14")
+    assert not failing.cross_validation.beats_base_rate
+    md = markdown(failing)
+    assert "| Logistic regression, every signal (not served) |" in md
+    assert "(served)" not in md
+    assert "so it is not exported: the API serves no confidence model" in md

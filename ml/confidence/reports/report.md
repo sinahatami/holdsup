@@ -17,13 +17,13 @@ How likely a verdict is to be right, from signals the check already has; below t
 |---|---|---|---|
 | Base rate (the training share right, for every claim) | 0.113 | 0.388 | n/a |
 | Logistic regression, reranker margin only | 0.121 | 0.443 | 0.305 |
-| Logistic regression, every signal (served) | 0.117 | 0.474 | 0.465 |
+| Logistic regression, every signal (not served) | 0.117 | 0.474 | 0.465 |
 | Gradient boosting, every signal | 0.114 | 0.407 | 0.605 |
 
-- The served model does not beat the base rate on the Brier score, so it is not exported: the API serves no confidence model and never abstains.
+- The logistic regression does not beat the base rate on the Brier score, so it is not exported: the API serves no confidence model and never abstains.
 - Gradient boosting is not clearly better (a clear gain is a Brier score 0.01 lower).
 
-## Calibration (served model, out of fold)
+## Calibration (logistic regression, out of fold)
 
 | Probability | Claims | Mean probability | Share right |
 |---|---|---|---|
@@ -33,7 +33,7 @@ How likely a verdict is to be right, from signals the check already has; below t
 | 0.6–0.8 | 6 | 0.735 | 100.0% |
 | 0.8–1.0 | 169 | 0.900 | 87.6% |
 
-## Accuracy against coverage (served model, out of fold)
+## Accuracy against coverage (logistic regression, out of fold)
 
 | Answer at most | Answered | Accuracy | Lowest probability answered |
 |---|---|---|---|
@@ -50,7 +50,7 @@ How likely a verdict is to be right, from signals the check already has; below t
 - Threshold 0.915: answers 67 of 178 (37.6%), abstains on 62.4%; answered accuracy 89.6% out of fold.
 - Confidence is high at 0.92 or above, medium from the threshold up, low (abstain) below it.
 
-## Served coefficients (per standard deviation; trained on every row)
+## Logistic regression coefficients (per standard deviation; trained on every row)
 
 | Signal | Weight | Expected | As expected |
 |---|---|---|---|
