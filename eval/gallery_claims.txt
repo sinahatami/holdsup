@@ -12,10 +12,11 @@ Chloe Smith: Unemployment rose to 30% under the last Labour government.
 EPA, 2017: US per capita carbon dioxide emissions fell more than 18% between 2000 and 2014.
 Facebook post, 2013: Unemployment in South Africa has increased by 60% in the past 19 years.
 # P5.1: the three example claims on the home page (the first is also the sample receipt's claim), so a
-# click on one is answered from the ledger at once, with no model call.
+# click on one is answered from the ledger at once, with no model call. The third is dev claim e052: right
+# in every P4.7 dev run, its framing caught (after inflation, pay fell).
 Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.
 Italy's public debt is 133% of GDP.
-Youth unemployment in Italy has risen every year since 2008.
+Italian workers' average net pay rose 4.6% between 2021 and 2023.
 # P5.1: dev-split claims (never the held-out split) from other countries and topics, none of them a row
 # the pipeline got wrong in the P4.7 dev runs. Ids in eval/claims.jsonl: e007 e087 e013 e042 e140 e142 e122.
 Germany got 52% of its electricity from renewables in 2023.

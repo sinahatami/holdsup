@@ -34,6 +34,10 @@ describe("MarkedQuote", () => {
       marks("Youth unemployment in Italy has risen every year since 2008.")
         .marked,
     ).toEqual([]);
+    expect(
+      marks("Italian workers' average net pay rose 4.6% between 2021 and 2023.")
+        .marked,
+    ).toEqual(["4.6%"]);
   });
 
   it("leaves the full stop that ends the sentence out of the mark", () => {
