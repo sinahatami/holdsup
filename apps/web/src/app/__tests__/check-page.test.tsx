@@ -163,6 +163,23 @@ describe("check page metadata", () => {
     });
   });
 
+  it("points chat and social apps at the check's own picture, whatever its state", async () => {
+    const image = {
+      url: "/check/c1/opengraph-image",
+      width: 1200,
+      height: 630,
+      alt: strings.og.alt,
+    };
+    found(checkView({ status: "done", result: checkResult([partlyClaim]) }));
+    const done = await meta();
+    expect(done.openGraph?.images).toEqual([image]);
+    expect(done.twitter?.images).toEqual([image]);
+    lookup.mockResolvedValue({ kind: "missing" });
+    const missing = await meta();
+    expect(missing.openGraph?.images).toEqual([image]);
+    expect(missing.twitter).toMatchObject({ card: "summary_large_image" });
+  });
+
   it.each([
     [
       "a running check",

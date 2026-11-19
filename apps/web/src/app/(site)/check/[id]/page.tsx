@@ -4,6 +4,7 @@ import { StatusText } from "@/components/atoms/status-text";
 import { CheckTemplate } from "@/components/templates/check-template";
 import { readCheck } from "@/lib/api/check";
 import { receiptDescription, receiptTitle } from "@/lib/receipt-meta";
+import { OG_IMAGE_SIZE, routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { CheckPage } from "./check-page";
 
@@ -18,8 +19,18 @@ export async function generateMetadata({
   const found = await readCheck(id);
   const result = found.kind === "found" ? found.view.result : null;
   const robots = { index: false };
+  // The picture is drawn by opengraph-image/route.tsx; a check with no verdict yet gets
+  // the plain brand picture there.
+  const images = [
+    { url: routes.checkImage(id), ...OG_IMAGE_SIZE, alt: strings.og.alt },
+  ];
   if (!result || result.claims.length === 0) {
-    return { title: fallbackTitle, robots };
+    return {
+      title: fallbackTitle,
+      robots,
+      openGraph: { images },
+      twitter: { card: "summary_large_image", images },
+    };
   }
   const title = receiptTitle(result);
   const description = receiptDescription(result);
@@ -32,9 +43,10 @@ export async function generateMetadata({
       siteName: strings.appName,
       title,
       description,
+      images,
     },
-    // The picture comes from opengraph-image.tsx; this asks for it at full width.
-    twitter: { card: "summary_large_image", title, description },
+    // Asks for the picture at full width.
+    twitter: { card: "summary_large_image", title, description, images },
   };
 }
 
