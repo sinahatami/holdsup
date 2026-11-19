@@ -56,7 +56,17 @@ export function formatFigures(
   }
   return unit.startsWith("%")
     ? { claimed: `${a}%`, official: `${b}${unit}` }
-    : { claimed: a, official: `${b} ${unit}` };
+    : { claimed: a, official: `${b} ${wordUnit(unit)}` };
+}
+
+/**
+ * A unit in words, which formatFigures writes after the official number ("deaths per 1,000
+ * live births"); null for one that is a sign on the number ("%", "×", "points"). A figure set
+ * large shows this one apart, under the numbers, so it never makes them too wide to fit.
+ */
+export function wordUnit(unit: string | null | undefined): string | null {
+  if (!unit || unit === "×" || unit === "percentage points") return null;
+  return unit.startsWith("%") ? null : unit;
 }
 
 /**

@@ -2,7 +2,8 @@ import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
 /** How tall the frame is for one claim, and how much each further claim adds (CSS px). */
-const ONE_CLAIM_PX = 400;
+// A two-line claim with a long unit filled 391 px of 400 at 400 px wide (seen 2026-11-19).
+const ONE_CLAIM_PX = 460;
 const MORE_BASE_PX = 190;
 const PER_CLAIM_PX = 150;
 /** Taller than this and the widget scrolls inside its frame instead. */

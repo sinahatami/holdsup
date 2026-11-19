@@ -232,6 +232,23 @@ describe("denominatorOf", () => {
       where: "Italy · 2015 to 2023",
     });
     expect(d?.source).toMatch(/une_rt_m/);
+    // "%" is a sign on the number, not words to set apart.
+    expect(d?.unit).toBeNull();
+  });
+
+  it("sets a unit in words apart from the figures, so they stay short", () => {
+    const words = "deaths per 1,000 live births";
+    const { indicator } = holdingClaim;
+    if (!indicator) throw new Error("the fixture is matched");
+    const d = denominatorOf({
+      ...holdingClaim,
+      indicator: { ...indicator, unit: words },
+    });
+    expect(d).toMatchObject({
+      claimed: ["11.9", "7.7"],
+      official: ["12.02", "7.68"],
+      unit: words,
+    });
   });
 
   it("names what the claim left out, which HoldsUp filled in", () => {
