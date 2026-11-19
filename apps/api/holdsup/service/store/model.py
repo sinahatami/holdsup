@@ -57,6 +57,19 @@ class RecheckOf(BaseModel):
     replaced: Suggestion | None  # the statistic the first check used, if it matched one
 
 
+class PageSource(BaseModel):
+    """The web page a check's text was taken from, when the reader sent a link."""
+
+    url: str = Field(description="The page's address, after any redirects.")
+    title: str | None = Field(default=None, description="The page's own title, as it gives it.")
+    read_at: datetime = Field(description="When HoldsUp read the page.")
+    used: int = Field(description="Passages with figures that the checked text holds.")
+    found: int = Field(
+        description="Passages with figures on the page; more than `used` when the page held "
+        "more than one text can."
+    )
+
+
 class CheckResult(BaseModel):
     """A finished check: what `GET /v1/checks/{id}` returns and the ledger stores."""
 
@@ -66,6 +79,7 @@ class CheckResult(BaseModel):
     finished_at: datetime
     cached_from: UUID | None = None  # the check this result was first computed for
     recheck_of: RecheckOf | None = None  # a re-check: never a ledger entry
+    page: PageSource | None = None  # the text came from this page, not pasted
     claims: list[ClaimResult]
     versions: Versions
     models: list[ModelUse]  # check-wide model calls; each claim lists its own

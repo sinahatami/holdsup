@@ -176,15 +176,21 @@ export const strings = {
       },
     ],
     intro:
-      "Paste a sentence with a number in it. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
+      "Paste a sentence with a number in it, or a link to an article. HoldsUp finds the official series, recomputes the claim, and tells you whether it holds up.",
     inputLabel: "The claim to check",
     // One short line under the label. It says "speak" only where the Speak button is shown.
-    helper: "Type a claim. English only for now.",
-    helperVoice: "Type or speak a claim. English only for now.",
+    helper: "Type a claim or paste a link to an article. English only for now.",
+    helperVoice:
+      "Type or speak a claim, or paste a link to an article. English only for now.",
+    // Replaces the helper while the box holds nothing but a link.
+    linkHelper:
+      "A link: HoldsUp reads the page and checks its paragraphs with figures.",
     placeholder:
       "e.g. Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
     submit: "Check this claim",
+    submitLink: "Check this page",
     submitting: "Sending…",
+    reading: "Reading the page…",
     shortcut: "to check",
     charsLeft: (n: string) => `${n} left`,
     sample: {
@@ -255,6 +261,13 @@ export const strings = {
     claimOf: (n: number, total: number) =>
       total > 1 ? `Claim ${n} of ${total}` : "Claim",
     originalHeading: "The text you checked",
+    // A check of an article link: the page's paragraphs with figures, and where they came from.
+    pageHeading: "What HoldsUp read on the page",
+    pageFrom: "From",
+    pageRead: (date: string) => `read on ${date}.`,
+    pageAll: "Only its paragraphs with figures were checked.",
+    pageSome: (used: number, found: number) =>
+      `It has ${found} paragraphs with figures. Only the first ${used === 1 ? "one was" : `${used} were`} checked: that is as much as one check holds.`,
     explanationHeading: "Why",
     loading: "Loading the check…",
     connectionLost: "Lost the connection to the live trace.",

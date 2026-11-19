@@ -16,6 +16,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from pprint import pformat
 from typing import Annotated, Any, Literal
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field
 
@@ -114,6 +115,7 @@ def notebook(result: CheckResult) -> Notebook:
         "# HoldsUp receipt",
         "The text that was checked:",
         _fenced(result.text),
+        _page(result),
         f"Checked on {_moment(result.finished_at)} UTC (check `{result.id}`), with "
         f"HoldsUp {v.app}, catalog {v.catalog} and allowed gaps version {v.tolerances}.",
         "Run every cell. Each one repeats a calculation from the values it read and stops with "
@@ -134,6 +136,19 @@ def notebook(result: CheckResult) -> Notebook:
         'else "No calculation to replay.")'
     )
     return Notebook(cells=out.cells)
+
+
+def _page(result: CheckResult) -> str:
+    """Where the text came from, when the reader sent a link: the page and what was kept."""
+    page = result.page
+    if page is None:
+        return ""
+    # An autolink, with anything that could end it or start markup percent-encoded.
+    url = quote(page.url, safe=":/?#[]@!$&'()*+,;=%-._~")
+    return (
+        f"It was taken from the web page <{url}>, read on {_moment(page.read_at)} UTC: "
+        f"its passages with figures ({page.used} of the {page.found} the page holds)."
+    )
 
 
 def _claim(out: _Cells, c: ClaimResult, total: int) -> None:

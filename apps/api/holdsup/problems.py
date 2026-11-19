@@ -66,6 +66,40 @@ def reports_limited(wait_s: float) -> Problem:
     )
 
 
+def pages_limited(wait_s: float) -> Problem:
+    return Problem(
+        type="/problems/rate-limited",
+        title="Too many links",
+        status=429,
+        detail="This address has sent too many links this hour. Pasting the text still works.",
+        retry_after=_seconds(wait_s),
+    )
+
+
+def link_not_allowed(why: str) -> Problem:
+    """A link HoldsUp will not open (not a public web page); `why` is for the reader."""
+    return Problem(
+        type="/problems/link-not-allowed", title="Link not opened", status=422, detail=why
+    )
+
+
+def page_unreadable(why: str) -> Problem:
+    """A link whose page could not be read; `why` is for the reader."""
+    return Problem(
+        type="/problems/page-unreadable",
+        title="Page not read",
+        status=422,
+        detail=f"{why} You can paste the sentence you want checked instead.",
+    )
+
+
+def no_figures(why: str) -> Problem:
+    """A page that was read but states no figure to check; `why` is for the reader."""
+    return Problem(
+        type="/problems/no-figures", title="No figures on the page", status=422, detail=why
+    )
+
+
 def unknown_claim(index: int) -> Problem:
     return Problem(
         type="/problems/unknown-claim",

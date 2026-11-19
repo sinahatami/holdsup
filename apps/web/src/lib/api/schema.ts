@@ -420,7 +420,7 @@ export interface components {
     CheckRequest: {
       /**
        * Text
-       * @description Text with one or more numeric claims.
+       * @description Text with one or more numeric claims, or a link to a public web page: then the page's paragraphs with figures are checked.
        */
       text: string;
     };
@@ -449,6 +449,7 @@ export interface components {
       /** Cached From */
       cached_from?: string | null;
       recheck_of?: components["schemas"]["RecheckOf"] | null;
+      page?: components["schemas"]["PageSource"] | null;
       /** Claims */
       claims: components["schemas"]["ClaimResult"][];
       versions: components["schemas"]["Versions"];
@@ -1052,6 +1053,38 @@ export interface components {
      * @enum {string}
      */
     Operator: "about" | "more_than" | "less_than" | "at_least" | "at_most";
+    /**
+     * PageSource
+     * @description The web page a check's text was taken from, when the reader sent a link.
+     */
+    PageSource: {
+      /**
+       * Url
+       * @description The page's address, after any redirects.
+       */
+      url: string;
+      /**
+       * Title
+       * @description The page's own title, as it gives it.
+       */
+      title?: string | null;
+      /**
+       * Read At
+       * Format: date-time
+       * @description When HoldsUp read the page.
+       */
+      read_at: string;
+      /**
+       * Used
+       * @description Passages with figures that the checked text holds.
+       */
+      used: number;
+      /**
+       * Found
+       * @description Passages with figures on the page; more than `used` when the page held more than one text can.
+       */
+      found: number;
+    };
     /**
      * Part
      * @description One checked piece of a claim.

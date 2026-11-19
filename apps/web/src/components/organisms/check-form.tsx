@@ -16,6 +16,7 @@ import { VoiceInput } from "@/components/molecules/voice-input";
 import { useDictation } from "@/hooks/use-dictation";
 import { useModifierKey } from "@/hooks/use-modifier-key";
 import { useSubmitCheck } from "@/hooks/use-submit-check";
+import { asLink } from "@/lib/link";
 import { withSpoken } from "@/lib/speech";
 import { strings } from "@/lib/strings";
 
@@ -61,6 +62,8 @@ export function CheckForm({
 
   const tooLong = text.length > t.maxChars;
   const empty = !text.trim();
+  // Nothing but a web address: the API reads the page and checks its paragraphs with figures.
+  const link = asLink(text) !== null;
   const spokenProblem = voice.problem ? v.problems[voice.problem] : null;
   const message = tooLong ? t.tooLong : (error ?? spokenProblem);
 
@@ -113,7 +116,7 @@ export function CheckForm({
           id={LANG_ID}
           className="text-muted-foreground -mt-1 px-1 text-sm leading-5"
         >
-          {voice.supported ? t.helperVoice : t.helper}
+          {link ? t.linkHelper : voice.supported ? t.helperVoice : t.helper}
         </p>
         <textarea
           ref={box}
@@ -155,7 +158,13 @@ export function CheckForm({
               aria-disabled={busy || empty || tooLong}
               className={pill({ tone: "primary" })}
             >
-              {busy ? t.submitting : t.submit}
+              {busy
+                ? link
+                  ? t.reading
+                  : t.submitting
+                : link
+                  ? t.submitLink
+                  : t.submit}
               {busy ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (

@@ -17,12 +17,20 @@ from holdsup.catalog.schema import Theme
 from holdsup.db.models import Check
 from holdsup.db.url import to_async_url
 from holdsup.main import create_app
+from holdsup.page import PageError, PageErrorKind, PageExcerpt
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
 from holdsup.pipeline.run import REUSED
 from holdsup.receipt.notebook import Notebook
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
-from holdsup.routes.deps import get_catalog, get_runner, get_store
+from holdsup.routes.deps import (
+    get_catalog,
+    get_page_limiter,
+    get_page_reader,
+    get_runner,
+    get_store,
+)
+from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
 from holdsup.verdict import Part
@@ -39,6 +47,20 @@ from tests.service.fakes import (
 )
 
 WEB = "http://localhost:3000"
+LINK = "https://news.example/jobs"
+PAGE_ERRORS: dict[str, PageErrorKind] = {
+    "https://local.example/": "not_allowed",
+    "https://down.example/": "unreadable",
+    "https://words.example/": "no_figures",
+}
+
+
+async def fake_pages(link: str, limit: int) -> PageExcerpt:
+    """A page reader with no network: LINK holds TEXT; PAGE_ERRORS' links fail."""
+    if link in PAGE_ERRORS:
+        raise PageError(PAGE_ERRORS[link], f"Why {link} gave nothing.")
+    assert link == LINK and limit == MAX_TEXT
+    return PageExcerpt(url=f"{LINK}?page=1", title="Jobs report", text=TEXT, used=1, found=4)
 
 
 @pytest.fixture
@@ -48,6 +70,9 @@ def api() -> Iterator[tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckSt
     app.dependency_overrides[get_runner] = lambda: runner
     app.dependency_overrides[get_store] = lambda: store
     app.dependency_overrides[get_catalog] = lambda: CATALOG
+    app.dependency_overrides[get_page_reader] = lambda: fake_pages
+    page_limiter = RateLimiter(2, 3600.0)
+    app.dependency_overrides[get_page_limiter] = lambda: page_limiter
     # The context manager keeps one event loop alive, so background checks can finish.
     with TestClient(app) as http:
         yield http, runner, client, store
@@ -123,6 +148,77 @@ def test_a_repeated_claim_is_cached(
     assert [e["event"] for e in events] == ["step_started", "step_done", "result"]
     assert events[-1]["data"]["cached_from"] == first["id"]
     assert len(client.calls) == calls
+
+
+def test_a_link_checks_the_pages_paragraphs_with_figures(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, *_ = api
+    r = http.post("/v1/checks", json={"text": f"  {LINK}  "})
+    assert r.status_code == 202 and r.json()["cached"] is False
+    check_id = r.json()["id"]
+    result = stream(http, check_id)[-1]["data"]
+    assert result["text"] == TEXT
+    assert result["claims"][0]["verdict"]["label"] == "supported"
+    page = result["page"]
+    assert page.pop("read_at")
+    assert page == {"url": f"{LINK}?page=1", "title": "Jobs report", "used": 1, "found": 4}
+    assert http.get(f"/v1/checks/{check_id}").json()["text"] == TEXT
+
+
+def test_a_page_whose_text_was_checked_before_is_cached_with_its_own_source(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, _, client, _ = api
+    pasted = http.post("/v1/checks", json={"text": TEXT}).json()
+    assert stream(http, pasted["id"])[-1]["data"]["page"] is None
+    calls = len(client.calls)
+
+    linked = http.post("/v1/checks", json={"text": LINK}).json()
+    assert linked["cached"] is True
+    result = stream(http, linked["id"])[-1]["data"]
+    assert result["cached_from"] == pasted["id"]
+    assert result["page"]["url"] == f"{LINK}?page=1"
+
+    again = http.post("/v1/checks", json={"text": TEXT}).json()
+    assert again["cached"] is True
+    assert stream(http, again["id"])[-1]["data"]["page"] is None  # pasted: no page of its own
+    assert len(client.calls) == calls
+
+
+@pytest.mark.parametrize(
+    ("link", "problem"),
+    [
+        ("https://local.example/", "/problems/link-not-allowed"),
+        ("https://down.example/", "/problems/page-unreadable"),
+        ("https://words.example/", "/problems/no-figures"),
+    ],
+)
+def test_a_link_that_gives_nothing_to_check_is_a_problem_on_the_form(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore], link: str, problem: str
+) -> None:
+    http, _, _, store = api
+    r = http.post("/v1/checks", json={"text": link})
+    assert r.status_code == 422
+    assert r.headers["content-type"] == "application/problem+json"
+    body = r.json()
+    assert body["type"] == problem
+    assert body["detail"].startswith(f"Why {link} gave nothing.")
+    assert not store.checks  # nothing was started
+
+
+def test_links_are_limited_per_address_even_when_they_fail(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, *_ = api
+    for _ in range(2):
+        assert http.post("/v1/checks", json={"text": "https://down.example/"}).status_code == 422
+    r = http.post("/v1/checks", json={"text": LINK})
+    assert r.status_code == 429
+    assert r.json()["type"] == "/problems/rate-limited"
+    assert r.json()["title"] == "Too many links"
+    assert r.headers["retry-after"] == "3600"
+    assert http.post("/v1/checks", json={"text": TEXT}).status_code == 202  # pasting still works
 
 
 def test_reconnect_with_last_event_id(

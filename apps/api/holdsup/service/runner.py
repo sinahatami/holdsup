@@ -33,7 +33,14 @@ from holdsup.problems import (
 )
 from holdsup.router import RouterError
 from holdsup.service.ratelimit import RateLimiter
-from holdsup.service.store import CheckResult, CheckStatus, CheckStore, RecheckOf, StoredCheck
+from holdsup.service.store import (
+    CheckResult,
+    CheckStatus,
+    CheckStore,
+    PageSource,
+    RecheckOf,
+    StoredCheck,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -113,17 +120,21 @@ class CheckRunner:
     channels: dict[UUID, Channel] = field(default_factory=dict)
     tasks: set[asyncio.Task[None]] = field(default_factory=set)
 
-    async def submit(self, text: str, client: str, *, fresh: bool = False) -> Submitted:
+    async def submit(
+        self, text: str, client: str, *, fresh: bool = False, page: PageSource | None = None
+    ) -> Submitted:
         """Start a check of `text`. Raises ProblemError (429) when `client` is over its limit.
         `fresh` skips the ledger, so the claim is checked again (the seed's --force); the new
-        result then becomes the ledger's newest entry for the claim."""
+        result then becomes the ledger's newest entry for the claim. `page` is the web page
+        the text was taken from, when the reader sent a link."""
         started = self.now()
         hit = None if fresh else await self.ledger.lookup(text)
         if hit is not None:
-            return await self._copy(text, CheckResult.model_validate(hit.entry.result), started)
+            original = CheckResult.model_validate(hit.entry.result)
+            return await self._copy(text, original, started, page)
         self._count(client)
         return await self._start(
-            text, started, "No earlier check of this claim; checking it now.", None
+            text, started, "No earlier check of this claim; checking it now.", None, page
         )
 
     async def recheck(
@@ -152,24 +163,32 @@ class CheckRunner:
             raise ProblemError(rate_limited(wait))
 
     async def _start(
-        self, text: str, started: datetime, summary: str, recheck: Recheck | None
+        self,
+        text: str,
+        started: datetime,
+        summary: str,
+        recheck: Recheck | None,
+        page: PageSource | None = None,
     ) -> Submitted:
         check_id = uuid4()
         await self.store.create(StoredCheck(check_id, text, CheckStatus.QUEUED, started))
         channel = self.channels[check_id] = Channel()
         await self._ledger_events(channel, summary)
-        task = asyncio.create_task(self._run(check_id, text, started, channel, recheck))
+        task = asyncio.create_task(self._run(check_id, text, started, channel, recheck, page))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
         log.info("check_started", check_id=str(check_id), chars=len(text), recheck=bool(recheck))
         return Submitted(check_id, CheckStatus.QUEUED, cached=False)
 
-    async def _copy(self, text: str, original: CheckResult, at: datetime) -> Submitted:
-        """A new check id that serves an earlier result (its own permanent link)."""
+    async def _copy(
+        self, text: str, original: CheckResult, at: datetime, page: PageSource | None = None
+    ) -> Submitted:
+        """A new check id that serves an earlier result (its own permanent link). The page is
+        this submission's: the same words pasted, or taken from another page, keep their own."""
         source = original.cached_from or original.id
         copy = original.model_copy(
             update={"id": uuid4(), "text": text, "created_at": at, "finished_at": at,
-                    "cached_from": source}
+                    "cached_from": source, "page": page}
         )  # fmt: skip
         await self.store.create(
             StoredCheck(
@@ -203,6 +222,7 @@ class CheckRunner:
         started: datetime,
         channel: Channel,
         recheck: Recheck | None = None,
+        page: PageSource | None = None,
     ) -> None:
         structlog.contextvars.bind_contextvars(check_id=str(check_id))
 
@@ -218,7 +238,7 @@ class CheckRunner:
             result = CheckResult(
                 id=check_id, text=text, created_at=started, finished_at=self.now(),
                 claims=output.claims, versions=output.versions, models=output.models,
-                notes=output.notes, recheck_of=recheck.of if recheck else None,
+                notes=output.notes, recheck_of=recheck.of if recheck else None, page=page,
             )  # fmt: skip
             payload = result.model_dump(mode="json")
             reusable = recheck is None and not output.retryable

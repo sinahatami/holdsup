@@ -1,6 +1,8 @@
-"""What route handlers depend on: the check runner, the check store and the catalog search.
+"""What route handlers depend on: the check runner, the check store, the catalog search and the
+page reader.
 
-Handlers take these as `Annotated` parameters (`Runner`, `Store`, `Search`) and never build them.
+Handlers take these as `Annotated` parameters (`Runner`, `Store`, `Search`, `Pages`) and never
+build them.
 Tests swap the providers with `app.dependency_overrides`; nothing here connects at import.
 """
 
@@ -15,6 +17,7 @@ from holdsup.catalog.schema import Catalog, load_catalog
 from holdsup.catalog.search import CatalogSearch, vector_search
 from holdsup.config import get_settings
 from holdsup.db.session import get_sessionmaker
+from holdsup.page import PageReader, read_page
 from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckStore, SqlCheckStore
@@ -48,6 +51,17 @@ def get_report_limiter() -> RateLimiter:
 
 
 @lru_cache
+def get_page_limiter() -> RateLimiter:
+    """Links read per client: each is a page fetch, even when its text was checked before."""
+    return RateLimiter(get_settings().pages_per_hour, HOUR_S)
+
+
+def get_page_reader() -> PageReader:  # pragma: no cover (tests override this)
+    """Reads a public web page for its paragraphs with figures (the network: never in tests)."""
+    return read_page
+
+
+@lru_cache
 def get_catalog() -> Catalog:  # pragma: no cover (tests override this)
     """The curated indicators, read once from the catalog directory."""
     return load_catalog(get_settings().catalog_dir)
@@ -60,6 +74,8 @@ def get_tolerances() -> Tolerances:
 
 
 ReportLimiter = Annotated[RateLimiter, Depends(get_report_limiter)]
+PageLimiter = Annotated[RateLimiter, Depends(get_page_limiter)]
+Pages = Annotated[PageReader, Depends(get_page_reader)]
 Runner = Annotated[CheckRunner, Depends(get_runner)]
 Store = Annotated[CheckStore, Depends(get_store)]
 Search = Annotated[CatalogSearch, Depends(get_catalog_search)]
