@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/sinahatami/holdsup/compare/v0.1.0...v0.2.0) (2026-11-19)
+
+
+### Features
+
+* **web:** embeddable verdict widget (S2) ([#61](https://github.com/sinahatami/holdsup/issues/61)) ([2ed25c3](https://github.com/sinahatami/holdsup/commit/2ed25c33c58c3a8773376ee325744c9e6dd18ee7))
+* **web:** new HoldsUp logo, Newsreader type and paper share cards ([#63](https://github.com/sinahatami/holdsup/issues/63)) ([24bf7de](https://github.com/sinahatami/holdsup/commit/24bf7deea9bdec2c19ee5dcd3fe73c697205e006))
+
 ## 0.1.0 (2026-11-19)
 
 
