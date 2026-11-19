@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * A section's title in the display serif: the claim card's parts (the series, other time
- * windows, the receipt) and the benchmark's. The serif has one weight, so bold is never faked.
+ * windows, the receipt) and the benchmark's. Medium weight, like every heading in the serif.
  */
 export function SectionTitle({
   as: Tag = "h3",
@@ -20,7 +20,7 @@ export function SectionTitle({
     <Tag
       id={id}
       className={cn(
-        "font-heading text-[1.75rem] leading-tight font-normal [font-synthesis:none]",
+        "font-heading text-[1.75rem] leading-tight font-medium tracking-[-0.01em] [font-synthesis:none]",
         className,
       )}
     >

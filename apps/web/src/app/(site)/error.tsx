@@ -21,7 +21,7 @@ export default function Error({
   const t = strings.error;
   return (
     <PageShell layout="message">
-      <h1 className="text-2xl font-bold">{t.heading}</h1>
+      <h1 className="text-2xl">{t.heading}</h1>
       <p className="text-muted-foreground">{t.body}</p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <button

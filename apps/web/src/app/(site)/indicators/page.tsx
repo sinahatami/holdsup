@@ -16,9 +16,7 @@ export default async function Page() {
   return (
     <PageShell>
       <BackLink />
-      <h1 className="text-4xl font-bold tracking-tight">
-        {strings.indicators.heading}
-      </h1>
+      <h1 className="text-4xl">{strings.indicators.heading}</h1>
       <p className="text-muted-foreground leading-7">
         {strings.indicators.intro}
       </p>

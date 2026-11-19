@@ -9,7 +9,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
   return (
     <html lang={strings.locale} dir={strings.dir}>
       <body className="flex min-h-full flex-col items-center justify-center gap-5 px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold">{t.heading}</h1>
+        <h1 className="text-2xl">{t.heading}</h1>
         <p className="text-muted-foreground max-w-md">{t.body}</p>
         <button
           type="button"

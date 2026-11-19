@@ -61,7 +61,7 @@ export function VerdictWidget({ result }: { result: CheckResult }) {
         className="flex flex-col items-start gap-3"
       >
         <VerdictBadge label={shownLabel(c)} large />
-        <q className="text-lg leading-7 font-medium">{c.claim.quote}</q>
+        <q className="font-heading text-xl leading-7">{c.claim.quote}</q>
         <Figures claim={c} />
         {why && <p className="line-clamp-3 leading-6">{why}</p>}
       </article>
@@ -77,7 +77,7 @@ export function VerdictWidget({ result }: { result: CheckResult }) {
         {claims.map((c) => (
           <li key={c.index} className="flex flex-col items-start gap-1.5">
             <VerdictBadge label={shownLabel(c)} />
-            <q className="line-clamp-2 leading-6 font-medium">
+            <q className="font-heading line-clamp-2 text-[1.0625rem] leading-6">
               {c.claim.quote}
             </q>
             <Figures claim={c} />

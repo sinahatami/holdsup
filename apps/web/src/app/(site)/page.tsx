@@ -25,7 +25,7 @@ export default async function Home() {
           picture. From lg up the figure moves beside the title and the box spans below. */}
       <div className="grid items-center gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-y-12 lg:[grid-template-areas:'title_figure'_'form_form']">
         <header className="rise flex flex-col gap-5 lg:[grid-area:title]">
-          <h1 className="text-[clamp(3rem,7vw,5rem)] leading-[0.98]">
+          <h1 className="text-[clamp(2.75rem,5.4vw,4.25rem)] leading-[1.02] font-normal">
             {strings.home.titleLead}{" "}
             <em className="text-brand">{strings.home.titleEnd}</em>
           </h1>

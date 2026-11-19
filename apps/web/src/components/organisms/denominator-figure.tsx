@@ -11,12 +11,12 @@ export function DenominatorFigure() {
   return (
     <figure
       aria-labelledby="denominator-caption"
-      className="relative m-0 flex w-full flex-col items-center pt-10"
+      className="relative m-0 flex w-full flex-col items-center pt-12"
     >
       <p aria-hidden className="pen absolute start-1 top-0 -rotate-3 text-2xl">
         {d.aside}
       </p>
-      <p className="font-heading text-[clamp(5rem,14vw,9.5rem)] leading-[0.9] tracking-tight tabular-nums">
+      <p className="font-heading text-[clamp(4.5rem,13vw,8.5rem)] leading-[0.9] tracking-tight tabular-nums">
         {d.value}
       </p>
       <span aria-hidden className="bg-brand mt-4 mb-5 block h-2 w-full" />

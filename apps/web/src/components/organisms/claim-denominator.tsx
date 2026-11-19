@@ -39,7 +39,7 @@ function Side({
       <dd className="flex w-full flex-col items-center gap-1">
         <span
           className={cn(
-            "font-heading max-w-full text-[clamp(2rem,4.2vw,3rem)] leading-none text-balance break-words tabular-nums",
+            "font-heading max-w-full text-[clamp(1.75rem,3.5vw,2.375rem)] leading-[1.1] tracking-[-0.01em] text-balance break-words tabular-nums",
             official && "text-brand",
           )}
         >
@@ -47,7 +47,12 @@ function Side({
             <Fragment key={i}>
               {i > 0 && (
                 <>
-                  <span aria-hidden> → </span>
+                  <span
+                    aria-hidden
+                    className="font-sans align-[0.08em] text-[0.8em]"
+                  >
+                    {" → "}
+                  </span>
                   <span className="sr-only"> {t.to} </span>
                 </>
               )}
