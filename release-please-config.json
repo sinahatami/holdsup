@@ -26,6 +26,11 @@
           "type": "toml",
           "path": "uv.lock",
           "jsonpath": "$.package[?(@.name.value=='holdsup')].version"
+        },
+        {
+          "type": "toml",
+          "path": "ml/uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='holdsup')].version"
         }
       ]
     }
