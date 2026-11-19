@@ -213,7 +213,7 @@ export const strings = {
     examples: [
       "Italy's unemployment rate fell from 11.9% in 2015 to 7.7% in 2023.",
       "Italy's public debt is 133% of GDP.",
-      "Youth unemployment in Italy has risen every year since 2008.",
+      "Italian workers' average net pay rose 4.6% between 2021 and 2023.",
     ],
     canCheckHeading: "What HoldsUp can check",
     canCheckBody:
