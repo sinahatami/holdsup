@@ -4,7 +4,7 @@ _Every number has a denominator._
 
 HoldsUp audits statistical claims. Paste a sentence with a number in it, such as _"Italy's youth unemployment has halved since 2015"_. HoldsUp finds the official statistic behind the claim and recomputes it from the raw series with plain code. It then tests whether the framing is fair and gives you a verdict with a receipt you can rerun yourself.
 
-> **Status:** in development. The live site and the benchmark results arrive with the first tagged release.
+> **Status:** in development and not deployed yet. [Benchmark results](#results-on-the-held-out-split) are below.
 
 <!-- Media: a GIF of the live trace and the cherry-pick heatmap goes here once the site is live. -->
 
@@ -100,7 +100,41 @@ The benchmark is 150 hand-labelled texts with real numeric claims ([`eval/`](eva
 - The same claims also go to a plain chatbot, for a head-to-head comparison.
 - A 30-claim smoke subset runs on every pull request that can change a verdict. It fails if verdict accuracy drops by more than 5 points.
 
-<!-- Results table (held-out verdict accuracy vs. the chatbot, extraction recall, match top-1, top failure causes) goes here after the held-out head-to-head run. -->
+### Results on the held-out split
+
+HoldsUp ran the 44 held-out texts once, after every choice had been fixed on dev. The chatbot is GPT-OSS 120B on Groq, given one plain prompt per text with no tools and no web search, and asked for the same five verdicts.
+
+| 44 held-out claims                              |           HoldsUp |      Plain chatbot |
+| ----------------------------------------------- | ----------------: | -----------------: |
+| **Verdict right**                               | **39 / 44 (89%)** | **17 / 44 (39%)** |
+| Labelled _Holds up_                             |           16 / 16 |             8 / 16 |
+| Labelled _Holds up, but the framing matters_    |             6 / 9 |              1 / 9 |
+| Labelled _Does not hold up_                     |           12 / 12 |             7 / 12 |
+| Labelled _Partly holds up_                      |             2 / 3 |              0 / 3 |
+| Labelled _Can't check_                          |             3 / 4 |              1 / 4 |
+| Model calls per claim                           |               5.1 |                1.6 |
+| Seconds per claim                               |              18.6 |                3.6 |
+
+- **Each HoldsUp step:**
+  - Extraction found all 44 claims and nothing else.
+  - Matching put the right statistic first for 43 of 44.
+  - All 40 model-written explanations passed the invented-number check.
+- **Where HoldsUp went wrong (5 claims):**
+  - In three, the figure was right but the framing was not, and no framing check caught it. Two were labelled _framing matters_ and one _partly holds up_; all three came back _Holds up_.
+  - One claim the benchmark marks as uncheckable came back _Does not hold up_.
+  - One needs a statistic the catalog does not have yet, so it came back _Can't check_.
+- **Where the chatbot went wrong:**
+  - It called 7 of the 16 true claims false.
+  - It called 3 of the 12 false claims true.
+  - It found the framing problem in 1 of 9 claims.
+- **Cost:** call counts include calls that failed and were retried on another provider. The HoldsUp run reached the daily limit of two Groq models and OpenRouter partway through, and finished on the backup providers.
+- **The chatbot's first run was discarded.** On rate limits it fell over to five different models, so it measured no single chatbot. It scored 32%, and was rerun on one model.
+- **Sample size:** 44 claims is a small sample. One claim moves accuracy by about two points.
+- **Full reports:** [`eval/reports/test.md`](eval/reports/test.md) and [`eval/reports/test.chatbot.groq-gpt-oss-120b.md`](eval/reports/test.chatbot.groq-gpt-oss-120b.md).
+
+**The trained models, on dev:**
+- **Reranker:** in cross-validation it puts the right statistic first for 94% of claims. Vector search alone manages 69%, and the cross-encoder before fine-tuning 81%.
+- **Confidence model:** it was meant to hold back verdicts the check is unsure of. It did no better than the base rate, so it is not served ([report](ml/confidence/reports/report.md)).
 
 ## Run it locally
 
