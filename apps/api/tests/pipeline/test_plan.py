@@ -767,11 +767,40 @@ def test_a_level_claim_keeps_its_one_value_at_as_the_answer() -> None:
     p = validate_plan(plan(*calls, answer=[1, 0]), ctx(c))
     assert p.answer == [0]
     assert p.notes == ["answer [1, 0] → [0]: a level claim is answered by its value_at"]
-    # Two values, or none, cannot be settled by code: the model is asked to fix it.
-    two = [{"op": "value_at", "geo": "IT", "period": "2020"},
-           {"op": "value_at", "geo": "IT", "period": "2019"}]  # fmt: skip
+
+
+def values_at(*periods: str) -> list[dict[str, Any]]:
+    return [{"op": "value_at", "geo": "IT", "period": p} for p in periods]
+
+
+def test_of_two_values_the_one_at_the_claim_s_end_answers_a_level_claim() -> None:
+    # "rose to 32% under the last government" (May 2016 to May 2019): the 2019 value is the
+    # level; the 2016 value it rose from stays as context.
+    c = claim(type=AssertionType.LEVEL, value=32, direction=Direction.UP, start="2016-05",
+              end="2019-05", start_basis="office", end_basis="office")  # fmt: skip
+    p = validate_plan(plan(*values_at("2016", "2019"), answer=[0, 1]), ctx(c))
+    assert p.answer == [1] and len(p.calls) == 2
+    assert p.notes == ["answer [0, 1] → [1]: a level claim is answered by its value_at"]
+    in_2020 = claim(type=AssertionType.LEVEL, value=32, direction=Direction.UP, start="2020",
+                    end="2020")  # fmt: skip
+    p = validate_plan(plan(*values_at("2019", "2020"), answer=[0, 1]), ctx(in_2020))
+    assert p.answer == [1]
+    latest = claim(type=AssertionType.LEVEL, value=28, direction=Direction.DOWN)  # end: latest
+    p = validate_plan(plan(*values_at("latest", "2015"), answer=[1, 0]), ctx(latest))
+    assert p.answer == [0]
+
+
+@pytest.mark.parametrize(
+    ("end", "periods"),
+    [("2020", ("2018", "2019")), ("2020", ("2020", "2020")), ("latest", ("latest", "latest")),
+     ("latest", ("2018", "2019")), (None, ("2018", "2019"))],
+)  # fmt: skip
+def test_values_that_do_not_single_out_the_claim_s_end_are_left_to_the_model(
+    end: str | None, periods: tuple[str, ...]
+) -> None:
+    c = claim(type=AssertionType.LEVEL, value=32, direction=Direction.UP, start=None, end=end)
     with pytest.raises(PlanInvalid):
-        validate_plan(plan(*two, answer=[0, 1]), ctx(c))
+        validate_plan(plan(*values_at(*periods), answer=[0, 1]), ctx(c))
 
 
 # --- a place written as a name, not a code ---------------------------------------------------
@@ -861,8 +890,9 @@ def test_two_values_that_are_not_one_change_are_left_to_the_checks(
 
 
 def test_a_level_claim_with_two_values_is_not_turned_into_a_change() -> None:
-    with pytest.raises(PlanInvalid, match="do not answer a level claim"):
-        validate_plan(plan(*VALUES, answer=[0, 1]), ctx(claim(AssertionType.LEVEL, 28, None)))
+    valid = validate_plan(plan(*VALUES, answer=[0, 1]), ctx(claim(AssertionType.LEVEL, 28, None)))
+    assert [c.op for c in valid.calls] == ["value_at", "value_at"]
+    assert valid.answer == [1]  # the claim is about the latest level: 2020, the series' last
 
 
 def test_one_value_of_a_growth_rate_series_stays_a_value() -> None:

@@ -181,7 +181,8 @@ def _values_as_change(plan: ModelPlan, ctx: PlanContext) -> list[str]:
 
 def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
     """A level claim is answered by one value_at; extra answer calls (a change to show the
-    rise) are kept as context."""
+    rise, the value it rose from) are kept as context. Of several value_at calls, the one read
+    at the claim's end answers it ("rose to 30%" by 2010: the 2010 value, not 1997's)."""
     claim = ctx.claim
     if claim.assertion.type is not AssertionType.LEVEL or len(plan.answer) < 2:
         return []
@@ -192,11 +193,32 @@ def _level_answer(plan: ModelPlan, ctx: PlanContext) -> list[str]:
         and plan.calls[i].op == "value_at"
         and plan.calls[i].geo == claim.geo
     ]
+    if len(values) > 1:
+        values = _at_end(values, plan, ctx)
     if len(values) != 1:
         return []
     note = f"answer {plan.answer} → {values}: a level claim is answered by its value_at"
     plan.answer = values
     return [note]
+
+
+def _at_end(values: list[int], plan: ModelPlan, ctx: PlanContext) -> list[int]:
+    """The value_at calls among `values` read at the claim's end: the period itself, else one
+    in its year; for the latest figure, "latest" or the series' last period. None or several
+    (the claim names no end, or two values fall there): the model is asked again."""
+    end = ctx.claim.end
+    periods = {i: plan.calls[i].period or "" for i in values}
+    if end is None:
+        return []
+    if end == LATEST:
+        found = [i for i, p in periods.items() if p == LATEST]
+        for i, p in periods.items():
+            info = source_of(i, plan.calls, ctx)
+            if info is not None and p == (ctx.published(info) or info.last):
+                found.append(i)
+        return found
+    exact = [i for i, p in periods.items() if p == end]
+    return exact or [i for i, p in periods.items() if p[:4] == end[:4]]
 
 
 # Order matters: read the places first, merge value_at pairs, then fix windows, then periods,
