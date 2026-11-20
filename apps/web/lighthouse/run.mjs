@@ -16,11 +16,21 @@
 //
 // Run it where nothing else heavy is running, and not while `next dev` is building: the
 // numbers come from a throttled browser on this machine and move with its load.
+//
+// Every page is loaded a few times before Lighthouse starts. Without that, the first run met
+// a server still rendering its first pages, and the CPU it took was multiplied by the
+// simulation into 0.9 to 1.9 s of blocking time on the home page (the next runs: 60 to 150
+// ms). With three runs, the median was then the worse of the two warm ones, and a slow
+// runner broke the budget on unchanged code (CI, 2026-11-20). The home page takes five runs
+// for the same reason.
 import { spawn, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const API_PORT = 3101;
 const WEB_PORT = 3200;
+const CONFIGS = ["lighthouserc.json", "lighthouserc.check.json"];
+const WARM_UPS = 3;
 const children = [];
 
 function start(command, args, env) {
@@ -46,6 +56,20 @@ async function waitFor(url) {
     await sleep(500);
   }
   throw new Error(`${url} did not come up in 60 seconds`);
+}
+
+// Load each page Lighthouse will measure, whole, a few times over.
+async function warmUp() {
+  const urls = CONFIGS.flatMap(
+    (config) => JSON.parse(readFileSync(config, "utf8")).ci.collect.url,
+  );
+  for (let i = 0; i < WARM_UPS; i++) {
+    for (const url of urls) {
+      const response = await fetch(url);
+      await response.arrayBuffer();
+      if (!response.ok) throw new Error(`${url} answered ${response.status}`);
+    }
+  }
 }
 
 function run(command, args, env) {
@@ -85,9 +109,10 @@ try {
       siteEnv,
     );
     await waitFor(`http://127.0.0.1:${WEB_PORT}/`);
+    await warmUp();
     // Both run, so one failure does not hide the other; the worse exit code wins.
     const extra = process.argv.slice(2);
-    for (const config of ["lighthouserc.json", "lighthouserc.check.json"]) {
+    for (const config of CONFIGS) {
       const status = run("pnpm", [
         "exec",
         "lhci",
