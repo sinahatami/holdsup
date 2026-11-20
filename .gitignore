@@ -1,47 +1,17 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# The web app's own ignores (Next.js, TypeScript, Lighthouse) live in apps/web/.gitignore.
+
+# secrets and local settings
+.env
+.env*.local
+*.pem
+.vercel
+.DS_Store
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-/docs/CLAUDE.md
-/docs/decisions.md
-/docs/tasks.md
-/docs/spec.md
+node_modules/
+.venv/
 
 # python
-.venv/
 __pycache__/
 *.py[cod]
 .coverage
@@ -51,23 +21,20 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# js (workspace packages)
-node_modules/
-
 # embedding model cache
 .cache/
 
-/docs
 # Playwright
 apps/web/test-results/
 apps/web/playwright-report/
 
-# Claude Code notes (local only)
+# local only: project docs and AI-agent notes (Claude Code; `next dev` writes AGENTS.md)
+/docs
 CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
 .claudeignore
 .claude/
-
-/repo-backup.git/
 
 # A stopped eval run keeps its finished texts here until the report is written (make eval --resume)
 eval/reports/*.partial.jsonl
