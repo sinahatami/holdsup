@@ -122,6 +122,11 @@ export const strings = {
     report: "Report a problem",
     note: "Verdicts are about the number, not the speaker.",
     legal: "MIT licensed, open source.",
+    // The release the site runs, linked to that release's notes on GitHub.
+    version: (v: string) => `v${v}`,
+    releaseNotes: "Release notes for",
+    releaseUrl: (v: string) =>
+      `https://github.com/sinahatami/holdsup/releases/tag/v${v}`,
   },
   notFound: {
     code: "404",
