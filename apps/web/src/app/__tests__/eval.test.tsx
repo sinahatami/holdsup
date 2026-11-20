@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Page from "@/app/(site)/eval/page";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { benchmarkResponse } from "@/test/fixtures";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 function api(body: unknown) {
   vi.stubGlobal(

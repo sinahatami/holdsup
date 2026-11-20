@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { ProviderStatus } from "@/lib/api/client";
 import { leftText, stateText, statusSummary, stepsText } from "@/lib/status";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { statusResponse } from "@/test/fixtures";
 
-const t = strings.status;
+const t = pageStrings.status;
 const [groq, mistral, openrouter] = statusResponse.providers;
 
 describe("status in words", () => {

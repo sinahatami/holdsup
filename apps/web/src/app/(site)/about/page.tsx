@@ -11,8 +11,9 @@ import { coverage } from "@/lib/catalog-stats";
 import { sourceName } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.about;
+const t = pageStrings.about;
 
 export const metadata: Metadata = {
   title: `${t.meta.title} · ${strings.appName}`,

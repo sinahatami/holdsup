@@ -9,9 +9,9 @@ import {
 import type { ProviderState, StatusResponse } from "@/lib/api/client";
 import { formatTimestamp } from "@/lib/format";
 import { leftText, stateText, statusSummary, stepsText } from "@/lib/status";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.status;
+const t = pageStrings.status;
 
 // Each state has its own icon as well as its words: never colour alone.
 const ICON: Record<ProviderState, LucideIcon> = {

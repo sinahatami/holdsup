@@ -8,9 +8,9 @@ import {
   rateText,
   splitText,
 } from "@/lib/benchmark";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 /** HoldsUp and the chatbot on one split: accuracy over the claims both were scored on, and by label. */
 export function HeadToHead({ comparison: c }: { comparison: Comparison }) {

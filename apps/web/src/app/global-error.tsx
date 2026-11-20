@@ -1,13 +1,13 @@
 "use client";
 
 import "./globals.css";
-import { strings } from "@/lib/strings";
+import { boundaryStrings } from "@/lib/strings/boundary";
 
 /** The last resort, when even the layout fails: it brings its own page around the message. */
 export default function GlobalError({ reset }: { reset: () => void }) {
-  const t = strings.error;
+  const t = boundaryStrings.error;
   return (
-    <html lang={strings.locale} dir={strings.dir}>
+    <html lang={boundaryStrings.locale} dir={boundaryStrings.dir}>
       <body className="flex min-h-full flex-col items-center justify-center gap-5 px-6 py-24 text-center">
         <h1 className="text-2xl">{t.heading}</h1>
         <p className="text-muted-foreground max-w-md">{t.body}</p>

@@ -11,8 +11,9 @@ import { PageShell } from "@/components/templates/page-shell";
 import { getTolerances } from "@/lib/api/tolerances";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.methodology;
+const t = pageStrings.methodology;
 
 export const metadata: Metadata = {
   title: `${t.meta.title} · ${strings.appName}`,

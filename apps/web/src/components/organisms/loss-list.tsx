@@ -2,9 +2,9 @@ import { SectionTitle } from "@/components/atoms/section-title";
 import { DataTable } from "@/components/molecules/data-table";
 import type { Comparison } from "@/lib/api/client";
 import { labelText, percent, stepText } from "@/lib/benchmark";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 /** Where HoldsUp loses to the chatbot, and the three steps its wrong verdicts break at most. */
 export function LossList({ comparison: c }: { comparison: Comparison }) {

@@ -1,7 +1,7 @@
 import type { BenchmarkRun, Rate } from "@/lib/api/client";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 /** "63.2%", or "—" when nothing was measured. */
 export function percent(rate: Rate): string {
