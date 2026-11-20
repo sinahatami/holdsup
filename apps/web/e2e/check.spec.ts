@@ -47,6 +47,35 @@ test("submit → trace → result", async ({ page }) => {
   await expect(page.getByText("4f556131ab70")).toBeVisible();
 });
 
+test("an article link → the page's paragraphs with figures → a result that names the page", async ({
+  page,
+}) => {
+  await mockApi(page, "page");
+  await page.goto("/");
+  const box = page.getByLabel("The claim to check");
+  await box.fill("https://news.example/jobs");
+  await expect(box).toHaveAccessibleDescription(
+    /HoldsUp reads the page and checks its paragraphs with figures/,
+  );
+  const sent = page.waitForRequest(
+    (r) => r.method() === "POST" && r.url().endsWith("/v1/checks"),
+  );
+  await page.getByRole("button", { name: "Check this page" }).click();
+  expect((await sent).postDataJSON()).toEqual({
+    text: "https://news.example/jobs",
+  });
+
+  await expect(page).toHaveURL(new RegExp(`/check/${CHECK_ID}$`));
+  await expect(
+    page.getByRole("heading", { name: "What HoldsUp read on the page" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Jobs report" })).toHaveAttribute(
+    "href",
+    "https://news.example/jobs",
+  );
+  await expect(page.getByText(/Only the first one was checked/)).toBeVisible();
+});
+
 test("a failed check shows the problem and when to retry", async ({ page }) => {
   await mockApi(page, "error");
   await page.goto(`/check/${CHECK_ID}`);

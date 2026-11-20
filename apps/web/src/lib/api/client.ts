@@ -3,6 +3,7 @@ import { strings } from "@/lib/strings";
 import type { components } from "./schema";
 
 export type CheckResult = components["schemas"]["CheckResult"];
+export type PageSource = components["schemas"]["PageSource"];
 export type ClaimResult = components["schemas"]["ClaimResult"];
 export type ClaimSpec = components["schemas"]["ClaimSpec"];
 /** One calculation a claim's receipt lists. */

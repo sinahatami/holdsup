@@ -16,7 +16,7 @@ from holdsup.pipeline.result import PipelineOutput, Versions
 from holdsup.receipt import replay
 from holdsup.receipt.notebook import CodeCell, MarkdownCell, Notebook, notebook
 from holdsup.router.client import ChatResponse
-from holdsup.service.store import CheckResult
+from holdsup.service.store import CheckResult, PageSource
 from tests.pipeline.test_regressions import (
     C018,
     EXPLAINED,
@@ -232,6 +232,23 @@ def test_pasted_text_cannot_break_out_of_its_block() -> None:
     )  # fmt: skip
     first = "".join(notebook(result).cells[0].source)
     assert f"````text\n{text}\n````" in first
+
+
+def test_a_page_check_names_its_page_and_the_link_cannot_start_markup() -> None:
+    result = CheckResult(
+        id=ID, text="Unemployment fell 4 points.", created_at=datetime(2026, 11, 12, tzinfo=UTC),
+        finished_at=datetime(2026, 11, 12, tzinfo=UTC), claims=[],
+        versions=Versions(app="0.0.0", catalog="0.8.0", tolerances=5), models=[],
+        page=PageSource(url="https://news.example/a b<script>`x`>", title="T",
+                        read_at=datetime(2026, 11, 12, 8, 30, tzinfo=UTC), used=2, found=5),
+    )  # fmt: skip
+    first = "".join(notebook(result).cells[0].source)
+    assert (
+        "It was taken from the web page <https://news.example/a%20b%3Cscript%3E%60x%60%3E>, "
+        "read on 12 November 2026 at 08:30 UTC: its passages with figures (2 of the 5 the page holds)."
+    ) in first
+    pasted = result.model_copy(update={"page": None})
+    assert "web page" not in "".join(notebook(pasted).cells[0].source)
 
 
 async def test_the_file_is_a_jupyter_notebook() -> None:

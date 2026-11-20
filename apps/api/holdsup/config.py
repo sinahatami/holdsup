@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     checks_per_hour: int = 10
     # Reports of a wrong match per client address per hour.
     reports_per_hour: int = 20
+    # Article links read per client address per hour (each is one page fetch, cached or not).
+    pages_per_hour: int = 20
     # Proxies in front of the API that append to X-Forwarded-For (0 = use the socket address).
     trusted_proxies: int = 0
     log_level: str = "INFO"

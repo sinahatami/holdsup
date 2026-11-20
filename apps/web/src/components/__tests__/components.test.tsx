@@ -9,6 +9,7 @@ import {
 import { describe, expect, it, vi } from "vitest";
 import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
+import { OriginalText } from "@/components/organisms/original-text";
 import { Gallery } from "@/components/organisms/gallery";
 import { SampleReceipt } from "@/components/organisms/sample-receipt";
 import { CharCounter } from "@/components/molecules/char-counter";
@@ -22,6 +23,7 @@ import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import {
   catalogEntry,
+  checkResult,
   holdingClaim,
   unmatchedClaim,
   versions,
@@ -418,6 +420,38 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
+  it("says a link is read as a page, and sends it as it is", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ id: "page-id" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CheckForm />);
+    const box = screen.getByLabelText(strings.home.inputLabel);
+    fireEvent.change(box, { target: { value: " https://news.example/jobs " } });
+    expect(box).toHaveAccessibleDescription(
+      expect.stringContaining(strings.home.linkHelper),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: strings.home.submitLink }),
+    );
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/check/page-id"));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: "https://news.example/jobs",
+    });
+    vi.unstubAllGlobals();
+    cleanup();
+
+    // A sentence with a link in it is still a claim to check.
+    render(<CheckForm />);
+    fireEvent.change(screen.getByLabelText(strings.home.inputLabel), {
+      target: { value: "See https://news.example/jobs: jobs rose 3%." },
+    });
+    expect(screen.getByText(strings.home.helper)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: strings.home.submit }),
+    ).toBeInTheDocument();
+  });
+
   it("shows the problem detail when the API refuses", async () => {
     vi.stubGlobal(
       "fetch",
@@ -640,5 +674,58 @@ describe("CatalogList", () => {
     ).toEqual(["Median age", "Total population"]);
     expect(within(population).getByText("2 statistics")).toBeInTheDocument();
     expect(screen.getByText("1 statistic")).toBeInTheDocument();
+  });
+});
+
+describe("OriginalText", () => {
+  const page = {
+    url: "https://www.news.example/jobs?id=4",
+    title: "Youth unemployment has halved",
+    read_at: "2026-11-20T09:30:00Z",
+    used: 2,
+    found: 5,
+  };
+
+  it("names the page a link's text came from, when it was read and what was kept", () => {
+    const text = `${holdingClaim.claim.quote}.\n\nThe second paragraph, 3%.`;
+    render(
+      <OriginalText result={checkResult([holdingClaim], { text, page })} />,
+    );
+    expect(
+      screen.getByRole("heading", { name: strings.check.pageHeading }),
+    ).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: page.title });
+    expect(link).toHaveAttribute("href", page.url);
+    expect(link).toHaveAttribute("rel", "nofollow noopener noreferrer ugc");
+    const note = link.closest("p");
+    expect(note).toHaveTextContent("(news.example)");
+    expect(note).toHaveTextContent(strings.check.pageRead("November 20, 2026"));
+    expect(note).toHaveTextContent(strings.check.pageSome(2, 5));
+  });
+
+  it("links only http pages, names the site when the page has no title, and says when all was kept", () => {
+    render(
+      <OriginalText
+        result={checkResult([holdingClaim], {
+          page: { ...page, url: "javascript:alert(1)", title: null, used: 5 },
+        })}
+      />,
+    );
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText(/javascript:alert\(1\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(strings.check.pageAll)),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the pasted-text heading and no page note for pasted text", () => {
+    render(<OriginalText result={checkResult([holdingClaim])} />);
+    expect(
+      screen.getByRole("heading", { name: strings.check.originalHeading }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(new RegExp(strings.check.pageAll)),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });

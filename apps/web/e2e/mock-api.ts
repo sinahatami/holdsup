@@ -27,6 +27,18 @@ const step = (event: string, step: string, extra: object = {}) => ({
 /** What the live check ends with: the sample claim holds. */
 export const result = checkResult([holdingClaim], { id: CHECK_ID });
 
+/** The same, from an article link: the text is the page's paragraphs with figures. */
+export const pageResult = checkResult([holdingClaim], {
+  id: CHECK_ID,
+  page: {
+    url: "https://news.example/jobs",
+    title: "Jobs report",
+    read_at: "2026-11-20T09:30:00Z",
+    used: 1,
+    found: 3,
+  },
+});
+
 const sse = (events: [string, object][]) =>
   events
     .map(
@@ -41,7 +53,8 @@ const sse = (events: [string, object][]) =>
  */
 export async function mockApi(
   page: Page,
-  outcome: "result" | "error" | "at-capacity" | "rate-limit" = "result",
+  outcome:
+    "result" | "page" | "error" | "at-capacity" | "rate-limit" = "result",
 ) {
   await page.route(`${API}/**`, async (route) => {
     const req = route.request();
@@ -88,7 +101,7 @@ export async function mockApi(
             ]
           : outcome === "at-capacity"
             ? ["error", atCapacityProblem]
-            : ["result", result];
+            : ["result", outcome === "page" ? pageResult : result];
       return route.fulfill({
         status: 200,
         headers: { ...CORS, "content-type": "text/event-stream" },

@@ -1,7 +1,8 @@
-"""Checks: submit text, follow the live trace, read the result; and the gallery."""
+"""Checks: submit text or an article link, follow the live trace, read the result; and the
+gallery."""
 
 from collections.abc import AsyncIterator, Mapping
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -13,14 +14,25 @@ from pydantic import BaseModel, Field, StringConstraints
 from holdsup.catalog.schema import Theme
 from holdsup.config import get_settings
 from holdsup.jsontypes import JsonObject
+from holdsup.page import PageError, as_link
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult
-from holdsup.problems import Problem, ProblemError, not_found, not_offered, unknown_claim
+from holdsup.problems import (
+    Problem,
+    ProblemError,
+    link_not_allowed,
+    no_figures,
+    not_found,
+    not_offered,
+    page_unreadable,
+    pages_limited,
+    unknown_claim,
+)
 from holdsup.receipt.notebook import Notebook, notebook
-from holdsup.routes.deps import CatalogDep, Runner, Store
+from holdsup.routes.deps import CatalogDep, PageLimiter, Pages, Runner, Store
 from holdsup.service.ratelimit import client_ip
 from holdsup.service.runner import Submitted
-from holdsup.service.store import CheckResult, CheckStatus
+from holdsup.service.store import CheckResult, CheckStatus, PageSource
 from holdsup.verdict import Label, Part
 
 MAX_TEXT = 2_000  # characters, after trimming whitespace
@@ -34,7 +46,10 @@ PROBLEM = {"model": Problem, "content": {"application/problem+json": {}}}
 class CheckRequest(BaseModel):
     text: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_TEXT)
-    ] = Field(description="Text with one or more numeric claims.")
+    ] = Field(
+        description="Text with one or more numeric claims, or a link to a public web page: "
+        "then the page's paragraphs with figures are checked."
+    )
 
 
 class CheckAccepted(BaseModel):
@@ -85,6 +100,13 @@ class GalleryResponse(BaseModel):
     items: list[GalleryItem]
 
 
+_PAGE_PROBLEMS = {
+    "not_allowed": link_not_allowed,
+    "unreadable": page_unreadable,
+    "no_figures": no_figures,
+}
+
+
 @router.post(
     "/checks",
     status_code=202,
@@ -92,10 +114,32 @@ class GalleryResponse(BaseModel):
     responses={422: PROBLEM, 429: PROBLEM},
 )
 async def submit_check(
-    body: CheckRequest, request: Request, response: Response, runner: Runner
+    body: CheckRequest,
+    request: Request,
+    response: Response,
+    runner: Runner,
+    pages: Pages,
+    page_limiter: PageLimiter,
 ) -> CheckAccepted:
-    submitted = await runner.submit(body.text, client_ip(request, get_settings().trusted_proxies))
-    return _accepted(submitted, response)
+    client = client_ip(request, get_settings().trusted_proxies)
+    link = as_link(body.text)
+    if link is None:
+        return _accepted(await runner.submit(body.text, client), response)
+    # A link: the page is read here, before answering, so a page with nothing to check is a
+    # plain error on the form rather than a failed check. Its excerpt is then checked (and
+    # cached) like pasted text.
+    wait = page_limiter.hit(client)
+    if wait is not None:
+        raise ProblemError(pages_limited(wait))
+    try:
+        page = await pages(link, MAX_TEXT)
+    except PageError as exc:
+        raise ProblemError(_PAGE_PROBLEMS[exc.kind](str(exc))) from exc
+    source = PageSource(
+        url=page.url, title=page.title, read_at=datetime.now(UTC), used=page.used,
+        found=page.found,
+    )  # fmt: skip
+    return _accepted(await runner.submit(page.text, client, page=source), response)
 
 
 class RecheckRequest(BaseModel):
