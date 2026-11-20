@@ -1,6 +1,6 @@
 [project]
 name = "holdsup"
-version = "0.4.2"
+version = "0.5.0"
 description = "HoldsUp API: a statistical claim auditor."
 license = "MIT"
 requires-python = ">=3.13,<3.14"

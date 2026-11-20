@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0](https://github.com/sinahatami/holdsup/compare/v0.4.2...v0.5.0) (2026-11-20)
+
+
+### Features
+
+* **deploy:** run the API on Google Cloud Run instead of a Hugging Face Space ([#77](https://github.com/sinahatami/holdsup/issues/77)) ([28fbd70](https://github.com/sinahatami/holdsup/commit/28fbd70bd4b9ed5cd765e466806f835bac8c9c98))
+
+
+### Bug Fixes
+
+* judge the smoke gate claim by claim, and leave one-year windows out of the start-and-end check ([#78](https://github.com/sinahatami/holdsup/issues/78)) ([493450b](https://github.com/sinahatami/holdsup/commit/493450bde88f12b40353dd660b2032829a2d9831))
+
+
+### Performance Improvements
+
+* **api:** one query for /status, gzip JSON, and run next to the database ([#81](https://github.com/sinahatami/holdsup/issues/81)) ([87a613e](https://github.com/sinahatami/holdsup/commit/87a613e5f12b86e47d633c7aa514ef0e97b08515))
+* **web:** cut Newsreader to the weights and sizes the site sets ([#80](https://github.com/sinahatami/holdsup/issues/80)) ([b71cc15](https://github.com/sinahatami/holdsup/commit/b71cc15d46b69726441b97760df35afd220db8a4))
+* **web:** keep server-only text out of browser bundles; add robots.txt and a sitemap ([#82](https://github.com/sinahatami/holdsup/issues/82)) ([346978a](https://github.com/sinahatami/holdsup/commit/346978ac6f34db453e459d65a7e3fcfccae26c75))
+
 ## [0.4.2](https://github.com/sinahatami/holdsup/compare/v0.4.1...v0.4.2) (2026-11-20)
 
 
