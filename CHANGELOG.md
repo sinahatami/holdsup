@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/sinahatami/holdsup/compare/v0.4.0...v0.4.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* a level claim answered with two values is read at the claim's end ([#70](https://github.com/sinahatami/holdsup/issues/70)) ([bbcf4e2](https://github.com/sinahatami/holdsup/commit/bbcf4e228eecfe7163e38721f73a057ea4dfdc0a))
+
 ## [0.4.0](https://github.com/sinahatami/holdsup/compare/v0.3.0...v0.4.0) (2026-11-20)
 
 
