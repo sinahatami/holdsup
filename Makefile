@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery watch format db-migrate docker-api space-bundle smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -94,23 +94,38 @@ docker-api: ## Build and run the API image on localhost:7860 (as development)
 		-e APP_ENV=development holdsup-api:dev
 
 # Everything the API image needs, from committed files only (git archive: never .env or
-# local edits), laid out as a Hugging Face Space: Dockerfile and Space card at the root.
-# One folder per commit, .cache/space-<commit>; an existing one is left as it is.
-SPACE_FILES := LICENSE pyproject.toml uv.lock apps/api/pyproject.toml apps/api/alembic.ini \
+# local edits), with the Dockerfile at the root and the commit stamped in for receipts.
+# One folder per commit, .cache/api-<commit>; an existing one is left as it is.
+API_BUNDLE_FILES := LICENSE pyproject.toml uv.lock apps/api/pyproject.toml apps/api/alembic.ini \
 	apps/api/holdsup apps/api/scripts/fetch_reranker.py packages/catalog eval/VERSION \
 	eval/reports ml/reranker/reports/report.json ml/confidence/reports/report.json
-space-bundle: ## Write the API's Hugging Face Space for HEAD into .cache/space-<commit> (DEPLOY.md)
-	@git diff --quiet HEAD -- $(SPACE_FILES) $(API_DIR)/Dockerfile $(API_DIR)/space || \
+api-bundle: ## Write the API image's build folder for HEAD into .cache/api-<commit>
+	@git diff --quiet HEAD -- $(API_BUNDLE_FILES) $(API_DIR)/Dockerfile || \
 		echo "warning: uncommitted changes are not in the bundle (it is built from HEAD)"
-	@commit=$$(git rev-parse --short HEAD); dir=.cache/space-$$commit; \
+	@commit=$$(git rev-parse --short HEAD); dir=.cache/api-$$commit; \
 	if [ -e $$dir ]; then echo "$$dir already exists (the bundle for $$commit)"; exit 0; fi; \
-	mkdir -p .cache && tmp=$$(mktemp -d .cache/space-partial.XXXXXX) && \
-	git archive HEAD $(SPACE_FILES) | tar -x -C $$tmp && \
-	git show HEAD:$(API_DIR)/space/README.md > $$tmp/README.md && \
+	mkdir -p .cache && tmp=$$(mktemp -d .cache/api-partial.XXXXXX) && \
+	git archive HEAD $(API_BUNDLE_FILES) | tar -x -C $$tmp && \
 	git show HEAD:$(API_DIR)/Dockerfile \
 		| sed 's/^ARG APP_COMMIT=""$$/ARG APP_COMMIT="'"$$commit"'"/' > $$tmp/Dockerfile && \
 	grep -q "^ARG APP_COMMIT=\"$$commit\"" $$tmp/Dockerfile && \
-	mv $$tmp $$dir && echo "Space bundle for $$commit in $$dir"
+	mv $$tmp $$dir && echo "API bundle for $$commit in $$dir"
+
+# Google Cloud Run (DEPLOY.md). GCP_PROJECT is your Google Cloud project id; GCP_REGION should
+# be the region nearest your Neon database. Images go to the Artifact Registry repository
+# `holdsup` in that region.
+GCP_REGION ?= europe-west1
+API_SERVICE := holdsup-api
+API_IMAGE = $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/holdsup/api
+api-image: api-bundle ## Build HEAD's API image and push it to Artifact Registry (GCP_PROJECT=…)
+	@test -n "$(GCP_PROJECT)" || { echo "Set GCP_PROJECT: make $@ GCP_PROJECT=<project id>"; exit 2; }
+	@commit=$$(git rev-parse --short HEAD); \
+	docker build --platform linux/amd64 -t $(API_IMAGE):$$commit .cache/api-$$commit && \
+	docker push $(API_IMAGE):$$commit && echo "Pushed $(API_IMAGE):$$commit"
+
+deploy-api: api-image ## Push HEAD's API image and switch the Cloud Run service to it (GCP_PROJECT=…)
+	gcloud run deploy $(API_SERVICE) --project $(GCP_PROJECT) --region $(GCP_REGION) \
+		--image $(API_IMAGE):$$(git rev-parse --short HEAD)
 
 smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.smoke_providers $(ARGS)

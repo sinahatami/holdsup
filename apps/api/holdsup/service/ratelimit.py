@@ -1,6 +1,6 @@
 """Per-IP limit on new checks (spec: about 10 an hour), in memory.
 
-One API process serves everything (Hugging Face Spaces, one container), so a sliding window
+One API process serves everything (Cloud Run capped at one instance), so a sliding window
 per address in memory is enough; a restart forgets the counts, which only errs towards
 letting people in. Cache hits never reach the limiter (decisions.md D017).
 """

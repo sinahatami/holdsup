@@ -1,4 +1,5 @@
-# HoldsUp API image (Hugging Face Spaces Docker, port 7860).
+# HoldsUp API image (Google Cloud Run, see DEPLOY.md). It listens on $PORT: 7860 unless the
+# host sets its own, as Cloud Run does.
 # Build from the repository root, because the uv workspace lock lives there:
 #   docker build -f apps/api/Dockerfile -t holdsup-api .
 
@@ -36,9 +37,9 @@ RUN python -I /fetch/fetch_reranker.py /fetch/reranker_pin.json /opt/reranker
 
 FROM python:3.13-slim AS runtime
 # The commit shown on receipts: --build-arg APP_COMMIT=$(git rev-parse --short HEAD)
-# (on Hugging Face Spaces, set it as a Space variable).
+# (`make api-bundle` stamps it into the Dockerfile it writes).
 ARG APP_COMMIT=""
-# Hugging Face Spaces runs containers as uid 1000.
+# Never run as root.
 RUN useradd --create-home --uid 1000 app
 COPY --from=build /opt/venv /opt/venv
 COPY --from=model --chown=app:app /opt/fastembed /opt/fastembed

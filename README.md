@@ -96,7 +96,7 @@ flowchart TD
   - Gemini is used only offline, for evaluation and training data, never for live users.
 - **Catalog** ([`packages/catalog/`](packages/catalog)): 80 hand-checked indicators. Each has its aliases, a one-sentence definition, its unit and its related series (the per-capita and real versions, for example). It is embedded for vector search in Postgres.
 - **Reranker:** a cross-encoder fine-tuned on the benchmark's dev split and served with onnxruntime. Its training is in [`ml/`](ml) and its card is [`ml/reranker/MODEL_CARD.md`](ml/reranker/MODEL_CARD.md). It is published on the [Hugging Face Hub](https://huggingface.co/sinahatami/holdsup-reranker).
-- **Planned hosting:** free tiers only. The web app on Vercel, the API in a Docker container on Hugging Face Spaces, and Postgres on Neon.
+- **Planned hosting:** free tiers only. The web app on Vercel, the API in a Docker container on Google Cloud Run, and Postgres on Neon.
 
 ## Evaluation
 
@@ -161,7 +161,7 @@ Other useful commands:
 - `make e2e` runs Playwright and axe against a mocked API, so it needs no keys.
 - `make help` lists everything else.
 
-To put it online (Vercel, a Hugging Face Docker Space and Neon, all on free tiers), follow [DEPLOY.md](DEPLOY.md).
+To put it online (Vercel, Google Cloud Run and Neon, all on free tiers), follow [DEPLOY.md](DEPLOY.md).
 
 ## Repository
 

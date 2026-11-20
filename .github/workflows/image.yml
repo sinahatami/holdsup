@@ -1,6 +1,6 @@
 name: API image
 
-# Builds the Hugging Face Space bundle (make space-bundle) the way the Space builds it and
+# Builds the API bundle (make api-bundle) the way a deploy builds it (DEPLOY.md) and
 # checks the image starts: production with incomplete settings refuses to start, and
 # production with complete (dummy) settings serves health, the catalog and the eval page.
 on:
@@ -40,17 +40,17 @@ concurrency:
 
 jobs:
   image:
-    name: Space bundle builds and starts
+    name: API bundle builds and starts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Write the Space bundle
+      - name: Write the API bundle
         run: |
-          make space-bundle
-          echo "BUNDLE=.cache/space-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          make api-bundle
+          echo "BUNDLE=.cache/api-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
-      - name: Build the image from the bundle (as the Space does)
+      - name: Build the image from the bundle (as a deploy does)
         run: docker build -t holdsup-api:ci "$BUNDLE"
 
       - name: Incomplete production settings refuse to start

@@ -29,7 +29,7 @@ TOKENIZER_FILE = "tokenizer.json"
 META_FILE = "reranker.json"
 EXPORT_FILES = frozenset({ONNX_FILE, TOKENIZER_FILE, META_FILE})
 PIN_FILE = Path(__file__).with_name("reranker_pin.json")
-# Hugging Face Spaces' free CPU has 2 cores; the report's latency is measured at 2 threads.
+# The API's host gives it 2 CPUs (DEPLOY.md); the report's latency is measured at 2 threads.
 THREADS = 2
 # How receipts name the reranker beside the router's providers.
 PROVIDER = "local"
