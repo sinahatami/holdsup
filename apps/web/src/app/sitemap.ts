@@ -10,7 +10,6 @@ const PUBLIC_PAGES = [
   routes.recent,
   routes.eval,
   routes.about,
-  routes.status,
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

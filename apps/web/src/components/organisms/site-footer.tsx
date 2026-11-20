@@ -5,6 +5,7 @@ import { GithubMark } from "@/components/atoms/github-mark";
 import { Logo } from "@/components/atoms/logo";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { APP_VERSION } from "@/lib/version";
 
 const footerLink =
   "text-muted-foreground hover:text-foreground block py-1 transition";
@@ -60,11 +61,6 @@ export function SiteFooter() {
                 {strings.nav.benchmark}
               </Link>
             </li>
-            <li>
-              <Link href={routes.status} className={footerLink}>
-                {strings.nav.status}
-              </Link>
-            </li>
           </LinkGroup>
           <LinkGroup title={t.project}>
             <li>
@@ -96,7 +92,16 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="text-muted-foreground border-t px-5 py-4 text-center text-xs">
-        {strings.appName} · {t.legal}
+        {strings.appName}{" "}
+        <ExternalLink
+          plain
+          href={t.releaseUrl(APP_VERSION)}
+          className="hover:text-foreground tabular-nums underline-offset-4 transition hover:underline"
+        >
+          <span className="sr-only">{t.releaseNotes}</span>{" "}
+          {t.version(APP_VERSION)}
+        </ExternalLink>{" "}
+        · {t.legal}
       </div>
     </footer>
   );

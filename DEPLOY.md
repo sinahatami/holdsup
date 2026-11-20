@@ -90,7 +90,7 @@ The first visit after a quiet spell waits a few seconds while the container star
    curl https://holdsup-api-<…>.run.app/v1/health
    ```
 
-   should print `{"status":"ok"}`, and `/v1/status` lists each provider as ready.
+   should print `{"status":"ok"}`.
 
 6. **Set `TRUSTED_PROXIES` from the logs.** After the first check from the site, search the service's **Logs** for `client_address`. Its `forwarded_entries` field is the number of proxies in front of the API (browsers send none). If it is more than 1, set `TRUSTED_PROXIES` to that number (**Edit & deploy new revision → Variables & secrets**). If it is 0, every visitor shares one rate limit, so tell me. A visitor behind their own proxy can show a higher count, so take the smallest one you see. Setting the value too high lets callers choose their own address. Setting it too low only puts everyone in one shared limit.
 
@@ -132,8 +132,8 @@ Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 - To roll back the API, open the service's **Revisions** tab and send all traffic to an earlier revision.
 - To move the API to another region (for example next to the database), set up the new one before taking the old one down:
   1. Run the three `gcloud artifacts …` commands from section 2, step 2, with the new region, then `make api-image GCP_PROJECT=<project id> GCP_REGION=<new region>`.
-  2. Create the service in the new region as in section 2, step 4: same name, settings and variables (including the `TRUSTED_PROXIES` value you settled on). Check `/v1/health` and `/v1/status` at its new address.
-  3. In Vercel, set `NEXT_PUBLIC_API_URL` and `HOLDSUP_API_URL` to the new address and redeploy. Check that a gallery receipt opens and `/status` lists the providers.
+  2. Create the service in the new region as in section 2, step 4: same name, settings and variables (including the `TRUSTED_PROXIES` value you settled on). Check `/v1/health` at its new address.
+  3. In Vercel, set `NEXT_PUBLIC_API_URL` and `HOLDSUP_API_URL` to the new address and redeploy. Check that a gallery receipt opens.
   4. Delete the old service, then the old image repository (`gcloud artifacts repositories delete holdsup --location=<old region>`). Images kept in two regions would pass the 0.5 GB of free storage.
   5. After the first check through the new service, look at `client_address` in its logs again (section 2, step 6).
 

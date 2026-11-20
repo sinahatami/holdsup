@@ -8,7 +8,6 @@ import type {
   GalleryClaim,
   GalleryItem,
   Problem,
-  StatusResponse,
   Tolerances,
 } from "@/lib/api/client";
 
@@ -565,43 +564,6 @@ export function galleryItem(
     ...over,
   };
 }
-
-/** The router's providers as `GET /v1/status` gives them: one of each state that ends. */
-export const statusResponse: StatusResponse = {
-  checked_at: "2026-11-12T21:40:00Z",
-  providers: [
-    {
-      name: "groq",
-      label: "GPT-OSS 120B (Groq)",
-      model: "openai/gpt-oss-120b",
-      state: "ready",
-      wait_s: 0,
-      remaining_today: 812,
-      daily_cap: 900,
-      steps: ["extract", "match", "plan", "explain"],
-    },
-    {
-      name: "mistral",
-      label: "Mistral Small",
-      model: "mistral-small-latest",
-      state: "cooling_down",
-      wait_s: 14.2,
-      remaining_today: null,
-      daily_cap: null,
-      steps: ["extract", "plan"],
-    },
-    {
-      name: "openrouter",
-      label: "Llama 3.3 70B (OpenRouter)",
-      model: "meta-llama/llama-3.3-70b-instruct:free",
-      state: "out_of_budget",
-      wait_s: 7900,
-      remaining_today: 0,
-      daily_cap: 45,
-      steps: ["explain"],
-    },
-  ],
-};
 
 const rate = (hits: number, total: number) => ({
   hits,

@@ -1,6 +1,6 @@
-// Text for pages that render only on the server: about, methodology, eval (benchmark) and
-// status. It is kept apart from `strings` so the browser never downloads it; no client
-// module may import this file (src/lib/__tests__/strings-boundaries.test.ts checks).
+// Text for pages that render only on the server: about, methodology and eval (benchmark).
+// It is kept apart from `strings` so the browser never downloads it; no client module may
+// import this file (src/lib/__tests__/strings-boundaries.test.ts checks).
 export const pageStrings = {
   about: {
     heading: "About HoldsUp",
@@ -459,46 +459,5 @@ export const pageStrings = {
       evalVersion === null
         ? "Read from the reports in the repository."
         : `Benchmark version ${evalVersion}, read from the reports in the repository.`,
-  },
-  // The /status page: the router's providers right now (P3.7).
-  status: {
-    meta: {
-      title: "Status",
-      description:
-        "The language models behind HoldsUp's checks right now: which can take a request, and how many requests each has left today.",
-    },
-    heading: "Status",
-    intro:
-      "Language models read the claims, choose the statistic, plan the calculation and write the explanation; code does everything else. HoldsUp spreads that work across free providers and moves to the next one when one is busy. This is how each stands right now.",
-    loading: "Asking the API…",
-    down: "The HoldsUp API is not answering, so no check can run right now. Please try again in a few minutes.",
-    asOf: (moment: string) => `As of ${moment}.`,
-    refresh: "Refresh",
-    summary: (ready: number, total: number) =>
-      ready === total
-        ? `All ${total} providers are ready.`
-        : ready === 0
-          ? "No provider is ready: new checks wait until one is."
-          : `${ready} of ${total} providers are ready; checks use those.`,
-    caption:
-      "Each provider, the steps it serves in order of preference, and its state now.",
-    columns: {
-      model: "Model",
-      steps: "Steps",
-      state: "State",
-      left: "Requests left today",
-    },
-    states: {
-      ready: () => "Ready",
-      cooling_down: (wait: string) => `Cooling down, ready in ${wait}`,
-      failing: (wait: string) => `Failing, tried again in ${wait}`,
-      out_of_budget: (wait: string) =>
-        `Out of today's requests, back in ${wait}`,
-      not_configured: () => "Not set up on this server",
-    },
-    noLimit: "No daily limit",
-    left: (left: number, cap: number) => `${left} of ${cap}`,
-    capNote:
-      "Each cap is 90% of the provider's published daily limit, so HoldsUp stops before the provider says no.",
   },
 } as const;

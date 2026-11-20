@@ -158,22 +158,15 @@ class SavedReplies(FakeClient):
 
 
 async def test_a_request_answered_from_a_saved_reply_counts_against_no_limit() -> None:
-    client, clock = SavedReplies(), FakeClock()
-    router = Router(config(provider("a", rpm=10, rpd=100), provider("b")), client, clock=clock)
+    client, clock, store = SavedReplies(), FakeClock(), InMemoryUsageStore()
+    router = Router(
+        config(provider("a", rpm=10, rpd=100), provider("b")), client, store, clock=clock
+    )
 
     used = [(await router.complete("extract", MSG, use=Use.LIVE)).provider for _ in range(30)]
 
     assert used == ["a"] * 30  # an ordinary client moves to b after 9 (the test above)
-    a, _ = router.config.providers
-    assert await router.budgets.remaining_today(a, clock.now()) == 90
-
-
-async def test_remaining_today_reports_budget_left() -> None:
-    router, _, clock = make(provider("a", rpd=100), provider("b"))
-    await router.complete("extract", MSG, use=Use.LIVE)
-    a, b = router.config.providers
-    assert await router.budgets.remaining_today(a, clock.now()) == 89
-    assert await router.budgets.remaining_today(b, clock.now()) is None
+    assert sum(store.requests.values()) == 0
 
 
 # --- timeouts, 5xx, circuit breaker -----------------------------------------------------------

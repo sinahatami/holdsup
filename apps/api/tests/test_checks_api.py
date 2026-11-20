@@ -21,7 +21,7 @@ from holdsup.db.url import to_async_url
 from holdsup.main import create_app
 from holdsup.page import PageError, PageErrorKind, PageExcerpt
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
-from holdsup.pipeline.result import ClaimResult
+from holdsup.pipeline.result import ClaimResult, app_version
 from holdsup.pipeline.run import REUSED
 from holdsup.receipt.notebook import Notebook
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
@@ -537,24 +537,13 @@ def test_a_recheck_needs_a_finished_check_a_claim_and_a_statistic_it_offers(
     assert r.status_code == 422
 
 
-def test_status_shows_the_router_now(
-    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
-) -> None:
-    http, *_ = api
-    r = http.get("/v1/status")
-    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
-    [fake] = r.json()["providers"]
-    assert {k: fake[k] for k in ("name", "state", "wait_s", "remaining_today", "steps")} == {
-        "name": "fake", "state": "ready", "wait_s": 0.0, "remaining_today": None,
-        "steps": ["extract", "match", "plan", "explain"],
-    }  # fmt: skip
-
-
 def test_openapi_documents_the_routes(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
     http, *_ = api
-    paths = http.get("/openapi.json").json()["paths"]
+    schema = http.get("/openapi.json").json()
+    assert schema["info"]["version"] == app_version()  # the release, as receipts stamp it
+    paths = schema["paths"]
     assert {"/v1/checks", "/v1/checks/{check_id}", "/v1/checks/{check_id}/stream",
             "/v1/checks/{check_id}/notebook", "/v1/checks/{check_id}/claims/{index}/recheck",
             "/v1/gallery"} <= set(paths)  # fmt: skip

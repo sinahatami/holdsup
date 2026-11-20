@@ -108,7 +108,6 @@ test.describe("every page on a 360px phone", () => {
     "/indicators",
     "/methodology",
     "/eval",
-    "/status",
     "/about",
   ]) {
     test(`${path} fits without scrolling sideways`, async ({ page }) => {
