@@ -179,7 +179,8 @@ class CheckStore(LedgerStore, Protocol):
         planned: bool = True,
     ) -> list[StoredCheck]:
         """Finished checks the watch reads: computed here (not copies), not already updated,
-        featured or made since `since`, and judged with `versions` (the catalog and tolerances,
+        featured (or with a featured cached copy, as the gallery seed makes when it reuses a
+        check) or made since `since`, and judged with `versions` (the catalog and tolerances,
         as the ledger requires). `planned`: with a claim it can replay; else with a matched,
         checked claim that has no stored plan (the backfill's). The ones compared longest ago
         (or never) first."""
@@ -195,8 +196,9 @@ class CheckStore(LedgerStore, Protocol):
     async def supersede(self, old_id: UUID, new: CheckResult) -> None:
         """Save `new`, the check `old_id` computed again on revised figures, and make it
         the one everything pointing at `old_id` now points at: the check itself, its cached
-        copies and the checks it updated (`updated_by`), its place in the gallery and its
-        ledger entry, so a repeated claim gets the revised result."""
+        copies and the checks it updated (`updated_by`), its ledger entry, so a repeated claim
+        gets the revised result, and the gallery place any of them held: the update is
+        featured when one of them was, and none of them stays featured."""
         ...
 
 
