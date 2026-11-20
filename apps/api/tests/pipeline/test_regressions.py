@@ -553,6 +553,30 @@ async def test_c029_a_plan_that_writes_the_cutoff_year_still_gets_the_claim_date
     assert inputs(c.operations[0]) == [("1994", 23.07), ("2012", 24.73)]
 
 
+C021 = "Chloe Smith: Unemployment rose to 30% under the last Labour government."
+
+
+async def test_c021_a_level_answered_with_the_value_it_rose_from_is_read_at_its_end() -> None:
+    # What failed twice live (2026-11-20): the 1997 and 2010 values, both as the answer.
+    office = {"who": "Labour", "scope": "term", "previous": True}
+    script = [
+        extraction(model_claim(C021[13:], "unemployment", None, None, geo="GB", office=office,
+                               value=30, direction="up", end_value=30),
+                   speaker="Chloe Smith"),
+        match("unemployment_rate_ilo"),
+        plan({"op": "value_at", "geo": "GB", "period": "1997"},
+             {"op": "value_at", "geo": "GB", "period": "2010"}, answer=[0, 1]),
+        EXPLAINED,
+    ]  # fmt: skip
+    out, _ = await check(C021, script)
+    [c] = out.claims
+    assert (c.claim.start, c.claim.end) == ("1997-05", "2010-05")
+    assert c.answer == [1] and len(c.operations) == 2
+    assert "answer [0, 1] → [1]: a level claim is answered by its value_at" in c.notes
+    assert inputs(c.operations[1]) == [("2010", 7.97)]
+    assert c.verdict.label is Label.NOT_SUPPORTED and not c.retryable  # 7.97%, not 30%
+
+
 async def test_c018_a_place_written_as_a_name_is_read_as_its_code() -> None:
     # What the extractor wrote live: "Italy", which dropped the claim for naming no place.
     script = [
