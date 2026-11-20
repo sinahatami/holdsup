@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/sinahatami/holdsup/compare/v0.2.0...v0.3.0) (2026-11-20)
+
+
+### Features
+
+* check an article from its link (S3) ([#65](https://github.com/sinahatami/holdsup/issues/65)) ([81a2c9c](https://github.com/sinahatami/holdsup/commit/81a2c9c2c5ff63bce48e934185ecb848d9306e2a))
+
 ## [0.2.0](https://github.com/sinahatami/holdsup/compare/v0.1.0...v0.2.0) (2026-11-19)
 
 
