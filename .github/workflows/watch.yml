@@ -5,11 +5,22 @@ name: Claim watch
 # is asked, so it needs no provider key, only the database (DATABASE_URL as a repository
 # secret). Without it (a fork, or before the site is deployed) the run is skipped with a notice.
 # A schedule here and not in the API: the API's host sleeps when idle.
+#
+# Run by hand with "backfill" ticked, it first gives checks made before plans were stored a plan
+# (`make watch ARGS=--backfill`), so the watch can compare them too. That asks the plan model
+# once per claim, so only that step gets the provider keys (development keys, as in eval.yml).
+# The calls count against the site's daily budgets in the same database, and the step stops
+# at the first "no model left today", keeping the plans it stored.
 
 on:
   schedule:
     - cron: "29 6 * * *"
   workflow_dispatch:
+    inputs:
+      backfill:
+        description: "First give older checks a plan (asks the plan model once per claim)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -52,5 +63,17 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: uv sync --all-packages --locked
+      - name: Backfill plans
+        if: inputs.backfill
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY$MISTRAL_API_KEY$OPENROUTER_API_KEY" ]; then
+            echo "::error title=Backfill needs a model::No provider key secret is set (GROQ_API_KEY, MISTRAL_API_KEY or OPENROUTER_API_KEY)."
+            exit 1
+          fi
+          make watch ARGS=--backfill
       - name: Watch
         run: make watch
