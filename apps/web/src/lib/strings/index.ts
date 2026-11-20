@@ -100,7 +100,6 @@ export const strings = {
     methodology: "Methodology",
     about: "About",
     recent: "Recent checks",
-    status: "Status",
     benchmark: "How it compares",
     pages: "Pages",
     menuOpen: "Open the menu",

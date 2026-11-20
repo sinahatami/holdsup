@@ -8,7 +8,6 @@ export const routes = {
   about: "/about",
   indicators: "/indicators",
   recent: "/recent",
-  status: "/status",
   eval: "/eval",
   cannotCheck: "/methodology#cannot",
   /** The catalog narrowed to a word or two, as the catalog page reads it. */

@@ -29,9 +29,6 @@ export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
 export type Suggestion = components["schemas"]["Suggestion"];
 export type RecheckOf = components["schemas"]["RecheckOf"];
-export type StatusResponse = components["schemas"]["StatusResponse"];
-export type ProviderStatus = components["schemas"]["ProviderStatus"];
-export type ProviderState = components["schemas"]["ProviderState"];
 export type Benchmark = components["schemas"]["Benchmark"];
 export type BenchmarkRun = components["schemas"]["Run"];
 export type Comparison = components["schemas"]["Comparison"];
@@ -224,8 +221,6 @@ export function createApiClient(baseUrl: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ indicator_id: indicatorId }),
       }),
-    /** The model providers as the router sees them now. */
-    status: (init?: RequestInit) => request<StatusResponse>("/status", init),
     catalog: () => request<CatalogResponse>("/catalog"),
     /** The benchmark's results: the head-to-head, every run and the trained models' reports. */
     benchmark: () => request<Benchmark>("/eval"),

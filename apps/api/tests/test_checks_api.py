@@ -537,19 +537,6 @@ def test_a_recheck_needs_a_finished_check_a_claim_and_a_statistic_it_offers(
     assert r.status_code == 422
 
 
-def test_status_shows_the_router_now(
-    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
-) -> None:
-    http, *_ = api
-    r = http.get("/v1/status")
-    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
-    [fake] = r.json()["providers"]
-    assert {k: fake[k] for k in ("name", "state", "wait_s", "remaining_today", "steps")} == {
-        "name": "fake", "state": "ready", "wait_s": 0.0, "remaining_today": None,
-        "steps": ["extract", "match", "plan", "explain"],
-    }  # fmt: skip
-
-
 def test_openapi_documents_the_routes(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
