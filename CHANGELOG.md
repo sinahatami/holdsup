@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/sinahatami/holdsup/compare/v0.3.0...v0.4.0) (2026-11-20)
+
+
+### Features
+
+* claim watch re-checks stored claims when a source revises its figures (S1) ([#67](https://github.com/sinahatami/holdsup/issues/67)) ([b01d1c3](https://github.com/sinahatami/holdsup/commit/b01d1c3c1331534b1a09d68088b7f88ba8a0845c))
+
+
+### Bug Fixes
+
+* the claim watch follows a featured cached copy into the gallery ([#69](https://github.com/sinahatami/holdsup/issues/69)) ([894e264](https://github.com/sinahatami/holdsup/commit/894e264a0f465031af6405e75887a8d5328cd799))
+
 ## [0.3.0](https://github.com/sinahatami/holdsup/compare/v0.2.0...v0.3.0) (2026-11-20)
 
 
