@@ -6,14 +6,16 @@ Order: database, then API, then web. The web build reads the gallery from the AP
 
 ## 0. One decision first, one thing to know
 
-**Which database the site uses.** The simplest safe choice is a Neon **branch** of the database you develop against, called `live` (Neon may already call your development branch `production`). It starts with everything already there (catalog, the 20 featured checks, the ledger). After that, local runs (`make dev`, seeding, evals) stay on the development branch and never touch live data. Sharing one database also works, but then everything you do locally shows up on the site.
+**Which database the site uses.** The simplest safe choice is a Neon **branch** of the database you develop against, called `live` (Neon names your first branch `production`; renaming it `dev` in the branch's settings avoids mixing the two up, and changes no connection string). It starts with everything already there (catalog, the 20 featured checks, the ledger). After that, local runs (`make dev`, seeding, evals) stay on the development branch and never touch live data. Sharing one database also works, but then everything you do locally shows up on the site.
 
 **The smoke run shares Groq's quota on Sundays.** `eval.yml` runs 30 claims once a week, on Sunday at 03:43 UTC, with the `GROQ_API_KEY` GitHub secret. Pull requests replay saved replies, so they rarely ask a model. If that key belongs to the same Groq account as the API's key on Cloud Run, the Sunday run uses most of that day's Groq quota (about 25 new checks) before visitors arrive. After Groq, checks fall back to Cerebras (5 a minute) and then to Mistral, which extracts claims less well. When every provider is out, the site says "HoldsUp is at capacity" and offers the gallery. Ledger hits and gallery receipts never use a model. A run you start by hand (Run workflow) spends the same quota on the day you start it.
 
 ## 1. Database (Neon)
 
-1. In the Neon console, create a branch `live` from your development branch, with **Branch data and schema** and auto-delete set to **Never** (the default may delete it after a day). Copy its connection string. Paste it as Neon shows it (`postgresql://…neon.tech/neondb?sslmode=require`). The API converts it to asyncpg with SSL.
-2. Check the branch is at the latest migration (`0007`). A branch of an up-to-date database already is. Otherwise:
+1. In the Neon console, create a branch `live` from your development branch, with **Branch data and schema** and auto-delete set to **Never** (the default may delete it after a day).
+2. **Give `live` its own password.** A new branch copies the roles of its parent with their passwords, so the address in your `.env` would reach the site's data by changing only the host. On the `live` branch open **Roles**, then **Reset password** for the database's owner (for example `holdsup_owner`). Only `live` changes; your development branch keeps its password.
+3. Copy the `live` connection string (**Connect**, branch `live`). Paste it as Neon shows it (`postgresql://…neon.tech/neondb?sslmode=require`). The API converts it to asyncpg with SSL.
+4. Check the branch is at the latest migration (`0007`). A branch of an up-to-date database already is. Otherwise:
 
    ```bash
    make db-migrate DATABASE_URL='<live branch url>'
