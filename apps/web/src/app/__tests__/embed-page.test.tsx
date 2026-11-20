@@ -12,6 +12,7 @@ import {
   holdingClaim,
   partlyClaim,
 } from "@/test/fixtures";
+import { updateResult } from "@/test/watch";
 
 vi.mock("@/lib/api/check", () => ({ readCheck: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -34,6 +35,49 @@ function linkOut(name: string | RegExp) {
   expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
   return link;
 }
+
+describe("EmbedPage and the claim watch", () => {
+  const update = updateResult();
+  const old = checkView({
+    status: "done",
+    result: checkResult([holdingClaim]),
+    updated_by: update.id,
+  });
+
+  it("shows the newest check computed again from the one asked for, and says when", async () => {
+    lookup.mockImplementation(async (id) =>
+      id === update.id
+        ? {
+            kind: "found",
+            view: checkView({ id: update.id, status: "done", result: update }),
+          }
+        : { kind: "found", view: old },
+    );
+    render(await EmbedPage({ id: "c1" }));
+    expect(
+      screen.getByText(strings.watch.embedUpdated("December 7, 2026")),
+    ).toBeVisible();
+    expect(screen.queryByText(strings.tagline)).toBeNull();
+    expect(screen.getByText(strings.verdicts.partly_supported)).toBeVisible();
+    expect(linkOut(new RegExp(t.fullReceipt))).toHaveAttribute(
+      "href",
+      `/check/${update.id}`,
+    );
+  });
+
+  it("keeps the check asked for when the newer one cannot be read", async () => {
+    lookup.mockImplementation(async (id) =>
+      id === update.id ? { kind: "unavailable" } : { kind: "found", view: old },
+    );
+    render(await EmbedPage({ id: "c1" }));
+    expect(screen.getByText(strings.verdicts.supported)).toBeVisible();
+    expect(screen.getByText(strings.tagline)).toBeVisible();
+    expect(linkOut(new RegExp(t.fullReceipt))).toHaveAttribute(
+      "href",
+      "/check/c1",
+    );
+  });
+});
 
 describe("EmbedPage", () => {
   it("shows one claim's stamp, words and figures, and links to its receipt", async () => {

@@ -5,6 +5,7 @@ import {
   serverApiUrl,
   type CheckView,
 } from "@/lib/api/client";
+import type { Newer } from "@/lib/watch";
 
 /** How long the server waits for the API before it leaves the check to the browser. */
 const READ_TIMEOUT_MS = 8_000;
@@ -21,8 +22,8 @@ export type CheckLookup =
 
 /**
  * A check by id, read on the server. Memoized per request, so a page and its
- * metadata share one call. A finished check never changes, but a running one
- * does, so nothing here is cached across requests.
+ * metadata share one call. A running check changes, and a finished one can gain
+ * a newer version (the claim watch, S1), so nothing here is cached across requests.
  */
 export const readCheck = cache(async (id: string): Promise<CheckLookup> => {
   try {
@@ -36,3 +37,15 @@ export const readCheck = cache(async (id: string): Promise<CheckLookup> => {
       : { kind: "unavailable" };
   }
 });
+
+/**
+ * The newest check computed again from a finished one (`updated_by`, the claim
+ * watch): its id, and its result when it can be read.
+ */
+export async function readNewer(id: string): Promise<Newer> {
+  const found = await readCheck(id);
+  return {
+    id,
+    result: found.kind === "found" ? (found.view.result ?? null) : null,
+  };
+}

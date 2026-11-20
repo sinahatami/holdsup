@@ -86,6 +86,7 @@ class Check(Base):
     __table_args__ = (
         Index("ix_checks_normalized_text", "normalized_text"),
         Index("ix_checks_featured_created_at", "featured", "created_at"),
+        Index("ix_checks_updated_by", "updated_by"),
     )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
@@ -106,6 +107,12 @@ class Check(Base):
         Uuid, ForeignKey("checks.id", ondelete="SET NULL"), nullable=True
     )
     featured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # The claim watch (S1): when it last compared this check's figures with the sources, and
+    # the newest check computed again from it after they were revised.
+    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_by: Mapped[UUID | None] = mapped_column(
+        Uuid, ForeignKey("checks.id", ondelete="SET NULL"), nullable=True
+    )
 
 
 class ClaimRow(Base):

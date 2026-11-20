@@ -2,6 +2,7 @@ import type {
   CheckResult,
   ClaimResult,
   ClaimSpec,
+  FigureChange,
   Operation,
   Part,
 } from "@/lib/api/client";
@@ -211,6 +212,19 @@ function partView(c: ClaimResult, p: Part): PartView {
     gap: null,
     note: compared.directionOnly,
   };
+}
+
+/**
+ * A figure the claim watch found revised, named as the comparison names its part, in the
+ * part's unit: "End value, 2023: from 7.68% to 9.18%". Both numbers were computed by code.
+ */
+export function revisedFigure(c: ClaimResult, f: FigureChange): string {
+  const unit = partUnit(c, f.name);
+  const show = (v: number | null | undefined) =>
+    v == null ? "—" : formatFigures(v, v, unit).official;
+  const label = partLabel(f.name);
+  const what = f.period ? `${label}, ${formatPeriod(f.period)}` : label;
+  return strings.watch.figure(what, show(f.before), show(f.after));
 }
 
 /** What the verdict compared, one entry per checked part of the claim. */

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readCheck } from "@/lib/api/check";
+import { readCheck, readNewer } from "@/lib/api/check";
 
 const view = {
   id: "c1",
@@ -52,5 +52,17 @@ describe("readCheck", () => {
     expect(await readCheck("u503")).toEqual({ kind: "unavailable" });
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("refused")));
     expect(await readCheck("ucrash")).toEqual({ kind: "unavailable" });
+  });
+});
+
+describe("readNewer", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("gives the newer check's result, or only its id when it cannot be read", async () => {
+    const result = { id: "n1", claims: [] };
+    answer(200, { ...view, id: "n1", result });
+    expect(await readNewer("n1")).toEqual({ id: "n1", result });
+    answer(503, { type: "about:blank", title: "Down", status: 503 });
+    expect(await readNewer("n2")).toEqual({ id: "n2", result: null });
   });
 });

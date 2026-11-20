@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { ShareActions } from "@/components/molecules/share-actions";
+import {
+  ComparedNote,
+  RevisedNote,
+  UpdateNote,
+} from "@/components/molecules/watch-notes";
 import { ClaimCard } from "@/components/organisms/claim-card";
 import { OriginalText } from "@/components/organisms/original-text";
 import { VerdictLegend } from "@/components/organisms/verdict-legend";
@@ -14,8 +19,22 @@ import {
 import { shareText } from "@/lib/share";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import type { Newer } from "@/lib/watch";
 
-export function CheckResultView({ result }: { result: CheckResult }) {
+/**
+ * A finished check's receipt. `newer` and `watchedAt` come from the claim watch (S1): the
+ * newest check computed again from this one after a source revised its figures, and when it
+ * last found them unchanged. A check followed live has neither.
+ */
+export function CheckResultView({
+  result,
+  newer = null,
+  watchedAt = null,
+}: {
+  result: CheckResult;
+  newer?: Newer | null;
+  watchedAt?: string | null;
+}) {
   const { claims } = result;
   if (claims.length === 0) {
     const none = (
@@ -33,6 +52,8 @@ export function CheckResultView({ result }: { result: CheckResult }) {
   }
   return (
     <div className="flex flex-col gap-8">
+      {newer && <RevisedNote result={result} newer={newer} />}
+      <UpdateNote result={result} />
       {result.cached_from && (
         <p className="text-muted-foreground text-sm">
           {strings.check.cached}{" "}
@@ -55,6 +76,7 @@ export function CheckResultView({ result }: { result: CheckResult }) {
           </Link>
         </p>
       )}
+      {!newer && watchedAt && <ComparedNote at={watchedAt} />}
       <ShareActions
         title={receiptTitle(result)}
         text={shareText(result)}

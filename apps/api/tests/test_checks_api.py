@@ -4,6 +4,8 @@ fake providers, a fake data source and the in-memory store."""
 import json
 import os
 from collections.abc import Iterator
+from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -132,6 +134,20 @@ def test_submit_stream_and_stored_result(
     assert body["status"] == "done" and body["error"] is None
     assert body["result"] == result
     assert body["text"] == TEXT and body["finished_at"] is not None
+    assert (body["watched_at"], body["updated_by"]) == (None, None)
+
+
+def test_a_check_says_when_it_was_watched_and_what_updated_it(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, _, _, store = api
+    check_id = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    stream(http, check_id)
+    newer, at = uuid4(), datetime(2026, 12, 1, 6, 29, tzinfo=UTC)
+    stored = store.checks[UUID(check_id)]
+    store.checks[stored.id] = replace(stored, watched_at=at, updated_by=newer)
+    body = http.get(f"/v1/checks/{check_id}").json()
+    assert body["watched_at"] == "2026-12-01T06:29:00Z" and body["updated_by"] == str(newer)
 
 
 def test_a_repeated_claim_is_cached(

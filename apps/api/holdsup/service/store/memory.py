@@ -1,5 +1,6 @@
 """The check store in memory: tests and local runs."""
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from uuid import UUID
@@ -13,6 +14,9 @@ from holdsup.service.store.model import (
     StoredCheck,
     StoredReport,
     add_entry,
+    has_versions,
+    is_planned,
+    needs_plan,
 )
 
 
@@ -67,8 +71,69 @@ class InMemoryCheckStore:
         return [
             c.result
             for c in self.checks.values()
-            if c.status is CheckStatus.DONE and c.cached_from is None and c.result is not None
+            if c.status is CheckStatus.DONE
+            and c.cached_from is None
+            and c.updated_by is None
+            and c.result is not None
         ]
+
+    # The claim watch (S1)
+    async def watchable(
+        self,
+        since: datetime,
+        limit: int,
+        versions: Mapping[str, object],
+        *,
+        planned: bool = True,
+    ) -> list[StoredCheck]:
+        wanted = is_planned if planned else needs_plan
+        found = [
+            c
+            for c in self.checks.values()
+            if c.status is CheckStatus.DONE
+            and c.result is not None
+            and c.cached_from is None
+            and c.updated_by is None
+            and (c.featured or c.created_at >= since)
+            and has_versions(c.result, versions)
+            and wanted(c.result)
+        ]
+        found.sort(
+            key=lambda c: (c.watched_at is not None, c.watched_at or c.created_at, c.created_at)
+        )
+        return found[:limit]
+
+    async def mark_watched(self, check_ids: Sequence[UUID], at: datetime) -> None:
+        for check_id in check_ids:
+            self.checks[check_id] = replace(self.checks[check_id], watched_at=at)
+
+    async def set_result(self, check_id: UUID, result: CheckResult) -> None:
+        self.checks[check_id] = replace(
+            self.checks[check_id], result=result.model_dump(mode="json")
+        )
+        if (entry := self.ledger.get(check_id)) is not None:
+            self.ledger[check_id] = replace(entry, result=result.model_dump(mode="json"))
+
+    async def supersede(self, old_id: UUID, new: CheckResult) -> None:
+        old = self.checks[old_id]
+        self.checks[new.id] = StoredCheck(
+            id=new.id,
+            text=old.text,
+            status=CheckStatus.DONE,
+            created_at=new.created_at,
+            finished_at=new.finished_at,
+            result=new.model_dump(mode="json"),
+            featured=old.featured,
+            watched_at=new.finished_at,
+        )
+        for check_id, c in list(self.checks.items()):
+            if old_id in (check_id, c.cached_from, c.updated_by):
+                self.checks[check_id] = replace(c, updated_by=new.id)
+        self.checks[old_id] = replace(self.checks[old_id], featured=False)
+        if (entry := self.ledger.pop(old_id, None)) is not None:
+            self.ledger[new.id] = replace(
+                entry, result=new.model_dump(mode="json"), created_at=new.created_at
+            )
 
     # LedgerStore
     def _fresh(self, since: datetime) -> list[LedgerEntry]:

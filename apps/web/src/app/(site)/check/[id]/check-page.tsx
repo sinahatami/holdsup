@@ -5,7 +5,7 @@ import { ProblemAlert } from "@/components/molecules/problem-alert";
 import { RetryButton } from "@/components/molecules/retry-button";
 import { CheckResultView } from "@/components/organisms/check-result";
 import { CheckTemplate } from "@/components/templates/check-template";
-import { readCheck } from "@/lib/api/check";
+import { readCheck, readNewer } from "@/lib/api/check";
 import { isRetryable, problemKind } from "@/lib/api/client";
 import { CheckLive } from "./check-live";
 import { WhileYouWait } from "./while-you-wait";
@@ -22,11 +22,17 @@ export async function CheckPage({ id }: { id: string }) {
   if (found.kind === "missing") notFound();
   if (found.kind === "unavailable") return <CheckLive id={id} />;
 
-  const { result, error, status, text } = found.view;
+  const { result, error, status, text, updated_by, watched_at } = found.view;
   if (result) {
+    // A source revised its figures since: the newest check, to point the reader to (S1).
+    const newer = updated_by ? await readNewer(updated_by) : null;
     return (
       <CheckTemplate actions={<BackLink />}>
-        <CheckResultView result={result} />
+        <CheckResultView
+          result={result}
+          newer={newer}
+          watchedAt={watched_at ?? null}
+        />
       </CheckTemplate>
     );
   }

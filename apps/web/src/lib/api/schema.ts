@@ -362,6 +362,11 @@ export interface components {
       indicators: components["schemas"]["CatalogEntry"][];
     };
     /**
+     * ChangeKind
+     * @enum {string}
+     */
+    ChangeKind: "absolute" | "percent" | "percentage_points" | "ratio";
+    /**
      * ChangePointTolerances
      * @description When a start or end on a break or extreme carries the claim (D025).
      */
@@ -450,6 +455,7 @@ export interface components {
       cached_from?: string | null;
       recheck_of?: components["schemas"]["RecheckOf"] | null;
       page?: components["schemas"]["PageSource"] | null;
+      update_of?: components["schemas"]["UpdateOf"] | null;
       /** Claims */
       claims: components["schemas"]["ClaimResult"][];
       versions: components["schemas"]["Versions"];
@@ -482,6 +488,31 @@ export interface components {
       finished_at: string | null;
       result: components["schemas"]["CheckResult"] | null;
       error: components["schemas"]["Problem"] | null;
+      /**
+       * Watched At
+       * @description When the claim watch last compared this check's figures with the sources and found them unchanged; null when it never has.
+       */
+      watched_at?: string | null;
+      /**
+       * Updated By
+       * @description The newest check computed again from this one after a source revised its figures (the claim watch); null when there is none.
+       */
+      updated_by?: string | null;
+    };
+    /**
+     * ClaimChange
+     * @description A claim whose figures were revised since the check this one updates.
+     */
+    ClaimChange: {
+      /** Index */
+      index: number;
+      before: components["schemas"]["Label"];
+      after: components["schemas"]["Label"];
+      /**
+       * Figures
+       * @description The verdict's figures that moved; empty when only a framing check's did.
+       */
+      figures?: components["schemas"]["FigureChange"][];
     };
     /** ClaimResult */
     ClaimResult: {
@@ -507,6 +538,7 @@ export interface components {
       operations?: components["schemas"]["OpRecord"][];
       /** Answer */
       answer?: number[];
+      plan?: components["schemas"]["StoredPlan"] | null;
       series?: components["schemas"]["ChartSeries"] | null;
       sweep?: components["schemas"]["Sweep"] | null;
       changepoints?: components["schemas"]["ChangePoints"] | null;
@@ -739,6 +771,23 @@ export interface components {
       wrong: number;
       /** Share */
       share: number;
+    };
+    /**
+     * FigureChange
+     * @description A figure the verdict read, as computed then and now: both by code, never a model.
+     */
+    FigureChange: {
+      /**
+       * Name
+       * @description The verdict part: "assertion", "start value", "end value".
+       */
+      name: string;
+      /** Period */
+      period?: string | null;
+      /** Before */
+      before?: number | null;
+      /** After */
+      after?: number | null;
     };
     /** Flag */
     Flag: {
@@ -1023,6 +1072,68 @@ export interface components {
     NotebookMetadata: {
       kernelspec?: components["schemas"]["KernelSpec"];
       language_info?: components["schemas"]["LanguageInfo"];
+    };
+    /** OpCall */
+    OpCall: {
+      /**
+       * Op
+       * @enum {string}
+       */
+      op:
+        | "value_at"
+        | "change"
+        | "cagr"
+        | "trend"
+        | "compare"
+        | "rank"
+        | "per_capita"
+        | "deflate";
+      /**
+       * Series
+       * @description null for the matched indicator; another listed indicator id; or '@N' for the series made by call N (per_capita or deflate).
+       */
+      series?: string | null;
+      /**
+       * Geo
+       * @description Place code, e.g. IT, EU, WORLD.
+       */
+      geo?: string | null;
+      /**
+       * Geo B
+       * @description compare: the second place.
+       */
+      geo_b?: string | null;
+      /**
+       * Geos
+       * @description rank: every place to rank.
+       */
+      geos?: string[] | null;
+      /**
+       * Period
+       * @description YYYY, YYYY-Sn, YYYY-Qn, YYYY-MM or latest.
+       */
+      period?: string | null;
+      /** Start */
+      start?: string | null;
+      /** End */
+      end?: string | null;
+      /** @description change: absolute, percent, percentage_points or ratio. */
+      kind?: components["schemas"]["ChangeKind"] | null;
+      /**
+       * Population
+       * @description per_capita: indicator id.
+       */
+      population?: string | null;
+      /**
+       * Price Index
+       * @description deflate: indicator id.
+       */
+      price_index?: string | null;
+      /**
+       * Base
+       * @description deflate: base period.
+       */
+      base?: string | null;
     };
     /** OpRecord */
     OpRecord: {
@@ -1345,6 +1456,24 @@ export interface components {
       | "verdict"
       | "explain";
     /**
+     * StoredPlan
+     * @description What computing the claim again needs, with code alone (S1, the claim watch): the plan's
+     *     calls as code accepted them, and where each series ended when the check read it.
+     */
+    StoredPlan: {
+      /** Calls */
+      calls: components["schemas"]["OpCall"][];
+      /**
+       * Read Until
+       * @description Per indicator id, per place: the last period with a value when the claim was checked. A later check of the same claim reads no further, so only revised figures can change it, not ones published since.
+       */
+      read_until: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      };
+    };
+    /**
      * Suggestion
      * @description A statistic HoldsUp has that is close to what a claim talks about: one a reader can
      *     re-check the claim with.
@@ -1439,6 +1568,32 @@ export interface components {
       max_period_gap: {
         [key: string]: number;
       };
+    };
+    /**
+     * UpdateOf
+     * @description The check this one updates (S1): the same claims, plans and statistics, computed again
+     *     by the claim watch on the sources' revised figures. No model was asked.
+     */
+    UpdateOf: {
+      /**
+       * Check Id
+       * Format: uuid
+       */
+      check_id: string;
+      /**
+       * Created At
+       * Format: date-time
+       * @description When the check this one updates was made.
+       */
+      created_at: string;
+      /**
+       * Checked On
+       * Format: date
+       * @description The day the claims were first checked: every update reads the claims' dates and the data as of it.
+       */
+      checked_on: string;
+      /** Changes */
+      changes: components["schemas"]["ClaimChange"][];
     };
     /** ValidationError */
     ValidationError: {

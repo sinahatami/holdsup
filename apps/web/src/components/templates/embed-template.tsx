@@ -5,13 +5,17 @@ import { strings } from "@/lib/strings";
 
 /**
  * A check inside another site's iframe: the name and tagline, so the reader knows whose
- * verdict it is, then the content, then a link out (`footer`) to HoldsUp itself.
+ * verdict it is, then the content, then a link out (`footer`) to HoldsUp itself. `aside`
+ * takes the tagline's place (a check updated with revised figures says when), so the frame
+ * keeps its height.
  */
 export function EmbedTemplate({
   footer,
+  aside,
   children,
 }: {
   footer?: ReactNode;
+  aside?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -20,7 +24,9 @@ export function EmbedTemplate({
         <h1>
           <LogoLockup label={strings.appName} className="h-6" />
         </h1>
-        <p className="text-muted-foreground text-sm">{strings.tagline}</p>
+        <p className="text-muted-foreground text-sm">
+          {aside ?? strings.tagline}
+        </p>
       </div>
       {children}
       {footer && <p className="text-sm">{footer}</p>}

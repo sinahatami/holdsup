@@ -1,0 +1,56 @@
+name: Claim watch
+
+# The claim watch (S1): every day, compare the figures behind stored checks with the sources
+# and publish an updated check where a source revised them (`make watch`). Code only: no model
+# is asked, so it needs no provider key, only the database (DATABASE_URL as a repository
+# secret). Without it (a fork, or before the site is deployed) the run is skipped with a notice.
+# A schedule here and not in the API: the API's host sleeps when idle.
+
+on:
+  schedule:
+    - cron: "29 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claim-watch
+  cancel-in-progress: false
+
+jobs:
+  database:
+    name: Database available?
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - id: check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Claim watch skipped::The DATABASE_URL repository secret is not set."
+          fi
+
+  watch:
+    name: Compare stored checks with the sources
+    needs: database
+    if: needs.database.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      APP_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --all-packages --locked
+      - name: Watch
+        run: make watch

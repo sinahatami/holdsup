@@ -4,11 +4,13 @@ TEST_DATABASE_URL set (a `pgvector/pgvector` container migrated with `alembic up
 import math
 import os
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import delete, select
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from holdsup.db.models import Check, ClaimRow, OperationRow
@@ -172,6 +174,128 @@ async def test_reports_are_kept_newest_first(store: CheckStore) -> None:
     await store.add_report(newer)
     assert await store.reports(10) == [newer, older]
     assert await store.reports(1) == [newer]
+
+
+# --- the claim watch (S1) --------------------------------------------------------------------
+
+
+VERSIONS = make_pipeline(happy_script())[0].versions()
+
+
+async def finished(store: CheckStore, created: datetime, *, featured: bool = False) -> UUID:
+    check_id = uuid4()
+    await store.create(StoredCheck(check_id, TEXT, CheckStatus.QUEUED, created))
+    await store.finish(await a_result(check_id, created), None)
+    if featured:
+        await store.set_featured(check_id, True)
+    return check_id
+
+
+async def test_the_watch_reads_recent_and_featured_computed_checks(store: CheckStore) -> None:
+    since = T0 - timedelta(days=90)
+    recent = await finished(store, T0)
+    older = await finished(store, T0 - timedelta(days=1))
+    old_featured = await finished(store, T0 - timedelta(days=200), featured=True)
+    await finished(store, T0 - timedelta(days=200))  # too old, not featured
+    unfinished, copy = uuid4(), uuid4()
+    await store.create(StoredCheck(unfinished, TEXT, CheckStatus.QUEUED, T0))
+    await store.create(
+        StoredCheck(copy, TEXT, CheckStatus.DONE, T0, result={"x": 1}, cached_from=recent)
+    )
+    # Never compared first, oldest first; then the ones compared longest ago.
+    assert [c.id for c in await store.watchable(since, 10, VERSIONS)] == [
+        old_featured,
+        older,
+        recent,
+    ]
+    await store.mark_watched([old_featured], T0 + timedelta(hours=1))
+    await store.mark_watched([older], T0 + timedelta(hours=2))
+    assert [c.id for c in await store.watchable(since, 10, VERSIONS)] == [
+        recent,
+        old_featured,
+        older,
+    ]
+    assert [c.id for c in await store.watchable(since, 1, VERSIONS)] == [recent]
+    got = await store.get(older)
+    assert got is not None and got.watched_at == T0 + timedelta(hours=2)
+    await store.mark_watched([], T0)  # nothing to do
+
+
+async def test_the_watch_reads_only_checks_it_can_replay_with_today_s_rules(
+    store: CheckStore,
+) -> None:
+    planned = await finished(store, T0)
+    result = (await a_result(uuid4())).model_dump(mode="json")
+    unplanned, older_rules, unmatched = uuid4(), uuid4(), uuid4()
+    no_plan = {**result, "claims": [{**c, "plan": None} for c in result["claims"]]}
+    old_rules = {**result, "versions": {**result["versions"], "tolerances": 1}}
+    nothing = {**no_plan, "claims": [{**c, "indicator": None} for c in no_plan["claims"]]}
+    for check_id, doc in ((unplanned, no_plan), (older_rules, old_rules), (unmatched, nothing)):
+        await store.create(StoredCheck(check_id, TEXT, CheckStatus.QUEUED, T0))
+        await store.finish(CheckResult.model_validate({**doc, "id": str(check_id)}), None)
+    assert [c.id for c in await store.watchable(T0, 10, VERSIONS)] == [planned]
+    # The backfill's: matched and checked, but no stored plan (from before S1).
+    assert [c.id for c in await store.watchable(T0, 10, VERSIONS, planned=False)] == [unplanned]
+
+
+async def test_an_update_takes_the_old_check_s_place(store: CheckStore) -> None:
+    ledger = Ledger(store, EMBEDDER, now=lambda: T0 + timedelta(days=30))
+    old = uuid4()
+    await store.create(StoredCheck(old, TEXT, CheckStatus.QUEUED, T0))
+    first = await a_result(old)
+    await store.finish(first, await ledger.entry(TEXT, first.model_dump(mode="json")))
+    await store.set_featured(old, True)
+    earlier, copy = await finished(store, T0 - timedelta(days=5)), uuid4()
+    await store.create(
+        StoredCheck(copy, TEXT, CheckStatus.DONE, T0, result=first.model_dump(mode="json"),
+                    cached_from=old)
+    )  # fmt: skip
+    # Pretend `old` was itself the update of an earlier check, which points at it.
+    if isinstance(store, InMemoryCheckStore):
+        store.checks[earlier] = replace(store.checks[earlier], updated_by=old)
+    else:
+        assert isinstance(store, SqlCheckStore)
+        async with store._sessionmaker() as s, s.begin():  # the store has no setter for this
+            await s.execute(sa_update(Check).where(Check.id == earlier).values(updated_by=old))
+
+    later = T0 + timedelta(days=30)
+    new = await a_result(uuid4(), later)
+    await store.supersede(old, new)
+
+    got = await store.get(new.id)
+    assert got is not None and got.status is CheckStatus.DONE and got.featured
+    assert got.text == TEXT and got.watched_at == new.finished_at and got.updated_by is None
+    for pointing in (old, copy, earlier):
+        c = await store.get(pointing)
+        assert c is not None and c.updated_by == new.id, pointing
+    assert [c.id for c in await store.gallery(10)] == [new.id]
+    # The ledger answers a repeated claim with the update, and only with it.
+    hit = await ledger.lookup(TEXT)
+    assert hit is not None and CheckResult.model_validate(hit.entry.result).id == new.id
+    assert [CheckResult.model_validate(r).id for r in await store.finished_results()] == [new.id]
+    assert [c.id for c in await store.watchable(T0, 10, VERSIONS)] == [new.id]
+
+
+async def test_set_result_replaces_the_stored_result(store: CheckStore) -> None:
+    ledger = Ledger(store, EMBEDDER, now=lambda: T0)
+    check_id = uuid4()
+    await store.create(StoredCheck(check_id, TEXT, CheckStatus.QUEUED, T0))
+    result = await a_result(check_id)
+    await store.finish(result, await ledger.entry(TEXT, result.model_dump(mode="json")))
+    noted = result.model_copy(update={"notes": ["a plan was added"]})
+    await store.set_result(check_id, noted)
+    got = await store.get(check_id)
+    assert got is not None and got.result is not None
+    assert CheckResult.model_validate(got.result).notes == ["a plan was added"]
+    # The ledger answers with the result as it is now.
+    hit = await ledger.lookup(TEXT)
+    assert hit is not None
+    assert CheckResult.model_validate(hit.entry.result).notes == ["a plan was added"]
+
+
+async def test_an_unknown_check_cannot_be_superseded(store: CheckStore) -> None:
+    with pytest.raises(KeyError):
+        await store.supersede(uuid4(), await a_result(uuid4()))
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="TEST_DATABASE_URL not set")
