@@ -304,7 +304,7 @@ wheels = [
 
 [[package]]
 name = "holdsup"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "../apps/api" }
 dependencies = [
     { name = "alembic" },
