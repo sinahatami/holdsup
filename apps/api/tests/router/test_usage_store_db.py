@@ -34,6 +34,8 @@ async def test_record_upserts_and_counts_per_day() -> None:
 
         assert await store.requests_on("test-provider", day) == 2
         assert await store.requests_on("test-provider", other) == 1
+        assert (await store.requests_by_provider(day)).get("test-provider") == 2
+        assert (await store.requests_by_provider(other)).get("test-provider") == 1
         async with sessionmaker() as s:
             row = await s.get(ProviderUsage, ("test-provider", day))
             assert row is not None

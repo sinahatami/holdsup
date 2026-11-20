@@ -28,6 +28,10 @@ def budget_cap(limit: int) -> int:
 class UsageStore(Protocol):
     async def requests_on(self, provider: str, day: date) -> int: ...
 
+    async def requests_by_provider(self, day: date) -> dict[str, int]:
+        """Every provider's count on that day, in one read (providers without one are absent)."""
+        ...
+
     async def record(self, provider: str, day: date, tokens: int) -> None: ...
 
     async def add_tokens(self, provider: str, day: date, tokens: int) -> None: ...
@@ -42,6 +46,9 @@ class InMemoryUsageStore:
 
     async def requests_on(self, provider: str, day: date) -> int:
         return self.requests[(provider, day)]
+
+    async def requests_by_provider(self, day: date) -> dict[str, int]:
+        return {p: n for (p, d), n in self.requests.items() if d == day}
 
     async def record(self, provider: str, day: date, tokens: int) -> None:
         self.requests[(provider, day)] += 1
@@ -63,6 +70,13 @@ class SqlUsageStore:
                 ProviderUsage.provider == provider, ProviderUsage.day == day
             )
             return (await session.scalar(stmt)) or 0
+
+    async def requests_by_provider(self, day: date) -> dict[str, int]:
+        stmt = select(ProviderUsage.provider, ProviderUsage.requests).where(
+            ProviderUsage.day == day
+        )
+        async with self._sessionmaker() as session:
+            return {provider: requests for provider, requests in await session.execute(stmt)}
 
     async def record(self, provider: str, day: date, tokens: int) -> None:
         stmt = insert(ProviderUsage).values(provider=provider, day=day, requests=1, tokens=tokens)
@@ -104,19 +118,33 @@ class Budgets:
         return self._minute[provider.name][0] + WINDOW_S - now
 
     async def day_exhausted(self, provider: ProviderConfig, now: float) -> bool:
-        per_day = provider.limits.requests_per_day
-        if per_day is None:
+        if provider.limits.requests_per_day is None:
             return False
-        used = await self._store.requests_on(provider.name, utc_day(now))
-        return used >= budget_cap(per_day)
+        return self.over_day_cap(
+            provider, await self._store.requests_on(provider.name, utc_day(now))
+        )
 
     async def remaining_today(self, provider: ProviderConfig, now: float) -> int | None:
         """For the /status page (P3.7)."""
-        per_day = provider.limits.requests_per_day
-        if per_day is None:
+        if provider.limits.requests_per_day is None:
             return None
-        used = await self._store.requests_on(provider.name, utc_day(now))
-        return max(0, budget_cap(per_day) - used)
+        return self.left_of_day_cap(
+            provider, await self._store.requests_on(provider.name, utc_day(now))
+        )
+
+    async def used_today(self, now: float) -> dict[str, int]:
+        """Today's request count for every provider, in one read (for /status)."""
+        return await self._store.requests_by_provider(utc_day(now))
+
+    @staticmethod
+    def over_day_cap(provider: ProviderConfig, used: int) -> bool:
+        per_day = provider.limits.requests_per_day
+        return per_day is not None and used >= budget_cap(per_day)
+
+    @staticmethod
+    def left_of_day_cap(provider: ProviderConfig, used: int) -> int | None:
+        per_day = provider.limits.requests_per_day
+        return None if per_day is None else max(0, budget_cap(per_day) - used)
 
     async def record(self, provider: ProviderConfig, now: float, tokens: int = 0) -> None:
         """Count one request (successful or not: providers count attempts)."""

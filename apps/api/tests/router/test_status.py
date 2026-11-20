@@ -1,9 +1,11 @@
 """What /status says about each provider (P3.7): the router's own state, read without a call."""
 
+from datetime import date
+
 from openai.types.chat import ChatCompletionMessageParam
 
 from holdsup.router import ProviderState, ProviderStatus, Router, Use
-from holdsup.router.budgets import budget_cap
+from holdsup.router.budgets import InMemoryUsageStore, budget_cap
 from holdsup.router.errors import ProviderUnavailable, RateLimited
 from tests.router.fakes import FakeClient, FakeClock, config, provider
 
@@ -74,3 +76,30 @@ async def test_the_daily_cap_reached_is_out_of_budget() -> None:
 async def test_a_provider_without_a_key_is_not_configured() -> None:
     router, _, _ = make(keys={"b"})
     assert states(await router.status())["a"] == (ProviderState.NOT_CONFIGURED, 0.0)
+
+
+class CountingStore(InMemoryUsageStore):
+    """Counts reads: each one is a database round trip in production."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.reads = 0
+
+    async def requests_on(self, provider: str, day: date) -> int:
+        self.reads += 1
+        return await super().requests_on(provider, day)
+
+    async def requests_by_provider(self, day: date) -> dict[str, int]:
+        self.reads += 1
+        return await super().requests_by_provider(day)
+
+
+async def test_status_reads_every_providers_count_at_once() -> None:
+    store, clock = CountingStore(), FakeClock()
+    providers = (provider("a", rpd=100), provider("b", rpd=50), provider("c"))
+    router = Router(config(*providers, steps=STEPS), FakeClient(), store, clock=clock)
+    await router.complete("plan", MSG, use=Use.LIVE)
+    store.reads = 0
+    statuses = await router.status()
+    assert store.reads == 1
+    assert [s.remaining_today for s in statuses] == [budget_cap(100) - 1, budget_cap(50), None]

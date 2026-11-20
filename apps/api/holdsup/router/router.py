@@ -149,13 +149,15 @@ class Router:
     # --- status ------------------------------------------------------------------------------
 
     async def status(self) -> list[ProviderStatus]:
-        """Every provider that serves live checks, in config order, as /status shows it."""
+        """Every provider that serves live checks, in config order, as /status shows it.
+        Today's counts come in one read for all providers, not one per provider."""
         now = self._clock.now()
+        used = await self.budgets.used_today(now)
         out = []
         for p in self.config.providers:
             if p.allowed_use is not Use.LIVE:
                 continue
-            state, wait = await self._state(p, now)
+            state, wait = self._state(p, now, used.get(p.name, 0))
             per_day = p.limits.requests_per_day
             out.append(
                 ProviderStatus(
@@ -164,18 +166,18 @@ class Router:
                     model=p.model,
                     state=state,
                     wait_s=round(wait, 1),
-                    remaining_today=await self.budgets.remaining_today(p, now),
+                    remaining_today=self.budgets.left_of_day_cap(p, used.get(p.name, 0)),
                     daily_cap=budget_cap(per_day) if per_day is not None else None,
                     steps=[s for s, names in self.config.steps.items() if p.name in names],
                 )
             )
         return out
 
-    async def _state(self, p: ProviderConfig, now: float) -> tuple[ProviderState, float]:
+    def _state(self, p: ProviderConfig, now: float, used_today: int) -> tuple[ProviderState, float]:
         if not self._client.has_key(p):
             return ProviderState.NOT_CONFIGURED, 0.0
         exhausted = self._exhausted_until.get(p.name, 0.0) - now
-        if exhausted > 0 or await self.budgets.day_exhausted(p, now):
+        if exhausted > 0 or self.budgets.over_day_cap(p, used_today):
             return ProviderState.OUT_OF_BUDGET, next_utc_midnight(now) - now
         failing = self.breaker.wait_s(p.name, now)
         if failing > 0:

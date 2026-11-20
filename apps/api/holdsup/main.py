@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from holdsup import problems
 from holdsup.config import get_settings, production_problems
@@ -28,6 +29,9 @@ def create_app() -> FastAPI:
     configure_logging(settings.log_level)
     app = FastAPI(title="HoldsUp API", version="0.0.0", lifespan=lifespan)
     problems.install(app)
+    # JSON compresses to about a seventh (the catalog: 56 KB). The event stream is left alone
+    # (Starlette excludes text/event-stream), so each step still goes out as it happens.
+    app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
     # Only the web app's origin may call the API from a browser.
     app.add_middleware(
         CORSMiddleware,
