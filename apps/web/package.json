@@ -14,6 +14,7 @@
     "lint": "eslint --max-warnings=0 .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:ui": "vitest --ui",
     "e2e": "playwright test",
     "lighthouse": "node lighthouse/run.mjs",
     "analyze": "next analyze"
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "6.2.1",
     "@vitest/coverage-v8": "5.1.0",
+    "@vitest/ui": "5.1.0",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.5",
