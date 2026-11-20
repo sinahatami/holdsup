@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -59,6 +59,9 @@ test-ml: ## ml/ tests (dataset, leakage guard, metrics, report; no torch, no net
 
 test-web:
 	pnpm --filter @holdsup/web test --coverage
+
+test-ui: ## Web tests in a browser window: pick, rerun and inspect each test (reruns on save)
+	pnpm --filter @holdsup/web test:ui
 
 e2e: ## Playwright against a mocked API (incl. axe accessibility checks)
 	pnpm --filter @holdsup/web e2e
