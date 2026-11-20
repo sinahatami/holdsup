@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -73,6 +73,9 @@ types: ## Regenerate apps/web/src/lib/api/schema.ts from FastAPI's OpenAPI schem
 	cd $(API_DIR) && uv run python -m scripts.export_openapi $(CURDIR)/.cache/openapi.json
 	pnpm --filter @holdsup/web exec openapi-typescript $(CURDIR)/.cache/openapi.json -o src/lib/api/schema.ts
 	pnpm exec prettier --write $(WEB_DIR)/src/lib/api/schema.ts
+
+fonts: ## Cut Newsreader to the weights and sizes the site sets -> apps/web/src/app/fonts (downloads the pinned sources once)
+	uv run scripts/trim_fonts.py
 
 seed-gallery: ## Run eval/gallery_claims.txt and feature the results (needs keys, DATABASE_URL, catalog; not CI)
 	cd $(API_DIR) && uv run python -m scripts.seed_gallery $(ARGS)

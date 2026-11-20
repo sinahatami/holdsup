@@ -8,7 +8,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-display: var(--font-newsreader);
+  /* The extra letters come first: their face covers only them, so other text passes on to the
+     main family. Listed after it they would never load: its fallback serif has them too. */
+  --font-display: var(--font-newsreader-extra), var(--font-newsreader);
   --font-hand: var(--font-caveat);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -48,7 +50,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --font-heading: var(--font-newsreader);
+  --font-heading: var(--font-newsreader-extra), var(--font-newsreader);
   --color-pen: var(--pen);
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
