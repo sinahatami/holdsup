@@ -318,6 +318,29 @@ describe("CheckResultView", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names the page a link was read from, even when its text is only the claim", () => {
+    const page = {
+      url: "https://news.example/jobs",
+      title: "Jobs report",
+      read_at: "2026-11-20T09:30:00Z",
+      used: 1,
+      found: 1,
+    };
+    for (const claims of [[holdingClaim], []]) {
+      const { unmount } = render(
+        <CheckResultView result={checkResult(claims, { page })} />,
+      );
+      expect(
+        screen.getByRole("heading", { name: strings.check.pageHeading }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Jobs report" })).toHaveAttribute(
+        "href",
+        page.url,
+      );
+      unmount();
+    }
+  });
+
   it("shows the words around a single claim", () => {
     render(
       <CheckResultView

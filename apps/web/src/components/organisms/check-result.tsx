@@ -18,7 +18,18 @@ import { strings } from "@/lib/strings";
 export function CheckResultView({ result }: { result: CheckResult }) {
   const { claims } = result;
   if (claims.length === 0) {
-    return <p className="glass rounded-2xl p-5">{strings.check.noClaims}</p>;
+    const none = (
+      <p className="glass rounded-2xl p-5">{strings.check.noClaims}</p>
+    );
+    // From a link, the reader still sees what was read and where from.
+    return result.page ? (
+      <div className="flex flex-col gap-8">
+        {none}
+        <OriginalText result={result} />
+      </div>
+    ) : (
+      none
+    );
   }
   return (
     <div className="flex flex-col gap-8">
@@ -53,10 +64,12 @@ export function CheckResultView({ result }: { result: CheckResult }) {
         }}
         embed={{ id: result.id, claims: claims.length }}
       />
-      {hasMoreThanQuotes(
-        result.text,
-        claims.map((c) => c.claim.quote),
-      ) && <OriginalText result={result} />}
+      {/* A page's note says where the text came from, so it shows even when the text is one claim. */}
+      {(result.page ||
+        hasMoreThanQuotes(
+          result.text,
+          claims.map((c) => c.claim.quote),
+        )) && <OriginalText result={result} />}
       {claims.map((c, n) => (
         <ClaimCard
           key={c.index}
