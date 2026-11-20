@@ -209,7 +209,7 @@ async def test_r001_a_change_between_whole_years_compares_yearly_averages() -> N
     assert {p.period: round(p.value, 2) for p in c.series.points}["2015"] == 12.02
     assert c.changepoints is not None and c.changepoints.breaks == ["1998", "2007", "2014"]
     assert c.changepoints.flags == []
-    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 6
+    assert out.versions.catalog == "0.8.0" and out.versions.tolerances == 7
 
 
 async def test_c004_two_levels_in_one_sentence_are_checked_on_their_own() -> None:

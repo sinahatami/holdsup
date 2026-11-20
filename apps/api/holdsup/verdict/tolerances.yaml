@@ -1,6 +1,6 @@
 # Verdict tolerances (docs/spec.md "Tolerances"). Shown on every receipt.
 # Tune on the dev split only (P4.7); bump `version` whenever a value changes.
-version: 6
+version: 7
 
 # "Supported" also needs the claim to hold in at least this share of reasonable time windows
 # (the cherry-pick sweep, P3.1); below it the label is "supported, but framing matters".
@@ -16,7 +16,8 @@ sweep: { reach: 2, min_years: 2 }
 # Change points (D025). A claim's start or end that is a peak or a trough (within the sweep's
 # reach), or within one period of a break in the trend, is flagged when it carries the claim:
 # with the typical level around it in its place, the change goes the other way or shrinks by
-# more than `shrink`.
+# more than `shrink`. A claim window shorter than the sweep's `min_years` is not looked at
+# either: it chose no window, and the typical level around its end would take in its start.
 changepoints: { shrink: 0.15 }
 
 # Distortion checks (D026). A claim about the present is flagged when its latest figure is for a
