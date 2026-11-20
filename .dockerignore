@@ -20,3 +20,9 @@ eval
 !eval/VERSION
 !eval/reports
 docs
+# Local AI-agent notes
+**/CLAUDE.md
+**/CLAUDE.local.md
+**/AGENTS.md
+**/.claude
+**/.claudeignore
