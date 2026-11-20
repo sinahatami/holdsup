@@ -1,0 +1,95 @@
+name: Deploy API
+
+# Continuous deployment of the API to Google Cloud Run (D042). The web app needs no workflow:
+# Vercel's Git integration deploys every push to main by itself (DEPLOY.md, section 3).
+#
+# Called by "API image" (image.yml) after its image job passes on a push to main, so a
+# deploy only follows commits that touch the API and whose image built and started in CI.
+# Run by hand (Run workflow, on main) to redeploy main's latest commit. Either way it runs
+# `make deploy-api`: build the image from committed files with the commit stamped in, push it
+# to Artifact Registry and switch the service to it. The service's settings and variables
+# carry over, and no API key passes through GitHub.
+#
+# No Google key is stored here either. GitHub's OIDC token is exchanged for a short-lived
+# token of a deploy-only service account (Workload Identity Federation), and Google accepts
+# only tokens from this file on this repository's main branch (DEPLOY.md, section 4).
+# Without the repository variables (a fork, or before that setup) the job is skipped.
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy the API to Cloud Run
+    if: vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    # One deploy at a time; a newer one waits instead of cancelling a deploy halfway.
+    concurrency:
+      group: deploy-api
+      cancel-in-progress: false
+    env:
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+      GCP_REGION: ${{ vars.GCP_REGION || 'us-east4' }}
+      API_SERVICE: holdsup-api # API_SERVICE in the Makefile
+      CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Let Docker push to Artifact Registry
+        run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev"
+
+      - name: Build, push and deploy (make deploy-api)
+        run: make deploy-api GCP_PROJECT="$GCP_PROJECT" GCP_REGION="$GCP_REGION"
+
+      - name: The new revision takes all traffic and serves health
+        run: |
+          commit=$(git rev-parse --short HEAD)
+          describe() {
+            gcloud run services describe "$API_SERVICE" --project "$GCP_PROJECT" \
+              --region "$GCP_REGION" --format="$1"
+          }
+          # Only these fields: the full description includes the service's API keys.
+          image=$(describe 'value(spec.template.spec.containers[0].image)')
+          url=$(describe 'value(status.url)')
+          status=$(describe 'json(status.latestReadyRevisionName,status.traffic)')
+          revision=$(jq -r .status.latestReadyRevisionName <<<"$status")
+          percent=$(jq --arg r "$revision" \
+            '[.status.traffic[]? | select(.revisionName == $r) | .percent // 0] | add // 0' \
+            <<<"$status")
+          echo "Image $image, revision $revision at $percent% of traffic, $url"
+          if [[ "$image" != *":$commit" ]]; then
+            echo "::error::The service runs $image, not the image for $commit."
+            exit 1
+          fi
+          if [[ "$percent" != 100 ]]; then
+            # After a rollback (Revisions tab) traffic stays pinned to the older revision.
+            echo "::error::$revision is deployed but gets $percent% of traffic. If you rolled back on purpose, nothing is wrong; otherwise send traffic to the latest revision: gcloud run services update-traffic $API_SERVICE --to-latest --region $GCP_REGION"
+            exit 1
+          fi
+          for _ in $(seq 1 30); do
+            if curl -fsS --max-time 20 "$url/v1/health"; then
+              echo
+              echo "Deployed \`$commit\` to $url as \`$revision\`." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::$url/v1/health did not answer; see the service's Logs tab."
+          exit 1
