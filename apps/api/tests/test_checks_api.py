@@ -101,6 +101,21 @@ def stream(http: TestClient, check_id: str, **headers: str) -> list[dict[str, An
         return sse("".join(r.iter_text()))
 
 
+def test_json_is_compressed_and_the_event_stream_is_not(
+    api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
+) -> None:
+    http, _, _, _ = api
+    gzip = {"Accept-Encoding": "gzip"}
+    check_id = http.post("/v1/checks", json={"text": TEXT}).json()["id"]
+    with http.stream("GET", f"/v1/checks/{check_id}/stream", headers=gzip) as r:
+        assert "content-encoding" not in r.headers  # buffering would hold every step back
+        r.read()
+    stored = http.get(f"/v1/checks/{check_id}", headers=gzip)
+    assert stored.headers["content-encoding"] == "gzip"
+    assert stored.json()["status"] == "done"
+    assert "content-encoding" not in http.get("/v1/health", headers=gzip).headers  # too small
+
+
 def test_submit_stream_and_stored_result(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
