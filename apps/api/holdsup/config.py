@@ -37,6 +37,37 @@ class Settings(BaseSettings):
     app_commit: str = ""
 
 
+def production_problems(settings: Settings) -> list[str]:
+    """What would make a production API wrong without failing: empty unless APP_ENV is
+    production. The app refuses to start while any remain (the image sets production)."""
+    if settings.app_env != "production":
+        return []
+    problems = []
+    if settings.database_url is None:
+        problems.append(
+            "DATABASE_URL is not set: checks, the gallery and the daily provider budgets "
+            "would live in memory and vanish on restart."
+        )
+    if settings.trusted_proxies < 1:
+        problems.append(
+            "TRUSTED_PROXIES is 0: behind the host's proxy every visitor would share one "
+            "rate limit. Set it to the number of X-Forwarded-For entries the proxy adds "
+            "(the `client_address` log line counts them; 1 is safe to start with)."
+        )
+    if not settings.web_origin.startswith("https://"):
+        problems.append(
+            f"WEB_ORIGIN is {settings.web_origin!r}: browsers on the site would be refused "
+            "(CORS). Set it to the site's https address."
+        )
+    for name, folder in (
+        ("CATALOG_DIR", settings.catalog_dir),
+        ("REPORTS_DIR", settings.reports_dir),
+    ):
+        if not folder.is_dir():
+            problems.append(f"{name} {folder} is not a folder.")
+    return problems
+
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

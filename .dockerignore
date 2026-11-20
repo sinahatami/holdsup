@@ -13,5 +13,10 @@
 **/.env.*
 apps/web
 ml
+# The API reads these at run time (the /eval page).
+!ml/reranker/reports/report.json
+!ml/confidence/reports/report.json
 eval
+!eval/VERSION
+!eval/reports
 docs

@@ -45,10 +45,23 @@ COPY --from=model --chown=app:app /opt/fastembed /opt/fastembed
 # Read-only: the API checks these files against the pin again when it loads them.
 COPY --from=reranker /opt/reranker /opt/reranker
 COPY --chown=app:app apps/api/alembic.ini /app/alembic.ini
+# Files the API reads at run time: the indicator catalog (matching, receipts) and the
+# committed evaluation and model reports (the /eval page).
+COPY packages/catalog /app/catalog
+COPY eval/VERSION /app/eval/VERSION
+COPY eval/reports /app/eval/reports
+COPY ml/reranker/reports/report.json /app/ml/reranker/reports/report.json
+COPY ml/confidence/reports/report.json /app/ml/confidence/reports/report.json
+# Production by default: the API refuses to start until the host's settings are complete
+# (holdsup/config.py production_problems); `make docker-api` runs it as development.
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
+    APP_ENV=production \
     FASTEMBED_CACHE_PATH=/opt/fastembed \
     RERANKER_DIR=/opt/reranker \
+    CATALOG_DIR=/app/catalog \
+    REPORTS_DIR=/app/eval/reports \
+    ML_DIR=/app/ml \
     PORT=7860 \
     APP_COMMIT=${APP_COMMIT}
 WORKDIR /app
@@ -56,4 +69,6 @@ USER app
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ[\"PORT\"]}/v1/health', timeout=4)"]
-CMD ["sh", "-c", "exec uvicorn holdsup.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]
+# No proxy headers: uvicorn would otherwise take the client address from X-Forwarded-For,
+# which callers can write. TRUSTED_PROXIES decides which forwarded entries count.
+CMD ["sh", "-c", "exec uvicorn holdsup.main:app --host 0.0.0.0 --port ${PORT} --no-proxy-headers"]

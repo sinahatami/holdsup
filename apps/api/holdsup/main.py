@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from holdsup import problems
-from holdsup.config import get_settings
+from holdsup.config import get_settings, production_problems
 from holdsup.logs import RequestIdMiddleware, configure_logging
 from holdsup.routes import v1
 from holdsup.service.wiring import Built
@@ -23,6 +23,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    if problems_found := production_problems(settings):
+        raise RuntimeError("Refusing to start in production:\n- " + "\n- ".join(problems_found))
     configure_logging(settings.log_level)
     app = FastAPI(title="HoldsUp API", version="0.0.0", lifespan=lifespan)
     problems.install(app)
