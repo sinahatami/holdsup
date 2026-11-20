@@ -30,7 +30,15 @@ The first visit after a quiet spell waits a few seconds while the container star
 ### One-time setup
 
 1. In the [Google Cloud console](https://console.cloud.google.com), create a project (for example `holdsup`) and note its **project ID**. Link a billing account when asked. Then open **Billing → Budgets & alerts** and create a budget of 1 (in your currency) with email alerts.
-2. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install) and Docker, then run these once. Pick a region near your Neon database: `europe-west1` (Belgium) for a Neon project in Europe, `us-east1` for one in the US. Use the same region everywhere below.
+2. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install) and Docker, then run these once. Pick the region next to your Neon database, and use it everywhere below. A check lookup makes several round trips to the database, so an ocean between them adds about half a second to every page that reads data (measured: 0.6 s per lookup with the API in Belgium and the database in Virginia).
+
+   | Neon region | Cloud Run region | Vercel function region |
+   | --- | --- | --- |
+   | AWS us-east-1 (N. Virginia), Neon's default | `us-east4` (N. Virginia) | `iad1` |
+   | AWS us-east-2 (Ohio) | `us-east5` (Columbus) | `cle1` |
+   | AWS eu-central-1 (Frankfurt) | `europe-west4` (Netherlands) | `fra1` |
+
+   All three Cloud Run regions are Tier 1, with the same free tier.
 
    ```bash
    gcloud auth login
@@ -86,7 +94,7 @@ The first visit after a quiet spell waits a few seconds while the container star
 
 ## 3. Web (Vercel)
 
-1. Import the GitHub repository and set **Root Directory** to `apps/web`. `vercel.json` there sets Next.js and `pnpm install --frozen-lockfile`. The web app needs Node 26 (`engines` in `package.json`); if the build log rejects the Node version, set **Settings → Build and Deployment → Node.js Version** to 26.x.
+1. Import the GitHub repository and set **Root Directory** to `apps/web`. `vercel.json` there sets Next.js, `pnpm install --frozen-lockfile`, and the region the server-side code runs in: `iad1` (Washington, D.C.), next to the database. If yours is elsewhere, change `regions` there to the Vercel region in the table in section 2. The web app needs Node 26 (`engines` in `package.json`); if the build log rejects the Node version, set **Settings → Build and Deployment → Node.js Version** to 26.x.
 2. Add these environment variables for Production:
 
    | Name | Value |
@@ -120,6 +128,12 @@ Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 
   It builds and pushes the image, then switches the service to it. The settings from step 2.4 carry over. Vercel deploys the web app from `main` by itself.
 - To roll back the API, open the service's **Revisions** tab and send all traffic to an earlier revision.
+- To move the API to another region (for example next to the database), set up the new one before taking the old one down:
+  1. Run the three `gcloud artifacts …` commands from section 2, step 2, with the new region, then `make api-image GCP_PROJECT=<project id> GCP_REGION=<new region>`.
+  2. Create the service in the new region as in section 2, step 4: same name, settings and variables (including the `TRUSTED_PROXIES` value you settled on). Check `/v1/health` and `/v1/status` at its new address.
+  3. In Vercel, set `NEXT_PUBLIC_API_URL` and `HOLDSUP_API_URL` to the new address and redeploy. Check that a gallery receipt opens and `/status` lists the providers.
+  4. Delete the old service, then the old image repository (`gcloud artifacts repositories delete holdsup --location=<old region>`). Images kept in two regions would pass the 0.5 GB of free storage.
+  5. After the first check through the new service, look at `client_address` in its logs again (section 2, step 6).
 
 ## What CI checks
 

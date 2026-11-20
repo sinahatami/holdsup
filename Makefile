@@ -114,10 +114,11 @@ api-bundle: ## Write the API image's build folder for HEAD into .cache/api-<comm
 	grep -q "^ARG APP_COMMIT=\"$$commit\"" $$tmp/Dockerfile && \
 	mv $$tmp $$dir && echo "API bundle for $$commit in $$dir"
 
-# Google Cloud Run (DEPLOY.md). GCP_PROJECT is your Google Cloud project id; GCP_REGION should
-# be the region nearest your Neon database. Images go to the Artifact Registry repository
-# `holdsup` in that region.
-GCP_REGION ?= europe-west1
+# Google Cloud Run (DEPLOY.md). GCP_PROJECT is your Google Cloud project id; GCP_REGION is the
+# region nearest your Neon database: us-east4 (N. Virginia) for Neon's AWS us-east-1, where the
+# site's database is (Vercel's functions run there too, apps/web/vercel.json). Images go to the
+# Artifact Registry repository `holdsup` in that region.
+GCP_REGION ?= us-east4
 API_SERVICE := holdsup-api
 API_IMAGE = $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/holdsup/api
 api-image: api-bundle ## Build HEAD's API image and push it to Artifact Registry (GCP_PROJECT=…)
