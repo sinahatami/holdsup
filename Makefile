@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -133,6 +133,10 @@ api-image: api-bundle ## Build HEAD's API image and push it to Artifact Registry
 deploy-api: api-image ## Push HEAD's API image and switch the Cloud Run service to it (GCP_PROJECT=…)
 	gcloud run deploy $(API_SERVICE) --project $(GCP_PROJECT) --region $(GCP_REGION) \
 		--image $(API_IMAGE):$$(git rev-parse --short HEAD)
+
+deploy-setup: ## One-time: let GitHub Actions (cd.yml) deploy the API without a stored key (GCP_PROJECT=…)
+	@test -n "$(GCP_PROJECT)" || { echo "Set GCP_PROJECT: make $@ GCP_PROJECT=<project id>"; exit 2; }
+	./scripts/setup-deploy.sh $(GCP_PROJECT) $(GCP_REGION)
 
 smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.smoke_providers $(ARGS)

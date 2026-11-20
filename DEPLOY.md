@@ -114,6 +114,21 @@ The first visit after a quiet spell waits a few seconds while the container star
 
 Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 
+### Automatic API deploys
+
+Vercel deploys the web app from `main` by itself. With this one-time setup, the API follows: after a merge to `main` that changes the API, the **API image** workflow builds and starts the image as usual, and if that passes it runs `cd.yml`, which deploys that commit with `make deploy-api`. Without it, the deploy job is skipped and you deploy by hand (section 5).
+
+GitHub holds no Google key. Each run trades its own short-lived GitHub token for one of a service account, `holdsup-deployer`. That account can only push images to the `holdsup` repository and deploy `holdsup-api`, and Google accepts the trade only from `cd.yml` on this repository's `main`. The service's settings and API keys stay on Cloud Run and never pass through GitHub.
+
+1. Run once, with `gcloud` signed in as the project's owner and `gh` signed in to the repository:
+
+   ```bash
+   make deploy-setup GCP_PROJECT=<project id> GCP_REGION=<region>
+   ```
+
+   It enables Google's token exchange, creates the Workload Identity pool `github` with its provider `holdsup`, creates the service account with those three permissions, and sets four repository **variables** (`GCP_PROJECT`, `GCP_REGION`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `GCP_WORKLOAD_IDENTITY_PROVIDER`). They are variables, not secrets: none of them is a key. Running it again is safe.
+2. On GitHub, open **Actions → Deploy API → Run workflow** on `main`. It deploys `main`'s latest commit, then checks that the service runs that commit's image, that the new revision takes all traffic, and that `/v1/health` answers.
+
 ## 5. After launch
 
 - Run the claim-watch backfill once Groq's daily quota has reset, so checks made before plans were stored are watched too. It makes about one plan call per watched claim and keeps only plans that reproduce the figures. On GitHub, open **Actions → Claim watch → Run workflow**, tick **backfill** and run it. It uses the repository's `DATABASE_URL` and provider key secrets (the same names as in `eval.yml`), so the site's address never leaves GitHub. To run it from your machine instead, with your `.env` keys:
@@ -122,14 +137,14 @@ Cloud Run wakes on the first request, so nothing needs to keep the API awake.
   make watch ARGS=--backfill DATABASE_URL='<the site database url>'
   ```
 
-- To deploy a new version, merge to `main`, then from an up-to-date `main`:
+- To deploy a new version, merge to `main`. Vercel deploys the web app by itself, and so does `cd.yml` for the API once section 4's automatic deploys are set up. To deploy the API by hand instead (or before that setup), from an up-to-date `main`:
 
   ```bash
   make deploy-api GCP_PROJECT=<project id> GCP_REGION=<region>
   ```
 
-  It builds and pushes the image, then switches the service to it. The settings from step 2.4 carry over. Vercel deploys the web app from `main` by itself.
-- To roll back the API, open the service's **Revisions** tab and send all traffic to an earlier revision.
+  It builds and pushes the image, then switches the service to it. The settings from step 2.4 carry over.
+- To roll back the API, open the service's **Revisions** tab and send all traffic to an earlier revision. Traffic then stays pinned there: the next deploy creates a revision, but `cd.yml` reports that it gets no traffic. When the fix is in, send all traffic to the latest revision again under **Manage traffic**, or run `gcloud run services update-traffic holdsup-api --to-latest --region <region>`.
 - To move the API to another region (for example next to the database), set up the new one before taking the old one down:
   1. Run the three `gcloud artifacts …` commands from section 2, step 2, with the new region, then `make api-image GCP_PROJECT=<project id> GCP_REGION=<new region>`.
   2. Create the service in the new region as in section 2, step 4: same name, settings and variables (including the `TRUSTED_PROXIES` value you settled on). Check `/v1/health` at its new address.
@@ -139,4 +154,4 @@ Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 
 ## What CI checks
 
-`.github/workflows/image.yml` runs on every pull request that touches the API, the catalog or the reports. It builds the image from `make api-bundle` the way a deploy does, then checks two things. With incomplete production settings, the image must refuse to start. With complete (dummy) settings, it must serve `/v1/health`, the catalog and the eval page. `make docker-api` builds the same image locally and runs it as development.
+`.github/workflows/image.yml` runs on every pull request that touches the API, the catalog or the reports. It builds the image from `make api-bundle` the way a deploy does, then checks two things. With incomplete production settings, the image must refuse to start. With complete (dummy) settings, it must serve `/v1/health`, the catalog and the eval page. `make docker-api` builds the same image locally and runs it as development. On a push to `main` the same workflow then deploys the commit (`cd.yml`, section 4), so an image that fails these checks is never deployed.

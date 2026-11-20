@@ -3,6 +3,7 @@ name: API image
 # Builds the API bundle (make api-bundle) the way a deploy builds it (DEPLOY.md) and
 # checks the image starts: production with incomplete settings refuses to start, and
 # production with complete (dummy) settings serves health, the catalog and the eval page.
+# On a push to main, a pass then deploys that commit to Cloud Run (cd.yml).
 on:
   pull_request:
     paths:
@@ -34,9 +35,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels the older run. On main the newer run waits, so a
+# deploy is never cut off halfway.
 concurrency:
   group: image-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   image:
@@ -91,3 +94,12 @@ jobs:
       - name: API logs
         if: always()
         run: docker logs api 2>&1 | tail -n 50 || true
+
+  deploy:
+    name: Deploy
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/cd.yml
