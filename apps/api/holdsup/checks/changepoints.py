@@ -10,6 +10,10 @@ that value carries the claim. With it replaced by the typical level around it, t
 change goes the other way or shrinks by more than `changepoints.shrink`. A start or end that
 makes the change look smaller is never flagged, and neither is a level or a rank. A trend is
 read from its first value to its last.
+
+A claim window shorter than the sweep's `min_years` is not read either, as the sweep gives it
+no share: "up from 127% in 2012" to 2013 chose no window, and the usual level around its end
+would take in its own start.
 """
 
 import math
@@ -106,7 +110,7 @@ def endpoint_flags(
 ) -> list[EndpointFlag]:
     """The claim's start and end that sit on a break or an extreme and carry the claim."""
     direction = claim.assertion.direction
-    read = endpoint_values(claim, record, series)
+    read = endpoint_values(claim, record, series, min_years=tolerances.sweep.min_years)
     if direction is None or read is None:
         return []
     start, end, a, b = read
@@ -141,11 +145,12 @@ def endpoint_flags(
 
 
 def endpoint_values(
-    claim: ClaimSpec, record: OpRecord, series: Series
+    claim: ClaimSpec, record: OpRecord, series: Series, *, min_years: float
 ) -> tuple[Period, Period, float, float] | None:
     """The start and end the claim's answer leans on, and the series' values there; None when
     they are not looked at: a change, growth rate or trend claimed to rise or fall, read from
-    the series at its own frequency, with a value at both ends."""
+    the series at its own frequency, over a window of at least `min_years` (the sweep's), with
+    a value at both ends."""
     if record.op not in FLAGGED_OPS or claim.assertion.direction not in (
         Direction.UP,
         Direction.DOWN,
@@ -154,6 +159,8 @@ def endpoint_values(
     try:
         start, end = own_window(record, series)
     except OpError:
+        return None
+    if years_between(start, end) < min_years:
         return None
     if record.op == "trend":
         a, b = series.get(start), series.get(end)

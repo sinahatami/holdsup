@@ -127,6 +127,31 @@ def test_a_start_next_to_a_break_can_carry_the_claim() -> None:
     assert (f.why, f.typical, f.claimed, f.shifted) == ("break", 15.0, 10.0, 5.0)
 
 
+# Italy's debt in % of GDP, 2008 to 2019 (Eurostat, rounded): it rises to 2014, then levels off.
+DEBT = annual(
+    [106.2, 116.6, 119.2, 119.7, 126.1, 132.0, 135.4, 135.3, 134.8, 134.2, 134.4, 134.1], 2008
+)
+
+
+def test_a_window_shorter_than_the_sweeps_is_not_read() -> None:
+    # The c007 smoke claim: "up from 127% in 2012" to 132.6% in 2013. The trend turns in 2014,
+    # and the usual level around 2013 (the median of 2011, 2012, 2014 and 2015) takes in the
+    # claim's own start, so without the rule the one-year rise would be flagged.
+    c = claim(Direction.UP, AssertionType.PERCENTAGE_POINTS)
+    r = change(DEBT, "2012", "2013", ChangeKind.PERCENTAGE_POINTS)
+    assert TOL.sweep.min_years == 2
+    assert flags(c, DEBT, r) == []
+    every = TOL.model_copy(update={"sweep": TOL.sweep.model_copy(update={"min_years": 0})})
+    [f] = endpoint_flags(c, r, DEBT, find_breaks(DEBT), tolerances=every)
+    assert (f.end, f.period, f.why) == ("end", "2013", "break")
+    assert f.typical == pytest.approx(130.7)  # the median of 119.7, 126.1, 135.3 and 135.4
+    # A window of the sweep's length is read: the fall to the 2013 trough over two years.
+    s = annual([17.0, 16.0, 10.0, 15.0, 14.0, 13.0, 12.0], first=2011)
+    assert flags(claim(Direction.DOWN), s, change(s, "2012", "2013", ChangeKind.PERCENT)) == []
+    [f] = flags(claim(Direction.DOWN), s, change(s, "2011", "2013", ChangeKind.PERCENT))
+    assert (f.end, f.why) == ("end", "trough")
+
+
 def test_ratios_are_compared_on_a_log_scale() -> None:
     s = annual([4.0, 4.2, 8.0, 4.1, 3.9, 2.0], first=2010)
     r = change(s, "2012", "2015", ChangeKind.RATIO)  # "quartered" from a peak

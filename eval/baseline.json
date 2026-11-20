@@ -5,5 +5,20 @@
   "written": "2026-11-13",
   "verdict_accuracy": 0.8462,
   "match_top1": 0.9167,
-  "extraction_recall": 0.8571
+  "extraction_recall": 0.8571,
+  "judged": {
+    "c004#1": true,
+    "c004#2": true,
+    "c001#1": true,
+    "c001#2": false,
+    "c002#1": true,
+    "c002#2": true,
+    "c007#1": true,
+    "c007#2": false,
+    "c006#1": true,
+    "c018#1": true,
+    "c024#1": true,
+    "c029#1": true,
+    "p001#1": true
+  }
 }

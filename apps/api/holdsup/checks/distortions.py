@@ -131,7 +131,7 @@ def endpoints_check(inp: CheckInput) -> DistortionCheck | None:
     if inp.changepoints is None or len(inp.answer) != 1 or inp.series is None:
         return None
     record = inp.answer[0]
-    read = endpoint_values(inp.claim, record, inp.series)
+    read = endpoint_values(inp.claim, record, inp.series, min_years=inp.tolerances.sweep.min_years)
     if read is None:
         return None
     unit = inp.series.unit if record.op == "trend" else record.unit  # a trend's is per year
