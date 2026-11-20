@@ -5,8 +5,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import exists, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import aliased
 
 from holdsup.db.models import Check, ClaimRow, OperationRow, ReportRow
 from holdsup.jsontypes import JsonObject
@@ -220,6 +221,8 @@ class SqlCheckStore:
         *,
         planned: bool = True,
     ) -> list[StoredCheck]:
+        copy = aliased(Check)
+        featured_copy = exists().where(copy.cached_from == Check.id, copy.featured.is_(True))
         stmt = (
             select(Check)
             .where(
@@ -227,7 +230,7 @@ class SqlCheckStore:
                 Check.result.is_not(None),
                 Check.cached_from.is_(None),
                 Check.updated_by.is_(None),
-                or_(Check.featured.is_(True), Check.created_at >= since),
+                or_(Check.featured.is_(True), featured_copy, Check.created_at >= since),
                 Check.result.path_exists(PLANNED if planned else NEEDS_PLAN),
                 *(Check.result["versions"][k].astext == str(v) for k, v in versions.items()),
             )
@@ -259,6 +262,10 @@ class SqlCheckStore:
             old = await session.get(Check, old_id)
             if old is None:
                 raise KeyError(old_id)
+            pointing = or_(
+                Check.id == old_id, Check.cached_from == old_id, Check.updated_by == old_id
+            )
+            featured = await session.scalar(select(exists().where(pointing, Check.featured)))
             session.add(
                 Check(
                     id=new.id,
@@ -270,27 +277,19 @@ class SqlCheckStore:
                     finished_at=new.finished_at,
                     providers=new.providers(),
                     result=new.model_dump(mode="json"),
-                    featured=old.featured,
+                    featured=bool(featured),
                     watched_at=new.finished_at,
                 )
             )
             await session.flush()  # the new row first: updated_by points at it
             await self._add_claim_rows(session, new)
             await session.execute(
-                update(Check)
-                .where(
-                    or_(
-                        Check.id == old_id,
-                        Check.cached_from == old_id,
-                        Check.updated_by == old_id,
-                    )
-                )
-                .values(updated_by=new.id)
+                update(Check).where(pointing).values(updated_by=new.id, featured=False)
             )
             await session.execute(
                 update(Check)
                 .where(Check.id == old_id)
-                .values(featured=False, normalized_text=None, input_embedding=None)
+                .values(normalized_text=None, input_embedding=None)
             )
 
     # LedgerStore: finished, reusable, original checks.

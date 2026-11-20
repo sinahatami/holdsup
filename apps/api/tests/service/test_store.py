@@ -276,6 +276,54 @@ async def test_an_update_takes_the_old_check_s_place(store: CheckStore) -> None:
     assert [c.id for c in await store.watchable(T0, 10, VERSIONS)] == [new.id]
 
 
+async def a_copy(store: CheckStore, of: UUID, *, featured: bool) -> UUID:
+    """A cached copy of `of`, as the gallery seed makes when the ledger reuses a check; the
+    seed then features the copy and takes the original out of the gallery."""
+    got = await store.get(of)
+    assert got is not None
+    copy = uuid4()
+    await store.create(
+        StoredCheck(copy, TEXT, CheckStatus.DONE, got.created_at + timedelta(days=1),
+                    result=got.result, cached_from=of)
+    )  # fmt: skip
+    await store.set_featured(copy, featured)
+    return copy
+
+
+async def test_the_watch_reads_an_old_check_whose_cached_copy_is_featured(
+    store: CheckStore,
+) -> None:
+    long_ago = T0 - timedelta(days=200)
+    shown, hidden = await finished(store, long_ago), await finished(store, long_ago)
+    await a_copy(store, shown, featured=True)
+    await a_copy(store, hidden, featured=False)
+    assert [c.id for c in await store.watchable(T0 - timedelta(days=90), 10, VERSIONS)] == [shown]
+
+
+async def test_an_update_takes_the_gallery_place_of_a_featured_copy(store: CheckStore) -> None:
+    old = await finished(store, T0)
+    copy = await a_copy(store, old, featured=True)
+    other = await a_copy(store, old, featured=False)
+    new = await a_result(uuid4(), T0 + timedelta(days=30))
+    await store.supersede(old, new)
+    got = await store.get(new.id)
+    assert got is not None and got.featured
+    for pointing in (old, copy, other):
+        c = await store.get(pointing)
+        assert c is not None and c.updated_by == new.id and not c.featured, pointing
+    assert [c.id for c in await store.gallery(10)] == [new.id]
+
+
+async def test_an_update_of_a_check_never_featured_is_not_featured(store: CheckStore) -> None:
+    old = await finished(store, T0)
+    await a_copy(store, old, featured=False)
+    new = await a_result(uuid4(), T0 + timedelta(days=30))
+    await store.supersede(old, new)
+    got = await store.get(new.id)
+    assert got is not None and not got.featured
+    assert await store.gallery(10) == []
+
+
 async def test_set_result_replaces_the_stored_result(store: CheckStore) -> None:
     ledger = Ledger(store, EMBEDDER, now=lambda: T0)
     check_id = uuid4()

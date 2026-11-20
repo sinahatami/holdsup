@@ -87,6 +87,7 @@ class InMemoryCheckStore:
         planned: bool = True,
     ) -> list[StoredCheck]:
         wanted = is_planned if planned else needs_plan
+        featured_copies = {c.cached_from for c in self.checks.values() if c.featured}
         found = [
             c
             for c in self.checks.values()
@@ -94,7 +95,7 @@ class InMemoryCheckStore:
             and c.result is not None
             and c.cached_from is None
             and c.updated_by is None
-            and (c.featured or c.created_at >= since)
+            and (c.featured or c.id in featured_copies or c.created_at >= since)
             and has_versions(c.result, versions)
             and wanted(c.result)
         ]
@@ -116,6 +117,12 @@ class InMemoryCheckStore:
 
     async def supersede(self, old_id: UUID, new: CheckResult) -> None:
         old = self.checks[old_id]
+        pointing = [
+            check_id
+            for check_id, c in self.checks.items()
+            if old_id in (check_id, c.cached_from, c.updated_by)
+        ]
+        featured = any(self.checks[check_id].featured for check_id in pointing)
         self.checks[new.id] = StoredCheck(
             id=new.id,
             text=old.text,
@@ -123,13 +130,13 @@ class InMemoryCheckStore:
             created_at=new.created_at,
             finished_at=new.finished_at,
             result=new.model_dump(mode="json"),
-            featured=old.featured,
+            featured=featured,
             watched_at=new.finished_at,
         )
-        for check_id, c in list(self.checks.items()):
-            if old_id in (check_id, c.cached_from, c.updated_by):
-                self.checks[check_id] = replace(c, updated_by=new.id)
-        self.checks[old_id] = replace(self.checks[old_id], featured=False)
+        for check_id in pointing:
+            self.checks[check_id] = replace(
+                self.checks[check_id], updated_by=new.id, featured=False
+            )
         if (entry := self.ledger.pop(old_id, None)) is not None:
             self.ledger[new.id] = replace(
                 entry, result=new.model_dump(mode="json"), created_at=new.created_at
