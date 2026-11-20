@@ -10,7 +10,10 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+import structlog
 from starlette.requests import Request
+
+log = structlog.get_logger(__name__)
 
 MAX_KEYS = 10_000  # forget idle addresses beyond this many
 
@@ -43,13 +46,19 @@ class RateLimiter:
 def client_ip(request: Request, trusted_proxies: int) -> str:
     """The caller's address. Behind `trusted_proxies` proxies that each append to
     X-Forwarded-For, the address the outermost trusted proxy saw; never a value the caller
-    could have written themselves."""
+    could have written themselves.
+
+    The socket address must be the real peer: the image runs uvicorn without proxy headers,
+    so this is the one place that decides which forwarded entries to trust. Each call logs
+    how many entries arrived (never the addresses): a visitor's browser sends none, so on the
+    host that count is the proxy hops to set as TRUSTED_PROXIES."""
     direct = request.client.host if request.client else "unknown"
-    if trusted_proxies <= 0:
-        return direct
     forwarded = [
         a.strip() for a in request.headers.get("x-forwarded-for", "").split(",") if a.strip()
     ]
+    log.info("client_address", forwarded_entries=len(forwarded), trusted_proxies=trusted_proxies)
+    if trusted_proxies <= 0:
+        return direct
     if len(forwarded) < trusted_proxies:
         return forwarded[0] if forwarded else direct
     return forwarded[-trusted_proxies]

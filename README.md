@@ -161,6 +161,8 @@ Other useful commands:
 - `make e2e` runs Playwright and axe against a mocked API, so it needs no keys.
 - `make help` lists everything else.
 
+To put it online (Vercel, a Hugging Face Docker Space and Neon, all on free tiers), follow [DEPLOY.md](DEPLOY.md).
+
 ## Repository
 
 | Path               | What is there                                                                                                             |

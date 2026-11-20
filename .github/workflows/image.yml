@@ -1,0 +1,93 @@
+name: API image
+
+# Builds the Hugging Face Space bundle (make space-bundle) the way the Space builds it and
+# checks the image starts: production with incomplete settings refuses to start, and
+# production with complete (dummy) settings serves health, the catalog and the eval page.
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "packages/catalog/**"
+      - "eval/VERSION"
+      - "eval/reports/**"
+      - "ml/*/reports/report.json"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "LICENSE"
+      - "Makefile"
+      - ".github/workflows/image.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/catalog/**"
+      - "eval/VERSION"
+      - "eval/reports/**"
+      - "ml/*/reports/report.json"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "LICENSE"
+      - "Makefile"
+      - ".github/workflows/image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: Space bundle builds and starts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Write the Space bundle
+        run: |
+          make space-bundle
+          echo "BUNDLE=.cache/space-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Build the image from the bundle (as the Space does)
+        run: docker build -t holdsup-api:ci "$BUNDLE"
+
+      - name: Incomplete production settings refuse to start
+        run: |
+          set +e
+          out=$(timeout 120 docker run --rm holdsup-api:ci 2>&1)
+          code=$?
+          set -e
+          echo "$out" | tail -n 20
+          test "$code" -ne 0
+          for name in "Refusing to start in production" DATABASE_URL TRUSTED_PROXIES WEB_ORIGIN; do
+            echo "$out" | grep -q "$name"
+          done
+
+      - name: Complete production settings serve health, catalog and eval
+        run: |
+          # Dummy values: nothing here reaches a database or a model provider.
+          docker run -d --name api -p 127.0.0.1:7860:7860 \
+            -e DATABASE_URL=postgresql+asyncpg://127.0.0.1:9/none \
+            -e TRUSTED_PROXIES=1 -e WEB_ORIGIN=https://holdsup.example \
+            holdsup-api:ci
+          for _ in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:7860/v1/health && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:7860/v1/catalog > catalog.json
+          curl -fsS http://127.0.0.1:7860/v1/eval > eval.json
+          python3 - <<'EOF'
+          import json
+          catalog = json.load(open("catalog.json"))
+          bench = json.load(open("eval.json"))
+          assert catalog["version"] and len(catalog["indicators"]) > 0, catalog
+          assert bench["eval_version"] and bench["runs"] and bench["models"], bench
+          print(len(catalog["indicators"]), "indicators;", len(bench["runs"]), "eval runs")
+          EOF
+          docker inspect api --format '{{range .Config.Env}}{{println .}}{{end}}' | grep '^APP_COMMIT=[0-9a-f]'
+
+      - name: API logs
+        if: always()
+        run: docker logs api 2>&1 | tail -n 50 || true

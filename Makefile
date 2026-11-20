@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery watch format db-migrate docker-api smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web e2e lighthouse analyze types seed-gallery watch format db-migrate docker-api space-bundle smoke-providerslist-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -88,9 +88,29 @@ format: ## Auto-format Python and web code
 db-migrate: ## alembic upgrade head (uses DATABASE_URL)
 	cd $(API_DIR) && uv run alembic upgrade head
 
-docker-api: ## Build and run the API image on localhost:7860
+docker-api: ## Build and run the API image on localhost:7860 (as development)
 	docker build -f $(API_DIR)/Dockerfile -t holdsup-api:dev .
-	docker run --rm -p 7860:7860 --env-file $(if $(wildcard .env),.env,/dev/null) holdsup-api:dev
+	docker run --rm -p 7860:7860 --env-file $(if $(wildcard .env),.env,/dev/null) \
+		-e APP_ENV=development holdsup-api:dev
+
+# Everything the API image needs, from committed files only (git archive: never .env or
+# local edits), laid out as a Hugging Face Space: Dockerfile and Space card at the root.
+# One folder per commit, .cache/space-<commit>; an existing one is left as it is.
+SPACE_FILES := LICENSE pyproject.toml uv.lock apps/api/pyproject.toml apps/api/alembic.ini \
+	apps/api/holdsup apps/api/scripts/fetch_reranker.py packages/catalog eval/VERSION \
+	eval/reports ml/reranker/reports/report.json ml/confidence/reports/report.json
+space-bundle: ## Write the API's Hugging Face Space for HEAD into .cache/space-<commit> (DEPLOY.md)
+	@git diff --quiet HEAD -- $(SPACE_FILES) $(API_DIR)/Dockerfile $(API_DIR)/space || \
+		echo "warning: uncommitted changes are not in the bundle (it is built from HEAD)"
+	@commit=$$(git rev-parse --short HEAD); dir=.cache/space-$$commit; \
+	if [ -e $$dir ]; then echo "$$dir already exists (the bundle for $$commit)"; exit 0; fi; \
+	mkdir -p .cache && tmp=$$(mktemp -d .cache/space-partial.XXXXXX) && \
+	git archive HEAD $(SPACE_FILES) | tar -x -C $$tmp && \
+	git show HEAD:$(API_DIR)/space/README.md > $$tmp/README.md && \
+	git show HEAD:$(API_DIR)/Dockerfile \
+		| sed 's/^ARG APP_COMMIT=""$$/ARG APP_COMMIT="'"$$commit"'"/' > $$tmp/Dockerfile && \
+	grep -q "^ARG APP_COMMIT=\"$$commit\"" $$tmp/Dockerfile && \
+	mv $$tmp $$dir && echo "Space bundle for $$commit in $$dir"
 
 smoke-providers: ## Check JSON-schema output and tool calls on every provider (needs keys; not CI)
 	cd $(API_DIR) && uv run python -m scripts.smoke_providers $(ARGS)

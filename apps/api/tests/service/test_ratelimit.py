@@ -51,3 +51,16 @@ def test_client_ip() -> None:
     # Fewer entries than proxies: every entry came from a proxy; the first is the caller.
     assert client_ip(request("10.0.0.1", "2.2.2.2"), 2) == "2.2.2.2"
     assert client_ip(request("10.0.0.1"), 1) == "10.0.0.1"
+
+
+def test_client_ip_logs_the_entry_count_never_the_addresses() -> None:
+    from structlog.testing import capture_logs
+
+    with capture_logs() as logs:
+        client_ip(request("10.0.0.1", "6.6.6.6, 2.2.2.2"), 0)
+        client_ip(request("10.0.0.1"), 1)
+    assert [(e["event"], e["forwarded_entries"], e["trusted_proxies"]) for e in logs] == [
+        ("client_address", 2, 0),
+        ("client_address", 0, 1),
+    ]
+    assert not any("6.6.6.6" in str(e) or "10.0.0.1" in str(e) for e in logs)
