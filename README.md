@@ -9,9 +9,11 @@ _Every number has a denominator._
 
 HoldsUp audits statistical claims. Paste a sentence with a number in it, such as _"Italy's youth unemployment has halved since 2015"_, or a link to an article. HoldsUp finds the official statistic behind the claim and recomputes it from the raw series with plain code. It then tests whether the framing is fair and gives you a verdict with a receipt you can rerun yourself.
 
-> **Status:** in development and not deployed yet. [Benchmark results](#results-on-the-held-out-split) are below.
+> **Live at [holdsup.vercel.app](https://holdsup.vercel.app).** It runs on free tiers: the first check after a quiet spell waits a few seconds while the API starts, and when the day's free model quota runs out the site says so and still shows finished checks. [Benchmark results](#results-on-the-held-out-split) are below.
 
-<!-- Media: a GIF of the live trace and the cherry-pick heatmap goes here once the site is live. -->
+<p align="center">
+  <img src=".github/assets/check.gif" width="800" alt="A real check on holdsup.vercel.app. The claim 'Employment in Spain fell from 19 million people in 2009 to 17 million in 2013' is typed and submitted. The live trace finds Eurostat's employment series, fetches 23 rows and recomputes the claim over 136 time windows in about five seconds. The verdict reads 'Holds up, but the framing matters': 2013 is a trough. The cherry-pick heatmap then shows that most other windows do not show the fall.">
+</p>
 
 ## Why
 
@@ -96,7 +98,7 @@ flowchart TD
   - Gemini is used only offline, for evaluation and training data, never for live users.
 - **Catalog** ([`packages/catalog/`](packages/catalog)): 80 hand-checked indicators. Each has its aliases, a one-sentence definition, its unit and its related series (the per-capita and real versions, for example). It is embedded for vector search in Postgres.
 - **Reranker:** a cross-encoder fine-tuned on the benchmark's dev split and served with onnxruntime. Its training is in [`ml/`](ml) and its card is [`ml/reranker/MODEL_CARD.md`](ml/reranker/MODEL_CARD.md). It is published on the [Hugging Face Hub](https://huggingface.co/sinahatami/holdsup-reranker).
-- **Planned hosting:** free tiers only. The web app on Vercel, the API in a Docker container on Google Cloud Run, and Postgres on Neon.
+- **Hosting:** free tiers only, in one region (N. Virginia): the web app on Vercel, the API in a Docker container on Google Cloud Run, and Postgres on Neon.
 
 ## Evaluation
 
