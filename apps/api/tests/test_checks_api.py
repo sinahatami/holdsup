@@ -21,7 +21,7 @@ from holdsup.db.url import to_async_url
 from holdsup.main import create_app
 from holdsup.page import PageError, PageErrorKind, PageExcerpt
 from holdsup.pipeline.claim import LATEST, AssertionType, Operator
-from holdsup.pipeline.result import ClaimResult
+from holdsup.pipeline.result import ClaimResult, app_version
 from holdsup.pipeline.run import REUSED
 from holdsup.receipt.notebook import Notebook
 from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
@@ -541,7 +541,9 @@ def test_openapi_documents_the_routes(
     api: tuple[TestClient, CheckRunner, FakeClient, InMemoryCheckStore],
 ) -> None:
     http, *_ = api
-    paths = http.get("/openapi.json").json()["paths"]
+    schema = http.get("/openapi.json").json()
+    assert schema["info"]["version"] == app_version()  # the release, as receipts stamp it
+    paths = schema["paths"]
     assert {"/v1/checks", "/v1/checks/{check_id}", "/v1/checks/{check_id}/stream",
             "/v1/checks/{check_id}/notebook", "/v1/checks/{check_id}/claims/{index}/recheck",
             "/v1/gallery"} <= set(paths)  # fmt: skip

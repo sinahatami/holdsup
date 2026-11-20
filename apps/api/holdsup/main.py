@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from holdsup import problems
 from holdsup.config import get_settings, production_problems
 from holdsup.logs import RequestIdMiddleware, configure_logging
+from holdsup.pipeline.result import app_version
 from holdsup.routes import v1
 from holdsup.service.wiring import Built
 
@@ -27,7 +28,7 @@ def create_app() -> FastAPI:
     if problems_found := production_problems(settings):
         raise RuntimeError("Refusing to start in production:\n- " + "\n- ".join(problems_found))
     configure_logging(settings.log_level)
-    app = FastAPI(title="HoldsUp API", version="0.0.0", lifespan=lifespan)
+    app = FastAPI(title="HoldsUp API", version=app_version(), lifespan=lifespan)
     problems.install(app)
     # JSON compresses to about a seventh (the catalog: 56 KB). The event stream is left alone
     # (Starlette excludes text/event-stream), so each step still goes out as it happens.
