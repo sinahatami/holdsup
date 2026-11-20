@@ -184,7 +184,7 @@ def _chatbot_markdown(report: Report) -> str:
     out += (
         _table(
             ["Claim", "Expected", "Answered"],
-            [[_name(o), str(o.expected), o.verdict or MISSED] for o in wrong],
+            [[claim_name(o), str(o.expected), o.verdict or MISSED] for o in wrong],
         )
         if wrong
         else ["None.", ""]
@@ -312,12 +312,13 @@ def _failures(report: Report) -> list[str]:
     )
     out += _table(
         ["Claim", "Expected", "Answered", "Broke at", "Why"],
-        [[_name(o), str(o.expected), o.verdict or MISSED, o.failed_step or "", o.reason] for o in wrong],
+        [[claim_name(o), str(o.expected), o.verdict or MISSED, o.failed_step or "", o.reason] for o in wrong],
     )  # fmt: skip
     return out
 
 
-def _name(o: ClaimOutcome) -> str:
+def claim_name(o: ClaimOutcome) -> str:
+    """The name reports and the gate give a claim: its text and its 1-based place, "c001#1"."""
     return f"{o.text_id}#{o.index + 1}"
 
 

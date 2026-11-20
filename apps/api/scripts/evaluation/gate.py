@@ -1,14 +1,17 @@
 """The regression gate: a run may not be more than 5 points below the baseline.
 
-`eval/baseline.json` holds the figures of the last accepted smoke run. The gate fails when
-end-to-end verdict accuracy drops by more than `MAX_DROP_POINTS`, and refuses to judge
-(`inconclusive`) when the run is not comparable or too much of it dropped out: a provider
-outage must not read as a pass. A run in which a step's first-choice model reached its daily
-limit is not comparable either: the fallback models answered, and the baseline is a measure of
-the first choices. Nor is one in which a per-minute limit sent a step to a fallback that then
-answered. A fallback that answers after the first choice's output was rejected still counts:
-that is the first choice failing, which the gate is there to catch. With a small smoke set one claim is worth several points, so a single flip
-can trip the gate; look at the report before updating the baseline.
+`eval/baseline.json` holds the figures of the last accepted smoke run and which of its claims
+came out right. The gate compares the two runs on the claims both of them judged, so a claim
+that dropped out of either run moves neither figure, and it names each claim that changed. It
+fails when end-to-end verdict accuracy on those claims drops by more than `MAX_DROP_POINTS`,
+and refuses to judge (`inconclusive`) when the run is not comparable or too much of it dropped
+out: a provider outage must not read as a pass. A run in which a step's first-choice model
+reached its daily limit is not comparable either: the fallback models answered, and the
+baseline is a measure of the first choices. Nor is one in which a per-minute limit sent a step
+to a fallback that then answered. A fallback that answers after the first choice's output was
+rejected still counts: that is the first choice failing, which the gate is there to catch.
+With a small smoke set one claim is worth several points, so a single flip can trip the gate;
+look at the claims it names before updating the baseline.
 """
 
 from collections import defaultdict
@@ -18,7 +21,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from scripts.evaluation.report import Report
+from scripts.evaluation.report import Report, claim_name
 from scripts.evaluation.score import CallStats
 
 MAX_DROP_POINTS = 5.0
@@ -41,6 +44,9 @@ class Baseline(BaseModel):
     verdict_accuracy: float
     match_top1: float | None
     extraction_recall: float | None
+    # Each claim the run judged ("c001#1") and whether its verdict was right; a claim that
+    # dropped out is not here.
+    judged: dict[str, bool]
 
 
 @dataclass(frozen=True)
@@ -71,7 +77,19 @@ def baseline_of(report: Report) -> Baseline:
         verdict_accuracy=accuracy,
         match_top1=m.matching.top1.rate,
         extraction_recall=m.extraction.recall.rate,
+        judged=judged_claims(report),
     )
+
+
+def judged_claims(report: Report) -> dict[str, bool]:
+    """Each claim the run judged, and whether its verdict was right: the claims behind its
+    end-to-end verdict accuracy."""
+    return {
+        claim_name(o): o.verdict_ok
+        for t in report.texts
+        for o in t.outcomes
+        if o.status == "scored" and o.verdict_ok is not None
+    }
 
 
 def first_choices_spent(report: Report) -> dict[str, list[str]]:
@@ -160,14 +178,36 @@ def check(
             f"{_limited(limited)}; the baseline measures the first choices, so this run cannot "
             "be compared with it. Run it again once the limits reset.",
         )
-    drop = round((baseline.verdict_accuracy - accuracy) * 100, 6)
+    return _compare(judged_claims(report), baseline, max_drop)
+
+
+def _compare(now: dict[str, bool], baseline: Baseline, max_drop: float) -> Gate:
+    """This run against the baseline on the claims both judged, naming the ones that changed."""
+    then = baseline.judged
+    both = sorted(now.keys() & then.keys())
+    if not both:
+        return Gate(Outcome.INCONCLUSIVE, "No claim was judged in both this run and the baseline.")
+    right_then, right_now = sum(then[c] for c in both), sum(now[c] for c in both)
+    before, after = right_then / len(both), right_now / len(both)
+    drop = round((right_then - right_now) * 100 / len(both), 6)
     summary = (
-        f"Verdict accuracy {accuracy:.1%} against a baseline of {baseline.verdict_accuracy:.1%} "
-        f"({baseline.written})"
+        f"Verdict accuracy {after:.1%} against a baseline of {before:.1%} ({baseline.written}), "
+        f"on the {len(both)} claims both runs judged"
     )
+    notes = [
+        f"{label}: {', '.join(names)}."
+        for label, names in (
+            ("Right in the baseline, wrong now", [c for c in both if then[c] and not now[c]]),
+            ("Wrong in the baseline, right now", [c for c in both if now[c] and not then[c]]),
+            ("Judged in one run only, so not compared", sorted(now.keys() ^ then.keys())),
+        )
+        if names
+    ]
+    tail = "".join(f" {n}" for n in notes)
     if drop > max_drop:
         return Gate(
-            Outcome.REGRESSION, f"{summary}: down {drop:.1f} points, more than {max_drop:g}."
+            Outcome.REGRESSION,
+            f"{summary}: down {drop:.1f} points, more than {max_drop:g}.{tail}",
         )
     change = "no change" if drop == 0 else f"{'down' if drop > 0 else 'up'} {abs(drop):.1f} points"
-    return Gate(Outcome.PASS, f"{summary}: {change}.")
+    return Gate(Outcome.PASS, f"{summary}: {change}.{tail}")
