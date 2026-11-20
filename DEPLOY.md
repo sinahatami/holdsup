@@ -110,13 +110,13 @@ The first visit after a quiet spell waits a few seconds while the container star
 
 ## 4. GitHub
 
-- Repository **secret** `DATABASE_URL` = the connection string of the Neon branch the site uses. The daily claim watch (`watch.yml`) uses no model and marks or updates checks whose figures were revised.
+- Repository **secret** `DATABASE_URL` = the connection string of the Neon branch the site uses. The daily claim watch (`watch.yml`) uses no model and marks or updates checks whose figures were revised. Its backfill (section 5) also reads `GROQ_API_KEY`, `MISTRAL_API_KEY` and `OPENROUTER_API_KEY`, the development keys the smoke evaluation uses.
 
 Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 
 ## 5. After launch
 
-- Run the claim-watch backfill against the site's database once Groq's daily quota has reset. It makes about one plan call per featured claim (your `.env` keys) and keeps only plans that reproduce the figures:
+- Run the claim-watch backfill once Groq's daily quota has reset, so checks made before plans were stored are watched too. It makes about one plan call per watched claim and keeps only plans that reproduce the figures. On GitHub, open **Actions → Claim watch → Run workflow**, tick **backfill** and run it. It uses the repository's `DATABASE_URL` and provider key secrets (the same names as in `eval.yml`), so the site's address never leaves GitHub. To run it from your machine instead, with your `.env` keys:
 
   ```bash
   make watch ARGS=--backfill DATABASE_URL='<the site database url>'
