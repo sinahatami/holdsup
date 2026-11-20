@@ -7,8 +7,9 @@ import { PageShell } from "@/components/templates/page-shell";
 import { readStatus } from "@/lib/api/status";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.status;
+const t = pageStrings.status;
 
 export const metadata: Metadata = {
   title: `${t.meta.title} · ${strings.appName}`,

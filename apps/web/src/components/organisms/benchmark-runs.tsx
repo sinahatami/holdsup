@@ -7,9 +7,9 @@ import {
   runTitle,
   splitText,
 } from "@/lib/benchmark";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 /** Every run in the repository, pipeline and chatbot, so each model's own record is visible. */
 export function BenchmarkRuns({ runs }: { runs: BenchmarkRun[] }) {

@@ -4,10 +4,10 @@ import { BenchmarkRuns } from "@/components/organisms/benchmark-runs";
 import { HeadToHead } from "@/components/organisms/head-to-head";
 import { LossList } from "@/components/organisms/loss-list";
 import { ModelReports } from "@/components/organisms/model-reports";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { benchmarkResponse } from "@/test/fixtures";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 const [comparison] = benchmarkResponse.comparisons;
 
 describe("HeadToHead", () => {

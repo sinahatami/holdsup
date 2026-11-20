@@ -1,8 +1,9 @@
 import type { ProviderStatus, StatusResponse } from "@/lib/api/client";
 import { waitText } from "@/lib/format";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.status;
+const t = pageStrings.status;
 
 /** A provider's state in words; a state that ends has its wait in it. */
 export function stateText(p: ProviderStatus): string {

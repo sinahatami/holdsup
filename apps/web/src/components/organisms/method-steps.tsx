@@ -1,6 +1,6 @@
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.methodology;
+const t = pageStrings.methodology;
 
 /** The steps of a check in order, each tagged with who does the work: code or a language model. */
 export function MethodSteps() {

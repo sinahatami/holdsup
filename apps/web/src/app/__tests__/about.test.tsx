@@ -3,10 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import Page from "@/app/(site)/about/page";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { externalLink } from "@/test/external";
 import { catalogEntry } from "@/test/fixtures";
 
-const t = strings.about;
+const t = pageStrings.about;
 afterEach(() => vi.unstubAllGlobals());
 
 const api = (indicators: ReturnType<typeof catalogEntry>[]) =>

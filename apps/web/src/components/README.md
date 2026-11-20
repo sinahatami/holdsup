@@ -16,7 +16,7 @@ Logic lives outside `components/`:
 
 - `src/hooks/` holds stateful React logic (`use-check`, `use-submit-check`, `use-theme`, `use-custom-cursor`).
 - `src/lib/` holds framework-free code: the API client factory (`createApiClient`), the theme store, the trace reducer, formatting, and route paths. It never imports components or hooks.
-- All interface text lives in `src/lib/strings.ts`.
+- All interface text lives in `src/lib/strings/`: `index.ts` for anything client code may show, `pages.ts` for pages rendered only on the server (it never reaches the browser), `boundary.ts` for the error pages.
 
 Rules of thumb:
 

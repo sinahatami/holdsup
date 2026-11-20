@@ -1,8 +1,8 @@
 import type { Tolerances, ValueTolerance } from "@/lib/api/client";
 import { allowsNoGap, gapTerms, percentText } from "@/lib/methodology";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const g = strings.methodology.gaps;
+const g = pageStrings.methodology.gaps;
 type Kind = keyof typeof g.kinds;
 const kinds = Object.keys(g.kinds) as Kind[];
 const list = new Intl.ListFormat("en", { type: "conjunction" });

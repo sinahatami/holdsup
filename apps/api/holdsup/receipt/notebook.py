@@ -28,7 +28,7 @@ from holdsup.receipt import replay
 from holdsup.service.store.model import CheckResult
 from holdsup.verdict import Label
 
-# The verdicts as the result page says them (apps/web/src/lib/strings.ts, `verdicts`).
+# The verdicts as the result page says them (apps/web/src/lib/strings/index.ts, `verdicts`).
 LABELS = {
     Label.SUPPORTED: "Holds up",
     Label.SUPPORTED_FRAMING_MATTERS: "Holds up, but the framing matters",
@@ -36,7 +36,7 @@ LABELS = {
     Label.PARTLY_SUPPORTED: "Partly holds up",
     Label.CANT_CHECK: "Can't check",
 }
-# The framing checks as the result page names them (strings.ts, `framing.kinds`).
+# The framing checks as the result page names them (strings/index.ts, `framing.kinds`).
 CHECKS = {
     CheckKind.ENDPOINTS: "Start and end",
     CheckKind.PER_CAPITA: "Per person",

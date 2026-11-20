@@ -8,8 +8,9 @@ import { ModelReports } from "@/components/organisms/model-reports";
 import { PageShell } from "@/components/templates/page-shell";
 import { getBenchmark } from "@/lib/api/benchmark";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
-const t = strings.benchmark;
+const t = pageStrings.benchmark;
 
 export const metadata: Metadata = {
   title: `${t.meta.title} · ${strings.appName}`,

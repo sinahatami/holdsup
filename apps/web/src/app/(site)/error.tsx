@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { pill } from "@/components/atoms/pill";
 import { PageShell } from "@/components/templates/page-shell";
 import { routes } from "@/lib/routes";
-import { strings } from "@/lib/strings";
+import { boundaryStrings } from "@/lib/strings/boundary";
 
 /** What a page shows when it fails while rendering: what happened, and a way to try again. */
 export default function Error({
@@ -18,7 +18,7 @@ export default function Error({
   useEffect(() => {
     console.error(error);
   }, [error]);
-  const t = strings.error;
+  const t = boundaryStrings.error;
   return (
     <PageShell layout="message">
       <h1 className="text-2xl">{t.heading}</h1>
@@ -32,7 +32,7 @@ export default function Error({
           {t.retry}
         </button>
         <Link href={routes.home} className={pill({ tone: "glass" })}>
-          {strings.check.back}
+          {boundaryStrings.back}
         </Link>
       </div>
     </PageShell>

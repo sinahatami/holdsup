@@ -5,10 +5,11 @@ import { AllowedGaps } from "@/components/organisms/allowed-gaps";
 import { MethodSteps } from "@/components/organisms/method-steps";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { externalLink } from "@/test/external";
 import { tolerances } from "@/test/fixtures";
 
-const t = strings.methodology;
+const t = pageStrings.methodology;
 
 afterEach(() => {
   vi.unstubAllGlobals();

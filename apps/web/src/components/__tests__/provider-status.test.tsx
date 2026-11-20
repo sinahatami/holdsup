@@ -1,10 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ProviderStatusTable } from "@/components/organisms/provider-status";
-import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 import { statusResponse } from "@/test/fixtures";
 
-const t = strings.status;
+const t = pageStrings.status;
 
 describe("ProviderStatusTable", () => {
   it("renders a row per provider from the router's data", () => {

@@ -39,7 +39,7 @@ Monthly, quarterly and half-yearly (`semiannual`) entries also set `annual_value
 
 `filters` (not in the original spec list) holds the fixed query dimensions an adapter needs to get exactly this series: Eurostat dimension codes; for OWID, `column` when a chart has several value columns; empty for most World Bank indicators.
 
-`theme` is the topic the /indicators page lists the entry under (the labels and their order are in `apps/web/src/lib/strings.ts`). It is required, and every theme should have at least one entry.
+`theme` is the topic the /indicators page lists the entry under (the labels and their order are in `apps/web/src/lib/strings/index.ts`). It is required, and every theme should have at least one entry.
 
 Rules the validator enforces: unknown fields are rejected; `theme` is one of the nine above; 3–5 unique aliases that don't repeat the name; `definition` 10–500 characters; `last_year ≥ first_year`; every `related` id exists and is not the entry itself; no two entries point at the same source series with the same filters.
 
