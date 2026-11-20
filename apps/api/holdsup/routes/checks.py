@@ -68,6 +68,16 @@ class CheckView(BaseModel):
     finished_at: datetime | None
     result: CheckResult | None
     error: Problem | None
+    watched_at: datetime | None = Field(
+        default=None,
+        description="When the claim watch last compared this check's figures with the sources "
+        "and found them unchanged; null when it never has.",
+    )
+    updated_by: UUID | None = Field(
+        default=None,
+        description="The newest check computed again from this one after a source revised its "
+        "figures (the claim watch); null when there is none.",
+    )
 
 
 class GalleryClaim(BaseModel):
@@ -234,6 +244,8 @@ async def get_check(check_id: UUID, store: Store) -> CheckView:
         finished_at=stored.finished_at,
         result=CheckResult.model_validate(stored.result) if stored.result else None,
         error=Problem.model_validate(stored.error) if stored.error else None,
+        watched_at=stored.watched_at,
+        updated_by=stored.updated_by,
     )
 
 

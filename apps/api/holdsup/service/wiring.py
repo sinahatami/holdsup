@@ -14,7 +14,7 @@ import structlog
 from holdsup.adapters.cache import CachedFetcher, SqlSeriesCacheStore
 from holdsup.adapters.registry import build_adapters
 from holdsup.catalog.embed import default_embedder
-from holdsup.catalog.index import SqlIndex
+from holdsup.catalog.index import IndicatorHit, SqlIndex
 from holdsup.catalog.schema import load_catalog
 from holdsup.catalog.search import vector_search
 from holdsup.config import Settings
@@ -23,6 +23,7 @@ from holdsup.ml.confidence import MODEL_FILE, ConfidenceModel, load_confidence
 from holdsup.ml.reranker import OnnxReranker, load_reranker
 from holdsup.pipeline.ledger import Ledger
 from holdsup.pipeline.run import Pipeline
+from holdsup.pipeline.steps import CodeSteps
 from holdsup.router import Router, load_router_config
 from holdsup.router.budgets import SqlUsageStore
 from holdsup.router.client import OpenAICompatibleClient
@@ -96,3 +97,49 @@ def optional_confidence(path: Path = MODEL_FILE) -> ConfidenceModel | None:
             hint="make eval, then make confidence-train",
         )
     return model
+
+
+@dataclass
+class WatchParts:
+    """What the claim watch (S1) needs: the store and the code's steps over the data sources."""
+
+    store: SqlCheckStore
+    steps: CodeSteps  # a Pipeline (with the router) for the backfill
+    http: httpx.AsyncClient
+
+    async def close(self) -> None:
+        await self.http.aclose()
+
+
+async def _never_search(phrase: str, k: int) -> list[IndicatorHit]:
+    raise RuntimeError("the claim watch never matches a claim to a statistic")
+
+
+def build_watch(settings: Settings, *, planner: bool = False) -> WatchParts:  # pragma: no cover
+    """The claim watch's parts: Postgres, the data sources, the catalog and tolerances. No
+    embedding model, reranker or router (no provider key needed), except for the backfill
+    (`planner`), which asks the plan model through the router."""
+    sessionmaker = get_sessionmaker()
+    http = httpx.AsyncClient(timeout=30.0)
+    fetcher = CachedFetcher(build_adapters(http), SqlSeriesCacheStore(sessionmaker))
+    catalog, tolerances = load_catalog(settings.catalog_dir), load_tolerances()
+    steps: CodeSteps
+    if planner:
+        steps = Pipeline(
+            router=Router(
+                load_router_config(), OpenAICompatibleClient(), SqlUsageStore(sessionmaker)
+            ),
+            search=_never_search,
+            catalog=catalog,
+            fetcher=fetcher,
+            tolerances=tolerances,
+            confidence=optional_confidence(),
+        )
+    else:
+        steps = CodeSteps(
+            catalog=catalog,
+            fetcher=fetcher,
+            tolerances=tolerances,
+            confidence=optional_confidence(),
+        )
+    return WatchParts(SqlCheckStore(sessionmaker), steps, http)

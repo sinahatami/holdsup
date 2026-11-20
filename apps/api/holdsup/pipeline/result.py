@@ -15,6 +15,7 @@ from holdsup.config import get_settings
 from holdsup.ml.confidence import Confidence
 from holdsup.ops import OpRecord, Series
 from holdsup.pipeline.claim import ClaimSpec
+from holdsup.pipeline.plan.model import OpCall
 from holdsup.pipeline.trace import ModelUse, Step
 from holdsup.verdict import Verdict
 
@@ -113,6 +114,18 @@ class ChartSeries(BaseModel):
         )
 
 
+class StoredPlan(BaseModel):
+    """What computing the claim again needs, with code alone (S1, the claim watch): the plan's
+    calls as code accepted them, and where each series ended when the check read it."""
+
+    calls: list[OpCall]
+    read_until: dict[str, dict[str, str]] = Field(
+        description="Per indicator id, per place: the last period with a value when the claim "
+        "was checked. A later check of the same claim reads no further, so only revised "
+        "figures can change it, not ones published since."
+    )
+
+
 class ClaimResult(BaseModel):
     index: int
     claim: ClaimSpec
@@ -126,6 +139,9 @@ class ClaimResult(BaseModel):
     plan_reason: str | None = None
     operations: list[OpRecord] = Field(default_factory=list)
     answer: list[int] = Field(default_factory=list)  # which operations decide the claim
+    # The plan, to compute the claim again with code alone; None when it stopped before
+    # running one, or was checked before plans were stored.
+    plan: StoredPlan | None = None
     # The claim's place's series as the first answer read it (the chart); None if not run.
     series: ChartSeries | None = None
     # The claim's direction over every time window (the cherry-pick sweep); None when the

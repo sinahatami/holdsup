@@ -559,6 +559,28 @@ export const strings = {
         : "This is a re-check with another statistic.",
     back: "See the first check",
   },
+  // The claim watch (S1): stored checks compared again with the sources, and computed again
+  // (by code, no model) when a source revised a figure they read.
+  watch: {
+    revised: "A source has revised the figures behind this check.",
+    checkedAgain: (date: string) => `HoldsUp checked it again on ${date}:`,
+    stands: "the verdict still stands.",
+    allStand: "every verdict still stands.",
+    nowIs: (label: string) => `the verdict is now “${label}”.`,
+    changed: (n: number, total: number) => `${n} of ${total} verdicts changed.`,
+    seeUpdate: "See the updated check",
+    updates: (date: string) =>
+      `This updates the check of ${date}. A source revised figures it read, so HoldsUp computed the claims again with the same statistics and plans. No model was asked: the explanation is written by code.`,
+    seeEarlier: "See the earlier check",
+    claimWas: (n: number | null, label: string) =>
+      n === null ? `It was “${label}”.` : `Claim ${n} was “${label}”.`,
+    figure: (what: string, before: string, after: string) =>
+      `${what}: from ${before} to ${after}`,
+    framingOnly: "Only a framing check moved.",
+    compared: (date: string) =>
+      `Figures last compared with the sources on ${date}.`,
+    embedUpdated: (date: string) => `Updated ${date} with revised figures`,
+  },
   // The /eval page: the benchmark, and HoldsUp against a plain chatbot (P4.6).
   benchmark: {
     meta: {

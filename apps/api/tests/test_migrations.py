@@ -17,7 +17,7 @@ def _config(buffer: io.StringIO) -> Config:
 
 def test_single_head() -> None:
     script = ScriptDirectory.from_config(_config(io.StringIO()))
-    assert script.get_heads() == ["0006"]
+    assert script.get_heads() == ["0007"]
 
 
 def test_upgrade_enables_pgvector(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -50,3 +50,14 @@ def test_downgrade_drops_reports(monkeypatch: pytest.MonkeyPatch) -> None:
     sql = buffer.getvalue()
     assert "DROP TABLE reports" in sql
     assert "DROP INDEX ix_reports_check_id" in sql
+
+
+def test_the_claim_watch_columns_come_and_go(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgres://u:p@db.example/holdsup")
+    up, down = io.StringIO(), io.StringIO()
+    command.upgrade(_config(up), "0006:0007", sql=True)
+    assert "ADD COLUMN watched_at TIMESTAMP WITH TIME ZONE" in up.getvalue()
+    assert "ADD COLUMN updated_by UUID" in up.getvalue()
+    assert "REFERENCES checks (id) ON DELETE SET NULL" in up.getvalue()
+    command.downgrade(_config(down), "0007:0006", sql=True)
+    assert "DROP COLUMN updated_by" in down.getvalue()

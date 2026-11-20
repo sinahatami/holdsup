@@ -1,11 +1,11 @@
 """The check store in Postgres: `checks`, `claims`, `operations` and `reports`."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from holdsup.db.models import Check, ClaimRow, OperationRow, ReportRow
@@ -33,6 +33,8 @@ def _stored(row: Check) -> StoredCheck:
         error=row.error,
         cached_from=row.cached_from,
         featured=row.featured,
+        watched_at=row.watched_at,
+        updated_by=row.updated_by,
     )
 
 
@@ -47,6 +49,14 @@ def _entry(row: Check) -> LedgerEntry:
         created_at=row.created_at,
     )
 
+
+# The claim watch's selection (S1), as JSON paths over the stored result; the same rules as
+# `is_planned` and `needs_plan` in model.py.
+PLANNED = "$.claims[*] ? (@.plan != null)"
+NEEDS_PLAN = (
+    '$.claims[*] ? (@.indicator != null && @.verdict.label != "cant_check" '
+    "&& (!exists(@.plan) || @.plan == null))"
+)
 
 OUTPUT_FIELDS = {"value", "extras", "series", "unit", "flags"}
 
@@ -105,6 +115,15 @@ class SqlCheckStore:
                 update(Check).where(Check.id == check_id).values(status=str(CheckStatus.RUNNING))
             )
 
+    @staticmethod
+    async def _add_claim_rows(session: AsyncSession, result: CheckResult) -> None:
+        for claim, ops in _claim_rows(result):
+            session.add(claim)
+            await session.flush()  # claim.id for its operations
+            for op in ops:
+                op.claim_id = claim.id
+            session.add_all(ops)
+
     async def finish(self, result: CheckResult, ledger: LedgerEntry | None) -> None:
         # Any: column values of several types (status, time, JSON, vector) for one UPDATE.
         values: dict[str, Any] = {
@@ -117,12 +136,7 @@ class SqlCheckStore:
             values |= {"normalized_text": ledger.normalized, "input_embedding": ledger.embedding}
         async with self._sessionmaker() as session, session.begin():
             await session.execute(update(Check).where(Check.id == result.id).values(**values))
-            for claim, ops in _claim_rows(result):
-                session.add(claim)
-                await session.flush()  # claim.id for its operations
-                for op in ops:
-                    op.claim_id = claim.id
-                session.add_all(ops)
+            await self._add_claim_rows(session, result)
 
     async def fail(self, check_id: UUID, error: Problem, at: datetime) -> None:
         async with self._sessionmaker() as session, session.begin():
@@ -191,10 +205,93 @@ class SqlCheckStore:
         stmt = select(Check.result).where(
             Check.status == str(CheckStatus.DONE),
             Check.cached_from.is_(None),
+            Check.updated_by.is_(None),
             Check.result.is_not(None),
         )
         async with self._sessionmaker() as session:
             return [r for r in (await session.scalars(stmt)).all() if r is not None]
+
+    # The claim watch (S1)
+    async def watchable(
+        self,
+        since: datetime,
+        limit: int,
+        versions: Mapping[str, object],
+        *,
+        planned: bool = True,
+    ) -> list[StoredCheck]:
+        stmt = (
+            select(Check)
+            .where(
+                Check.status == str(CheckStatus.DONE),
+                Check.result.is_not(None),
+                Check.cached_from.is_(None),
+                Check.updated_by.is_(None),
+                or_(Check.featured.is_(True), Check.created_at >= since),
+                Check.result.path_exists(PLANNED if planned else NEEDS_PLAN),
+                *(Check.result["versions"][k].astext == str(v) for k, v in versions.items()),
+            )
+            .order_by(Check.watched_at.asc().nulls_first(), Check.created_at.asc())
+            .limit(limit)
+        )
+        async with self._sessionmaker() as session:
+            rows = (await session.scalars(stmt)).all()
+        return [_stored(r) for r in rows]
+
+    async def mark_watched(self, check_ids: Sequence[UUID], at: datetime) -> None:
+        if not check_ids:
+            return
+        async with self._sessionmaker() as session, session.begin():
+            await session.execute(
+                update(Check).where(Check.id.in_(check_ids)).values(watched_at=at)
+            )
+
+    async def set_result(self, check_id: UUID, result: CheckResult) -> None:
+        async with self._sessionmaker() as session, session.begin():
+            await session.execute(
+                update(Check)
+                .where(Check.id == check_id)
+                .values(result=result.model_dump(mode="json"))
+            )
+
+    async def supersede(self, old_id: UUID, new: CheckResult) -> None:
+        async with self._sessionmaker() as session, session.begin():
+            old = await session.get(Check, old_id)
+            if old is None:
+                raise KeyError(old_id)
+            session.add(
+                Check(
+                    id=new.id,
+                    input_text=old.input_text,
+                    normalized_text=old.normalized_text,
+                    input_embedding=old.input_embedding,
+                    status=str(CheckStatus.DONE),
+                    created_at=new.created_at,
+                    finished_at=new.finished_at,
+                    providers=new.providers(),
+                    result=new.model_dump(mode="json"),
+                    featured=old.featured,
+                    watched_at=new.finished_at,
+                )
+            )
+            await session.flush()  # the new row first: updated_by points at it
+            await self._add_claim_rows(session, new)
+            await session.execute(
+                update(Check)
+                .where(
+                    or_(
+                        Check.id == old_id,
+                        Check.cached_from == old_id,
+                        Check.updated_by == old_id,
+                    )
+                )
+                .values(updated_by=new.id)
+            )
+            await session.execute(
+                update(Check)
+                .where(Check.id == old_id)
+                .values(featured=False, normalized_text=None, input_embedding=None)
+            )
 
     # LedgerStore: finished, reusable, original checks.
     @staticmethod

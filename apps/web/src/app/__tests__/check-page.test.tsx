@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckPage } from "@/app/(site)/check/[id]/check-page";
 import { generateMetadata } from "@/app/(site)/check/[id]/page";
-import { readCheck } from "@/lib/api/check";
+import { readCheck, readNewer } from "@/lib/api/check";
 import { strings } from "@/lib/strings";
 import {
   checkResult,
@@ -10,8 +10,9 @@ import {
   holdingClaim,
   partlyClaim,
 } from "@/test/fixtures";
+import { EARLIER_ID, updateResult } from "@/test/watch";
 
-vi.mock("@/lib/api/check", () => ({ readCheck: vi.fn() }));
+vi.mock("@/lib/api/check", () => ({ readCheck: vi.fn(), readNewer: vi.fn() }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NEXT_HTTP_ERROR_FALLBACK;404");
@@ -31,7 +32,86 @@ const lookup = vi.mocked(readCheck);
 const found = (view: ReturnType<typeof checkView>) =>
   lookup.mockResolvedValue({ kind: "found", view });
 
-beforeEach(() => lookup.mockReset());
+beforeEach(() => {
+  lookup.mockReset();
+  vi.mocked(readNewer).mockReset();
+});
+
+describe("CheckPage and the claim watch", () => {
+  const w = strings.watch;
+
+  it("points a check whose figures were revised to the newest one, and says what it found", async () => {
+    const update = updateResult();
+    found(
+      checkView({
+        status: "done",
+        result: checkResult([holdingClaim]),
+        updated_by: update.id,
+        watched_at: "2026-12-01T06:29:00Z",
+      }),
+    );
+    vi.mocked(readNewer).mockResolvedValue({ id: update.id, result: update });
+    render(await CheckPage({ id: "c1" }));
+    expect(readNewer).toHaveBeenCalledWith(update.id);
+    const note = screen.getByRole("note");
+    expect(note).toHaveTextContent(w.revised);
+    expect(note).toHaveTextContent(w.nowIs(strings.verdicts.partly_supported));
+    expect(
+      within(note).getByRole("link", { name: w.seeUpdate }),
+    ).toHaveAttribute("href", `/check/${update.id}`);
+    // The check itself is shown as it was, and not as recently compared: it is out of date.
+    expect(
+      within(screen.getByRole("article")).getByText(strings.verdicts.supported),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(w.compared("December 1, 2026"))).toBeNull();
+  });
+
+  it("still links to the newest check when it cannot be read", async () => {
+    found(
+      checkView({
+        status: "done",
+        result: checkResult([holdingClaim]),
+        updated_by: "n1",
+      }),
+    );
+    vi.mocked(readNewer).mockResolvedValue({ id: "n1", result: null });
+    render(await CheckPage({ id: "c1" }));
+    expect(screen.getByRole("note")).toHaveTextContent(w.revised);
+    expect(screen.getByRole("link", { name: w.seeUpdate })).toHaveAttribute(
+      "href",
+      "/check/n1",
+    );
+  });
+
+  it("names the check an update updates, and each figure that moved", async () => {
+    found(checkView({ status: "done", result: updateResult() }));
+    render(await CheckPage({ id: "u1" }));
+    const note = screen.getByRole("note");
+    expect(note).toHaveTextContent(w.updates("November 7, 2026"));
+    expect(
+      within(note).getByRole("link", { name: w.seeEarlier }),
+    ).toHaveAttribute("href", `/check/${EARLIER_ID}`);
+    expect(
+      within(note).getByText(/End value, 2023: from 7.68% to 9.18%/),
+    ).toBeInTheDocument();
+    expect(readNewer).not.toHaveBeenCalled();
+  });
+
+  it("says when the figures were last found unchanged", async () => {
+    found(
+      checkView({
+        status: "done",
+        result: checkResult([holdingClaim]),
+        watched_at: "2026-12-01T06:29:00Z",
+      }),
+    );
+    render(await CheckPage({ id: "c1" }));
+    expect(
+      screen.getByText(w.compared("December 1, 2026")),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("note")).toBeNull();
+  });
+});
 
 describe("CheckPage", () => {
   it("draws a finished check from what the API stored, without following it", async () => {

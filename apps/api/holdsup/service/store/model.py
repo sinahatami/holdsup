@@ -6,8 +6,9 @@ reused (a source was down) are saved without one; cached copies are never ledger
 themselves, so a copy cannot keep an old result alive past the ledger's age limit.
 """
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
@@ -19,6 +20,7 @@ from holdsup.pipeline.ledger import LedgerEntry, LedgerStore
 from holdsup.pipeline.result import ClaimResult, Suggestion, Versions
 from holdsup.pipeline.trace import ModelUse
 from holdsup.problems import Problem
+from holdsup.verdict import Label
 
 
 class CheckStatus(StrEnum):
@@ -57,6 +59,40 @@ class RecheckOf(BaseModel):
     replaced: Suggestion | None  # the statistic the first check used, if it matched one
 
 
+class FigureChange(BaseModel):
+    """A figure the verdict read, as computed then and now: both by code, never a model."""
+
+    name: str = Field(description='The verdict part: "assertion", "start value", "end value".')
+    period: str | None = None
+    before: float | None = None
+    after: float | None = None
+
+
+class ClaimChange(BaseModel):
+    """A claim whose figures were revised since the check this one updates."""
+
+    index: int
+    before: Label
+    after: Label
+    figures: list[FigureChange] = Field(
+        default_factory=list,
+        description="The verdict's figures that moved; empty when only a framing check's did.",
+    )
+
+
+class UpdateOf(BaseModel):
+    """The check this one updates (S1): the same claims, plans and statistics, computed again
+    by the claim watch on the sources' revised figures. No model was asked."""
+
+    check_id: UUID
+    created_at: datetime = Field(description="When the check this one updates was made.")
+    checked_on: date = Field(
+        description="The day the claims were first checked: every update reads the claims' "
+        "dates and the data as of it."
+    )
+    changes: list[ClaimChange]
+
+
 class PageSource(BaseModel):
     """The web page a check's text was taken from, when the reader sent a link."""
 
@@ -80,6 +116,7 @@ class CheckResult(BaseModel):
     cached_from: UUID | None = None  # the check this result was first computed for
     recheck_of: RecheckOf | None = None  # a re-check: never a ledger entry
     page: PageSource | None = None  # the text came from this page, not pasted
+    update_of: UpdateOf | None = None  # computed again by the claim watch (S1)
     claims: list[ClaimResult]
     versions: Versions
     models: list[ModelUse]  # check-wide model calls; each claim lists its own
@@ -101,6 +138,8 @@ class StoredCheck:
     error: JsonObject | None = None  # Problem as JSON
     cached_from: UUID | None = None
     featured: bool = False
+    watched_at: datetime | None = None  # the claim watch last compared its figures (S1)
+    updated_by: UUID | None = None  # the newest check computed again from it
 
 
 class CheckStore(LedgerStore, Protocol):
@@ -126,8 +165,69 @@ class CheckStore(LedgerStore, Protocol):
 
     async def finished_results(self) -> list[JsonObject]:
         """The result (CheckResult as JSON) of every finished check that was computed, not copied
-        from the ledger, so a claim asked again is not counted twice."""
+        from the ledger nor since updated, so a claim asked again is not counted twice."""
         ...
+
+    # The claim watch (S1)
+
+    async def watchable(
+        self,
+        since: datetime,
+        limit: int,
+        versions: Mapping[str, object],
+        *,
+        planned: bool = True,
+    ) -> list[StoredCheck]:
+        """Finished checks the watch reads: computed here (not copies), not already updated,
+        featured or made since `since`, and judged with `versions` (the catalog and tolerances,
+        as the ledger requires). `planned`: with a claim it can replay; else with a matched,
+        checked claim that has no stored plan (the backfill's). The ones compared longest ago
+        (or never) first."""
+        ...
+
+    async def mark_watched(self, check_ids: Sequence[UUID], at: datetime) -> None: ...
+
+    async def set_result(self, check_id: UUID, result: CheckResult) -> None:
+        """Replace a finished check's stored result in place: only to add what it lacked (the
+        backfill's plans), never to change a figure a reader has seen."""
+        ...
+
+    async def supersede(self, old_id: UUID, new: CheckResult) -> None:
+        """Save `new`, the check `old_id` computed again on revised figures, and make it
+        the one everything pointing at `old_id` now points at: the check itself, its cached
+        copies and the checks it updated (`updated_by`), its place in the gallery and its
+        ledger entry, so a repeated claim gets the revised result."""
+        ...
+
+
+def is_planned(result: JsonObject) -> bool:
+    """A claim of this result (CheckResult as JSON) has a stored plan to replay."""
+    return any(c.get("plan") for c in _claims(result))
+
+
+def needs_plan(result: JsonObject) -> bool:
+    """A claim of this result was matched and checked before plans were stored."""
+    return any(
+        c.get("indicator") and not c.get("plan") and _label(c) != "cant_check"
+        for c in _claims(result)
+    )
+
+
+def has_versions(result: JsonObject, versions: Mapping[str, object]) -> bool:
+    stamped = result.get("versions")
+    return isinstance(stamped, dict) and all(
+        str(stamped.get(k)) == str(v) for k, v in versions.items()
+    )
+
+
+def _claims(result: JsonObject) -> list[JsonObject]:
+    claims = result.get("claims")
+    return [c for c in claims if isinstance(c, dict)] if isinstance(claims, list) else []
+
+
+def _label(claim: JsonObject) -> object:
+    verdict = claim.get("verdict")
+    return verdict.get("label") if isinstance(verdict, dict) else None
 
 
 async def add_entry(store: CheckStore, entry: LedgerEntry) -> None:

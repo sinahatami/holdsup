@@ -4,7 +4,7 @@ of them is changed."""
 
 import json
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -16,7 +16,7 @@ from holdsup.pipeline.result import PipelineOutput, Versions
 from holdsup.receipt import replay
 from holdsup.receipt.notebook import CodeCell, MarkdownCell, Notebook, notebook
 from holdsup.router.client import ChatResponse
-from holdsup.service.store import CheckResult, PageSource
+from holdsup.service.store import CheckResult, PageSource, UpdateOf
 from tests.pipeline.test_regressions import (
     C018,
     EXPLAINED,
@@ -249,6 +249,25 @@ def test_a_page_check_names_its_page_and_the_link_cannot_start_markup() -> None:
     ) in first
     pasted = result.model_copy(update={"page": None})
     assert "web page" not in "".join(notebook(pasted).cells[0].source)
+
+
+def test_an_update_names_the_check_it_updates() -> None:
+    earlier = UUID("00000000-0000-4000-8000-000000000001")
+    result = CheckResult(
+        id=ID, text="Unemployment fell 4 points.", created_at=datetime(2026, 12, 7, tzinfo=UTC),
+        finished_at=datetime(2026, 12, 7, tzinfo=UTC), claims=[],
+        versions=Versions(app="0.0.0", catalog="0.8.0", tolerances=5), models=[],
+        update_of=UpdateOf(check_id=earlier, created_at=datetime(2026, 11, 7, 9, 5, tzinfo=UTC),
+                           checked_on=date(2026, 11, 7), changes=[]),
+    )  # fmt: skip
+    first = "".join(notebook(result).cells[0].source)
+    assert (
+        f"This check updates check `{earlier}` of 7 November 2026 at 09:05 UTC: a source revised "
+        "figures it read, so its claims were computed again with the same plans and statistics, "
+        "on the data as of 7 November 2026. No model was asked."
+    ) in first
+    plain = result.model_copy(update={"update_of": None})
+    assert "updates check" not in "".join(notebook(plain).cells[0].source)
 
 
 async def test_the_file_is_a_jupyter_notebook() -> None:

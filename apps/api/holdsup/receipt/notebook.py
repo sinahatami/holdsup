@@ -116,6 +116,7 @@ def notebook(result: CheckResult) -> Notebook:
         "The text that was checked:",
         _fenced(result.text),
         _page(result),
+        _update(result),
         f"Checked on {_moment(result.finished_at)} UTC (check `{result.id}`), with "
         f"HoldsUp {v.app}, catalog {v.catalog} and allowed gaps version {v.tolerances}.",
         "Run every cell. Each one repeats a calculation from the values it read and stops with "
@@ -148,6 +149,19 @@ def _page(result: CheckResult) -> str:
     return (
         f"It was taken from the web page <{url}>, read on {_moment(page.read_at)} UTC: "
         f"its passages with figures ({page.used} of the {page.found} the page holds)."
+    )
+
+
+def _update(result: CheckResult) -> str:
+    """When the claim watch made this check: which check it updates, and why."""
+    of = result.update_of
+    if of is None:
+        return ""
+    return (
+        f"This check updates check `{of.check_id}` of {_moment(of.created_at)} UTC: a source "
+        "revised figures it read, so its claims were computed again with the same plans "
+        f"and statistics, on the data as of {of.checked_on.day} {of.checked_on:%B %Y}. "
+        "No model was asked."
     )
 
 
