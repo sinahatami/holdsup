@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/sinahatami/holdsup/compare/v0.4.1...v0.4.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* **api:** make the API image deployable and its rate limits unforgeable ([#74](https://github.com/sinahatami/holdsup/issues/74)) ([1e2f921](https://github.com/sinahatami/holdsup/commit/1e2f921a09885037a5a7be1238a00da22b6c2bae))
+
 ## [0.4.1](https://github.com/sinahatami/holdsup/compare/v0.4.0...v0.4.1) (2026-11-20)
 
 
