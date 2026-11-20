@@ -2,13 +2,18 @@ name: Eval smoke
 
 # The smoke benchmark through the real pipeline (eval/smoke_claims.jsonl, P4.2) on every pull
 # request that can change a verdict (the pipeline code, the evaluation, the benchmark, the
-# catalog or the dependencies), and every night. It fails when verdict accuracy drops more than
-# 5 points below eval/baseline.json. When the run cannot be judged (so many claims drop out, a
-# provider or a source down; or a rate limit sends a step's first choice to a fallback model,
-# so the baseline does not apply), the nightly run fails and a pull request gets a warning to
-# rerun it.
+# catalog or the dependencies), and once a week. It fails when verdict accuracy drops more
+# than 5 points below eval/baseline.json. When the run cannot be judged (so many claims drop
+# out, a provider or a source down; or a rate limit sends a step's first choice to a fallback
+# model, so the baseline does not apply), the weekly run fails and a pull request gets a
+# warning to rerun it.
 #
-# Model replies are kept in the Actions cache (scripts/evaluation/replay.py). The nightly run
+# Weekly, not nightly: the live site's Groq key may belong to the same Groq account as this
+# one, and a run uses most of a day's Groq quota. So it runs early on Sunday, when the site is
+# likely quietest. For a fresh main result to compare a pull request with, run it by hand
+# (Run workflow on main).
+#
+# Model replies are kept in the Actions cache (scripts/evaluation/replay.py). The weekly run
 # asks every request afresh and saves the replies; a pull request replays the saved ones and
 # asks only what it changed, so most pull requests spend no free-tier quota at all.
 #
@@ -29,7 +34,7 @@ on:
       - "uv.lock"
       - ".github/workflows/eval.yml"
   schedule:
-    - cron: "43 3 * * *"
+    - cron: "43 3 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -64,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     # Every run shares the same free-tier keys, so two at once starve each other: runs from
-    # different pull requests (and the nightly) queue here instead of overlapping.
+    # different pull requests (and the weekly one) queue here instead of overlapping.
     concurrency:
       group: eval-smoke-provider-keys
       cancel-in-progress: false
@@ -95,7 +100,7 @@ jobs:
       - name: Download the pinned reranker
         run: make reranker-fetch
       - name: Restore saved model replies
-        # The newest save this run may read: its own branch's, else main's (the nightly run's).
+        # The newest save this run may read: its own branch's, else main's (the weekly run's).
         uses: actions/cache/restore@v6
         with:
           path: .cache/eval-replies
@@ -105,8 +110,8 @@ jobs:
         # `make eval-smoke`'s command, run directly: make reports every failure as 2, and the
         # gate's own code matters here. 1 is a regression and always fails. 3 means the run
         # cannot be judged (providers at their limits): on a pull request that is a warning,
-        # not a pass, and the nightly run on main judges again and fails on it. A pull request
-        # replays saved replies; the nightly run asks afresh and records them.
+        # not a pass, and the weekly run on main judges again and fails on it. A pull request
+        # replays saved replies; the weekly run asks afresh and records them.
         working-directory: apps/api
         run: |
           mode=--record
@@ -114,7 +119,7 @@ jobs:
           code=0
           uv run python -m scripts.evaluation --claims eval/smoke_claims.jsonl --name smoke --gate "$mode" .cache/eval-replies || code=$?
           if [ "$code" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            echo "::warning title=Smoke evaluation inconclusive::The run could not judge this pull request: providers at their free-tier limits (the gate line above says which). This is not a pass: rerun the job once the limits reset. The nightly run on main fails on it."
+            echo "::warning title=Smoke evaluation inconclusive::The run could not judge this pull request: providers at their free-tier limits (the gate line above says which). This is not a pass: rerun the job once the limits reset. The weekly run on main fails on it."
             exit 0
           fi
           exit "$code"

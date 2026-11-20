@@ -1,7 +1,7 @@
 """Saved model replies, so a run spends no quota on a request it has already made.
 
 The smoke gate runs on every pull request that could change a verdict, against the same
-free-tier keys as the nightly run, and most of those pull requests change no prompt at all. A
+free-tier keys as the weekly run, and most of those pull requests change no prompt at all. A
 `ReplayClient` answers a request it has a saved reply for from the store, and sends anything
 else (a changed prompt, another model, new series data in a plan prompt) to the provider,
 saving what comes back. Only replies are saved, never failures, so a request a rate limit
@@ -9,7 +9,7 @@ turned away is asked again next time.
 
 The key is the provider, its model and the whole request, so a reply is only ever replayed
 for exactly the request that produced it. A replayed run measures the code, not the models'
-day-to-day variation; the nightly run records (`replay=False`): it asks every request afresh,
+day-to-day variation; the weekly run records (`replay=False`): it asks every request afresh,
 so a provider that changes its model is still noticed, and it leaves the store the PR runs
 start from.
 """

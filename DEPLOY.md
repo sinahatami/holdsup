@@ -4,11 +4,11 @@ The site runs on three free tiers: the web app on **Vercel**, the API as a Docke
 
 Order: database, then API, then web. The web build reads the gallery from the API, and the API refuses to start without the site's address.
 
-## 0. Two decisions first
+## 0. One decision first, one thing to know
 
 **Which database the site uses.** The simplest safe choice is a Neon **branch** of the database you develop against, called `production`. It starts with everything already there (catalog, the 20 featured checks, the ledger). After that, local runs (`make dev`, seeding, evals) stay on the development branch and never touch live data. Sharing one database also works, but then everything you do locally shows up on the site.
 
-**Whether the nightly smoke keeps running every day.** `eval.yml` runs 30 claims at 03:43 UTC with the `GROQ_API_KEY` GitHub secret. If that key belongs to the same Groq account as the Space's key, the smoke uses most of a day's Groq quota (about 25 new checks) before visitors arrive. After Groq, checks fall back to Cerebras (5 a minute) and then to Mistral, which extracts claims less well. When every provider is out, the site says "HoldsUp is at capacity" and offers the gallery. Ledger hits and gallery receipts never use a model. Consider running the smoke weekly while the site is live.
+**The smoke run shares Groq's quota on Sundays.** `eval.yml` runs 30 claims once a week, on Sunday at 03:43 UTC, with the `GROQ_API_KEY` GitHub secret. Pull requests replay saved replies, so they rarely ask a model. If that key belongs to the same Groq account as the Space's key, the Sunday run uses most of that day's Groq quota (about 25 new checks) before visitors arrive. After Groq, checks fall back to Cerebras (5 a minute) and then to Mistral, which extracts claims less well. When every provider is out, the site says "HoldsUp is at capacity" and offers the gallery. Ledger hits and gallery receipts never use a model. A run you start by hand (Run workflow) spends the same quota on the day you start it.
 
 ## 1. Database (Neon)
 
