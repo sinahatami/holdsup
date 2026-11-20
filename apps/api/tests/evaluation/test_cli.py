@@ -240,6 +240,7 @@ def test_the_gate_from_no_baseline_to_a_regression(
         "0.1.0",
         "claims.jsonl",
     )
+    assert saved["judged"] == {"r001#1": True}
 
     # The same run passes.
     assert run(tmp_path, claims, "--gate") == 0
@@ -248,7 +249,8 @@ def test_the_gate_from_no_baseline_to_a_regression(
     # The same pipeline against a label it no longer meets: down 100 points.
     benchmark(tmp_path, entry(expected=Label.NOT_SUPPORTED))
     assert run(tmp_path, claims, "--gate") == 1
-    assert "down 100.0 points" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "down 100.0 points" in err and "Right in the baseline, wrong now: r001#1." in err
 
     # A change to the benchmark without a new version cannot be compared either way.
     (tmp_path / "VERSION").write_text("0.2.0\n")

@@ -147,6 +147,15 @@ def test_a_trend_with_no_value_at_its_end_has_no_start_and_end_check() -> None:
     assert trend_endpoints(gap, end="2022") is None
 
 
+def test_a_one_year_change_has_no_start_and_end_check() -> None:
+    # A rise onto the 2015 spike, over one year: shorter than the sweep's windows.
+    c = claim(type=AssertionType.PERCENTAGE_POINTS, direction=Direction.UP)
+    r = change(SPIKE, "2014", "2015", ChangeKind.PERCENTAGE_POINTS)
+    points = change_points(c, r, SPIKE, tolerances=TOL)
+    assert points is not None and points.flags == []
+    assert endpoints_check(inp(c, "unemployment_rate_ilo", r, SPIKE, changepoints=points)) is None
+
+
 def test_a_level_has_no_start_and_end_check() -> None:
     c = claim(type=AssertionType.LEVEL, value=7.9, direction=None)
     r = value_at(STEADY, "2023")
