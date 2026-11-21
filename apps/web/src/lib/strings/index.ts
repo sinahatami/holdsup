@@ -588,17 +588,35 @@ export const strings = {
   },
   share: {
     heading: "Share this check",
+    // The ways to share, as tabs: each shows what it gives before anything is copied.
+    tabs: {
+      link: "Link",
+      summary: "Summary",
+      embed: "Embed",
+      image: "Image",
+    },
+    // Under each preview: who it is for and what happens with it.
+    hints: {
+      link: "Anyone with the link sees this receipt. It is not listed on the site or shown to search engines.",
+      summary:
+        "For a message or a post: the claim, how it came out, and the link, as above.",
+      embed:
+        "For your own page: paste this into its HTML. It shows the verdict, always as HoldsUp has it now, and links back here.",
+      image:
+        "The card chat apps and social sites show for the link (1200 × 630, PNG).",
+    },
+    previewLabel: "What will be copied",
     copyLink: "Copy link",
     copySummary: "Copy summary",
     image: "Download image",
     imageName: (id: string) => `holdsup-${id}.png`,
-    native: "Share",
+    native: "Share…",
     embed: "Copy embed code",
     linkCopied: "Link copied.",
     summaryCopied: "Summary copied.",
     embedCopied: "Embed code copied. Paste it into a page's HTML.",
     failed:
-      "Could not copy. You can copy the address from your browser's address bar instead.",
+      "Could not copy. The text is selected above: press Ctrl+C (⌘C on a Mac) to copy it.",
     // The text that is copied or shared: the claim, how it came out, and where.
     one: (claim: string, verdict: string, source: string | null) =>
       `“${claim}”\n${verdict}. Checked with HoldsUp${source ? `, against ${source}` : ""}.`,

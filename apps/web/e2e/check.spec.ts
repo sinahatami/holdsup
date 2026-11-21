@@ -232,6 +232,7 @@ test.describe("sharing a check", () => {
     await expect(share.getByRole("status")).toHaveText("Link copied.");
     expect(await clipboard()).toBe(page.url());
 
+    await share.getByRole("tab", { name: "Summary" }).click();
     await share.getByRole("button", { name: "Copy summary" }).click();
     await expect(share.getByRole("status")).toHaveText("Summary copied.");
     const summary = await clipboard();
@@ -247,6 +248,7 @@ test.describe("sharing a check", () => {
   }) => {
     await page.goto(`/check/${DONE_ID}`);
     const share = page.getByRole("region", { name: "Share this check" });
+    await share.getByRole("tab", { name: "Embed" }).click();
     await share.getByRole("button", { name: "Copy embed code" }).click();
     await expect(share.getByRole("status")).toContainText("Embed code copied.");
     const code = await page.evaluate(() => navigator.clipboard.readText());
@@ -273,6 +275,7 @@ test.describe("sharing a check", () => {
   test("downloads the check's card image", async ({ page }) => {
     await page.goto(`/check/${DONE_ID}`);
     const share = page.getByRole("region", { name: "Share this check" });
+    await share.getByRole("tab", { name: "Image" }).click();
     const downloading = page.waitForEvent("download");
     await share.getByRole("link", { name: "Download image" }).click();
     const file = await downloading;
