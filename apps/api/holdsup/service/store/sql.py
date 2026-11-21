@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import exists, or_, select, update
+from sqlalchemy import delete, exists, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased
 
@@ -185,6 +185,18 @@ class SqlCheckStore:
                     created_at=report.created_at,
                 )
             )
+
+    async def remove(self, check_id: UUID) -> list[UUID]:
+        async with self._sessionmaker() as session, session.begin():
+            text = await session.scalar(select(Check.input_text).where(Check.id == check_id))
+            if text is None:
+                return []
+            # Claims, operations and reports go with their check (ON DELETE CASCADE); other
+            # checks' cached_from and updated_by pointing at one become null (SET NULL).
+            gone = await session.scalars(
+                delete(Check).where(Check.input_text == text).returning(Check.id)
+            )
+            return list(gone.all())
 
     async def reports(self, limit: int) -> list[StoredReport]:
         stmt = select(ReportRow).order_by(ReportRow.created_at.desc()).limit(limit)

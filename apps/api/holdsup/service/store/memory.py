@@ -64,6 +64,24 @@ class InMemoryCheckStore:
     async def add_report(self, report: StoredReport) -> None:
         self.saved_reports.append(report)
 
+    async def remove(self, check_id: UUID) -> list[UUID]:
+        if (check := self.checks.get(check_id)) is None:
+            return []
+        gone = [c.id for c in self.checks.values() if c.text == check.text]
+        for i in gone:
+            del self.checks[i]
+            self.ledger.pop(i, None)
+        # Like the database's ON DELETE rules: reports go with their check, links become empty.
+        self.saved_reports = [r for r in self.saved_reports if r.check_id not in gone]
+        for i, c in list(self.checks.items()):
+            if c.cached_from in gone or c.updated_by in gone:
+                self.checks[i] = replace(
+                    c,
+                    cached_from=None if c.cached_from in gone else c.cached_from,
+                    updated_by=None if c.updated_by in gone else c.updated_by,
+                )
+        return gone
+
     async def reports(self, limit: int) -> list[StoredReport]:
         return sorted(self.saved_reports, key=lambda r: r.created_at, reverse=True)[:limit]
 

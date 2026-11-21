@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports delete-check
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -197,8 +197,12 @@ catalog-check: ## Validate packages/catalog without touching the database
 missing-report: ## List the topics most often asked about that came back "can't check" (needs DATABASE_URL; read-only)
 	cd $(API_DIR) && uv run python -m scripts.missing_report $(ARGS)
 
-reports: ## List the newest reports of a wrong match, with a link to each check (needs DATABASE_URL; read-only)
+reports: ## List the newest reports (wrong matches, removal requests), with a link to each check (needs DATABASE_URL; read-only)
 	cd $(API_DIR) && uv run python -m scripts.list_reports $(ARGS)
+
+delete-check: ## Delete a check on a removal request, with every stored check of its text: ID=<check id> (needs DATABASE_URL; asks first, ARGS=--yes skips)
+	@test -n "$(ID)" || { echo "Usage: make delete-check ID=<check id>"; exit 1; }
+	cd $(API_DIR) && uv run python -m scripts.delete_check $(ID) $(ARGS)
 
 catalog: ## Validate packages/catalog, embed it, and load it into Postgres (needs DATABASE_URL)
 	cd $(API_DIR) && uv run python -m holdsup.catalog.load

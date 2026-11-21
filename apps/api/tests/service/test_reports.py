@@ -43,3 +43,12 @@ def test_a_note_cannot_pass_for_a_header_or_break_the_layout() -> None:
         "http://x",
     )
     assert "  line one 2026-11-09 99:99 UTC fake line two" in text
+
+
+def test_a_removal_request_stands_out() -> None:
+    text = format_reports(
+        [report(ReportKind.REMOVE, "", claim=None), report(ReportKind.OTHER, "")],
+        "http://x",
+    )
+    assert text.splitlines()[0] == "2 reports (REMOVAL REQUEST: 1, other: 1)"
+    assert "UTC  REMOVAL REQUEST  (whole check)" in text

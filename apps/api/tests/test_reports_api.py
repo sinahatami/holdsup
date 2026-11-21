@@ -62,6 +62,18 @@ def test_a_report_is_stored_without_an_account(
     assert abs((datetime.now(UTC) - saved.created_at).total_seconds()) < 60
 
 
+def test_a_reader_can_ask_for_the_check_to_be_removed(
+    api: tuple[TestClient, InMemoryCheckStore, UUID],
+) -> None:
+    http, store, check_id = api
+    r = http.post(url(check_id), json={"kind": "remove", "note": "It names my neighbour."})
+    assert r.status_code == 201
+    (saved,) = store.saved_reports
+    assert (saved.kind, saved.claim_index) == (ReportKind.REMOVE, None)
+    # Asking is all a reader can do: the check stays until a maintainer deletes it.
+    assert check_id in store.checks
+
+
 def test_the_note_and_the_claim_are_optional(
     api: tuple[TestClient, InMemoryCheckStore, UUID],
 ) -> None:

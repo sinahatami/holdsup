@@ -1,4 +1,4 @@
-"""List the newest reports of a wrong match, with a link to each check.
+"""List the newest reports (wrong matches, removal requests), with a link to each check.
 
 Usage (from the repo root, with DATABASE_URL in .env):
     make reports [ARGS="--top 50"]
