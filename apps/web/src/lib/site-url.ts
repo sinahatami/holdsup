@@ -1,6 +1,6 @@
 /**
- * The site's public address, for the few places that need absolute links (robots.txt, the
- * sitemap). NEXT_PUBLIC_SITE_URL wins (a custom domain); on Vercel it is the production
+ * The site's public address, for the places that need absolute links (robots.txt, the
+ * sitemap, metadataBase for canonical links and share pictures). NEXT_PUBLIC_SITE_URL wins (a custom domain); on Vercel it is the production
  * domain, also in previews; locally the dev server.
  */
 export function siteUrl(): string {

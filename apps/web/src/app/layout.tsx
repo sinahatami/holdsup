@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Caveat, Geist_Mono, Inter } from "next/font/google";
 import localFont from "next/font/local";
+import { siteUrl } from "@/lib/site-url";
 import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
@@ -64,16 +65,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Shared links need absolute addresses for their pictures. On Vercel they are worked out
-// from the deployment; elsewhere set NEXT_PUBLIC_SITE_URL to the site's public address.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
 // The code Google Search Console gives for its "HTML tag" check. Read when the pages are
 // built, so redeploy after setting it; unset, no tag is written.
 const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  // Canonical links and share pictures need absolute addresses. Next fills in a base for
+  // the pictures only, so the site's address is always given.
+  metadataBase: new URL(siteUrl()),
   title: strings.appName,
   description: strings.metaDescription,
   // Pages share the large picture from opengraph-image.tsx; a check draws its own.
