@@ -107,6 +107,7 @@ export const strings = {
     themeLight: "Light",
     themeDark: "Dark",
     themeSystem: "System",
+    backToTop: "Back to top",
   },
   footer: {
     blurb:
