@@ -10,6 +10,12 @@ name: Deploy API
 # to Artifact Registry and switch the service to it. The service's settings and variables
 # carry over, and no API key passes through GitHub.
 #
+# Before that it brings the site's database up to the commit's migrations (`make db-migrate`,
+# with the DATABASE_URL repository secret), so new code never meets an old schema. The old
+# revision keeps serving until the switch, so a migration must still work with the code before
+# it: add columns and tables first, and drop what the old code reads only in a later release.
+# Already at head, the step changes nothing.
+#
 # No Google key is stored here either. GitHub's OIDC token is exchanged for a short-lived
 # token of a deploy-only service account (Workload Identity Federation), and Google accepts
 # only tokens from this file on this repository's main branch (DEPLOY.md, section 4).
@@ -17,6 +23,9 @@ name: Deploy API
 
 on:
   workflow_call:
+    secrets:
+      DATABASE_URL:
+        required: false # checked by the migration step, with a clearer message
   workflow_dispatch:
 
 permissions:
@@ -51,6 +60,23 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v3
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-packages --locked
+
+      - name: Migrate the site's database (make db-migrate)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error title=No database to migrate::Set the DATABASE_URL repository secret (DEPLOY.md, section 4). Deploying without migrating could run new code against an old schema."
+            exit 1
+          fi
+          make db-migrate
 
       - name: Let Docker push to Artifact Registry
         run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev"

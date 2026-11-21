@@ -112,13 +112,13 @@ The first visit after a quiet spell waits a few seconds while the container star
 
 ## 4. GitHub
 
-- Repository **secret** `DATABASE_URL` = the connection string of the Neon branch the site uses. The daily claim watch (`watch.yml`) uses no model and marks or updates checks whose figures were revised. Its backfill (section 5) also reads `GROQ_API_KEY`, `MISTRAL_API_KEY` and `OPENROUTER_API_KEY`, the development keys the smoke evaluation uses.
+- Repository **secret** `DATABASE_URL` = the connection string of the Neon branch the site uses. Each automatic API deploy (`cd.yml`) first runs the database migrations against it. The daily claim watch (`watch.yml`) uses no model and marks or updates checks whose figures were revised. Its backfill (section 5) also reads `GROQ_API_KEY`, `MISTRAL_API_KEY` and `OPENROUTER_API_KEY`, the development keys the smoke evaluation uses.
 
 Cloud Run wakes on the first request, so nothing needs to keep the API awake.
 
 ### Automatic API deploys
 
-Vercel deploys the web app from `main` by itself. With this one-time setup, the API follows: after a merge to `main` that changes the API, the **API image** workflow builds and starts the image as usual, and if that passes it runs `cd.yml`, which deploys that commit with `make deploy-api`. Without it, the deploy job is skipped and you deploy by hand (section 5).
+Vercel deploys the web app from `main` by itself. With this one-time setup, the API follows: after a merge to `main` that changes the API, the **API image** workflow builds and starts the image as usual, and if that passes it runs `cd.yml`, which brings the site's database up to that commit's migrations (`make db-migrate`) and then deploys the commit with `make deploy-api`. Without it, the deploy job is skipped and you deploy by hand (section 5).
 
 GitHub holds no Google key. Each run trades its own short-lived GitHub token for one of a service account, `holdsup-deployer`. That account can only push images to the `holdsup` repository and deploy `holdsup-api`, and Google accepts the trade only from `cd.yml` on this repository's `main`. The service's settings and API keys stay on Cloud Run and never pass through GitHub.
 
@@ -145,7 +145,7 @@ GitHub holds no Google key. Each run trades its own short-lived GitHub token for
   make deploy-api GCP_PROJECT=<project id> GCP_REGION=<region>
   ```
 
-  It builds and pushes the image, then switches the service to it. The settings from step 2.4 carry over.
+  It builds and pushes the image, then switches the service to it. The settings from step 2.4 carry over. If the commit adds a migration, run `make db-migrate DATABASE_URL='<the site database url>'` first, as `cd.yml` does.
 - To roll back the API, open the service's **Revisions** tab and send all traffic to an earlier revision. Traffic then stays pinned there: the next deploy creates a revision, but `cd.yml` reports that it gets no traffic. When the fix is in, send all traffic to the latest revision again under **Manage traffic**, or run `gcloud run services update-traffic holdsup-api --to-latest --region <region>`.
 - To move the API to another region (for example next to the database), set up the new one before taking the old one down:
   1. Run the three `gcloud artifacts …` commands from section 2, step 2, with the new region, then `make api-image GCP_PROJECT=<project id> GCP_REGION=<new region>`.
