@@ -102,7 +102,7 @@ The first visit after a quiet spell waits a few seconds while the container star
    | Name | Value |
    | --- | --- |
    | `NEXT_PUBLIC_API_URL` | the Cloud Run address (the browser calls it) |
-   | `HOLDSUP_API_URL` | the same address (server-side reads: gallery, catalog, eval) |
+   | `HOLDSUP_API_URL` | the same address (server-side reads: gallery, catalog) |
 
    `NEXT_PUBLIC_SITE_URL` is only needed if the site uses a custom domain. On Vercel, share-picture links are worked out from the deployment. `NEXT_PUBLIC_*` values are built into the pages, so redeploy after changing one.
 
