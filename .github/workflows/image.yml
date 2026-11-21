@@ -94,3 +94,5 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/cd.yml
+    secrets:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
