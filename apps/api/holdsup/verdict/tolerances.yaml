@@ -1,5 +1,5 @@
-# Verdict tolerances (docs/spec.md "Tolerances"). Shown on every receipt.
-# Tune on the dev split only (P4.7); bump `version` whenever a value changes.
+# Verdict tolerances. Shown on every receipt.
+# Tune on the dev split only, never on the held-out test split; bump `version` whenever a value changes.
 version: 7
 
 # "Supported" also needs the claim to hold in at least this share of reasonable time windows

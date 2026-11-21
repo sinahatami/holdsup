@@ -1,8 +1,7 @@
 """Which places a catalog entry covers, from its `geo_coverage` labels.
 
 Geo codes are the claim spec's: ISO 3166-1 alpha-2 (GB, GR) plus EU, EA, WORLD. Matching
-drops candidates that cannot cover the claim's place before the model picks
-(docs/notes.md "P1.12 Pivot test review", item 1).
+drops candidates that cannot cover the claim's place before the model picks.
 """
 
 import re

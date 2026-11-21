@@ -1,11 +1,12 @@
 # Model providers for the router. One entry per provider + model.
-# Limits are the published free-tier limits (docs/spec.md "Model router", checked 2026-11-06).
-# The human records what each console actually shows in docs/notes.md (P0.1); update here to match.
+# Limits are the published free-tier limits (checked 2026-11-06). When a provider's console
+# shows different limits for the key, update them here to match.
 # Model ids: list what each key can use with `make list-models`; confirm with `make smoke-providers`.
-# Last confirmed: 2026-11-06 (see docs/notes.md "Provider smoke fix").
+# Last confirmed: 2026-11-06.
 #
 # allowed_use: live    → may serve user requests (and offline jobs)
-#              offline → eval/ and ml/ only. Gemini MUST stay offline (docs/decisions.md D003).
+#              offline → eval/ and ml/ only. Gemini MUST stay offline: Google's terms
+#              require a paid plan to serve users in the EEA, Switzerland and the UK.
 
 providers:
   - name: groq-gpt-oss-120b

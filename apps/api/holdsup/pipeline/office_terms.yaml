@@ -1,5 +1,5 @@
 # Terms of office, for resolving "since I took office" / "under the last Labour government"
-# in code instead of from the model's memory (docs/notes.md "P1.12 Pivot test review", item 3).
+# in code instead of from the model's memory.
 # Heads of government for the countries in the seed claims, plus governing parties where
 # claims name a party. Dates are the day the term started and ended; end: null = in office.
 # Last checked: 2026-11-07 against the agent's knowledge (to mid-2026). Verify before relying
