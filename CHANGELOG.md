@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://github.com/sinahatami/holdsup/compare/v0.6.0...v0.7.0) (2026-11-21)
+
+
+### Features
+
+* privacy and terms page, claim-box notice, and private removal requests ([#95](https://github.com/sinahatami/holdsup/issues/95)) ([8097101](https://github.com/sinahatami/holdsup/commit/8097101cc9f119fc9b7c8c26687eb6c8de594fe6))
+* **web:** share a check from one row, with the other ways behind "More ways" ([#98](https://github.com/sinahatami/holdsup/issues/98)) ([af724af](https://github.com/sinahatami/holdsup/commit/af724af6c389fae373c40cb5c978365574fc2807))
+* **web:** tooltips, back-to-top, share tabs, receipt heading and live progress (6 commits) ([#96](https://github.com/sinahatami/holdsup/issues/96)) ([37bc789](https://github.com/sinahatami/holdsup/commit/37bc78970935060d4ea3902101e84313a08e519c))
+
 ## [0.6.0](https://github.com/sinahatami/holdsup/compare/v0.5.0...v0.6.0) (2026-11-21)
 
 
