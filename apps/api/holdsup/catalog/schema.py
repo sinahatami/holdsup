@@ -76,7 +76,7 @@ class AnnualValue(StrEnum):
 
 
 class IndicatorSpec(BaseModel):
-    """One curated indicator. Field meanings: docs/spec.md "Data sources and indicator catalog"."""
+    """One curated indicator. Field meanings: packages/catalog/README.md "Entry format"."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 

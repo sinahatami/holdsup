@@ -2,7 +2,7 @@
 
 Each check that applies to a claim gives one `DistortionCheck`, flagged or not, with one line
 saying what it found, in numbers code computed. A flagged check makes a claim that holds
-"supported, but framing matters" (docs/spec.md, "Verdicts").
+"supported, but framing matters".
 
 - endpoints: the claim's start or end on a peak, a trough or a turn in the trend (P3.3, D025).
 - per_capita: an amount or a count divided by the place's population.

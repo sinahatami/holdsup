@@ -1,4 +1,4 @@
-# Git hooks for both languages (see docs/decisions.md D010).
+# Git hooks for both languages (Python and TypeScript) from one file.
 # Installed by `make setup` (runs `lefthook install`).
 
 pre-commit:

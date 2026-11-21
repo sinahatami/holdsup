@@ -5,7 +5,7 @@ Writes eval/reports/pivot_test.csv with one row per claim, plus pivot_test.steps
 claim's extraction and match. `make pivot-test ARGS="--refetch"` later redoes only fetch and
 `change` for rows that failed there (e.g. a source was down), with no model calls.
 The human fills in `correct_match`
-and applies the pivot rule (docs/tasks.md P1.12). Deliberately crude: the real pipeline steps
+and applies the pivot rule. Deliberately crude: the real pipeline steps
 are built in Phase 2 (P2.1 extraction, P2.2 matching, P2.3 ops).
 """
 
