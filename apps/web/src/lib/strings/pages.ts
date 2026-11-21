@@ -1,4 +1,4 @@
-// Text for pages that render only on the server: about, methodology and eval (benchmark).
+// Text for pages that render only on the server: about, methodology, privacy and terms.
 // It is kept apart from `strings` so the browser never downloads it; no client module may
 // import this file (src/lib/__tests__/strings-boundaries.test.ts checks).
 export const pageStrings = {
@@ -79,7 +79,7 @@ export const pageStrings = {
       newSource:
         "A source that is not on the list needs a small adapter that fetches its series and turns them into rows of place, period and value. Open an issue on GitHub that names the source and the series you have in mind, before writing one.",
       mistakes:
-        "Found a statistic that was matched wrongly, or a figure that looks off? Use “Report a wrong match” on the claim's receipt, or open an issue.",
+        "Found a statistic that was matched wrongly, or a figure that looks off? Use “Report a problem” on the claim's receipt, or open an issue.",
     },
     meta: {
       title: "About",
@@ -302,7 +302,7 @@ export const pageStrings = {
     limits: [
       {
         title: "The statistic may be close, not identical.",
-        body: "Statistics differ in age range, definition, unit or place. The receipt names the series that was used and its definition, so that you can see whether it is the one meant. If it is not, say so with “Report a wrong match” on that claim.",
+        body: "Statistics differ in age range, definition, unit or place. The receipt names the series that was used and its definition, so that you can see whether it is the one meant. If it is not, say so with “Report a problem” on that claim.",
       },
       {
         title: "Language models can misread a sentence.",
@@ -329,6 +329,168 @@ export const pageStrings = {
       title: "Methodology",
       description:
         "How HoldsUp reads a claim, finds the official statistic, recomputes it with code, and decides a verdict.",
+    },
+  },
+  // Privacy and terms in one page (/privacy), linked from the footer and the check form.
+  // Every statement here must stay true of the code: what is stored (db/models.py), who gets
+  // the text (router/providers.yaml), what the browser keeps (lib/history.ts, lib/theme.ts).
+  privacy: {
+    heading: "Privacy and terms",
+    intro:
+      "HoldsUp is a free, open-source project with no accounts, no ads and no tracking. This page says what happens to the text you send, who else handles it, how to have a check removed, and the few rules for using the site.",
+    updated: {
+      label: "Last updated",
+      iso: "2026-11-21",
+      text: "21 November 2026",
+    },
+    glanceLabel: "At a glance",
+    onThisPage: "On this page",
+    glance: [
+      {
+        title: "No cookies, no tracking",
+        body: "No account, no analytics, no ads. Nothing follows you to other sites.",
+      },
+      {
+        title: "Your check is saved",
+        body: "The text and its result are kept, and anyone with the link can open them.",
+      },
+      {
+        title: "Language models read it",
+        body: "Your text is sent to a model provider to find its claims and plan the check.",
+      },
+      {
+        title: "You can have it removed",
+        body: "Ask from the check's own page, privately, with no account.",
+      },
+    ],
+    kept: {
+      heading: "What HoldsUp keeps",
+      items: [
+        "The text you submit and its result: the claims found, the statistics they were matched to, the figures, the verdicts and the receipt. If you submit a link, HoldsUp's server reads that page and keeps its text in the same way.",
+        "Each check gets an address that cannot be guessed, and it is kept with no end date so that shared links keep working. Anyone who has the link can open it, and it can be shown on other sites with the embed code.",
+        "Checks are not listed anywhere and are hidden from search engines. The examples on the home page and under Recent checks are ones the project ran itself.",
+        "A later check of exactly the same text can reuse a stored result instead of asking the models again. When a source revises its figures, a check can be computed again; the update gets its own link.",
+        "If you report a problem with a check, the report (what kind of problem, and your note if you add one) is kept with that check.",
+      ],
+      never:
+        "HoldsUp never asks for your name or email address, and it does not build a profile of you. Please do not paste personal information about yourself or anyone else.",
+    },
+    who: {
+      heading: "Who else handles your text",
+      intro:
+        "HoldsUp runs on outside services. Each one receives only what it needs and handles it under its own terms. Most of them are in the United States, so your text is processed there.",
+      groups: [
+        {
+          title: "Language models",
+          body: "Your text goes to one of these at a time, Groq first, to find the claims in it, plan each check and word the explanation. The arithmetic never comes from a model.",
+          services: [
+            {
+              name: "Groq",
+              url: "https://groq.com/privacy-policy",
+              role: "First choice",
+              where: "United States",
+            },
+            {
+              name: "Cerebras",
+              url: "https://www.cerebras.ai/privacy-policy",
+              role: "When Groq is busy",
+              where: "United States",
+            },
+            {
+              name: "Mistral AI",
+              url: "https://legal.mistral.ai/terms/privacy-policy",
+              role: "Fallback",
+              where: "France",
+            },
+            {
+              name: "OpenRouter",
+              url: "https://openrouter.ai/privacy",
+              role: "Last resort, free models; their hosts may keep prompts",
+              where: "United States",
+            },
+          ],
+        },
+        {
+          title: "Hosting",
+          body: "These run the site. Like any web host they keep short-lived request logs, which include your IP address.",
+          services: [
+            {
+              name: "Vercel",
+              url: "https://vercel.com/legal/privacy-notice",
+              role: "Serves the website",
+              where: "United States",
+            },
+            {
+              name: "Google Cloud Run",
+              url: "https://cloud.google.com/terms/cloud-privacy-notice",
+              role: "Runs the checking service",
+              where: "United States",
+            },
+            {
+              name: "Neon",
+              url: "https://neon.com/privacy-policy",
+              role: "The database the checks are kept in",
+              where: "United States",
+            },
+          ],
+        },
+      ],
+      sources:
+        "The statistics come from Eurostat, the World Bank and Our World in Data. HoldsUp asks them only for a series and a place, never for your text, and the request comes from its server, not from your browser.",
+      voice:
+        "If you use the Speak button, your browser's own speech service turns your voice into text, and may send the audio to its provider (Google for Chrome, Apple for Safari). HoldsUp receives only the text you then submit.",
+    },
+    address: {
+      heading: "Your IP address",
+      body: "To stop one address from sending too many checks or reports, HoldsUp counts requests per address in memory for an hour. It does not store addresses. Its own logs record which pages and checks were asked for, and a check's length and verdicts, but never its text or your address. The hosts above keep their own request logs for a short time.",
+    },
+    browser: {
+      heading: "In your browser",
+      body: "HoldsUp sets no cookies, so there is no cookie banner. It keeps two things in your browser's local storage: your light or dark choice, and the list of your recent checks. They stay on your device, are never sent anywhere, and are gone when you clear your browser's data. Fonts and scripts are served by HoldsUp itself, so no third party sees your visit.",
+    },
+    basis: {
+      heading: "Why, and on what basis",
+      body: "Your text is used to run the check you ask for and to keep its result at its link, and your address only to keep the service from being overloaded. Under the EU and UK GDPR the basis for both is legitimate interest (Article 6(1)(f)): providing a free, shareable check and keeping it working for everyone. HoldsUp is a personal, non-commercial project; it does not sell or share data for advertising.",
+    },
+    remove: {
+      heading: "Removing a check, and your rights",
+      steps: [
+        "Open the check and choose “Report a problem” under one of its claims.",
+        "Pick “It shows personal information: please remove this check”, and send. No account is needed, and the request is not public.",
+        "The check is then deleted, together with every stored check of the same text.",
+      ],
+      noClaims:
+        "If the check has no claims, or for anything else (seeing what is stored about you, correcting it, or objecting), open an issue on GitHub. Do not put the personal information or the check's link in the issue; ask for a private way to send it.",
+      issue: "Open an issue on GitHub",
+      authority:
+        "You also have the right to complain to the data protection authority where you live.",
+      controller:
+        "HoldsUp is run by its maintainer, sinahatami on GitHub, who decides how this data is used.",
+    },
+    terms: {
+      heading: "Terms of use",
+      intro: "By using HoldsUp you agree to these terms.",
+      items: [
+        "Verdicts are made by software and can be wrong. Read the receipt before you rely on one. Nothing here is legal, financial or other professional advice.",
+        "A verdict is about the number, not about the person who said it.",
+        "HoldsUp is free and provided as it is, with no promise that it is available, complete or correct, as far as the law allows.",
+        "Do not submit personal information about anyone, or anything unlawful, and do not try to overload or misuse the service. There are limits on how many checks one address can make in an hour.",
+        "The code is open source under the MIT license. The figures belong to their sources and are used under those sources' own licenses.",
+      ],
+      sources: "Where the figures come from",
+      license: "Read the MIT license",
+    },
+    changes: {
+      heading: "Changes to this page",
+      body: "When something here changes, the date at the top changes with it, and every earlier version is in the project's history on GitHub.",
+      history: "See this page's history",
+      historyUrl:
+        "https://github.com/sinahatami/holdsup/commits/main/apps/web/src/lib/strings/pages.ts",
+    },
+    meta: {
+      title: "Privacy and terms",
+      description:
+        "What HoldsUp keeps, who else handles your text, how to have a check removed, and the terms for using the site.",
     },
   },
 } as const;

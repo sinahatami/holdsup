@@ -64,6 +64,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href={routes.privacy} className={footerLink}>
+                {t.privacy}
+              </Link>
+            </li>
+            <li>
               <ExternalLink
                 plain
                 href={t.repoUrl}

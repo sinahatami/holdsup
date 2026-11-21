@@ -1,7 +1,9 @@
 """Readers' reports of a wrong match, for the maintainer: the data behind `make reports`.
 
-A report says a check matched the wrong statistic or read the claim wrongly. Each one is shown
-with the link to the check it is about, so the receipt can be opened beside the reader's note.
+A report says a check matched the wrong statistic or read the claim wrongly, or asks for the
+check to be removed because it shows personal information. Each one is shown with the link to
+the check it is about, so the receipt can be opened beside the reader's note. Removal requests
+are counted on the first line, so they are not missed; `make delete-check` acts on one.
 """
 
 from collections import Counter
@@ -15,6 +17,7 @@ _KIND_TEXT = {
     ReportKind.WRONG_SERIES: "wrong statistic",
     ReportKind.WRONG_READING: "claim read wrongly",
     ReportKind.OTHER: "other",
+    ReportKind.REMOVE: "REMOVAL REQUEST",
 }
 
 

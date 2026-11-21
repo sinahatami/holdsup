@@ -355,10 +355,10 @@ test.describe("re-checking with another statistic", () => {
   });
 });
 
-test.describe("reporting a wrong match", () => {
+test.describe("reporting a problem", () => {
   const open = async (page: Page) => {
     await page.goto(`/check/${DONE_ID}`);
-    await page.getByRole("button", { name: "Report a wrong match" }).click();
+    await page.getByRole("button", { name: "Report a problem" }).click();
   };
 
   test("sends the choice, the claim and the note, with no account, and says it was recorded", async ({
@@ -386,6 +386,20 @@ test.describe("reporting a wrong match", () => {
     await expect(page.getByRole("button", { name: "Send report" })).toHaveCount(
       0,
     );
+  });
+
+  test("asks for the whole check to be removed when it shows personal information", async ({
+    page,
+  }) => {
+    const sent = await mockReports(page);
+    await open(page);
+    await page.getByRole("radio", { name: /personal information/ }).check();
+    await page.getByRole("button", { name: "Send report" }).click();
+
+    await expect(
+      page.getByText(/will be deleted, with every stored copy of its text/),
+    ).toBeVisible();
+    expect(sent).toEqual([{ kind: "remove", claim_index: null, note: "" }]);
   });
 
   test("shows why a report was refused and keeps the form", async ({

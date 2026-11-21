@@ -176,6 +176,32 @@ async def test_reports_are_kept_newest_first(store: CheckStore) -> None:
     assert await store.reports(1) == [newer]
 
 
+async def test_remove_deletes_every_check_of_the_text_and_its_reports(store: CheckStore) -> None:
+    ledger = Ledger(store, EMBEDDER, now=lambda: T0 + timedelta(hours=1))
+    original, other = uuid4(), uuid4()
+    await store.create(StoredCheck(original, TEXT, CheckStatus.QUEUED, T0))
+    result = await a_result(original)
+    await store.finish(result, await ledger.entry(TEXT, result.model_dump(mode="json")))
+    copy = await a_copy(store, original, featured=True)
+    # A later check of another text that was answered from the original keeps existing.
+    await store.create(
+        StoredCheck(other, TEXT + " Also in 2024.", CheckStatus.DONE, T0,
+                    result=result.model_dump(mode="json"), cached_from=original)
+    )  # fmt: skip
+    await store.add_report(
+        StoredReport(uuid4(), copy, None, ReportKind.REMOVE, "my name is in it", T0)
+    )
+
+    assert sorted(await store.remove(copy)) == sorted([original, copy])
+    assert await store.get(original) is None and await store.get(copy) is None
+    assert await store.reports(10) == []
+    assert await store.gallery(10) == []
+    assert await ledger.lookup(TEXT) is None  # a repeat of the text is checked afresh
+    kept = await store.get(other)
+    assert kept is not None and kept.cached_from is None
+    assert await store.remove(original) == []  # already gone
+
+
 # --- the claim watch (S1) --------------------------------------------------------------------
 
 

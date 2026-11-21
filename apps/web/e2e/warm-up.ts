@@ -13,6 +13,7 @@ export default async function warmUp(config: FullConfig) {
     "/indicators",
     "/methodology",
     "/recent",
+    "/privacy",
     `/check/${DONE_ID}`,
     "/check/not-an-id",
   ]) {

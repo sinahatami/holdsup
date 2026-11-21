@@ -36,6 +36,9 @@ class ReportKind(StrEnum):
     WRONG_SERIES = "wrong_series"  # the statistic it was matched to is not what the claim is about
     WRONG_READING = "wrong_reading"  # the claim was read wrongly: its place, period or figure
     OTHER = "other"
+    # The check shows personal information: the reader asks for it to be deleted. This is the
+    # private way to ask (the privacy page points here); `make delete-check` does the deleting.
+    REMOVE = "remove"
 
 
 @dataclass(frozen=True)
@@ -158,6 +161,13 @@ class CheckStore(LedgerStore, Protocol):
     async def set_featured(self, check_id: UUID, featured: bool) -> None: ...
 
     async def add_report(self, report: StoredReport) -> None: ...
+
+    async def remove(self, check_id: UUID) -> list[UUID]:
+        """Delete the check and every stored check of the same text (its cached copies, its
+        updates, anyone's identical submission), with their claims and reports, so a removal
+        request takes the text off the site and out of the ledger. The deleted checks' ids;
+        empty when there is no such check."""
+        ...
 
     async def reports(self, limit: int) -> list[StoredReport]:
         """The newest reports first."""

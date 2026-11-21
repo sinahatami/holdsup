@@ -57,6 +57,7 @@ describe("ReportMatch", () => {
       "wrong_series",
       "wrong_reading",
       "other",
+      "remove",
     ]);
     expect(choices[0]).toBeChecked();
     expect(choices[0]).toHaveFocus();
@@ -93,6 +94,16 @@ describe("ReportMatch", () => {
       screen.queryByRole("button", { name: t.open }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  });
+
+  it("asks for the whole check to be removed, and says what happens next", async () => {
+    open();
+    fireEvent.click(screen.getByRole("radio", { name: t.kinds.remove }));
+    fireEvent.click(screen.getByRole("button", { name: t.send }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    // About the check as a whole, not the claim whose button was used.
+    expect(sentBody()).toEqual({ kind: "remove", claim_index: null, note: "" });
+    expect(await screen.findByRole("status")).toHaveTextContent(t.removeThanks);
   });
 
   it("sends a report with no note", async () => {

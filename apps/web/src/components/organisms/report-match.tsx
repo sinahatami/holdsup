@@ -13,8 +13,9 @@ const t = strings.report;
 const KINDS = Object.keys(t.kinds) as ReportKind[];
 
 /**
- * "Report a wrong match": a reader says a claim was checked against the wrong
- * statistic or read wrongly, with an optional note. No account is needed. The
+ * "Report a problem": a reader says a claim was checked against the wrong
+ * statistic or read wrongly, or asks for the check to be removed because it
+ * shows personal information, with an optional note. No account is needed. The
  * form opens in place, takes focus, and gives it back when closed; the outcome
  * is said in a status line that is always on the page, so it is read out.
  */
@@ -51,7 +52,11 @@ export function ReportMatch({
   return (
     <div className="flex flex-col gap-4 border-t pt-4">
       <p role="status" className="text-sm font-medium empty:hidden">
-        {phase === "sent" ? t.thanks : null}
+        {phase === "sent"
+          ? kind === "remove"
+            ? t.removeThanks
+            : t.thanks
+          : null}
       </p>
       {phase !== "sent" && (
         <>

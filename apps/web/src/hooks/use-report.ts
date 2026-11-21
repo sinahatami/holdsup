@@ -11,7 +11,8 @@ import {
 
 export type ReportPhase = "idle" | "sending" | "sent";
 
-/** Sends a reader's report about one claim of a check; keeps the sending state and the error. */
+/** Sends a reader's report about one claim of a check (or a request to remove the whole
+ * check); keeps the sending state and the error. */
 export function useReport(
   checkId: string,
   claimIndex: number,
@@ -27,7 +28,8 @@ export function useReport(
     try {
       await api.reportCheck(checkId, {
         kind,
-        claim_index: claimIndex,
+        // A removal request is about the whole check, not one claim.
+        claim_index: kind === "remove" ? null : claimIndex,
         note: note.trim(),
       });
       setPhase("sent");
