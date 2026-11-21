@@ -5,11 +5,10 @@ A new route module adds its `router` here. Handlers get their collaborators from
 
 from fastapi import APIRouter
 
-from holdsup.routes import benchmark, checks, indicators, meta, reports
+from holdsup.routes import checks, indicators, meta, reports
 
 v1 = APIRouter(prefix="/v1")
 v1.include_router(meta.router)
 v1.include_router(indicators.router)
 v1.include_router(checks.router)
 v1.include_router(reports.router)
-v1.include_router(benchmark.router)

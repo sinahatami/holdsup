@@ -17,11 +17,7 @@ const links = [
 ];
 
 // Below 768px they sit in a menu, together with the pages the header never lists.
-const menuLinks = [
-  ...links,
-  { href: routes.eval, label: strings.nav.benchmark },
-  { href: routes.about, label: strings.nav.about },
-];
+const menuLinks = [...links, { href: routes.about, label: strings.nav.about }];
 
 export function SiteHeader() {
   return (
