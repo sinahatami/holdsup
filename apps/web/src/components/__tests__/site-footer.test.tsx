@@ -24,6 +24,9 @@ describe("SiteFooter", () => {
     expect(
       within(project).getByRole("link", { name: strings.nav.about }),
     ).toHaveAttribute("href", routes.about);
+    expect(
+      within(project).getByRole("link", { name: t.privacy }),
+    ).toHaveAttribute("href", routes.privacy);
   });
 
   it("links to the repository, the issues and the licence", () => {

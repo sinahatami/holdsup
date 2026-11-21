@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Loader2 } from "lucide-react";
+import Link from "next/link";
 import {
   useRef,
   useState,
@@ -17,6 +18,7 @@ import { useDictation } from "@/hooks/use-dictation";
 import { useModifierKey } from "@/hooks/use-modifier-key";
 import { useSubmitCheck } from "@/hooks/use-submit-check";
 import { asLink } from "@/lib/link";
+import { routes } from "@/lib/routes";
 import { withSpoken } from "@/lib/speech";
 import { strings } from "@/lib/strings";
 
@@ -46,6 +48,7 @@ export function CheckForm({
   const ERROR_ID = `${idPrefix}-error`;
   const HINT_ID = `${idPrefix}-hint`;
   const LANG_ID = `${idPrefix}-english`;
+  const PRIVACY_ID = `${idPrefix}-privacy`;
   const [text, setText] = useState(initialText);
   const box = useRef<HTMLTextAreaElement>(null);
   const { submit, busy, error } = useSubmitCheck();
@@ -129,8 +132,8 @@ export function CheckForm({
           className="ruled placeholder:text-muted-foreground/85 w-full resize-none bg-transparent px-1 text-lg leading-8 outline-none"
           aria-describedby={
             message
-              ? `${LANG_ID} ${HINT_ID} ${ERROR_ID}`
-              : `${LANG_ID} ${HINT_ID}`
+              ? `${LANG_ID} ${HINT_ID} ${PRIVACY_ID} ${ERROR_ID}`
+              : `${LANG_ID} ${HINT_ID} ${PRIVACY_ID}`
           }
           aria-keyshortcuts="Control+Enter Meta+Enter"
         />
@@ -184,6 +187,15 @@ export function CheckForm({
           </p>
         )}
       </div>
+      <p className="text-muted-foreground -mt-3 px-2 text-xs leading-5">
+        <span id={PRIVACY_ID}>{t.privacyNotice}</span>{" "}
+        <Link
+          href={routes.privacy}
+          className="hover:text-foreground font-medium underline underline-offset-4 transition"
+        >
+          {t.privacyLink}
+        </Link>
+      </p>
       {message && (
         <p
           id={ERROR_ID}

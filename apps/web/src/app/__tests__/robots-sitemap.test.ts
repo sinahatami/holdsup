@@ -41,6 +41,7 @@ describe("robots.txt and the sitemap", () => {
       "https://holdsup.example/indicators",
       "https://holdsup.example/recent",
       "https://holdsup.example/about",
+      "https://holdsup.example/privacy",
     ]);
     expect(
       urls.some((url) => url.includes("/check/") || url.includes("/embed/")),

@@ -1143,7 +1143,7 @@ export interface components {
      * @description What a reader says is wrong with a check.
      * @enum {string}
      */
-    ReportKind: "wrong_series" | "wrong_reading" | "other";
+    ReportKind: "wrong_series" | "wrong_reading" | "other" | "remove";
     /** ReportRequest */
     ReportRequest: {
       kind: components["schemas"]["ReportKind"];

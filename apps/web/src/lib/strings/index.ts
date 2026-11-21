@@ -119,6 +119,7 @@ export const strings = {
     project: "Project",
     license: "MIT license",
     report: "Report a problem",
+    privacy: "Privacy and terms",
     note: "Verdicts are about the number, not the speaker.",
     legal: "MIT licensed, open source.",
     // The release the site runs, linked to that release's notes on GitHub.
@@ -143,6 +144,10 @@ export const strings = {
     running: "Result not seen yet",
   },
   home: {
+    // Under the text box, read with it by a screen reader: what happens to what is pasted.
+    privacyNotice:
+      "Please don't paste personal information. Every check is saved, and anyone with its link can open it.",
+    privacyLink: "How your text is handled",
     // The page title is the tagline, with its last word set apart.
     titleLead: "Every number has a",
     titleEnd: "denominator.",
@@ -605,12 +610,14 @@ export const strings = {
       `${n}. “${claim}” — ${verdict}`,
   },
   report: {
-    open: "Report a wrong match",
+    open: "Report a problem",
     heading: "What looks wrong?",
     kinds: {
       wrong_series: "It is checked against the wrong statistic",
       wrong_reading: "The claim was read wrongly (place, period or figure)",
       other: "Something else",
+      // A removal request: answered by deleting the check (make delete-check), not in public.
+      remove: "It shows personal information: please remove this check",
     },
     noteLabel: "Add a note (optional)",
     anonymous: "Reports are anonymous. Please do not include personal details.",
@@ -618,6 +625,8 @@ export const strings = {
     sending: "Sending…",
     cancel: "Cancel",
     thanks: "Thank you. Your report was recorded.",
+    removeThanks:
+      "Thank you. The check will be deleted, with every stored copy of its text, once the request has been read.",
     maxNote: 500,
   },
   // The picture a chat or social app shows for a shared check.

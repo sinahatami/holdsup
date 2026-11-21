@@ -131,7 +131,7 @@ export async function mockApi(
 }
 
 /**
- * Mocks the browser's call that reports a wrong match. Returns the bodies it was sent, so a
+ * Mocks the browser's call that sends a report (a wrong match, a removal request). Returns the bodies it was sent, so a
  * test can check what the form posted.
  */
 export async function mockReports(

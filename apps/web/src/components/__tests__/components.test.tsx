@@ -420,6 +420,16 @@ describe("CheckForm", () => {
     vi.unstubAllGlobals();
   });
 
+  it("asks for no personal information, read with the box, and links to the privacy page", () => {
+    render(<CheckForm />);
+    expect(screen.getByRole("textbox")).toHaveAccessibleDescription(
+      expect.stringContaining(strings.home.privacyNotice),
+    );
+    expect(
+      screen.getByRole("link", { name: strings.home.privacyLink }),
+    ).toHaveAttribute("href", routes.privacy);
+  });
+
   it("says a link is read as a page, and sends it as it is", async () => {
     const fetchMock = vi
       .fn()
