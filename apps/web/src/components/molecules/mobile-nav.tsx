@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Tooltip } from "@/components/atoms/tooltip";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -40,17 +41,22 @@ export function MobileNav({ links }: { links: readonly NavLink[] }) {
   const Icon = open ? X : Menu;
   return (
     <div className="md:hidden">
-      <button
-        ref={button}
-        type="button"
-        aria-expanded={open}
-        aria-controls={PANEL_ID}
-        aria-label={open ? strings.nav.menuClose : strings.nav.menuOpen}
-        onClick={() => setOpenOn(open ? null : pathname)}
-        className="text-muted-foreground hover:text-foreground flex size-10 items-center justify-center rounded-full transition"
+      <Tooltip
+        label={open ? strings.nav.menuClose : strings.nav.menuOpen}
+        align="end"
       >
-        <Icon className="size-5" aria-hidden />
-      </button>
+        <button
+          ref={button}
+          type="button"
+          aria-expanded={open}
+          aria-controls={PANEL_ID}
+          aria-label={open ? strings.nav.menuClose : strings.nav.menuOpen}
+          onClick={() => setOpenOn(open ? null : pathname)}
+          className="text-muted-foreground hover:text-foreground flex size-10 items-center justify-center rounded-full transition"
+        >
+          <Icon className="size-5" aria-hidden />
+        </button>
+      </Tooltip>
       <nav
         id={PANEL_ID}
         hidden={!open}

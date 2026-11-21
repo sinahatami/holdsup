@@ -1,6 +1,7 @@
 "use client";
 
 import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
+import { Tooltip } from "@/components/atoms/tooltip";
 import { useTheme } from "@/hooks/use-theme";
 import type { Theme } from "@/lib/theme";
 import { strings } from "@/lib/strings";
@@ -21,23 +22,23 @@ export function ThemeToggle() {
       className="glass inline-flex rounded-full p-1"
     >
       {options.map(({ value, label, Icon }) => (
-        <button
-          key={value}
-          type="button"
-          role="radio"
-          aria-checked={theme === value}
-          aria-label={label}
-          title={label}
-          onClick={() => setTheme(value)}
-          className={cn(
-            "flex size-8 items-center justify-center rounded-full transition",
-            theme === value
-              ? "bg-primary text-primary-foreground shadow"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <Icon className="size-4" aria-hidden />
-        </button>
+        <Tooltip key={value} label={label}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={theme === value}
+            aria-label={label}
+            onClick={() => setTheme(value)}
+            className={cn(
+              "flex size-8 items-center justify-center rounded-full transition",
+              theme === value
+                ? "bg-primary text-primary-foreground shadow"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Icon className="size-4" aria-hidden />
+          </button>
+        </Tooltip>
       ))}
     </div>
   );

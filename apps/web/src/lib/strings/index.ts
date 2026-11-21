@@ -138,6 +138,8 @@ export const strings = {
     note: "Kept in this browser only. Clearing your browser data removes them.",
     clear: "Clear the list",
     remove: (text: string) => `Remove from your list: ${text}`,
+    // The tooltip on the remove button: the start of its name, short enough for one line.
+    removeShort: "Remove from your list",
     summary: (holds: number, total: number) =>
       `${holds} of ${total} claims hold up`,
     running: "Result not seen yet",
