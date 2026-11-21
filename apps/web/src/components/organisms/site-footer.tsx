@@ -56,11 +56,6 @@ export function SiteFooter() {
                 {strings.nav.methodology}
               </Link>
             </li>
-            <li>
-              <Link href={routes.eval} className={footerLink}>
-                {strings.nav.benchmark}
-              </Link>
-            </li>
           </LinkGroup>
           <LinkGroup title={t.project}>
             <li>

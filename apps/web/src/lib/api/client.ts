@@ -29,13 +29,6 @@ export type Label = components["schemas"]["Label"];
 export type Step = components["schemas"]["Step"];
 export type Suggestion = components["schemas"]["Suggestion"];
 export type RecheckOf = components["schemas"]["RecheckOf"];
-export type Benchmark = components["schemas"]["Benchmark"];
-export type BenchmarkRun = components["schemas"]["Run"];
-export type Comparison = components["schemas"]["Comparison"];
-export type Loss = components["schemas"]["Loss"];
-export type FailureCause = components["schemas"]["FailureCause"];
-export type ModelReport = components["schemas"]["ModelReport"];
-export type Rate = components["schemas"]["Rate"];
 
 /** One line of the live trace (the `step_started` / `step_done` event data). */
 export interface StepEvent {
@@ -222,8 +215,6 @@ export function createApiClient(baseUrl: string) {
         body: JSON.stringify({ indicator_id: indicatorId }),
       }),
     catalog: () => request<CatalogResponse>("/catalog"),
-    /** The benchmark's results: the head-to-head, every run and the trained models' reports. */
-    benchmark: () => request<Benchmark>("/eval"),
     /** The allowed gaps and thresholds every verdict is judged by. */
     tolerances: () => request<Tolerances>("/tolerances"),
     getCheck: (id: string, init?: RequestInit) =>

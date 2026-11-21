@@ -213,27 +213,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/v1/eval": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Benchmark
-     * @description The head-to-head against a plain chatbot, every evaluation run, and the trained models'
-     *     reports. Nothing is recomputed: it is what the committed reports say.
-     */
-    get: operations["benchmark_v1_eval_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -292,17 +271,6 @@ export interface components {
      * @enum {string}
      */
     Basis: "stated" | "inferred" | "lookback" | "office" | "assumed";
-    /** Benchmark */
-    Benchmark: {
-      /** Eval Version */
-      eval_version: string | null;
-      /** Comparisons */
-      comparisons: components["schemas"]["Comparison"][];
-      /** Runs */
-      runs: components["schemas"]["Run"][];
-      /** Models */
-      models: components["schemas"]["ModelReport"][];
-    };
     /** CatalogEntry */
     CatalogEntry: {
       /** Id */
@@ -595,30 +563,6 @@ export interface components {
       }[];
     };
     /**
-     * Comparison
-     * @description HoldsUp and the chatbot on the same split, over the claims both could be scored on.
-     */
-    Comparison: {
-      /** Split */
-      split: string;
-      holdsup: components["schemas"]["Run"];
-      chatbot: components["schemas"]["Run"];
-      /** Claims */
-      claims: number;
-      holdsup_right: components["schemas"]["Rate"];
-      chatbot_right: components["schemas"]["Rate"];
-      /** Both Right */
-      both_right: number;
-      /** Both Wrong */
-      both_wrong: number;
-      /** Only Holdsup Right */
-      only_holdsup_right: number;
-      /** Only Chatbot Right */
-      only_chatbot_right: number;
-      /** Losses */
-      losses: components["schemas"]["Loss"][];
-    };
-    /**
      * Confidence
      * @description How sure the check is of a claim's verdict.
      */
@@ -741,15 +685,6 @@ export interface components {
     ExtraSource: {
       indicator: components["schemas"]["IndicatorRef"];
       data: components["schemas"]["DataRef"];
-    };
-    /** FailureCause */
-    FailureCause: {
-      /** Step */
-      step: string;
-      /** Wrong */
-      wrong: number;
-      /** Share */
-      share: number;
     };
     /**
      * FigureChange
@@ -946,28 +881,6 @@ export interface components {
        */
       name: string;
     };
-    /**
-     * Loss
-     * @description A claim HoldsUp got wrong and the chatbot got right.
-     */
-    Loss: {
-      /** Text Id */
-      text_id: string;
-      /** Index */
-      index: number;
-      /** Quote */
-      quote: string;
-      /** Expected */
-      expected: string;
-      /** Holdsup */
-      holdsup: string;
-      /** Chatbot */
-      chatbot: string;
-      /** Broke At */
-      broke_at: string | null;
-      /** Reason */
-      reason: string;
-    };
     /** MarkdownCell */
     MarkdownCell: {
       /**
@@ -984,21 +897,6 @@ export interface components {
       /** Source */
       source: string[];
     };
-    /**
-     * ModelReport
-     * @description A trained model's headline figures, from its committed report.
-     */
-    ModelReport: {
-      /** Id */
-      id: string;
-      /** Title */
-      title: string;
-      /** Created */
-      created: string;
-      table: components["schemas"]["Table"];
-      /** Notes */
-      notes: string[];
-    };
     /** ModelUse */
     ModelUse: {
       step: components["schemas"]["Step"];
@@ -1011,17 +909,6 @@ export interface components {
        * @default
        */
       label: string;
-    };
-    /** ModelUsed */
-    ModelUsed: {
-      /** Provider */
-      provider: string;
-      /** Model */
-      model: string;
-      /** Label */
-      label: string;
-      /** Calls */
-      calls: number;
     };
     /**
      * Notebook
@@ -1222,18 +1109,6 @@ export interface components {
         | null;
     };
     /**
-     * Rate
-     * @description `hits` of `total`; `rate` is None when there was nothing to measure.
-     */
-    Rate: {
-      /** Hits */
-      hits: number;
-      /** Total */
-      total: number;
-      /** Rate */
-      rate: number | null;
-    };
-    /**
      * RecheckOf
      * @description The claim a re-check redid with a statistic a reader chose.
      */
@@ -1283,63 +1158,6 @@ export interface components {
        * @default
        */
       note: string;
-    };
-    /**
-     * Run
-     * @description One evaluation run: a split of the benchmark, answered by the pipeline or a chatbot.
-     */
-    Run: {
-      /** Name */
-      name: string;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind: "pipeline" | "chatbot";
-      /** Split */
-      split: string;
-      /** Provider */
-      provider: string;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-      /** App Version */
-      app_version: string;
-      /** Catalog Version */
-      catalog_version: string;
-      /** Eval Version */
-      eval_version: string;
-      /** Models */
-      models: components["schemas"]["ModelUsed"][];
-      /** Texts */
-      texts: number;
-      /** Labelled Claims */
-      labelled_claims: number;
-      /** Left Out */
-      left_out: number;
-      accuracy: components["schemas"]["Rate"];
-      /** Labels */
-      labels: string[];
-      /** Confusion */
-      confusion: {
-        [key: string]: {
-          [key: string]: number;
-        };
-      };
-      /** Per Label */
-      per_label: {
-        [key: string]: components["schemas"]["Rate"];
-      };
-      /** Failure Causes */
-      failure_causes: components["schemas"]["FailureCause"][];
-      /** Calls Per Claim */
-      calls_per_claim: number | null;
-      /** Seconds Per Claim */
-      seconds_per_claim: number | null;
-      /** Role */
-      role?: ("compared" | "weaker") | null;
     };
     /** SeriesPoint */
     SeriesPoint: {
@@ -1460,13 +1278,6 @@ export interface components {
       reach: number;
       /** Min Years */
       min_years: number;
-    };
-    /** Table */
-    Table: {
-      /** Columns */
-      columns: string[];
-      /** Rows */
-      rows: string[][];
     };
     /**
      * Theme
@@ -2007,26 +1818,6 @@ export interface operations {
         content: {
           "application/problem+json": unknown;
           "application/json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
-  benchmark_v1_eval_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Benchmark"];
         };
       };
     };

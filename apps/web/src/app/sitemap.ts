@@ -8,7 +8,6 @@ const PUBLIC_PAGES = [
   routes.methodology,
   routes.indicators,
   routes.recent,
-  routes.eval,
   routes.about,
 ] as const;
 
