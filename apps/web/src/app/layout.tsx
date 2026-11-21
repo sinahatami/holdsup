@@ -68,12 +68,19 @@ const geistMono = Geist_Mono({
 // from the deployment; elsewhere set NEXT_PUBLIC_SITE_URL to the site's public address.
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
+// The code Google Search Console gives for its "HTML tag" check. Read when the pages are
+// built, so redeploy after setting it; unset, no tag is written.
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
   metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: strings.appName,
   description: strings.metaDescription,
   // Pages share the large picture from opengraph-image.tsx; a check draws its own.
   twitter: { card: "summary_large_image" },
+  ...(googleVerification
+    ? { verification: { google: googleVerification } }
+    : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

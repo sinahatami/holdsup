@@ -9,16 +9,18 @@ import { MethodSteps } from "@/components/organisms/method-steps";
 import { VerdictRules } from "@/components/organisms/verdict-legend";
 import { PageShell } from "@/components/templates/page-shell";
 import { getTolerances } from "@/lib/api/tolerances";
+import { pageMetadata } from "@/lib/page-meta";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { pageStrings } from "@/lib/strings/pages";
 
 const t = pageStrings.methodology;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: routes.methodology,
   title: `${t.meta.title} · ${strings.appName}`,
   description: t.meta.description,
-};
+});
 
 const link = "text-brand font-medium underline underline-offset-4";
 

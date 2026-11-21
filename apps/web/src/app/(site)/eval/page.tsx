@@ -7,15 +7,18 @@ import { LossList } from "@/components/organisms/loss-list";
 import { ModelReports } from "@/components/organisms/model-reports";
 import { PageShell } from "@/components/templates/page-shell";
 import { getBenchmark } from "@/lib/api/benchmark";
+import { pageMetadata } from "@/lib/page-meta";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { pageStrings } from "@/lib/strings/pages";
 
 const t = pageStrings.benchmark;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: routes.eval,
   title: `${t.meta.title} · ${strings.appName}`,
   description: t.meta.description,
-};
+});
 
 /** The benchmark: HoldsUp against a plain chatbot on the same claims, where it loses, and why. */
 export default async function Page() {
