@@ -605,31 +605,35 @@ export const strings = {
   },
   share: {
     heading: "Share this check",
-    // The ways to share, as tabs: each shows what it gives before anything is copied.
+    // Opens the other ways to share, below the row with the link.
+    more: "More ways",
+    // The other ways to share, as tabs: each shows what it gives before anything is copied.
     tabs: {
-      link: "Link",
       summary: "Summary",
       embed: "Embed",
       image: "Image",
     },
     // Under each preview: who it is for and what happens with it.
     hints: {
-      link: "Anyone with the link sees this receipt. It is not listed on the site or shown to search engines.",
       summary:
-        "For a message or a post: the claim, how it came out, and the link, as above.",
+        "For a message or a post: the claim, how it came out, and the link to this page.",
       embed:
         "For your own page: paste this into its HTML. It shows the verdict, always as HoldsUp has it now, and links back here.",
       image:
         "The card chat apps and social sites show for the link (1200 × 630, PNG).",
     },
     previewLabel: "What will be copied",
+    // Shown, selected, only when the link could not be copied.
+    linkLabel: "Link to this check",
     copyLink: "Copy link",
     copySummary: "Copy summary",
     image: "Download image",
     imageName: (id: string) => `holdsup-${id}.png`,
     native: "Share…",
     embed: "Copy embed code",
-    linkCopied: "Link copied.",
+    // Said once the link is copied, so it is clear who can open it.
+    linkCopied:
+      "Link copied. Anyone with it can open this receipt; it is not listed on the site or shown to search engines.",
     summaryCopied: "Summary copied.",
     embedCopied: "Embed code copied. Paste it into a page's HTML.",
     failed:

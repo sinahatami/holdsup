@@ -35,6 +35,7 @@ function full() {
 
 const tab = (name: string) => screen.getByRole("tab", { name });
 const preview = () => screen.getByTestId("share-preview");
+const more = () => screen.getByRole("button", { name: t.more });
 
 beforeEach(() => {
   writeText.mockReset().mockResolvedValue(undefined);
@@ -48,39 +49,51 @@ afterEach(() => {
 });
 
 describe("ShareActions", () => {
-  it("is a labelled region with one tab per way to share, the link first", () => {
+  it("is a labelled region: one row with the link, and the other ways closed", () => {
     full();
     expect(screen.getByRole("region", { name: t.heading })).toBeInTheDocument();
     expect(
-      screen.getByRole("tablist", { name: t.heading }),
+      screen.getByRole("button", { name: t.copyLink }),
     ).toBeInTheDocument();
+    expect(more()).toHaveAttribute("aria-expanded", "false");
+    // Closed, the tabs are out of the page for everyone.
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.queryByTestId("share-preview")).not.toBeVisible();
+  });
+
+  it("opens the other ways as tabs, the summary first, and closes them again", () => {
+    full();
+    fireEvent.click(more());
+    expect(more()).toHaveAttribute("aria-expanded", "true");
+    const panel = document.getElementById(
+      more().getAttribute("aria-controls")!,
+    );
+    expect(panel).toBeVisible();
+    expect(screen.getByRole("tablist", { name: t.more })).toBeInTheDocument();
     expect(screen.getAllByRole("tab").map((el) => el.textContent)).toEqual([
-      t.tabs.link,
       t.tabs.summary,
       t.tabs.embed,
       t.tabs.image,
     ]);
-    expect(tab(t.tabs.link)).toHaveAttribute("aria-selected", "true");
+    expect(tab(t.tabs.summary)).toHaveAttribute("aria-selected", "true");
     // One tab stop for the whole list; arrows move within it.
-    expect(tab(t.tabs.link)).toHaveAttribute("tabindex", "0");
-    expect(tab(t.tabs.summary)).toHaveAttribute("tabindex", "-1");
-    expect(screen.getByRole("tabpanel")).toHaveAccessibleName(t.tabs.link);
+    expect(tab(t.tabs.summary)).toHaveAttribute("tabindex", "0");
+    expect(tab(t.tabs.embed)).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("tabpanel")).toHaveAccessibleName(t.tabs.summary);
+    fireEvent.click(more());
+    expect(more()).toHaveAttribute("aria-expanded", "false");
+    expect(panel).not.toBeVisible();
   });
 
   it("offers only the ways this check has", () => {
     open();
-    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    fireEvent.click(more());
+    expect(screen.getAllByRole("tab")).toHaveLength(1);
     expect(screen.queryByRole("tab", { name: t.tabs.embed })).toBeNull();
     expect(screen.queryByRole("tab", { name: t.tabs.image })).toBeNull();
   });
 
-  it("shows the link before it is copied, without the page's query or fragment", () => {
-    open();
-    expect(preview()).toHaveTextContent(URL_());
-    expect(screen.getByText(t.hints.link)).toBeInTheDocument();
-  });
-
-  it("copies the link, ticks the button and says so beside it", async () => {
+  it("copies the link without the page's query or fragment, ticks the button and says who can open it", async () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(URL_()));
@@ -89,13 +102,14 @@ describe("ShareActions", () => {
     expect(
       screen.getByRole("button", { name: t.copyLink }),
     ).toBeInTheDocument();
+    expect(screen.queryByTestId("share-link")).toBeNull();
   });
 
   it("shows and copies a summary with the claim, the verdict and the link", async () => {
     open();
-    fireEvent.click(tab(t.tabs.summary));
-    expect(tab(t.tabs.summary)).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(more());
     expect(preview().textContent).toBe(`${TEXT}\n${URL_()}`);
+    expect(screen.getByText(t.hints.summary)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t.copySummary }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
     const copied = writeText.mock.calls[0][0] as string;
@@ -107,6 +121,7 @@ describe("ShareActions", () => {
 
   it("shows and copies the iframe code for this site", async () => {
     full();
+    fireEvent.click(more());
     fireEvent.click(tab(t.tabs.embed));
     expect(preview().textContent).toMatch(/^<iframe /);
     fireEvent.click(screen.getByRole("button", { name: t.embed }));
@@ -120,6 +135,7 @@ describe("ShareActions", () => {
 
   it("shows the card image and offers it to download", () => {
     full();
+    fireEvent.click(more());
     fireEvent.click(tab(t.tabs.image));
     expect(screen.getByRole("img", { name: strings.og.alt })).toHaveAttribute(
       "src",
@@ -132,34 +148,57 @@ describe("ShareActions", () => {
 
   it("moves between tabs with the arrow keys, Home and End, and wraps around", () => {
     full();
+    fireEvent.click(more());
     const list = screen.getByRole("tablist");
     fireEvent.keyDown(list, { key: "ArrowRight" });
-    expect(tab(t.tabs.summary)).toHaveFocus();
-    expect(tab(t.tabs.summary)).toHaveAttribute("aria-selected", "true");
+    expect(tab(t.tabs.embed)).toHaveFocus();
+    expect(tab(t.tabs.embed)).toHaveAttribute("aria-selected", "true");
     fireEvent.keyDown(list, { key: "End" });
     expect(tab(t.tabs.image)).toHaveFocus();
     fireEvent.keyDown(list, { key: "ArrowRight" });
-    expect(tab(t.tabs.link)).toHaveFocus();
+    expect(tab(t.tabs.summary)).toHaveFocus();
     fireEvent.keyDown(list, { key: "ArrowLeft" });
     expect(tab(t.tabs.image)).toHaveFocus();
     fireEvent.keyDown(list, { key: "Home" });
-    expect(tab(t.tabs.link)).toHaveFocus();
+    expect(tab(t.tabs.summary)).toHaveFocus();
   });
 
-  it("clears the last status when another tab is chosen", async () => {
-    open();
+  it("clears the last status when another tab is chosen or the ways are closed", async () => {
+    full();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
     expect(await screen.findByRole("status")).toHaveTextContent(t.linkCopied);
-    fireEvent.click(tab(t.tabs.summary));
+    fireEvent.click(more());
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    fireEvent.click(screen.getByRole("button", { name: t.copySummary }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      t.summaryCopied,
+    );
+    fireEvent.click(tab(t.tabs.embed));
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
-  it("selects the preview so it can be copied by hand when copying fails", async () => {
+  it("shows the link, selected, so it can be copied by hand when copying it fails", async () => {
     writeText.mockRejectedValue(new Error("denied"));
     open();
+    expect(screen.queryByTestId("share-link")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
     expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
+    expect(screen.getByTestId("share-link")).toHaveTextContent(URL_());
     expect(window.getSelection()?.toString()).toBe(URL_());
+    // Once a copy works, the link goes away again.
+    writeText.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
+    expect(await screen.findByText(t.linkCopied)).toBeInTheDocument();
+    expect(screen.queryByTestId("share-link")).toBeNull();
+  });
+
+  it("selects the preview so it can be copied by hand when copying a summary fails", async () => {
+    writeText.mockRejectedValue(new Error("denied"));
+    open();
+    fireEvent.click(more());
+    fireEvent.click(screen.getByRole("button", { name: t.copySummary }));
+    expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
+    expect(window.getSelection()?.toString()).toBe(preview().textContent);
   });
 
   it("clears the status after a few seconds", async () => {
