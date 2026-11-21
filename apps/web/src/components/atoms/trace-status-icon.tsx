@@ -25,7 +25,10 @@ export function TraceStatusIcon({ state }: { state: TraceState }) {
         tone,
       )}
     >
-      <Icon className={cn("size-3.5", spin && "animate-spin")} aria-hidden />
+      <Icon
+        className={cn("size-3.5", spin && "motion-safe:animate-spin")}
+        aria-hidden
+      />
     </span>
   );
 }

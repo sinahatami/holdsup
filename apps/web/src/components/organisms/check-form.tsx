@@ -166,7 +166,10 @@ export function CheckForm({
                   ? t.submitLink
                   : t.submit}
               {busy ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
+                <Loader2
+                  className="size-4 motion-safe:animate-spin"
+                  aria-hidden
+                />
               ) : (
                 <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
               )}
