@@ -2,6 +2,7 @@
 
 import {
   Check,
+  ChevronDown,
   Code,
   Copy,
   ImageDown,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { flushSync } from "react-dom";
 import { pill } from "@/components/atoms/pill";
 import { useShare, type ShareStatus } from "@/hooks/use-share";
 import { embedCode } from "@/lib/embed";
@@ -20,17 +22,16 @@ import { cn } from "@/lib/utils";
 
 const t = strings.share;
 
-type Way = "link" | "summary" | "embed" | "image";
+/** The ways behind "More ways": the link has its own button in the row above them. */
+type Way = "summary" | "embed" | "image";
 
 const ICON: Record<Way, LucideIcon> = {
-  link: Link2,
   summary: TextQuote,
   embed: Code,
   image: ImageDown,
 };
 
 const ACTION = {
-  link: t.copyLink,
   summary: t.copySummary,
   embed: t.embed,
 } as const;
@@ -52,12 +53,13 @@ function step(e: KeyboardEvent, dir: string): number {
 }
 
 /**
- * Ways to share a check, as tabs: the link, a summary (the claim, its verdict and the link),
- * HTML that puts the verdict on another page, and the check's card image. Each tab shows
- * exactly what it gives before anything is copied, says who it is for, and has one action.
- * The action's icon turns into a tick and a status line beside it says what was copied. If
- * the copy fails, the preview is selected so the reader can copy it by hand. Where the
- * device has a share sheet, a button opens it.
+ * Ways to share a check, in one row that stays out of the result's way: copy the link, the
+ * device's share sheet where there is one, and "More ways", which opens the rest as tabs: a
+ * summary (the claim, its verdict and the link), HTML that puts the verdict on another page,
+ * and the check's card image. Each tab shows exactly what it gives before anything is copied,
+ * says who it is for, and has one action. A copy button's icon turns into a tick and the
+ * status line at the end says what was copied. If a copy fails, the text is shown (the link)
+ * or already is (a preview) and is selected, so the reader can copy it by hand.
  */
 export function ShareActions({
   title,
@@ -80,15 +82,18 @@ export function ShareActions({
     embed && ((origin) => embedCode({ origin, title, ...embed })),
   );
   const ways: Way[] = [
-    "link",
     "summary",
     ...(embed ? (["embed"] as const) : []),
     ...(image ? (["image"] as const) : []),
   ];
-  const [way, setWay] = useState<Way>("link");
+  const [open, setOpen] = useState(false);
+  const [way, setWay] = useState<Way>("summary");
+  // The link, shown only once copying it has failed.
+  const [showLink, setShowLink] = useState(false);
   const id = useId();
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const preview = useRef<HTMLPreElement | null>(null);
+  const link = useRef<HTMLPreElement | null>(null);
 
   function choose(next: Way) {
     setWay(next);
@@ -107,151 +112,212 @@ export function ShareActions({
     tabs.current[to]?.focus();
   }
 
-  async function copy(what: Exclude<Way, "image">) {
+  async function copy(what: "link" | Exclude<Way, "image">) {
     const ok = await share.copy(what);
     // Copying is refused (an old browser, a denied permission): hand the reader the text.
-    if (!ok && preview.current) {
-      window.getSelection()?.selectAllChildren(preview.current);
-    }
+    if (what === "link") flushSync(() => setShowLink(!ok));
+    if (ok) return;
+    const shown = what === "link" ? link.current : preview.current;
+    if (shown) window.getSelection()?.selectAllChildren(shown);
   }
 
   const value =
-    way === "link"
-      ? share.url
-      : way === "summary"
-        ? share.summary
-        : way === "embed"
-          ? share.embedCode
-          : null;
-  const done = share.status !== null && share.status !== "failed";
-  const ActionIcon = done ? Check : Copy;
+    way === "summary"
+      ? share.summary
+      : way === "embed"
+        ? share.embedCode
+        : null;
+  const done = (what: Way | "link") => share.status === what;
 
   return (
     <section
       aria-labelledby="share-heading"
-      className="glass flex flex-col gap-4 rounded-2xl p-4 sm:p-5"
+      className="glass flex flex-col rounded-2xl p-4 sm:px-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="share-heading" className="text-sm font-medium">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
+        <h2 id="share-heading" className="me-auto text-sm font-medium">
           {t.heading}
         </h2>
-        {share.canShare && (
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className={pill({ tone: "glass" })}
-            onClick={share.share}
+            className={cn(
+              pill({ tone: "glass" }),
+              done("link") && "border-brand text-brand",
+            )}
+            onClick={() => void copy("link")}
           >
-            <Share2 className="size-4" aria-hidden />
-            {t.native}
+            {done("link") ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              <Link2 className="size-4" aria-hidden />
+            )}
+            {t.copyLink}
           </button>
-        )}
-      </div>
-
-      <div
-        role="tablist"
-        aria-label={t.heading}
-        onKeyDown={onTabKey}
-        className="bg-muted/60 grid auto-cols-fr grid-flow-col gap-1 rounded-md p-1 sm:inline-flex sm:self-start"
-      >
-        {ways.map((w, i) => {
-          const Icon = ICON[w];
-          const selected = w === way;
-          return (
+          {share.canShare && (
             <button
-              key={w}
-              ref={(el) => {
-                tabs.current[i] = el;
-              }}
               type="button"
-              role="tab"
-              id={`${id}-tab-${w}`}
-              aria-selected={selected}
-              aria-controls={`${id}-panel`}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => choose(w)}
-              className={cn(
-                "focus-visible:ring-ring flex items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 sm:px-3 text-sm font-medium transition focus-visible:ring-2 focus-visible:outline-none",
-                selected
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon className="hidden size-4 sm:block" aria-hidden />
-              {t.tabs[w]}
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        role="tabpanel"
-        id={`${id}-panel`}
-        aria-labelledby={`${id}-tab-${way}`}
-        className="flex flex-col gap-3"
-      >
-        {way === "image" && image ? (
-          <Image
-            src={image.href}
-            alt={strings.og.alt}
-            width={1200}
-            height={630}
-            unoptimized
-            className="border-border h-auto w-full max-w-md rounded-md border"
-          />
-        ) : (
-          <figure className="m-0 flex flex-col gap-1">
-            <figcaption className="sr-only">{t.previewLabel}</figcaption>
-            <pre
-              ref={preview}
-              data-testid="share-preview"
-              className={cn(
-                "bg-background/60 border-border max-h-40 min-h-11 overflow-auto rounded-md border px-3 py-2.5 text-sm leading-6 break-words whitespace-pre-wrap select-all",
-                way === "summary" ? "font-sans" : "font-mono text-[0.8125rem]",
-              )}
-            >
-              {value}
-            </pre>
-          </figure>
-        )}
-        <p className="text-muted-foreground text-sm leading-6">
-          {t.hints[way]}
-        </p>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {way === "image" && image ? (
-            <a
-              href={image.href}
-              download={image.name}
               className={pill({ tone: "glass" })}
+              onClick={share.share}
             >
-              <ImageDown className="size-4" aria-hidden />
-              {t.image}
-            </a>
-          ) : (
-            <button
-              type="button"
-              className={cn(
-                pill({ tone: "glass" }),
-                done && "border-brand text-brand",
-              )}
-              onClick={() => void copy(way as Exclude<Way, "image">)}
-            >
-              <ActionIcon className="size-4" aria-hidden />
-              {ACTION[way as Exclude<Way, "image">]}
+              <Share2 className="size-4" aria-hidden />
+              {t.native}
             </button>
           )}
-          <p
-            role="status"
-            className={cn(
-              "flex min-h-5 items-center text-sm",
-              share.status === "failed"
-                ? "text-foreground"
-                : "text-muted-foreground",
-            )}
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={`${id}-more`}
+            onClick={() => {
+              setOpen(!open);
+              share.clearStatus();
+            }}
+            className={pill({ tone: "glass" })}
           >
-            {share.status && MESSAGE[share.status]}
-          </p>
+            {t.more}
+            <ChevronDown
+              className={cn(
+                "size-4 motion-safe:transition-transform",
+                open && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </button>
         </div>
       </div>
+
+      {showLink && (
+        <figure className="m-0 mt-4 flex flex-col gap-1">
+          <figcaption className="sr-only">{t.linkLabel}</figcaption>
+          <pre
+            ref={link}
+            data-testid="share-link"
+            className="bg-background/60 border-border overflow-auto rounded-md border px-3 py-2.5 font-mono text-[0.8125rem] leading-6 break-all whitespace-pre-wrap select-all"
+          >
+            {share.url}
+          </pre>
+        </figure>
+      )}
+
+      <div
+        id={`${id}-more`}
+        hidden={!open}
+        className="border-border mt-4 flex flex-col gap-4 border-t pt-4"
+      >
+        <div
+          role="tablist"
+          aria-label={t.more}
+          onKeyDown={onTabKey}
+          className="bg-muted/60 grid auto-cols-fr grid-flow-col gap-1 rounded-md p-1 sm:inline-flex sm:self-start"
+        >
+          {ways.map((w, i) => {
+            const Icon = ICON[w];
+            const selected = w === way;
+            return (
+              <button
+                key={w}
+                ref={(el) => {
+                  tabs.current[i] = el;
+                }}
+                type="button"
+                role="tab"
+                id={`${id}-tab-${w}`}
+                aria-selected={selected}
+                aria-controls={`${id}-panel`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => choose(w)}
+                className={cn(
+                  "focus-visible:ring-ring flex items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 sm:px-3 text-sm font-medium transition focus-visible:ring-2 focus-visible:outline-none",
+                  selected
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="hidden size-4 sm:block" aria-hidden />
+                {t.tabs[w]}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          role="tabpanel"
+          id={`${id}-panel`}
+          aria-labelledby={`${id}-tab-${way}`}
+          className="flex flex-col gap-3"
+        >
+          {way === "image" && image ? (
+            <Image
+              src={image.href}
+              alt={strings.og.alt}
+              width={1200}
+              height={630}
+              unoptimized
+              className="border-border h-auto w-full max-w-md rounded-md border"
+            />
+          ) : (
+            <figure className="m-0 flex flex-col gap-1">
+              <figcaption className="sr-only">{t.previewLabel}</figcaption>
+              <pre
+                ref={preview}
+                data-testid="share-preview"
+                className={cn(
+                  "bg-background/60 border-border max-h-40 min-h-11 overflow-auto rounded-md border px-3 py-2.5 text-sm leading-6 break-words whitespace-pre-wrap select-all",
+                  way === "summary"
+                    ? "font-sans"
+                    : "font-mono text-[0.8125rem]",
+                )}
+              >
+                {value}
+              </pre>
+            </figure>
+          )}
+          <p className="text-muted-foreground text-sm leading-6">
+            {t.hints[way]}
+          </p>
+          <div>
+            {way === "image" && image ? (
+              <a
+                href={image.href}
+                download={image.name}
+                className={pill({ tone: "glass" })}
+              >
+                <ImageDown className="size-4" aria-hidden />
+                {t.image}
+              </a>
+            ) : (
+              <button
+                type="button"
+                className={cn(
+                  pill({ tone: "glass" }),
+                  done(way) && "border-brand text-brand",
+                )}
+                onClick={() => void copy(way as Exclude<Way, "image">)}
+              >
+                {done(way) ? (
+                  <Check className="size-4" aria-hidden />
+                ) : (
+                  <Copy className="size-4" aria-hidden />
+                )}
+                {ACTION[way as Exclude<Way, "image">]}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Always in the page (so it is announced), with no height of its own when empty. */}
+      <p
+        role="status"
+        className={cn(
+          "mt-3 text-sm leading-6 empty:mt-0",
+          share.status === "failed"
+            ? "text-foreground"
+            : "text-muted-foreground",
+        )}
+      >
+        {share.status && MESSAGE[share.status]}
+      </p>
     </section>
   );
 }
