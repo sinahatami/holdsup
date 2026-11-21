@@ -9,16 +9,18 @@ import { PageShell } from "@/components/templates/page-shell";
 import { getCatalog } from "@/lib/api/catalog";
 import { coverage } from "@/lib/catalog-stats";
 import { sourceName } from "@/lib/format";
+import { pageMetadata } from "@/lib/page-meta";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 import { pageStrings } from "@/lib/strings/pages";
 
 const t = pageStrings.about;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: routes.about,
   title: `${t.meta.title} · ${strings.appName}`,
   description: t.meta.description,
-};
+});
 
 const link = "text-brand font-medium underline underline-offset-4";
 

@@ -6,14 +6,17 @@ import { RecentExplorer } from "@/components/organisms/recent-explorer";
 import { GalleryCard } from "@/components/molecules/gallery-card";
 import { PageShell } from "@/components/templates/page-shell";
 import { getRecent } from "@/lib/api/gallery";
+import { pageMetadata } from "@/lib/page-meta";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
 const t = strings.recent;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: routes.recent,
   title: `${t.heading} · ${strings.appName}`,
   description: t.meta.description,
-};
+});
 
 /** Every featured check, newest first, with filters by verdict, topic and place. */
 export default async function Page() {

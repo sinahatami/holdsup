@@ -105,6 +105,8 @@ The first visit after a quiet spell waits a few seconds while the container star
    | `HOLDSUP_API_URL` | the same address (server-side reads: gallery, catalog, eval) |
 
    `NEXT_PUBLIC_SITE_URL` is only needed if the site uses a custom domain. On Vercel, share-picture links are worked out from the deployment. `NEXT_PUBLIC_*` values are built into the pages, so redeploy after changing one.
+
+   To list the site in Google: in [Search Console](https://search.google.com/search-console) add a **URL prefix** property for the site's address, pick the **HTML tag** check, and copy only the `content` value into a `GOOGLE_SITE_VERIFICATION` variable (Production). Redeploy, click **Verify**, then submit `sitemap.xml` under **Sitemaps**.
 3. Deploy. If the home page shows an empty gallery, the API was still starting during the build: redeploy once it answers.
 4. If the final address differs from the `WEB_ORIGIN` you set on Cloud Run, update it there (**Edit & deploy new revision**). Otherwise browsers get CORS errors. Preview deployments have other addresses, so they can show pages but can't run checks.
 

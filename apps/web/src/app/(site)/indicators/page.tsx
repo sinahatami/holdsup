@@ -5,11 +5,14 @@ import { CatalogExplorer } from "@/components/organisms/catalog-explorer";
 import { CatalogList } from "@/components/organisms/catalog-list";
 import { PageShell } from "@/components/templates/page-shell";
 import { getCatalog } from "@/lib/api/catalog";
+import { pageMetadata } from "@/lib/page-meta";
+import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: routes.indicators,
   title: `${strings.indicators.heading} · ${strings.appName}`,
-};
+});
 
 export default async function Page() {
   const catalog = await getCatalog();

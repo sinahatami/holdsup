@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { CanCheck } from "@/components/organisms/can-check";
 import { CheckForm } from "@/components/organisms/check-form";
@@ -9,8 +10,14 @@ import { SampleReceipt } from "@/components/organisms/sample-receipt";
 import { PageShell } from "@/components/templates/page-shell";
 import { getCatalog } from "@/lib/api/catalog";
 import { getGallery } from "@/lib/api/gallery";
+import { pageMetadata } from "@/lib/page-meta";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+
+export const metadata: Metadata = pageMetadata({
+  path: routes.home,
+  title: strings.appName,
+});
 
 // Prerendered: the gallery and catalog reads are cached (see getGallery,
 // getCatalog), so the page still renders when the API is stopped.
