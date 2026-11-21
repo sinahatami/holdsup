@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { StatusText } from "@/components/atoms/status-text";
+import { CheckPlaceholder } from "@/components/molecules/check-placeholder";
 import { CheckTemplate } from "@/components/templates/check-template";
 import { readCheck } from "@/lib/api/check";
 import { receiptDescription, receiptTitle } from "@/lib/receipt-meta";
@@ -61,7 +61,7 @@ export default function Page({ params }: PageProps<"/check/[id]">) {
               a short page would show it, and it would jump when the receipt arrives
               (a layout shift of about 0.5 in Lighthouse). */}
           <div className="min-h-svh">
-            <StatusText>{strings.check.loading}</StatusText>
+            <CheckPlaceholder />
           </div>
         </CheckTemplate>
       }

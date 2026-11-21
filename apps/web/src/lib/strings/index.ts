@@ -268,6 +268,8 @@ export const strings = {
     receiptNo: (no: string) => `No. ${no}`,
     checkedOn: (date: string) => `Checked ${date}`,
     claimCount: (n: number) => `${n} claim${n === 1 ? "" : "s"}`,
+    // Names the receipt when it arrives at the end of a live check and takes the focus.
+    resultLabel: "Result of the check",
     traceHeading: "What HoldsUp is doing",
     // Names each claim's section for a screen reader; "Claim" alone when there is one.
     claimOf: (n: number, total: number) =>
@@ -530,6 +532,9 @@ export const strings = {
   },
   progress: {
     heading: "Progress",
+    // Time spent so far on the stage in progress.
+    elapsed: (s: number) =>
+      s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${s % 60} s`,
     stages: {
       find: "Finding the series",
       fetch: "Fetching the data",
