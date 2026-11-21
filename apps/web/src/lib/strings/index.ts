@@ -261,6 +261,13 @@ export const strings = {
   },
   check: {
     heading: "Check",
+    // The page's heading once a check has a result, and while it runs.
+    receiptHeading: "Receipt",
+    runningHeading: "Checking",
+    // The line under "Receipt": its number (the start of the check's id), when, how many claims.
+    receiptNo: (no: string) => `No. ${no}`,
+    checkedOn: (date: string) => `Checked ${date}`,
+    claimCount: (n: number) => `${n} claim${n === 1 ? "" : "s"}`,
     traceHeading: "What HoldsUp is doing",
     // Names each claim's section for a screen reader; "Claim" alone when there is one.
     claimOf: (n: number, total: number) =>
