@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/sinahatami/holdsup/compare/v0.5.0...v0.6.0) (2026-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* GET /v1/eval and the /eval page are removed.
+* remove the status page; show the release version in the footer ([#88](https://github.com/sinahatami/holdsup/issues/88))
+
+### Features
+
+* remove the eval page and GET /v1/eval ([#92](https://github.com/sinahatami/holdsup/issues/92)) ([3c061cf](https://github.com/sinahatami/holdsup/commit/3c061cf3af0b8136beb39fb59fee53e5cfc16a4b))
+* remove the status page; show the release version in the footer ([#88](https://github.com/sinahatami/holdsup/issues/88)) ([0b90710](https://github.com/sinahatami/holdsup/commit/0b90710fb39e770f64b827e401a0395b96ddb2ce))
+* **web:** canonical links, og:url and a Search Console tag ([#91](https://github.com/sinahatami/holdsup/issues/91)) ([421e3f4](https://github.com/sinahatami/holdsup/commit/421e3f45bb53c9d0f2d71161f6382b9439f4694b))
+
 ## [0.5.0](https://github.com/sinahatami/holdsup/compare/v0.4.2...v0.5.0) (2026-11-20)
 
 
