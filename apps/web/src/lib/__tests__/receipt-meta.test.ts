@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CheckResult, Label } from "@/lib/api/client";
+import { shownLabel } from "@/lib/confidence";
+import { checkResult, holdingClaim, partlyClaim } from "@/test/fixtures";
 import {
   clip,
   receiptDescription,
+  receiptFacts,
   receiptTitle,
   verdictLine,
 } from "@/lib/receipt-meta";
@@ -83,5 +86,27 @@ describe("receipt title and description", () => {
       claim("r", "supported"),
     );
     expect(receiptDescription(many)).toHaveLength(200);
+  });
+});
+
+describe("receiptFacts", () => {
+  it("names the receipt by the start of its id, its day and its one claim", () => {
+    expect(receiptFacts(checkResult([holdingClaim]))).toEqual([
+      "No. 11111111",
+      "Checked November 7, 2026",
+      "1 claim",
+    ]);
+  });
+
+  it("says how many of several claims hold up", () => {
+    const result = checkResult([holdingClaim, { ...partlyClaim, index: 1 }], {
+      id: "4c47ae9e-0c31-4fbd-a132-aa05dfdfc109",
+    });
+    const facts = receiptFacts(result);
+    expect(facts[0]).toBe("No. 4C47AE9E");
+    expect(facts[2]).toBe(
+      verdictLine(result.claims.map((c) => ({ label: shownLabel(c) }))),
+    );
+    expect(facts[2]).toMatch(/of 2 claims/);
   });
 });

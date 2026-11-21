@@ -12,6 +12,7 @@ import { strings } from "@/lib/strings";
 const t = strings.share;
 const TEXT =
   "“Debt is 133% of GDP.”\nHolds up. Checked with HoldsUp, against Eurostat.";
+const URL_ = () => `${location.origin}/check/abc-123`;
 
 const writeText = vi.fn();
 
@@ -20,6 +21,20 @@ function open() {
     <ShareActions title="Holds up · “Debt is 133% of GDP.”" text={TEXT} />,
   );
 }
+
+function full() {
+  return render(
+    <ShareActions
+      title="Holds up · “Debt is 133% of GDP.”"
+      text={TEXT}
+      image={{ href: "/check/c1/opengraph-image", name: "holdsup-c1.png" }}
+      embed={{ id: "abc-123", claims: 1 }}
+    />,
+  );
+}
+
+const tab = (name: string) => screen.getByRole("tab", { name });
+const preview = () => screen.getByTestId("share-preview");
 
 beforeEach(() => {
   writeText.mockReset().mockResolvedValue(undefined);
@@ -33,51 +48,118 @@ afterEach(() => {
 });
 
 describe("ShareActions", () => {
-  it("offers the check's card image to download, only when there is one", () => {
-    const { unmount } = render(
-      <ShareActions
-        title="Holds up"
-        text={TEXT}
-        image={{ href: "/check/c1/opengraph-image", name: "holdsup-c1.png" }}
-      />,
-    );
-    const link = screen.getByRole("link", { name: t.image });
-    expect(link).toHaveAttribute("href", "/check/c1/opengraph-image");
-    expect(link).toHaveAttribute("download", "holdsup-c1.png");
-    unmount();
-    open();
-    expect(screen.queryByRole("link", { name: t.image })).toBeNull();
+  it("is a labelled region with one tab per way to share, the link first", () => {
+    full();
+    expect(screen.getByRole("region", { name: t.heading })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tablist", { name: t.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("tab").map((el) => el.textContent)).toEqual([
+      t.tabs.link,
+      t.tabs.summary,
+      t.tabs.embed,
+      t.tabs.image,
+    ]);
+    expect(tab(t.tabs.link)).toHaveAttribute("aria-selected", "true");
+    // One tab stop for the whole list; arrows move within it.
+    expect(tab(t.tabs.link)).toHaveAttribute("tabindex", "0");
+    expect(tab(t.tabs.summary)).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("tabpanel")).toHaveAccessibleName(t.tabs.link);
   });
 
-  it("copies the link of this page, without its query or fragment", async () => {
+  it("offers only the ways this check has", () => {
+    open();
+    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    expect(screen.queryByRole("tab", { name: t.tabs.embed })).toBeNull();
+    expect(screen.queryByRole("tab", { name: t.tabs.image })).toBeNull();
+  });
+
+  it("shows the link before it is copied, without the page's query or fragment", () => {
+    open();
+    expect(preview()).toHaveTextContent(URL_());
+    expect(screen.getByText(t.hints.link)).toBeInTheDocument();
+  });
+
+  it("copies the link, ticks the button and says so beside it", async () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
-    await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith(
-        `${location.origin}/check/abc-123`,
-      ),
-    );
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(URL_()));
     expect(await screen.findByRole("status")).toHaveTextContent(t.linkCopied);
+    // The button keeps its name (what it does), so it can be pressed again.
+    expect(
+      screen.getByRole("button", { name: t.copyLink }),
+    ).toBeInTheDocument();
   });
 
-  it("copies a summary with the claim, the verdict and the link", async () => {
+  it("shows and copies a summary with the claim, the verdict and the link", async () => {
     open();
+    fireEvent.click(tab(t.tabs.summary));
+    expect(tab(t.tabs.summary)).toHaveAttribute("aria-selected", "true");
+    expect(preview().textContent).toBe(`${TEXT}\n${URL_()}`);
     fireEvent.click(screen.getByRole("button", { name: t.copySummary }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
     const copied = writeText.mock.calls[0][0] as string;
-    expect(copied).toContain("“Debt is 133% of GDP.”");
-    expect(copied).toContain("Holds up");
-    expect(copied.endsWith(`${location.origin}/check/abc-123`)).toBe(true);
+    expect(copied).toBe(preview().textContent);
     expect(await screen.findByRole("status")).toHaveTextContent(
       t.summaryCopied,
     );
   });
 
-  it("says so when it could not copy", async () => {
+  it("shows and copies the iframe code for this site", async () => {
+    full();
+    fireEvent.click(tab(t.tabs.embed));
+    expect(preview().textContent).toMatch(/^<iframe /);
+    fireEvent.click(screen.getByRole("button", { name: t.embed }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+    const code = writeText.mock.calls[0][0] as string;
+    expect(code).toBe(preview().textContent);
+    expect(code).toContain(`src="${location.origin}/embed/abc-123"`);
+    expect(code).toContain("Debt is 133% of GDP.");
+    expect(await screen.findByRole("status")).toHaveTextContent(t.embedCopied);
+  });
+
+  it("shows the card image and offers it to download", () => {
+    full();
+    fireEvent.click(tab(t.tabs.image));
+    expect(screen.getByRole("img", { name: strings.og.alt })).toHaveAttribute(
+      "src",
+      "/check/c1/opengraph-image",
+    );
+    const link = screen.getByRole("link", { name: t.image });
+    expect(link).toHaveAttribute("href", "/check/c1/opengraph-image");
+    expect(link).toHaveAttribute("download", "holdsup-c1.png");
+  });
+
+  it("moves between tabs with the arrow keys, Home and End, and wraps around", () => {
+    full();
+    const list = screen.getByRole("tablist");
+    fireEvent.keyDown(list, { key: "ArrowRight" });
+    expect(tab(t.tabs.summary)).toHaveFocus();
+    expect(tab(t.tabs.summary)).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(list, { key: "End" });
+    expect(tab(t.tabs.image)).toHaveFocus();
+    fireEvent.keyDown(list, { key: "ArrowRight" });
+    expect(tab(t.tabs.link)).toHaveFocus();
+    fireEvent.keyDown(list, { key: "ArrowLeft" });
+    expect(tab(t.tabs.image)).toHaveFocus();
+    fireEvent.keyDown(list, { key: "Home" });
+    expect(tab(t.tabs.link)).toHaveFocus();
+  });
+
+  it("clears the last status when another tab is chosen", async () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
+    expect(await screen.findByRole("status")).toHaveTextContent(t.linkCopied);
+    fireEvent.click(tab(t.tabs.summary));
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("selects the preview so it can be copied by hand when copying fails", async () => {
     writeText.mockRejectedValue(new Error("denied"));
     open();
     fireEvent.click(screen.getByRole("button", { name: t.copyLink }));
     expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
+    expect(window.getSelection()?.toString()).toBe(URL_());
   });
 
   it("clears the status after a few seconds", async () => {
@@ -88,7 +170,7 @@ describe("ShareActions", () => {
       expect(screen.getByRole("status")).toHaveTextContent(t.linkCopied),
     );
     act(() => {
-      vi.advanceTimersByTime(3500);
+      vi.advanceTimersByTime(4500);
     });
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
@@ -121,7 +203,7 @@ describe("ShareActions", () => {
     expect(share).toHaveBeenCalledWith({
       title: "Holds up · “Debt is 133% of GDP.”",
       text: TEXT,
-      url: `${location.origin}/check/abc-123`,
+      url: URL_(),
     });
   });
 
@@ -152,45 +234,5 @@ describe("ShareActions", () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: t.native }));
     expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
-  });
-
-  it("copies the iframe code for this site, only for a check that can be embedded", async () => {
-    const { unmount } = render(
-      <ShareActions
-        title="Holds up · “Debt is 133% of GDP.”"
-        text={TEXT}
-        embed={{ id: "abc-123", claims: 1 }}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: t.embed }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-    const code = writeText.mock.calls[0][0] as string;
-    expect(code).toMatch(/^<iframe /);
-    expect(code).toContain(`src="${location.origin}/embed/abc-123"`);
-    expect(code).toContain("Debt is 133% of GDP.");
-    expect(await screen.findByRole("status")).toHaveTextContent(t.embedCopied);
-    unmount();
-    open();
-    expect(screen.queryByRole("button", { name: t.embed })).toBeNull();
-  });
-
-  it("says so when the embed code cannot be copied", async () => {
-    writeText.mockRejectedValue(new Error("denied"));
-    render(
-      <ShareActions title="t" text={TEXT} embed={{ id: "c1", claims: 2 }} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: t.embed }));
-    expect(await screen.findByRole("status")).toHaveTextContent(t.failed);
-  });
-
-  it("is a labelled region whose buttons can be reached by keyboard", () => {
-    open();
-    expect(screen.getByRole("region", { name: t.heading })).toBeInTheDocument();
-    for (const name of [t.copyLink, t.copySummary]) {
-      expect(screen.getByRole("button", { name })).not.toHaveAttribute(
-        "tabindex",
-        "-1",
-      );
-    }
   });
 });

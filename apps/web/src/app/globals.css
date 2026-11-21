@@ -362,6 +362,175 @@ html {
   }
 }
 
+/* ---------- Check progress: the line from one stage to the next ---------- */
+/* Down the list on a phone, across it from 40rem. The fill grows from the stage it leaves
+   once that stage is done or not needed, so it shows only what the trace says happened. */
+.stage-line {
+  position: absolute;
+  inset-inline-start: 0.75rem; /* the centre of the 1.5rem mark */
+  inset-block: 1.75rem -0.5rem; /* from under this mark to just above the next */
+  width: 1px;
+  overflow: hidden;
+  background: var(--border);
+}
+.stage-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(180deg, var(--brand), var(--brand-2));
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+:is([data-state="done"], [data-state="skipped"]) > .stage-line::after {
+  transform: none;
+}
+@media (width >= 40rem) {
+  .stage-line {
+    inset-block: 0.75rem auto;
+    inset-inline: 2rem 0;
+    width: auto;
+    height: 1px;
+  }
+  .stage-line::after {
+    background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+  [dir="rtl"] .stage-line::after {
+    background-image: linear-gradient(270deg, var(--brand), var(--brand-2));
+    transform-origin: 100% 50%;
+  }
+}
+
+/* ---------- Tooltip (atoms/tooltip.tsx) ---------- */
+/* An ink label, the page's own colours swapped, so it reads on paper and in the dark theme
+   alike. A caret points at the control, and the label settles in towards it. It opens
+   after a moment of mouse hover (so a pointer passing over the header does not flash
+   labels), at once on keyboard focus, and Escape closes it (data-dismissed). */
+.tip-anchor {
+  position: relative;
+  display: inline-flex;
+}
+.tip {
+  position: absolute;
+  z-index: 50;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.14s ease-out,
+    visibility 0s linear 0.14s;
+}
+.tip[data-side="bottom"] {
+  top: 100%;
+  padding-top: 0.5rem;
+}
+.tip[data-side="top"] {
+  bottom: 100%;
+  padding-bottom: 0.5rem;
+}
+.tip[data-align="start"] {
+  inset-inline-start: 0;
+}
+.tip[data-align="end"] {
+  inset-inline-end: 0;
+}
+.tip[data-align="center"] {
+  inset-inline-start: 50%;
+  translate: -50% 0;
+}
+[dir="rtl"] .tip[data-align="center"] {
+  translate: 50% 0;
+}
+.tip-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 3px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow:
+    0 10px 24px -10px oklch(0.2 0.02 265 / 0.45),
+    0 2px 4px -2px oklch(0.2 0.02 265 / 0.25);
+  transform: translateY(-3px) scale(0.96);
+  transform-origin: 50% 0;
+  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.tip[data-side="top"] .tip-label {
+  transform: translateY(3px) scale(0.96);
+  transform-origin: 50% 100%;
+}
+/* The caret: a small square turned on its point, half of it showing. At an end, it sits over
+   the middle of a 44px control (the largest of them; smaller ones are off by a few pixels). */
+.tip-label::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: inherit;
+  rotate: 45deg;
+}
+.tip[data-side="bottom"] .tip-label::before {
+  top: -3px;
+}
+.tip[data-side="top"] .tip-label::before {
+  bottom: -3px;
+}
+.tip[data-align="center"] .tip-label::before {
+  inset-inline-start: 50%;
+  margin-inline-start: -4px;
+}
+.tip[data-align="end"] .tip-label::before {
+  inset-inline-end: calc(1.375rem - 4px);
+}
+.tip[data-align="start"] .tip-label::before {
+  inset-inline-start: calc(1.375rem - 4px);
+}
+@media (hover: hover) {
+  .tip-anchor:hover > .tip {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition:
+      opacity 0.14s ease-out 0.3s,
+      visibility 0s linear 0.3s;
+  }
+  .tip-anchor:hover > .tip .tip-label {
+    transform: none;
+    transition-delay: 0.3s;
+  }
+}
+.tip-anchor:has(:focus-visible) > .tip {
+  visibility: visible;
+  opacity: 1;
+  transition:
+    opacity 0.14s ease-out,
+    visibility 0s;
+}
+.tip-anchor:has(:focus-visible) > .tip .tip-label {
+  transform: none;
+  transition-delay: 0s;
+}
+.tip-anchor[data-dismissed] > .tip {
+  visibility: hidden;
+  opacity: 0;
+}
+@media print {
+  .tip {
+    display: none;
+  }
+}
+
 /* ---------- Scroll reveal (CSS scroll-driven, no JS) ---------- */
 @supports (animation-timeline: view()) {
   .reveal {
@@ -447,7 +616,14 @@ html {
   .scroll-progress {
     animation: none;
   }
-  .shine::after {
+  .shine::after,
+  .stage-line::after {
+    transition: none;
+  }
+  /* The tooltip only fades. */
+  .tip-label,
+  .tip[data-side="top"] .tip-label {
+    transform: none;
     transition: none;
   }
 }

@@ -107,6 +107,7 @@ export const strings = {
     themeLight: "Light",
     themeDark: "Dark",
     themeSystem: "System",
+    backToTop: "Back to top",
   },
   footer: {
     blurb:
@@ -138,6 +139,8 @@ export const strings = {
     note: "Kept in this browser only. Clearing your browser data removes them.",
     clear: "Clear the list",
     remove: (text: string) => `Remove from your list: ${text}`,
+    // The tooltip on the remove button: the start of its name, short enough for one line.
+    removeShort: "Remove from your list",
     summary: (holds: number, total: number) =>
       `${holds} of ${total} claims hold up`,
     running: "Result not seen yet",
@@ -258,6 +261,15 @@ export const strings = {
   },
   check: {
     heading: "Check",
+    // The page's heading once a check has a result, and while it runs.
+    receiptHeading: "Receipt",
+    runningHeading: "Checking",
+    // The line under "Receipt": its number (the start of the check's id), when, how many claims.
+    receiptNo: (no: string) => `No. ${no}`,
+    checkedOn: (date: string) => `Checked ${date}`,
+    claimCount: (n: number) => `${n} claim${n === 1 ? "" : "s"}`,
+    // Names the receipt when it arrives at the end of a live check and takes the focus.
+    resultLabel: "Result of the check",
     traceHeading: "What HoldsUp is doing",
     // Names each claim's section for a screen reader; "Claim" alone when there is one.
     claimOf: (n: number, total: number) =>
@@ -520,6 +532,9 @@ export const strings = {
   },
   progress: {
     heading: "Progress",
+    // Time spent so far on the stage in progress.
+    elapsed: (s: number) =>
+      s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${s % 60} s`,
     stages: {
       find: "Finding the series",
       fetch: "Fetching the data",
@@ -585,17 +600,35 @@ export const strings = {
   },
   share: {
     heading: "Share this check",
+    // The ways to share, as tabs: each shows what it gives before anything is copied.
+    tabs: {
+      link: "Link",
+      summary: "Summary",
+      embed: "Embed",
+      image: "Image",
+    },
+    // Under each preview: who it is for and what happens with it.
+    hints: {
+      link: "Anyone with the link sees this receipt. It is not listed on the site or shown to search engines.",
+      summary:
+        "For a message or a post: the claim, how it came out, and the link, as above.",
+      embed:
+        "For your own page: paste this into its HTML. It shows the verdict, always as HoldsUp has it now, and links back here.",
+      image:
+        "The card chat apps and social sites show for the link (1200 × 630, PNG).",
+    },
+    previewLabel: "What will be copied",
     copyLink: "Copy link",
     copySummary: "Copy summary",
     image: "Download image",
     imageName: (id: string) => `holdsup-${id}.png`,
-    native: "Share",
+    native: "Share…",
     embed: "Copy embed code",
     linkCopied: "Link copied.",
     summaryCopied: "Summary copied.",
     embedCopied: "Embed code copied. Paste it into a page's HTML.",
     failed:
-      "Could not copy. You can copy the address from your browser's address bar instead.",
+      "Could not copy. The text is selected above: press Ctrl+C (⌘C on a Mac) to copy it.",
     // The text that is copied or shared: the claim, how it came out, and where.
     one: (claim: string, verdict: string, source: string | null) =>
       `“${claim}”\n${verdict}. Checked with HoldsUp${source ? `, against ${source}` : ""}.`,

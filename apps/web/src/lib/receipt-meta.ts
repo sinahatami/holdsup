@@ -1,5 +1,6 @@
 import type { CheckResult, Label } from "@/lib/api/client";
 import { shownLabel } from "@/lib/confidence";
+import { formatDate } from "@/lib/format";
 import { countHolding } from "@/lib/gallery";
 import { strings } from "@/lib/strings";
 
@@ -30,6 +31,21 @@ export function receiptTitle(result: CheckResult): string {
     verdictLine(labels(result)),
     clip(claim, TITLE_CLAIM_MAX),
   );
+}
+
+/**
+ * The facts under a receipt's heading, in reading order: its number (the start of the
+ * check's id, enough to name it in a report), the day it was checked, and the claims (with
+ * how many hold up when there are several; one claim's verdict is right below).
+ */
+export function receiptFacts(result: CheckResult): string[] {
+  const t = strings.check;
+  const n = result.claims.length;
+  return [
+    t.receiptNo(result.id.slice(0, 8).toUpperCase()),
+    t.checkedOn(formatDate(result.created_at)),
+    n > 1 ? verdictLine(labels(result)) : t.claimCount(n),
+  ];
 }
 
 /**

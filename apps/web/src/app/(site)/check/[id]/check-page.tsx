@@ -7,6 +7,8 @@ import { CheckResultView } from "@/components/organisms/check-result";
 import { CheckTemplate } from "@/components/templates/check-template";
 import { readCheck, readNewer } from "@/lib/api/check";
 import { isRetryable, problemKind } from "@/lib/api/client";
+import { receiptFacts } from "@/lib/receipt-meta";
+import { strings } from "@/lib/strings";
 import { CheckLive } from "./check-live";
 import { WhileYouWait } from "./while-you-wait";
 
@@ -27,7 +29,11 @@ export async function CheckPage({ id }: { id: string }) {
     // A source revised its figures since: the newest check, to point the reader to (S1).
     const newer = updated_by ? await readNewer(updated_by) : null;
     return (
-      <CheckTemplate actions={<BackLink />}>
+      <CheckTemplate
+        heading={strings.check.receiptHeading}
+        facts={receiptFacts(result)}
+        actions={<BackLink />}
+      >
         <CheckResultView
           result={result}
           newer={newer}

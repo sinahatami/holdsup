@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import Link from "next/link";
+import { Tooltip } from "@/components/atoms/tooltip";
 import { VerdictBadge } from "@/components/atoms/verdict-badge";
 import { TitledSection } from "@/components/molecules/titled-section";
 import { useHistory } from "@/hooks/use-history";
@@ -60,15 +61,16 @@ export function HistoryList() {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => historyStore.remove(e.id)}
-                aria-label={t.remove(e.text)}
-                title={t.remove(e.text)}
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full focus-visible:ring-4 focus-visible:outline-none"
-              >
-                <X className="size-4" aria-hidden />
-              </button>
+              <Tooltip label={t.removeShort} side="top" align="end">
+                <button
+                  type="button"
+                  onClick={() => historyStore.remove(e.id)}
+                  aria-label={t.remove(e.text)}
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full focus-visible:ring-4 focus-visible:outline-none"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              </Tooltip>
             </li>
           );
         })}

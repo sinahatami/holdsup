@@ -1,3 +1,4 @@
+import { ElapsedTime } from "@/components/atoms/elapsed-time";
 import { Eyebrow } from "@/components/atoms/eyebrow";
 import { ProgressMark } from "@/components/atoms/progress-mark";
 import type { Stage } from "@/lib/progress";
@@ -7,6 +8,8 @@ import { cn } from "@/lib/utils";
 /**
  * Where a running check is: finding the series, fetching the data, recomputing, writing the
  * explanation, done. Each stage follows the live trace, so it moves when the server moves.
+ * A line joins each stage to the next and fills once the stage is behind (`.stage-line` in
+ * globals.css, keyed on `data-state`); the running stage counts its seconds.
  */
 export function ProgressSteps({ stages }: { stages: readonly Stage[] }) {
   const t = strings.progress;
@@ -17,24 +20,30 @@ export function ProgressSteps({ stages }: { stages: readonly Stage[] }) {
     >
       <Eyebrow id="progress-heading">{t.heading}</Eyebrow>
       <ol className="grid gap-3 sm:grid-cols-5 sm:gap-2">
-        {stages.map(({ id, state }) => (
+        {stages.map(({ id, state }, i) => (
           <li
             key={id}
             data-state={state}
             aria-current={state === "running" ? "step" : undefined}
-            className="flex items-center gap-3 text-sm sm:flex-col sm:items-start sm:gap-2"
+            className="relative flex items-center gap-3 text-sm sm:flex-col sm:items-start sm:gap-2"
           >
+            {i < stages.length - 1 && (
+              <span aria-hidden className="stage-line" />
+            )}
             <ProgressMark state={state} />
             <span
               className={cn(
-                "leading-5",
+                "flex flex-wrap items-baseline gap-x-2 leading-5",
                 state === "pending" || state === "skipped"
                   ? "text-muted-foreground"
                   : "font-medium",
               )}
             >
-              {t.stages[id]}
-              <span className="sr-only"> ({t.state[state]})</span>
+              <span>
+                {t.stages[id]}
+                <span className="sr-only"> ({t.state[state]})</span>
+              </span>
+              {state === "running" && <ElapsedTime key={id} />}
             </span>
           </li>
         ))}
