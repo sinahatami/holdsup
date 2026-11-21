@@ -1,4 +1,4 @@
-"""The report: stamped, complete enough for the /eval page, and free of raw text."""
+"""The report: stamped, complete, and free of raw text."""
 
 from pathlib import Path
 

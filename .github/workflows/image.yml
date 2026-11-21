@@ -2,16 +2,13 @@ name: API image
 
 # Builds the API bundle (make api-bundle) the way a deploy builds it (DEPLOY.md) and
 # checks the image starts: production with incomplete settings refuses to start, and
-# production with complete (dummy) settings serves health, the catalog and the eval page.
+# production with complete (dummy) settings serves health and the catalog.
 # On a push to main, a pass then deploys that commit to Cloud Run (cd.yml).
 on:
   pull_request:
     paths:
       - "apps/api/**"
       - "packages/catalog/**"
-      - "eval/VERSION"
-      - "eval/reports/**"
-      - "ml/*/reports/report.json"
       - "pyproject.toml"
       - "uv.lock"
       - "LICENSE"
@@ -22,9 +19,6 @@ on:
     paths:
       - "apps/api/**"
       - "packages/catalog/**"
-      - "eval/VERSION"
-      - "eval/reports/**"
-      - "ml/*/reports/report.json"
       - "pyproject.toml"
       - "uv.lock"
       - "LICENSE"
@@ -68,7 +62,7 @@ jobs:
             echo "$out" | grep -q "$name"
           done
 
-      - name: Complete production settings serve health, catalog and eval
+      - name: Complete production settings serve health and catalog
         run: |
           # Dummy values: nothing here reaches a database or a model provider.
           docker run -d --name api -p 127.0.0.1:7860:7860 \
@@ -80,14 +74,11 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:7860/v1/catalog > catalog.json
-          curl -fsS http://127.0.0.1:7860/v1/eval > eval.json
           python3 - <<'EOF'
           import json
           catalog = json.load(open("catalog.json"))
-          bench = json.load(open("eval.json"))
           assert catalog["version"] and len(catalog["indicators"]) > 0, catalog
-          assert bench["eval_version"] and bench["runs"] and bench["models"], bench
-          print(len(catalog["indicators"]), "indicators;", len(bench["runs"]), "eval runs")
+          print(len(catalog["indicators"]), "indicators")
           EOF
           docker inspect api --format '{{range .Config.Env}}{{println .}}{{end}}' | grep '^APP_COMMIT=[0-9a-f]'
 

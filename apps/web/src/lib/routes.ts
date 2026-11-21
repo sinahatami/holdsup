@@ -8,7 +8,6 @@ export const routes = {
   about: "/about",
   indicators: "/indicators",
   recent: "/recent",
-  eval: "/eval",
   cannotCheck: "/methodology#cannot",
   /** The catalog narrowed to a word or two, as the catalog page reads it. */
   indicatorSearch: (q: string) => `/indicators?q=${encodeURIComponent(q)}`,

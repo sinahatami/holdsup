@@ -40,7 +40,6 @@ describe("robots.txt and the sitemap", () => {
       "https://holdsup.example/methodology",
       "https://holdsup.example/indicators",
       "https://holdsup.example/recent",
-      "https://holdsup.example/eval",
       "https://holdsup.example/about",
     ]);
     expect(

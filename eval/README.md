@@ -51,6 +51,4 @@ A run waits out rate limits for ten minutes in all, then leaves the texts it cou
 
 A general chatbot gets the text and the labelled claims in one plain question ("is each claim true?", the five labels with a line each) and answers from what it knows: no tools, no data, no web search. Its answers are scored against the same labels, with the same confusion matrix and cost figures, as a report of `kind: chatbot` (verdicts and cost only: it has no extraction, matching or explanation). The router step is `baseline` in `providers.yaml`; the run allows the offline-only provider (`--use offline`). A claim it gives no answer for counts as wrong ("no answer"); a text no provider could serve is left out and counted.
 
-`GET /v1/eval` joins `<split>.json` with the split's chatbot run (the one that answered the most claims, whether `<split>.chatbot.json` or one provider's `<split>.chatbot.<provider>.json`) on the claims both could be scored on, and the `/eval` page shows the result, with the claims HoldsUp loses and the first step that broke in each.
-
 The test split is held out: `--split test` and `--split all` are refused without `--final` (P4.7). Tuning uses dev only.

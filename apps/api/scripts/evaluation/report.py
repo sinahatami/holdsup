@@ -1,4 +1,4 @@
-"""The report of one run: JSON for the /eval page (P4.6) and Markdown for people.
+"""The report of one run: JSON for the gates and tools, Markdown for people.
 
 Every report is stamped with what produced it: app, catalog, tolerances and benchmark
 versions, and the provider and model behind each step. It carries claim ids, labels, the

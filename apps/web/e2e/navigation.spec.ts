@@ -6,7 +6,6 @@ const PAGES = [
   { name: "What it can check", url: /\/indicators$/ },
   { name: "Recent checks", url: /\/recent$/ },
   { name: "Methodology", url: /\/methodology$/ },
-  { name: "How it compares", url: /\/eval$/ },
   { name: "About", url: /\/about$/ },
 ];
 
@@ -107,7 +106,6 @@ test.describe("every page on a 360px phone", () => {
     "/recent",
     "/indicators",
     "/methodology",
-    "/eval",
     "/about",
   ]) {
     test(`${path} fits without scrolling sideways`, async ({ page }) => {

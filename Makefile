@@ -103,8 +103,7 @@ docker-api: ## Build and run the API image on localhost:7860 (as development)
 # local edits), with the Dockerfile at the root and the commit stamped in for receipts.
 # One folder per commit, .cache/api-<commit>; an existing one is left as it is.
 API_BUNDLE_FILES := LICENSE pyproject.toml uv.lock apps/api/pyproject.toml apps/api/alembic.ini \
-	apps/api/holdsup apps/api/scripts/fetch_reranker.py packages/catalog eval/VERSION \
-	eval/reports ml/reranker/reports/report.json ml/confidence/reports/report.json
+	apps/api/holdsup apps/api/scripts/fetch_reranker.py packages/catalog
 api-bundle: ## Write the API image's build folder for HEAD into .cache/api-<commit>
 	@git diff --quiet HEAD -- $(API_BUNDLE_FILES) $(API_DIR)/Dockerfile || \
 		echo "warning: uncommitted changes are not in the bundle (it is built from HEAD)"

@@ -35,7 +35,6 @@ def test_a_complete_production_setup_passes() -> None:
         ({"trusted_proxies": 0}, "TRUSTED_PROXIES"),
         ({"web_origin": "http://localhost:3000"}, "WEB_ORIGIN"),
         ({"catalog_dir": Path("/nowhere/catalog")}, "CATALOG_DIR"),
-        ({"reports_dir": Path("/nowhere/reports")}, "REPORTS_DIR"),
     ],
 )
 def test_each_gap_is_named(change: dict[str, object], named: str) -> None:
