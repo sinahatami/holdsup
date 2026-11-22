@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 // The live follower is a client component with its own tests; here it only has to be chosen.
-vi.mock("@/app/(site)/check/[id]/check-live", () => ({
+vi.mock("@/app/(site)/check/[id]/check-live-lazy", () => ({
   CheckLive: ({ id }: { id: string }) => <p>following {id} live</p>,
 }));
 // The gallery read is the home page's (tested there); here it only has to be placed.

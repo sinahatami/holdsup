@@ -9,7 +9,7 @@ import { readCheck, readNewer } from "@/lib/api/check";
 import { isRetryable, problemKind } from "@/lib/api/client";
 import { receiptFacts } from "@/lib/receipt-meta";
 import { strings } from "@/lib/strings";
-import { CheckLive } from "./check-live";
+import { CheckLive } from "./check-live-lazy";
 import { WhileYouWait } from "./while-you-wait";
 
 /**
