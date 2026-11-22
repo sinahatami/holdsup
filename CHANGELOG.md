@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/sinahatami/holdsup/compare/v0.8.0...v0.8.1) (2026-11-22)
+
+
+### Performance Improvements
+
+* serve a finished check's page whole from the site's cache ([#103](https://github.com/sinahatami/holdsup/issues/103)) ([267919d](https://github.com/sinahatami/holdsup/commit/267919dc5778e77a5511eebf5a04184d5a40701c))
+
 ## [0.8.0](https://github.com/sinahatami/holdsup/compare/v0.7.0...v0.8.0) (2026-11-22)
 
 
