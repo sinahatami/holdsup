@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/sinahatami/holdsup/compare/v0.7.0...v0.8.0) (2026-11-22)
+
+
+### Features
+
+* **web:** one-minute teaser video in "How it works", plus make e2e-ui and lighthouse-ui ([#101](https://github.com/sinahatami/holdsup/issues/101)) ([08ed4b8](https://github.com/sinahatami/holdsup/commit/08ed4b8a501762264dfd0ad1521aaa90fe388482))
+
+
+### Performance Improvements
+
+* **web:** a result page paints half a second sooner: two font preloads, live-check code on demand, one logo path ([#99](https://github.com/sinahatami/holdsup/issues/99)) ([7e33e98](https://github.com/sinahatami/holdsup/commit/7e33e9811c2551a9d2894d6fe7ddfb42b6a04e8c))
+* **web:** lay out below-the-fold sections only when scrolled near ([#102](https://github.com/sinahatami/holdsup/issues/102)) ([0a205a4](https://github.com/sinahatami/holdsup/commit/0a205a4c6888bb98c085fffb7a64b3062a888230))
+
 ## [0.7.0](https://github.com/sinahatami/holdsup/compare/v0.6.0...v0.7.0) (2026-11-21)
 
 
