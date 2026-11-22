@@ -1,3 +1,9 @@
+// A client component for its size, not for state: its path is 3.4 kB, and a server component
+// writes it into a page's RSC payload once for every logo drawn there (the header, the footer
+// and the not-found frames sent with each page), which was 12 copies on a check page. As a
+// client component the path ships once, in a cached script, and the payload holds only props.
+"use client";
+
 import { LOGO_DOT, LOGO_INK, LOGO_VIEWBOX } from "@/lib/logo-art";
 import { cn } from "@/lib/utils";
 
