@@ -7,7 +7,8 @@ Usage (from the repo root, DATABASE_URL in .env or the environment):
     make watch ARGS="--backfill"    # give checks from before plans were stored a plan: asks
                                     # the plan model once per claim (keys needed), and keeps a
                                     # plan only when it gives the figures the check showed
-GitHub Actions runs `make watch` daily (.github/workflows/watch.yml).
+GitHub Actions runs `make watch` daily (.github/workflows/watch.yml). A check that now points
+at an update has its cached page dropped on the site at WEB_ORIGIN.
 """
 
 import argparse
@@ -16,12 +17,21 @@ from datetime import UTC, datetime
 
 from holdsup.config import get_settings
 from holdsup.pipeline.run import Pipeline
-from holdsup.service.watch import MAX_PER_RUN, WATCH_DAYS, backfill, format_table, watch
+from holdsup.service.site_pages import SitePages
+from holdsup.service.watch import (
+    MAX_PER_RUN,
+    WATCH_DAYS,
+    backfill,
+    format_table,
+    tell_site,
+    watch,
+)
 from holdsup.service.wiring import build_watch
 
 
 async def main(*, plan: bool, limit: int, days: int, save: bool) -> int:
-    parts = build_watch(get_settings(), planner=plan)
+    settings = get_settings()
+    parts = build_watch(settings, planner=plan)
     now = datetime.now(UTC)
     try:
         if plan:
@@ -31,6 +41,12 @@ async def main(*, plan: bool, limit: int, days: int, save: bool) -> int:
             )
         else:
             rows = await watch(parts.store, parts.steps, now=now, limit=limit, days=days, save=save)
+            if save:
+                missed = await tell_site(rows, SitePages(parts.http, settings.web_origin))
+                for check_id in missed:
+                    print(
+                        f"{settings.web_origin} kept its cached page of {check_id} (a day at most)."
+                    )
     finally:
         await parts.close()
     print(format_table(rows))

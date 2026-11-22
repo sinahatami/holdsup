@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -10,7 +10,7 @@ from holdsup.adapters.base import SourceUnavailable
 from holdsup.problems import ProblemError
 from holdsup.router.errors import ProviderUnavailable
 from holdsup.service.runner import Channel, CheckRunner, Event
-from holdsup.service.store import CheckResult, CheckStatus, StoredCheck
+from holdsup.service.store import CheckResult, CheckStatus, InMemoryCheckStore, StoredCheck
 from tests.service.fakes import (
     TEXT,
     FakeFetcher,
@@ -225,3 +225,40 @@ async def test_ledger_entries_older_than_the_limit_are_ignored() -> None:
     later = runner.now() + timedelta(days=8)
     runner.ledger.now = lambda: later
     assert (await runner.submit(TEXT, "1.1.1.1")).cached is False
+
+
+async def test_the_site_is_told_once_a_check_has_finished_or_failed() -> None:
+    for script, status in (
+        (happy_script(), CheckStatus.DONE),
+        ([ProviderUnavailable("down")], CheckStatus.FAILED),
+    ):
+        runner, _, store = make_runner(script)
+        told: list[tuple[UUID, CheckStatus | None]] = []
+
+        async def settled(
+            check_id: UUID,
+            store: InMemoryCheckStore = store,
+            told: list[tuple[UUID, CheckStatus | None]] = told,
+        ) -> None:
+            stored = await store.get(check_id)
+            told.append((check_id, stored.status if stored else None))
+
+        runner.on_settled = settled
+        submitted = await runner.submit(TEXT, "1.1.1.1")
+        await finish(runner)
+        # Told after the outcome is stored, so the site reads the settled check.
+        assert told == [(submitted.id, status)]
+
+
+async def test_a_failing_settled_hook_never_breaks_the_check() -> None:
+    async def broken(check_id: UUID) -> None:
+        raise RuntimeError("site down")
+
+    runner, _, store = make_runner(happy_script())
+    runner.on_settled = broken
+    submitted = await runner.submit(TEXT, "1.1.1.1")
+    events = await drain(runner, submitted.id)
+    await finish(runner)
+    assert events[-1].name == "result"
+    stored = await store.get(submitted.id)
+    assert stored is not None and stored.status is CheckStatus.DONE

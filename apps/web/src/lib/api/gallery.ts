@@ -1,8 +1,12 @@
+import { cacheTag } from "next/cache";
 import {
   createApiClient,
   serverApiUrl,
   type GalleryItem,
 } from "@/lib/api/client";
+
+/** The tag on the featured checks, dropped when one is removed or updated. */
+export const GALLERY_TAG = "gallery";
 
 const GALLERY_SIZE = 12;
 /** The most the API gives in one read: the recent-checks page shows all of them. */
@@ -17,6 +21,7 @@ const RECENT_SIZE = 100;
  */
 export async function getGallery(): Promise<GalleryItem[] | null> {
   "use cache";
+  cacheTag(GALLERY_TAG);
   try {
     return await createApiClient(serverApiUrl()).gallery(GALLERY_SIZE);
   } catch {
@@ -30,6 +35,7 @@ export async function getGallery(): Promise<GalleryItem[] | null> {
  */
 export async function getRecent(): Promise<GalleryItem[] | null> {
   "use cache";
+  cacheTag(GALLERY_TAG);
   try {
     return await createApiClient(serverApiUrl()).gallery(RECENT_SIZE);
   } catch {

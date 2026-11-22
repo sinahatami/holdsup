@@ -8,6 +8,7 @@ text, so no cached copy, update or identical submission keeps the text on the si
 from collections.abc import Callable
 from uuid import UUID
 
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import CheckStore, StoredCheck
 
 PREVIEW_CHARS = 300
@@ -22,8 +23,14 @@ def describe(check: StoredCheck) -> str:
     return f"Check {check.id}, {check.created_at:%Y-%m-%d %H:%M} UTC\n  {text}\n"
 
 
-async def remove_check(store: CheckStore, check_id: UUID, confirm: Callable[[str], bool]) -> str:
-    """Show the check, ask `confirm`, then delete it and its copies; what happened, as text."""
+async def remove_check(
+    store: CheckStore,
+    check_id: UUID,
+    confirm: Callable[[str], bool],
+    pages: SitePages | None = None,
+) -> str:
+    """Show the check, ask `confirm`, then delete it and its copies and ask the site (`pages`)
+    to drop their cached pages and the cached gallery; what happened, as text."""
     check = await store.get(check_id)
     if check is None:
         return f"No check {check_id}.\n"
@@ -32,7 +39,15 @@ async def remove_check(store: CheckStore, check_id: UUID, confirm: Callable[[str
     gone = await store.remove(check_id)
     lines = [f"Deleted {len(gone)} check{'s' if len(gone) != 1 else ''} of this text:"]
     lines += [f"  {i}" for i in gone]
-    lines.append(
-        "Their pages are gone now. A featured one leaves the cached gallery within 15 minutes."
-    )
+    if pages is None:
+        return "\n".join(lines) + "\n"
+    failed = [i for i in gone if not await pages.refresh(i, gallery=True)]
+    if not failed:
+        lines.append(f"{pages.origin} dropped their cached pages and the cached gallery.")
+    else:
+        lines.append(
+            f"{pages.origin} did not drop every cached page: the site can show them for a day. "
+            "Retry with:"
+        )
+        lines += [f"  curl -X POST '{pages.refresh_url(i, gallery=True)}'" for i in failed]
     return "\n".join(lines) + "\n"

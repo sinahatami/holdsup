@@ -1,5 +1,6 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readCheck, readNewer } from "@/lib/api/check";
+import { checkTag, readCheck, readNewer } from "@/lib/api/check";
 
 const view = {
   id: "c1",
@@ -52,6 +53,46 @@ describe("readCheck", () => {
     expect(await readCheck("u503")).toEqual({ kind: "unavailable" });
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("refused")));
     expect(await readCheck("ucrash")).toEqual({ kind: "unavailable" });
+  });
+});
+
+describe("how long readCheck keeps a check", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.mocked(cacheLife).mockClear();
+  });
+
+  it("tags the read with the check, so the site can drop it", async () => {
+    answer(200, view);
+    await readCheck("t1");
+    expect(cacheTag).toHaveBeenCalledWith(checkTag("t1"));
+    expect(checkTag("t1")).toBe("check:t1");
+  });
+
+  it.each(["done", "failed"])(
+    "keeps a %s check for days, so its page is stored whole",
+    async (status) => {
+      answer(200, { ...view, status });
+      await readCheck(`k${status}`);
+      expect(cacheLife).toHaveBeenCalledWith("days");
+    },
+  );
+
+  it.each(["queued", "running"])(
+    "keeps a %s check for seconds, out of any stored page",
+    async (status) => {
+      answer(200, { ...view, status });
+      await readCheck(`s${status}`);
+      expect(cacheLife).toHaveBeenCalledWith("seconds");
+    },
+  );
+
+  it("keeps a missing check or a failed read for seconds", async () => {
+    answer(404, { type: "about:blank", title: "No", status: 404 });
+    await readCheck("s404");
+    answer(503, { type: "about:blank", title: "Down", status: 503 });
+    await readCheck("s503");
+    expect(vi.mocked(cacheLife).mock.calls).toEqual([["seconds"], ["seconds"]]);
   });
 });
 

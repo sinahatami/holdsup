@@ -348,8 +348,8 @@ export const pageStrings = {
       "HoldsUp is a free, open-source project with no accounts, no ads and no tracking. This page says what happens to the text you send, who else handles it, how to have a check removed, and the few rules for using the site.",
     updated: {
       label: "Last updated",
-      iso: "2026-11-21",
-      text: "21 November 2026",
+      iso: "2026-11-22",
+      text: "22 November 2026",
     },
     glanceLabel: "At a glance",
     onThisPage: "On this page",
@@ -425,7 +425,7 @@ export const pageStrings = {
             {
               name: "Vercel",
               url: "https://vercel.com/legal/privacy-notice",
-              role: "Serves the website",
+              role: "Serves the website, and keeps a copy of each finished check's page so it opens fast; removing a check removes that copy too",
               where: "United States",
             },
             {

@@ -8,7 +8,7 @@ the stream is rebuilt from the stored result.
 """
 
 import asyncio
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import partial
@@ -117,6 +117,9 @@ class CheckRunner:
     limiter: RateLimiter
     now: Callable[[], datetime] = _utcnow
     keep_channel_s: float = KEEP_CHANNEL_S
+    # Called with a check's id once it has finished or failed (the site drops its cached
+    # page, service/site_pages.py); never stops the check, whatever it raises.
+    on_settled: Callable[[UUID], Awaitable[object]] | None = None
     channels: dict[UUID, Channel] = field(default_factory=dict)
     tasks: set[asyncio.Task[None]] = field(default_factory=set)
 
@@ -254,6 +257,15 @@ class CheckRunner:
             await self._fail(check_id, channel, internal_error())
         finally:
             await self._finish_channel(check_id, channel)
+            await self._settled(check_id)
+
+    async def _settled(self, check_id: UUID) -> None:
+        if self.on_settled is None:
+            return
+        try:
+            await self.on_settled(check_id)
+        except Exception:
+            log.exception("check_settled_hook_failed")
 
     async def _fail(self, check_id: UUID, channel: Channel, problem: Problem) -> None:
         try:

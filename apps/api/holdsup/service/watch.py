@@ -27,6 +27,7 @@ from holdsup.pipeline.result import ClaimResult, Versions, app_version
 from holdsup.pipeline.run import Pipeline
 from holdsup.pipeline.steps import CodeSteps, ReplayError
 from holdsup.router import RouterError
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import (
     CheckResult,
     CheckStore,
@@ -157,6 +158,13 @@ async def _watch_one(
         await store.supersede(stored.id, update)
         log.info("watch_updated", check_id=str(stored.id), update_id=str(update.id))
     return Watched(stored.id, stored.text, Outcome.UPDATED, describe(changes), update.id)
+
+
+async def tell_site(rows: Sequence[Watched], pages: SitePages) -> list[UUID]:
+    """Ask the site to drop the cached pages of the checks that now point at an update, and
+    its cached gallery (a featured place moves to the update); the ones it did not drop."""
+    updated = [w.check_id for w in rows if w.outcome is Outcome.UPDATED]
+    return [i for i in updated if not await pages.refresh(i, gallery=True)]
 
 
 def describe(changes: Sequence[ClaimChange]) -> str:
