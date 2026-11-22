@@ -1,7 +1,15 @@
-// Text for pages that render only on the server: about, methodology, privacy and terms.
+// Text for pages that render only on the server: about, methodology, privacy and terms,
+// and the home page's video section.
 // It is kept apart from `strings` so the browser never downloads it; no client module may
 // import this file (src/lib/__tests__/strings-boundaries.test.ts checks).
 export const pageStrings = {
+  tour: {
+    // The hero's link down to the video in "How it works".
+    watch: "Watch the one-minute tour",
+    caption:
+      "A one-minute tour of a real check. The words are on screen, so it works with the sound off.",
+    label: "HoldsUp in one minute",
+  },
   about: {
     heading: "About HoldsUp",
     intro:

@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Home from "@/app/(site)/page";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -30,6 +31,25 @@ describe("Home page", () => {
       ).getByText(strings.home.sample.series),
     ).toBeInTheDocument();
     expect(screen.getByText(strings.home.canCheckBody)).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it("links from the hero to the video at the top of How it works", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    const { container } = render(await Home());
+    expect(
+      screen.getByRole("link", { name: pageStrings.tour.watch }),
+    ).toHaveAttribute("href", "#how");
+    const how = screen.getByRole("region", { name: strings.home.howHeading });
+    expect(how).toHaveAttribute("id", "how");
+    expect(container.querySelectorAll("video")).toHaveLength(1);
+    // The video comes before the three steps.
+    const video = how.querySelector("video");
+    const steps = how.querySelector("ol.glass");
+    expect(video).not.toBeNull();
+    expect(
+      video!.compareDocumentPosition(steps!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     vi.unstubAllGlobals();
   });
 

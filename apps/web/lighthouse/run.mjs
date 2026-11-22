@@ -94,7 +94,10 @@ try {
     );
     await waitFor(`http://127.0.0.1:${WEB_PORT}/`);
     // Both run, so one failure does not hide the other; the worse exit code wins.
-    const extra = process.argv.slice(2);
+    // `--open` (make lighthouse-ui) shows each page's median report in the browser: the
+    // second run replaces the first one's collected results, so open each before moving on.
+    const open = process.argv.includes("--open");
+    const extra = process.argv.slice(2).filter((arg) => arg !== "--open");
     for (const config of ["lighthouserc.json", "lighthouserc.check.json"]) {
       const status = run("pnpm", [
         "exec",
@@ -104,6 +107,7 @@ try {
         ...extra,
       ]);
       code = Math.max(code, status);
+      if (open) run("pnpm", ["exec", "lhci", "open", `--config=${config}`]);
     }
   }
 } finally {

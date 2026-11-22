@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { StepCard } from "@/components/molecules/step-card";
 import { TitledSection } from "@/components/molecules/titled-section";
+import { TourVideo } from "@/components/molecules/tour-video";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
 
-/** Three steps in a line; the methodology page has the full account. */
+/** The one-minute video, then three steps in a line; the methodology page has the full account. */
 export function HowItWorks() {
   return (
     <TitledSection
@@ -12,6 +13,7 @@ export function HowItWorks() {
       title={strings.home.howHeading}
       className="scroll-mt-24"
     >
+      <TourVideo />
       <ol className="glass grid gap-5 rounded-2xl p-5 md:grid-cols-3">
         {strings.home.how.map((step, i) => (
           <StepCard

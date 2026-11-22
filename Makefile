@@ -14,10 +14,10 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e lighthouse analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports delete-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e e2e-ui lighthouse lighthouse-ui analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports delete-check
 
 help: ## List available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
 
 setup: ## Install Python (uv) and JS (pnpm) deps, install lefthook hooks
 	uv sync --all-packages --locked
@@ -63,11 +63,17 @@ test-web:
 test-ui: ## Web tests in a browser window: pick, rerun and inspect each test (reruns on save)
 	pnpm --filter @holdsup/web test:ui
 
-e2e: ## Playwright against a mocked API (incl. axe accessibility checks)
+e2e: ## Playwright against a mocked API (incl. axe accessibility checks); stop `make dev` first
 	pnpm --filter @holdsup/web e2e
+
+e2e-ui: ## Playwright in its own window: run, watch and time-travel through each test; stop `make dev` first
+	pnpm --filter @holdsup/web e2e:ui
 
 lighthouse: ## Production build against the mock API, then the Lighthouse CI budget (home and a result page)
 	pnpm --filter @holdsup/web lighthouse
+
+lighthouse-ui: ## Same as lighthouse, then opens each page's median report in the browser
+	pnpm --filter @holdsup/web lighthouse:ui
 
 analyze: ## Bundle analyzer (Turbopack): an interactive treemap of every route's JS
 	pnpm --filter @holdsup/web analyze

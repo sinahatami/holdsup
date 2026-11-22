@@ -1,3 +1,4 @@
+import { CirclePlay } from "lucide-react";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { CanCheck } from "@/components/organisms/can-check";
@@ -13,6 +14,7 @@ import { getGallery } from "@/lib/api/gallery";
 import { pageMetadata } from "@/lib/page-meta";
 import { routes } from "@/lib/routes";
 import { strings } from "@/lib/strings";
+import { pageStrings } from "@/lib/strings/pages";
 
 export const metadata: Metadata = pageMetadata({
   path: routes.home,
@@ -39,6 +41,14 @@ export default async function Home() {
           <p className="text-foreground/80 max-w-xl text-lg leading-7 text-pretty">
             {strings.home.intro}
           </p>
+          {/* A quiet way to the video: the claim box stays the first thing to use. */}
+          <a
+            href="#how"
+            className="text-brand inline-flex items-center gap-2 self-start font-medium underline underline-offset-4"
+          >
+            <CirclePlay className="size-5" aria-hidden />
+            {pageStrings.tour.watch}
+          </a>
         </header>
         <div
           className="rise mx-auto w-full max-w-3xl lg:[grid-area:form]"
