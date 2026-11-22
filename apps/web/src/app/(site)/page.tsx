@@ -67,13 +67,15 @@ export default async function Home() {
       </div>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-12">
         <HistoryList />
-        <div className="reveal">
+        {/* Below the fold: laid out once scrolled near (.defer-render). -m-4 p-4 leaves
+            room for the cards' focus rings and hover shadows, and the layout as it was. */}
+        <div className="reveal defer-render -m-4 p-4">
           <HowItWorks />
         </div>
-        <div className="reveal">
+        <div className="reveal defer-render -m-4 p-4">
           <CanCheck entries={catalog?.indicators} />
         </div>
-        <div className="reveal">
+        <div className="reveal defer-render -m-4 p-4">
           <Gallery items={items} />
         </div>
       </div>

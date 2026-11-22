@@ -76,7 +76,7 @@ export function VerdictLegend({
   return (
     <section
       aria-labelledby="legend-heading"
-      className="glass flex flex-col gap-5 rounded-2xl p-5 sm:p-6"
+      className="glass defer-render flex flex-col gap-5 rounded-2xl p-5 sm:p-6"
     >
       <h2 id="legend-heading" className="text-lg font-semibold">
         {t.heading}
