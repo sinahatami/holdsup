@@ -64,9 +64,14 @@ export async function generateMetadata({
   };
 }
 
-// The id is read inside <Suspense>: the shell (and its loading text) is prerendered, and
-// on a first visit the check streams in.
-export default function Page({ params }: PageProps<"/check/[id]">) {
+// The id is read before <Suspense>, so the page Next stores for an id has the check in
+// its HTML, drawn in place: read inside <Suspense>, the stored page was the loading frame
+// with the receipt in a hidden part that a script swaps in after first paint, which put
+// it after the scripts (Lighthouse's mobile LCP 3 s instead of 1). A first visit to an id
+// gets the site's frame at once and the page after it. A check still running streams in
+// behind the placeholder.
+export default async function Page({ params }: PageProps<"/check/[id]">) {
+  const { id } = await params;
   return (
     <Suspense
       fallback={
@@ -80,16 +85,7 @@ export default function Page({ params }: PageProps<"/check/[id]">) {
         </CheckTemplate>
       }
     >
-      <CheckFromParams params={params} />
+      <CheckPage id={id} />
     </Suspense>
   );
-}
-
-async function CheckFromParams({
-  params,
-}: {
-  params: PageProps<"/check/[id]">["params"];
-}) {
-  const { id } = await params;
-  return <CheckPage id={id} />;
 }
