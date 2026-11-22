@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/sinahatami/holdsup/compare/v0.8.1...v0.8.2) (2026-11-22)
+
+
+### Performance Improvements
+
+* **web:** store a check's page with the receipt drawn in place ([#105](https://github.com/sinahatami/holdsup/issues/105)) ([1e0d721](https://github.com/sinahatami/holdsup/commit/1e0d721caea53556713c6fa264520c84ddb39bdb))
+
 ## [0.8.1](https://github.com/sinahatami/holdsup/compare/v0.8.0...v0.8.1) (2026-11-22)
 
 
