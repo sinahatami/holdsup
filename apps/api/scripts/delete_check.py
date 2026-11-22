@@ -2,7 +2,9 @@
 
 Usage (from the repo root, with DATABASE_URL in .env):
     make delete-check ID=<check id> [ARGS=--yes]
-Shows the check, then deletes it after you type "delete" (--yes skips the question). Removal
+Shows the check, then deletes it after you type "delete" (--yes skips the question), and asks
+the site at WEB_ORIGIN to drop the deleted checks' cached pages and its cached gallery. For the
+live site, run it with the live database and WEB_ORIGIN=https://holdsup.vercel.app. Removal
 requests from readers are listed by `make reports`.
 """
 
@@ -10,8 +12,12 @@ import argparse
 import asyncio
 from uuid import UUID
 
+import httpx
+
+from holdsup.config import get_settings
 from holdsup.db.session import get_sessionmaker
 from holdsup.service.removal import remove_check
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import SqlCheckStore
 
 
@@ -27,7 +33,9 @@ def ask(description: str) -> bool:
 
 async def main(check_id: UUID, yes: bool) -> int:
     store = SqlCheckStore(get_sessionmaker())
-    message = await remove_check(store, check_id, show if yes else ask)
+    async with httpx.AsyncClient() as http:
+        pages = SitePages(http, get_settings().web_origin)
+        message = await remove_check(store, check_id, show if yes else ask, pages)
     print(message, end="")
     return 0 if message.startswith("Deleted") else 1
 

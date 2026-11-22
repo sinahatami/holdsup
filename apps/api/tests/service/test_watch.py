@@ -6,6 +6,7 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+import httpx
 import pytest
 
 from holdsup.adapters.base import Observation
@@ -14,6 +15,7 @@ from holdsup.pipeline.run import Pipeline
 from holdsup.pipeline.steps import CodeSteps, ReplayError
 from holdsup.router import Router
 from holdsup.router.client import ChatResponse
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import (
     CheckResult,
     CheckStatus,
@@ -27,6 +29,7 @@ from holdsup.service.watch import (
     backfill,
     checked_on,
     format_table,
+    tell_site,
     watch,
 )
 from holdsup.verdict import Label, cant_check, load_tolerances
@@ -261,3 +264,24 @@ def test_the_run_s_table_counts_each_outcome() -> None:
 
 def test_figure_changes_name_the_part_and_period() -> None:
     assert FigureChange(name="end value", period="2023", before=7.68, after=9.18).before == 7.68
+
+
+async def test_the_site_drops_the_pages_of_checks_that_point_at_an_update() -> None:
+    updated, unchanged, refused = uuid4(), uuid4(), uuid4()
+    rows = [
+        Watched(updated, "a", Outcome.UPDATED, "x", uuid4()),
+        Watched(unchanged, "b", Outcome.UNCHANGED),
+        Watched(refused, "c", Outcome.UPDATED, "y", uuid4()),
+    ]
+    seen: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(500 if str(refused) in str(request.url) else 204)
+
+    pages = SitePages(httpx.AsyncClient(transport=httpx.MockTransport(answer)), "https://s.test")
+    assert await tell_site(rows, pages) == [refused]
+    assert seen == [
+        f"https://s.test/api/checks/{updated}/refresh?gallery=1",
+        f"https://s.test/api/checks/{refused}/refresh?gallery=1",
+    ]

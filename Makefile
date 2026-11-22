@@ -206,7 +206,7 @@ missing-report: ## List the topics most often asked about that came back "can't 
 reports: ## List the newest reports (wrong matches, removal requests), with a link to each check (needs DATABASE_URL; read-only)
 	cd $(API_DIR) && uv run python -m scripts.list_reports $(ARGS)
 
-delete-check: ## Delete a check on a removal request, with every stored check of its text: ID=<check id> (needs DATABASE_URL; asks first, ARGS=--yes skips)
+delete-check: ## Delete a check on a removal request, with every stored check of its text, and drop its cached pages on the site at WEB_ORIGIN: ID=<check id> (needs DATABASE_URL; asks first, ARGS=--yes skips)
 	@test -n "$(ID)" || { echo "Usage: make delete-check ID=<check id>"; exit 1; }
 	cd $(API_DIR) && uv run python -m scripts.delete_check $(ID) $(ARGS)
 

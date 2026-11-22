@@ -1,8 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CheckPage } from "@/app/(site)/check/[id]/check-page";
-import { generateMetadata } from "@/app/(site)/check/[id]/page";
+import {
+  generateMetadata,
+  generateStaticParams,
+} from "@/app/(site)/check/[id]/page";
 import { readCheck, readNewer } from "@/lib/api/check";
+import { getGallery } from "@/lib/api/gallery";
 import { strings } from "@/lib/strings";
 import {
   checkResult,
@@ -13,6 +17,7 @@ import {
 import { EARLIER_ID, updateResult } from "@/test/watch";
 
 vi.mock("@/lib/api/check", () => ({ readCheck: vi.fn(), readNewer: vi.fn() }));
+vi.mock("@/lib/api/gallery", () => ({ getGallery: vi.fn() }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NEXT_HTTP_ERROR_FALLBACK;404");
@@ -273,5 +278,22 @@ describe("check page metadata", () => {
     expect(m.title).toBe(`${strings.check.heading} · ${strings.appName}`);
     expect(m.description).toBeUndefined();
     expect(m.robots).toEqual({ index: false });
+  });
+});
+
+describe("check pages drawn at build time", () => {
+  it("are the featured checks", async () => {
+    vi.mocked(getGallery).mockResolvedValue([
+      { id: "f1" },
+      { id: "f2" },
+    ] as Awaited<ReturnType<typeof getGallery>>);
+    expect(await generateStaticParams()).toEqual([{ id: "f1" }, { id: "f2" }]);
+  });
+
+  it("are one id that is never a check when there are none (Next needs one)", async () => {
+    vi.mocked(getGallery).mockResolvedValue(null);
+    const params = await generateStaticParams();
+    expect(params).toHaveLength(1);
+    expect(params[0].id).toMatch(/^0{8}-/);
   });
 });

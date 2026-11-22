@@ -1,7 +1,10 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+import httpx
+
 from holdsup.service.removal import PREVIEW_CHARS, describe, remove_check
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import CheckStatus, InMemoryCheckStore, StoredCheck
 
 T0 = datetime(2026, 11, 21, 9, 5, tzinfo=UTC)
@@ -51,3 +54,39 @@ async def test_an_unknown_check_is_said_so() -> None:
     assert await remove_check(InMemoryCheckStore(), unknown, lambda _: True) == (
         f"No check {unknown}.\n"
     )
+
+
+def fake_site(status: int) -> tuple[SitePages, list[str]]:
+    seen: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(status)
+
+    return SitePages(
+        httpx.AsyncClient(transport=httpx.MockTransport(answer)), "https://s.test"
+    ), seen
+
+
+async def test_the_site_drops_the_pages_of_every_deleted_copy_and_the_gallery() -> None:
+    store = InMemoryCheckStore()
+    check, twin = a_check("Same text."), a_check("Same text.")
+    for c in (check, twin):
+        await store.create(c)
+    pages, seen = fake_site(204)
+    message = await remove_check(store, check.id, lambda _: True, pages)
+    assert sorted(seen) == sorted(
+        f"https://s.test/api/checks/{i}/refresh?gallery=1" for i in (check.id, twin.id)
+    )
+    assert message.endswith("https://s.test dropped their cached pages and the cached gallery.\n")
+
+
+async def test_a_refresh_the_site_refused_is_printed_to_retry() -> None:
+    store = InMemoryCheckStore()
+    check = a_check("A name.")
+    await store.create(check)
+    pages, _ = fake_site(500)
+    message = await remove_check(store, check.id, lambda _: True, pages)
+    assert "did not drop every cached page" in message
+    assert f"curl -X POST 'https://s.test/api/checks/{check.id}/refresh?gallery=1'" in message
+    assert await store.get(check.id) is None  # deleted all the same

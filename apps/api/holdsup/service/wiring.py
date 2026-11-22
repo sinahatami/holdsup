@@ -29,6 +29,7 @@ from holdsup.router.budgets import SqlUsageStore
 from holdsup.router.client import OpenAICompatibleClient
 from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
+from holdsup.service.site_pages import SitePages
 from holdsup.service.store import SqlCheckStore
 from holdsup.verdict import load_tolerances
 
@@ -67,6 +68,7 @@ def build_runner(settings: Settings) -> Built:  # pragma: no cover (needs Postgr
         ledger=Ledger(store, embedder, versions=pipeline.versions()),
         pipeline=pipeline,
         limiter=RateLimiter(settings.checks_per_hour, HOUR_S),
+        on_settled=SitePages(http, settings.web_origin).refresh,
     )
     return Built(runner, http)
 
