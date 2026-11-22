@@ -6,6 +6,13 @@ import { strings } from "@/lib/strings";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
+// Preloads: only Inter and Geist Mono. Every page's first paint waits for the stylesheet, and a
+// preloaded font shares the connection with it: with all five preloaded (250 kB) the 14 kB
+// stylesheet took 1.4 s on Lighthouse's slow 4G. These two are preloaded because swapping them
+// in moves text (a check's facts line wraps once both have loaded, pushing the receipt down),
+// so they must land before the content is shown. Newsreader and Caveat load when a page uses
+// them; their fallbacks are size-matched, so their swap moves nothing.
+
 // Body text.
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +38,7 @@ const newsreader = localFont({
       style: "italic",
     },
   ],
+  preload: false,
   adjustFontFallback: "Times New Roman",
 });
 
@@ -58,6 +66,7 @@ const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
   weight: "600",
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
