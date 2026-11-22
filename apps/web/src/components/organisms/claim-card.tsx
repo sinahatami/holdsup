@@ -45,6 +45,7 @@ export function ClaimCard({
 }) {
   const whyId = `why-${c.index}`;
   const chart = c.verdict.label === "cant_check" ? null : chartOf(c);
+  const heatmap = c.verdict.label === "cant_check" ? null : c.sweep;
   return (
     <article
       data-verdict={shownLabel(c)}
@@ -74,25 +75,34 @@ export function ClaimCard({
           <p className="max-w-prose text-lg leading-8">{c.explanation}</p>
         </section>
       )}
-      {chart && <SeriesChart chart={chart} />}
-      {c.sweep && c.verdict.label !== "cant_check" && (
-        <WindowHeatmap
-          sweep={c.sweep}
-          direction={c.claim.assertion.direction ?? null}
-          threshold={c.verdict.framing_threshold}
-          breaks={c.changepoints?.breaks ?? []}
-        />
+      {/* The data and the receipt start below the fold on a phone, so they are laid out
+          once scrolled near (.defer-render). -m-2 p-2 gives focus rings on their edges
+          room to draw, and leaves the layout as it was. */}
+      {(chart || heatmap) && (
+        <div className="defer-render -m-2 flex flex-col gap-10 p-2">
+          {chart && <SeriesChart chart={chart} />}
+          {heatmap && (
+            <WindowHeatmap
+              sweep={heatmap}
+              direction={c.claim.assertion.direction ?? null}
+              threshold={c.verdict.framing_threshold}
+              breaks={c.changepoints?.breaks ?? []}
+            />
+          )}
+        </div>
       )}
-      <FramingChecks claim={c} />
-      <CantCheckHelp claim={c} checkId={checkId} />
-      <Receipt
-        claim={c}
-        versions={versions}
-        sharedModels={sharedModels}
-        checkId={checkId}
-      />
-      <RecheckOptions claim={c} checkId={checkId} />
-      <ReportMatch checkId={checkId} claimIndex={c.index} />
+      <div className="defer-render -m-2 flex flex-col gap-10 p-2">
+        <FramingChecks claim={c} />
+        <CantCheckHelp claim={c} checkId={checkId} />
+        <Receipt
+          claim={c}
+          versions={versions}
+          sharedModels={sharedModels}
+          checkId={checkId}
+        />
+        <RecheckOptions claim={c} checkId={checkId} />
+        <ReportMatch checkId={checkId} claimIndex={c.index} />
+      </div>
     </article>
   );
 }

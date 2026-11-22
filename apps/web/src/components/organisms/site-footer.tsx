@@ -32,7 +32,7 @@ function LinkGroup({
 export function SiteFooter() {
   const t = strings.footer;
   return (
-    <footer className="mt-auto border-t">
+    <footer className="defer-render mt-auto border-t">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-10 sm:flex-row sm:justify-between sm:px-6">
         <div className="flex max-w-sm flex-col gap-3">
           <Logo />
