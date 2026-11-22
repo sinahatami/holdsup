@@ -161,6 +161,7 @@ Other useful commands:
 - `make reranker-fetch` downloads the pinned reranker. Without it, the model picks every indicator.
 - `make test` runs pytest and vitest; no test touches the network.
 - `make e2e` runs Playwright and axe against a mocked API, so it needs no keys.
+- `make test-ui`, `make e2e-ui` and `make lighthouse-ui` do the same in a window you can click through: the Vitest UI, Playwright's UI mode, and the Lighthouse reports.
 - `make help` lists everything else.
 
 To put it online (Vercel, Google Cloud Run and Neon, all on free tiers), follow [DEPLOY.md](DEPLOY.md).
