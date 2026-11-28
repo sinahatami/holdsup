@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/sinahatami/holdsup/compare/v0.8.2...v0.9.0) (2026-11-28)
+
+
+### Features
+
+* a Telegram bot that checks claims sent in a private chat ([#107](https://github.com/sinahatami/holdsup/issues/107)) ([0c986b7](https://github.com/sinahatami/holdsup/commit/0c986b768e3563be9ab8560b294d7b069c46cf71))
+
 ## [0.8.2](https://github.com/sinahatami/holdsup/compare/v0.8.1...v0.8.2) (2026-11-22)
 
 
