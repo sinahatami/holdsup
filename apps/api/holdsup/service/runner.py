@@ -248,7 +248,13 @@ class CheckRunner:
             entry = await self.ledger.entry(text, payload) if reusable else None
             await self.store.finish(result, entry)
             await channel.publish("result", payload)
-            log.info("check_done", verdicts=[str(c.verdict.label) for c in result.claims])
+            # Where each can't-check claim stopped (match: no statistic; fetch: no figures for
+            # the place; plan; execute: often a year outside the series), never its text.
+            log.info(
+                "check_done",
+                verdicts=[str(c.verdict.label) for c in result.claims],
+                stopped_at=[str(c.stopped_at) if c.stopped_at else None for c in result.claims],
+            )
         except RouterError as exc:
             log.warning("check_at_capacity", step=exc.step, attempts=exc.attempts)
             await self._fail(check_id, channel, at_capacity(exc.retry_after_s))

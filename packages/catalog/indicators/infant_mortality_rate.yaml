@@ -16,4 +16,5 @@ geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1960
 last_year: null # still updated (latest period seen: 2024)
 related: [infant_mortality_rate_world, life_expectancy, live_births]
+same_measure: [infant_mortality_rate_world] # same definition and unit: read when this series lacks the claim's years
 filters: { indic_de: "INFMORRT" }

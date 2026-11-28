@@ -9,7 +9,7 @@ from typing import Any
 
 from holdsup.adapters.base import AdapterError, FetchedSeries, Filters, Observation
 from holdsup.catalog.index import InMemoryIndex
-from holdsup.catalog.schema import load_catalog
+from holdsup.catalog.schema import Catalog, load_catalog
 from holdsup.catalog.search import vector_search
 from holdsup.pipeline.ledger import Ledger
 from holdsup.pipeline.run import Pipeline
@@ -136,7 +136,10 @@ STEPS = ("extract", "match", "plan", "explain")
 
 
 def make_pipeline(
-    script: Sequence[ChatResponse | ProviderError], fetcher: FakeFetcher | None = None
+    script: Sequence[ChatResponse | ProviderError],
+    fetcher: FakeFetcher | None = None,
+    *,
+    catalog: Catalog = CATALOG,
 ) -> tuple[Pipeline, FakeClient, FakeFetcher]:
     client = FakeClient()
     client.script("fake", script)
@@ -146,7 +149,7 @@ def make_pipeline(
     fetcher = fetcher or FakeFetcher()
     pipeline = Pipeline(
         router=router,
-        catalog=CATALOG,
+        catalog=catalog,
         search=vector_search(INDEX.search, EMBEDDER),
         fetcher=fetcher,
         tolerances=TOLERANCES,

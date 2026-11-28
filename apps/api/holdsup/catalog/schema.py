@@ -108,6 +108,10 @@ class IndicatorSpec(BaseModel):
     # when the catalog has it; otherwise with consumer prices.
     nominal: bool = False
     real_version: Slug | None = None
+    # Entries of `related` that measure the same thing from another source: same definition,
+    # same unit. A claim this entry's series has no figures for (its place, or its years) is
+    # checked with the first of them that has. Each must list this entry back.
+    same_measure: list[Slug] = Field(default_factory=list)
 
     @property
     def lag_months(self) -> int:
@@ -132,6 +136,10 @@ class IndicatorSpec(BaseModel):
             raise ValueError("real_version is only for a nominal entry")
         if self.real_version is not None and self.real_version not in self.related:
             raise ValueError("real_version must be one of related")
+        if not set(self.same_measure) <= set(self.related):
+            raise ValueError("every same_measure entry must be one of related")
+        if len(set(self.same_measure)) != len(self.same_measure):
+            raise ValueError("same_measure contains duplicates")
         return self
 
     def embedding_text(self) -> str:
@@ -199,6 +207,10 @@ def load_catalog(root: Path) -> Catalog:
                 f"{spec.id}: real_version {real.id!r} must not be nominal, and must be "
                 f"{spec.frequency} too"
             )
+        for other in spec.same_measure:
+            twin = by_id.get(other)
+            if twin is not None and spec.id not in twin.same_measure:
+                problems.append(f"{spec.id}: same_measure {other!r} must list {spec.id!r} back")
     keys = [(s.source, s.source_code, tuple(sorted(s.filters.items(), key=str))) for s in specs]
     if len(set(map(str, keys))) != len(keys):
         problems.append("two entries point at the same source series and filters")

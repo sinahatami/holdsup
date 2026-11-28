@@ -20,6 +20,7 @@ from holdsup.adapters.base import (
     Observation,
     SourceUnavailable,
 )
+from holdsup.catalog.coverage import covers
 from holdsup.catalog.schema import Catalog, IndicatorSpec
 from holdsup.checks import (
     ChangePoints,
@@ -60,6 +61,7 @@ from holdsup.pipeline.result import (
     IndicatorRef,
     StoredPlan,
 )
+from holdsup.pipeline.same_measure import claim_years, missing_years, slack_years, swap_note
 from holdsup.pipeline.trace import ModelUse, Step, StepEvent, StepStatus, Trace
 from holdsup.places import place_name
 from holdsup.verdict import Label, Tolerances, decide
@@ -209,7 +211,7 @@ class CodeSteps:
         )
         c = ClaimRun(Trace(_ignore), old.index, old.claim, out, checked_on, until)
         try:
-            data, ctx = await self._read(c, spec)
+            _, data, ctx = await self._read(c, spec)
             if missing := _unlisted(plan, ctx):
                 raise ReplayError(f"no figures for {', '.join(missing)}")
             out.extra_sources = self._plan_sources(c, plan)
@@ -227,23 +229,34 @@ class CodeSteps:
 
     async def _read(
         self, c: ClaimRun, spec: IndicatorSpec
-    ) -> tuple[dict[str, list[Observation]], PlanContext]:
-        """Fetch the claim's series and its population: the data and what a plan may know."""
-        observations, info = await self._fetch(c, spec)
+    ) -> tuple[IndicatorSpec, dict[str, list[Observation]], PlanContext]:
+        """Fetch the claim's series and its population: the statistic read (the matched one,
+        or the same measure from another source), the data, and what a plan may know."""
+        spec, observations, info = await self._fetch(c, spec)
         data = {spec.id: observations}
         others = await self._denominator(c, spec, data)
         ctx = PlanContext(
             claim=c.claim, main=info, others=others, as_of=self._as_of(c.claim, c.today)
         )
-        return data, ctx
+        return spec, data, ctx
 
     # --- the steps code does, in order --------------------------------------------------------
 
     async def _fetch(
         self, c: ClaimRun, spec: IndicatorSpec
-    ) -> tuple[list[Observation], SeriesInfo]:
+    ) -> tuple[IndicatorSpec, list[Observation], SeriesInfo]:
         await c.start(Step.FETCH)
-        observations = await self._observations(c, spec)
+        series, observations = await self._load(c, spec)
+        note = ""
+        # Only a claim matched in this run: a reader's pick and a replay keep their statistic.
+        if c.match is not None and (swap := await self._same_measure(c, spec, observations)):
+            matched, (spec, series, observations, missing) = spec, swap
+            note = swap_note(matched, spec, c.claim.geo, missing)
+            c.out.indicator = IndicatorRef.of(spec)
+            c.out.suggestions = [s for s in c.out.suggestions if s.id != spec.id]
+            c.out.notes.append(note)
+            note += " "
+        c.out.data = DataRef.of(series, observations)
         info = SeriesInfo.from_data(spec, observations)
         if c.claim.geo not in info.geos:
             raise ClaimStopped(
@@ -251,14 +264,32 @@ class CodeSteps:
                 f"{_cap(spec.source.label)} has no {spec.name} figures for "
                 f"{place_name(c.claim.geo)}.",
             )
-        await c.done(Step.FETCH, f"Fetched {len(observations)} rows, {info.first} to {info.last}.")
-        return observations, info
+        await c.done(
+            Step.FETCH, f"{note}Fetched {len(observations)} rows, {info.first} to {info.last}."
+        )
+        return spec, observations, info
 
-    async def _observations(self, c: ClaimRun, spec: IndicatorSpec) -> list[Observation]:
-        """The indicator's series for the claim's place and its peers, in claim codes."""
-        series, observations = await self._load(c, spec)
-        c.out.data = DataRef.of(series, observations)
-        return observations
+    async def _same_measure(
+        self, c: ClaimRun, spec: IndicatorSpec, observations: Sequence[Observation]
+    ) -> tuple[IndicatorSpec, FetchedSeries, list[Observation], list[int]] | None:
+        """When the claim's place has no figures for some of its years, the first entry of
+        `spec.same_measure` that has them all: that entry, its series and rows, and the years
+        `spec` lacked. None when nothing is missing or no other source does better."""
+        gap = self.tolerances.max_period_gap
+        years = claim_years(c.claim)
+        missing = missing_years(years, observations, c.claim.geo, slack_years(spec, gap))
+        if not missing:
+            return None
+        for twin in map(self.catalog.get, spec.same_measure):
+            if not covers(twin.geo_coverage, c.claim.geo):
+                continue
+            try:
+                series, rows = await self._load(c, twin)
+            except ClaimStopped:
+                continue  # that source down or without the place: keep the matched one
+            if not missing_years(years, rows, c.claim.geo, slack_years(twin, gap)):
+                return twin, series, rows, missing
+        return None
 
     async def _load(
         self, c: ClaimRun, spec: IndicatorSpec
