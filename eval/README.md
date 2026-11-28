@@ -47,7 +47,7 @@ make eval-chatbot ARGS=--resume                     # continue a stopped run
 make eval-chatbot ARGS="--provider mistral-ministral-14b --resume --wait-budget 9000"
 ```
 
-A run waits out rate limits for ten minutes in all, then leaves the texts it could not serve as "not run" (`--wait-budget SECONDS`). A provider held to about a call a minute, such as Mistral's Experiment plan, needs about two hours for the 106 dev texts, so give it a budget of that size and run it from a restartable unit with `--resume`.
+A run waits out rate limits for ten minutes in all, then leaves the texts it could not serve as "not run" (`--wait-budget SECONDS`). A provider held to about a call a minute, such as Mistral's Experiment plan, needs about two hours for the 107 dev texts, so give it a budget of that size and run it from a restartable unit with `--resume`.
 
 A general chatbot gets the text and the labelled claims in one plain question ("is each claim true?", the five labels with a line each) and answers from what it knows: no tools, no data, no web search. Its answers are scored against the same labels, with the same confusion matrix and cost figures, as a report of `kind: chatbot` (verdicts and cost only: it has no extraction, matching or explanation). The router step is `baseline` in `providers.yaml`; the run allows the offline-only provider (`--use offline`). A claim it gives no answer for counts as wrong ("no answer"); a text no provider could serve is left out and counted.
 
