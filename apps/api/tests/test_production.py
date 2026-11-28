@@ -6,12 +6,14 @@ import pytest
 
 from holdsup.config import Settings, get_settings, production_problems
 from holdsup.main import create_app
+from tests.telegram.fakes import SECRET, TOKEN
 
 READY = {
     "app_env": "production",
     "database_url": "postgresql+asyncpg://u:p@db.example/holdsup",
     "trusted_proxies": 1,
     "web_origin": "https://holdsup.example",
+    "telegram_bot_token": None,  # the bot is off unless a test turns it on
 }
 
 
@@ -26,6 +28,8 @@ def test_development_is_never_checked() -> None:
 
 def test_a_complete_production_setup_passes() -> None:
     assert production_problems(settings()) == []
+    bot = settings(telegram_bot_token=TOKEN, telegram_webhook_secret=SECRET)
+    assert production_problems(bot) == []
 
 
 @pytest.mark.parametrize(
@@ -35,8 +39,15 @@ def test_a_complete_production_setup_passes() -> None:
         ({"trusted_proxies": 0}, "TRUSTED_PROXIES"),
         ({"web_origin": "http://localhost:3000"}, "WEB_ORIGIN"),
         ({"catalog_dir": Path("/nowhere/catalog")}, "CATALOG_DIR"),
+        ({"telegram_bot_token": TOKEN}, "TELEGRAM_WEBHOOK_SECRET"),
+        ({"telegram_bot_token": TOKEN, "telegram_webhook_secret": "short"},
+         "TELEGRAM_WEBHOOK_SECRET"),
+        ({"telegram_bot_token": TOKEN, "telegram_webhook_secret": SECRET + "\r"},
+         "TELEGRAM_WEBHOOK_SECRET"),
+        ({"telegram_bot_token": TOKEN + "\r", "telegram_webhook_secret": SECRET},
+         "TELEGRAM_BOT_TOKEN"),
     ],
-)
+)  # fmt: skip
 def test_each_gap_is_named(change: dict[str, object], named: str) -> None:
     problems = production_problems(settings(**change))
     assert len(problems) == 1

@@ -13,11 +13,15 @@ from holdsup.logs import RequestIdMiddleware, configure_logging
 from holdsup.pipeline.result import app_version
 from holdsup.routes import v1
 from holdsup.service.wiring import Built
+from holdsup.telegram.bot import TelegramBot
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
+    telegram: TelegramBot | None = getattr(app.state, "telegram", None)
+    if telegram is not None:  # pragma: no cover (built only with a bot token)
+        await telegram.client.http.aclose()
     built: Built | None = getattr(app.state, "built", None)
     if built is not None:  # pragma: no cover (built only with Postgres + the model)
         await built.close()

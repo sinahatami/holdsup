@@ -1,9 +1,10 @@
 """Application settings, read from environment variables (never hard-coded secrets)."""
 
+import re
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -32,6 +33,43 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # The git commit this build came from (the image build sets it); stamped on every receipt.
     app_commit: str = ""
+    # The Telegram bot (off when no token): BotFather's token, and the secret Telegram sends
+    # with every update so the webhook knows the call is Telegram's.
+    telegram_bot_token: SecretStr | None = None
+    telegram_webhook_secret: SecretStr | None = None
+
+    @field_validator("telegram_bot_token", "telegram_webhook_secret", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value: object) -> object:
+        """`TELEGRAM_BOT_TOKEN=` (as in .env.example) means no bot, not an empty token; an
+        empty secret would match an empty header."""
+        return None if isinstance(value, str) and not value.strip() else value
+
+
+# BotFather's token ("<bot id>:<35 characters>") and the secret setWebhook accepts.
+TELEGRAM_TOKEN = re.compile(r"\d+:[A-Za-z0-9_-]{30,}")
+TELEGRAM_SECRET = re.compile(r"[A-Za-z0-9_-]{16,256}")
+
+
+def telegram_problems(settings: Settings) -> list[str]:
+    """What would leave the Telegram bot unsafe or broken; empty when it is off (no token).
+    Part of the production checks. Elsewhere the webhook stays off unless both are set
+    (local development polls instead, which needs no secret)."""
+    token, secret = settings.telegram_bot_token, settings.telegram_webhook_secret
+    if token is None:
+        return []
+    problems = []
+    if not TELEGRAM_TOKEN.fullmatch(token.get_secret_value()):
+        problems.append(
+            "TELEGRAM_BOT_TOKEN does not look like BotFather's token (digits, a colon, then "
+            "letters, digits, - and _): check for a stray space or line break."
+        )
+    if secret is None or not TELEGRAM_SECRET.fullmatch(secret.get_secret_value()):
+        problems.append(
+            "TELEGRAM_WEBHOOK_SECRET must be set with the bot: 16 to 256 letters, digits, - "
+            "and _ (`openssl rand -hex 32` makes one). Without it anyone could post updates."
+        )
+    return problems
 
 
 def production_problems(settings: Settings) -> list[str]:
@@ -39,7 +77,7 @@ def production_problems(settings: Settings) -> list[str]:
     production. The app refuses to start while any remain (the image sets production)."""
     if settings.app_env != "production":
         return []
-    problems = []
+    problems = telegram_problems(settings)
     if settings.database_url is None:
         problems.append(
             "DATABASE_URL is not set: checks, the gallery and the daily provider budgets "

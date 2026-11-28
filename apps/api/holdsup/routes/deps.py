@@ -1,5 +1,5 @@
-"""What route handlers depend on: the check runner, the check store, the catalog search and the
-page reader.
+"""What route handlers depend on: the check runner, the check store, the catalog search, the
+page reader and the Telegram bot.
 
 Handlers take these as `Annotated` parameters (`Runner`, `Store`, `Search`, `Pages`) and never
 build them.
@@ -9,6 +9,7 @@ Tests swap the providers with `app.dependency_overrides`; nothing here connects 
 from functools import lru_cache
 from typing import Annotated
 
+import httpx
 from fastapi import Depends, Request
 
 from holdsup.catalog.embed import default_embedder
@@ -22,6 +23,8 @@ from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckStore, SqlCheckStore
 from holdsup.service.wiring import HOUR_S, build_runner
+from holdsup.telegram.bot import TelegramBot
+from holdsup.telegram.client import API, TelegramClient
 from holdsup.verdict import Tolerances, load_tolerances
 
 
@@ -71,6 +74,20 @@ def get_catalog() -> Catalog:  # pragma: no cover (tests override this)
 def get_tolerances() -> Tolerances:
     """The tolerances verdicts are judged by, read once from `tolerances.yaml`."""
     return load_tolerances()
+
+
+def get_telegram_bot(request: Request) -> TelegramBot | None:
+    """The app's bot, or None when it is off (no token and webhook secret)."""
+    settings = get_settings()
+    token, secret = settings.telegram_bot_token, settings.telegram_webhook_secret
+    if token is None or secret is None:
+        return None
+    state = request.app.state
+    if getattr(state, "telegram", None) is None:  # pragma: no cover (tests override this)
+        client = TelegramClient(token, httpx.AsyncClient(base_url=API))
+        state.telegram = TelegramBot(client, settings.web_origin)
+    bot: TelegramBot = state.telegram
+    return bot
 
 
 ReportLimiter = Annotated[RateLimiter, Depends(get_report_limiter)]
