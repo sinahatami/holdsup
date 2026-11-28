@@ -15,10 +15,12 @@ from tests.service.fakes import (
     TEXT,
     FakeFetcher,
     claim_json,
+    explain_answer,
     extraction,
     happy_script,
     make_runner,
     match_answer,
+    plan_answer,
 )
 
 
@@ -85,6 +87,21 @@ async def test_a_result_with_a_source_down_is_not_reused() -> None:
     await finish(runner)
     assert first.id not in store.ledger
     assert (await runner.submit(TEXT, "1.1.1.1")).cached is False
+
+
+async def test_the_log_says_where_a_claim_stopped_but_never_its_text() -> None:
+    from structlog.testing import capture_logs
+
+    two = extraction(claim_json(), claim_json(quote="Italy's unemployment rate fell", geo=None))
+    runner, _, _ = make_runner([two, match_answer(), plan_answer(), explain_answer(),
+                                match_answer()])  # fmt: skip
+    with capture_logs() as logs:
+        await runner.submit(TEXT, "1.1.1.1")
+        await finish(runner)
+    [done] = [e for e in logs if e["event"] == "check_done"]
+    assert done["verdicts"] == ["supported", "cant_check"]
+    assert done["stopped_at"] == [None, "fetch"]  # the second names no place
+    assert not any("unemployment" in str(e).lower() for e in logs)
 
 
 async def test_new_checks_are_limited_per_address_but_cache_hits_are_not() -> None:

@@ -17,4 +17,5 @@ geo_coverage: ["EU27_2020", "EU member states", "CH", "IS", "NO"]
 first_year: 1975
 last_year: null # still updated (latest period seen: 2025)
 related: [exports_pct_gdp_world, nominal_gdp_eur]
+same_measure: [exports_pct_gdp_world] # same definition and unit: read when this series lacks the claim's years
 filters: { na_item: "P6", unit: "PC_GDP" }

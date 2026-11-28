@@ -21,4 +21,5 @@ geo_coverage: ["All countries", "WLD"]
 first_year: 1961
 last_year: null # still updated
 related: [real_gdp_growth]
+same_measure: [real_gdp_growth] # same definition and unit: read when this series lacks the claim's years
 filters: {}

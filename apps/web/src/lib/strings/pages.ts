@@ -155,7 +155,7 @@ export const pageStrings = {
       {
         title: "It fetches the data",
         by: "code",
-        body: "The series comes from the source's own service: Eurostat, the World Bank or Our World in Data. The receipt keeps a fingerprint of the data, so a later change can be seen.",
+        body: "The series comes from the source's own service: Eurostat, the World Bank or Our World in Data. If it has no figures for the claim's place in the years named, and another source publishes the same measure (same definition, same unit) for them, that source is used instead, and the receipt names it. The receipt keeps a fingerprint of the data, so a later change can be seen.",
       },
       {
         title: "It plans the calculation",
@@ -465,7 +465,7 @@ export const pageStrings = {
     },
     address: {
       heading: "Your IP address",
-      body: "To stop one address from sending too many checks or reports, HoldsUp counts requests per address in memory for an hour. It does not store addresses. On Telegram it counts checks per Telegram account in the same way, and does not store or log the account number either. Its own logs record which pages and checks were asked for, and a check's length and verdicts, but never its text or your address. The hosts above keep their own request logs for a short time.",
+      body: "To stop one address from sending too many checks or reports, HoldsUp counts requests per address in memory for an hour. It does not store addresses. On Telegram it counts checks per Telegram account in the same way, and does not store or log the account number either. Its own logs record which pages and checks were asked for, and a check's length, its verdicts and the step at which a claim could not be checked, but never its text or your address. The hosts above keep their own request logs for a short time.",
     },
     browser: {
       heading: "In your browser",

@@ -103,9 +103,9 @@ flowchart TD
 
 ## Evaluation
 
-The benchmark is 150 hand-labelled texts with real numeric claims ([`eval/`](eval)).
+The benchmark is 151 hand-labelled texts with real numeric claims ([`eval/`](eval)).
 
-- 106 texts form the **dev split**, used for every threshold, tolerance and training choice.
+- 107 texts form the **dev split**, used for every threshold, tolerance and training choice.
 - 44 texts are **held out** and run once, at the end.
 - The same claims also go to a plain chatbot, for a head-to-head comparison.
 - A 30-claim smoke subset runs on every pull request that can change a verdict. It fails if verdict accuracy drops by more than 5 points.

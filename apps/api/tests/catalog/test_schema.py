@@ -70,6 +70,8 @@ def test_real_catalog_lists_every_theme_and_no_unthemed_entry() -> None:
         ({"theme": "sport"}, "population"),
         ({"real_version": "real_x", "related": ["real_x"]}, "only for a nominal entry"),
         ({"nominal": True, "real_version": "real_x", "related": []}, "must be one of related"),
+        ({"same_measure": ["other_x"], "related": []}, "same_measure entry must be one of"),
+        ({"same_measure": ["x", "x"], "related": ["x"]}, "same_measure contains duplicates"),
     ],
 )
 def test_invalid_entries(change: dict[str, object], message: str) -> None:
@@ -132,6 +134,41 @@ def test_a_real_version_is_a_constant_price_entry_of_the_same_frequency(tmp_path
         else:
             with pytest.raises(CatalogError, match=problem):
                 load_catalog(root)
+
+
+def test_same_measure_entries_list_each_other(tmp_path: Path) -> None:
+    one = entry(related=["world_rate"], same_measure=["world_rate"])
+    for back, problem in [
+        (["unemployment_rate"], None),
+        ([], "must list 'unemployment_rate' back"),
+    ]:
+        (tmp_path / str(len(back))).mkdir()
+        world = entry(
+            id="world_rate", filters={"x": "1"}, related=["unemployment_rate"], same_measure=back
+        )
+        root = make_catalog(
+            tmp_path / str(len(back)), {"unemployment_rate.yaml": one, "world_rate.yaml": world}
+        )
+        if problem is None:
+            assert load_catalog(root).get("world_rate").same_measure == ["unemployment_rate"]
+        else:
+            with pytest.raises(CatalogError, match=problem):
+                load_catalog(root)
+
+
+def test_real_catalog_pairs_only_entries_with_the_same_unit() -> None:
+    """A same-measure pair is read in place of each other, so the units must say the same."""
+    root = Path(__file__).resolve().parents[4] / "packages" / "catalog"
+    catalog = load_catalog(root)
+    pairs = {(s.id, t) for s in catalog.indicators for t in s.same_measure}
+    assert ("health_spending", "health_spending_world") in pairs
+    for a, b in pairs:
+        units = {
+            catalog.get(a).unit.replace("people", "inhabitants"),
+            catalog.get(b).unit.replace("people", "inhabitants"),
+        }
+        assert len(units) == 1, (a, b, units)
+        assert catalog.get(a).source is not catalog.get(b).source
 
 
 def test_duplicate_ids(tmp_path: Path) -> None:

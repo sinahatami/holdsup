@@ -16,4 +16,5 @@ geo_coverage: ["All countries", "WLD"]
 first_year: 1990
 last_year: null # still updated (latest period seen: 2023)
 related: [homicide_rate]
+same_measure: [homicide_rate] # same definition and unit: read when this series lacks the claim's years
 filters: {}

@@ -165,7 +165,7 @@ class Pipeline(CodeSteps):
         c = ClaimRun(trace, i, claim, out, self._today(), check_models=check_models)
         try:
             spec = await self._match(c) if choice is None else await self._chosen(c, choice)
-            data, ctx = await self._read(c, spec)
+            spec, data, ctx = await self._read(c, spec)
             plan = await self._plan(c, ctx)
             c.out.extra_sources = self._plan_sources(c, plan)
             execution = await self._execute(c, spec, plan, ctx, data)
@@ -195,7 +195,7 @@ class Pipeline(CodeSteps):
         scratch = old.model_copy(deep=True)
         c = ClaimRun(Trace(_quiet), old.index, old.claim, scratch, checked_on)
         try:
-            _, ctx = await self._read(c, spec)
+            _, _, ctx = await self._read(c, spec)
             plan = await self._plan(c, ctx)
         except ClaimStopped as stop:
             raise ReplayError(stop.reason) from None
@@ -297,9 +297,11 @@ class Pipeline(CodeSteps):
         """How sure the check is of its verdict (P4.5): the reranker's and the router's
         signals, then what the data and the verdict show (`CodeSteps._scored`)."""
         probability, margin = (None, None)
-        if c.match is not None and c.out.indicator is not None:
+        # The matched statistic, which the reranker scored, even when the same measure from
+        # another source was read instead (`CodeSteps._same_measure`).
+        if c.match is not None and c.match.indicator_id is not None:
             probability, margin = rerank_signals(
-                [(h.id, h.rerank) for h in c.match.candidates], c.out.indicator.id
+                [(h.id, h.rerank) for h in c.match.candidates], c.match.indicator_id
             )
         base = Signals(
             rerank_probability=probability,

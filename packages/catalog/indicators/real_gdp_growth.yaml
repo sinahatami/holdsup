@@ -26,4 +26,5 @@ related:
     regional_real_gdp_growth,
     real_gdp_growth_world,
   ]
+same_measure: [real_gdp_growth_world] # same definition and unit: read when this series lacks the claim's years
 filters: { na_item: "B1GQ", unit: "CLV_PCH_PRE" }

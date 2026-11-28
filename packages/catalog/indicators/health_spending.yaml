@@ -16,4 +16,5 @@ geo_coverage: ["EU27_2020", "EU member states", "EFTA countries"]
 first_year: 1992
 last_year: null # still updated (latest period seen: 2025)
 related: [health_spending_world, life_expectancy]
+same_measure: [health_spending_world] # same definition and unit: read when this series lacks the claim's years
 filters: { icha11_hf: "TOT_HF", unit: "PC_GDP" }

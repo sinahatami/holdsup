@@ -39,8 +39,10 @@ Monthly, quarterly and half-yearly (`semiannual`) entries also set `annual_value
 
 `filters` (not in the original spec list) holds the fixed query dimensions an adapter needs to get exactly this series: Eurostat dimension codes; for OWID, `column` when a chart has several value columns; empty for most World Bank indicators.
 
+`same_measure` (optional) lists entries of `related` that measure the same thing from another source, with the same definition and unit (Eurostat's and the World Bank's health spending, both from the System of Health Accounts). When the matched series has no figures for the claim's place in a year the claim names, the check reads the first of them that has them all, and the receipt and the fetch step say so. A year counts as covered when a value is within the gap the calculations allow (one year for an annual series). Only a claim matched in that check switches: a reader's re-check and the claim watch keep their statistic. Each entry must list the other back. Leave it out when the two differ in age band, reference date (1 January against mid-year), or scope (general against central government).
+
 `theme` is the topic the /indicators page lists the entry under (the labels and their order are in `apps/web/src/lib/strings/index.ts`). It is required, and every theme should have at least one entry.
 
-Rules the validator enforces: unknown fields are rejected; `theme` is one of the nine above; 3–5 unique aliases that don't repeat the name; `definition` 10–500 characters; `last_year ≥ first_year`; every `related` id exists and is not the entry itself; no two entries point at the same source series with the same filters.
+Rules the validator enforces: unknown fields are rejected; `theme` is one of the nine above; 3–5 unique aliases that don't repeat the name; `definition` 10–500 characters; `last_year ≥ first_year`; every `related` id exists and is not the entry itself; every `same_measure` id is in `related` and lists the entry back; no two entries point at the same source series with the same filters.
 
 What gets embedded for search: `"{name}. Also called: {aliases}. {definition}"`.
