@@ -341,15 +341,16 @@ export const pageStrings = {
   },
   // Privacy and terms in one page (/privacy), linked from the footer and the check form.
   // Every statement here must stay true of the code: what is stored (db/models.py), who gets
-  // the text (router/providers.yaml), what the browser keeps (lib/history.ts, lib/theme.ts).
+  // the text (router/providers.yaml), what the browser keeps (lib/history.ts, lib/theme.ts),
+  // and what the Telegram bot does (apps/api/holdsup/telegram/).
   privacy: {
     heading: "Privacy and terms",
     intro:
       "HoldsUp is a free, open-source project with no accounts, no ads and no tracking. This page says what happens to the text you send, who else handles it, how to have a check removed, and the few rules for using the site.",
     updated: {
       label: "Last updated",
-      iso: "2026-11-22",
-      text: "22 November 2026",
+      iso: "2026-11-28",
+      text: "28 November 2026",
     },
     glanceLabel: "At a glance",
     onThisPage: "On this page",
@@ -375,6 +376,7 @@ export const pageStrings = {
       heading: "What HoldsUp keeps",
       items: [
         "The text you submit and its result: the claims found, the statistics they were matched to, the figures, the verdicts and the receipt. If you submit a link, HoldsUp's server reads that page and keeps its text in the same way.",
+        "A message you send to the HoldsUp bot on Telegram is checked and kept in the same way as text submitted here. The bot does not keep your Telegram name, username or account number.",
         "Each check gets an address that cannot be guessed, and it is kept with no end date so that shared links keep working. Anyone who has the link can open it, and it can be shown on other sites with the embed code.",
         "Checks are not listed anywhere and are hidden from search engines. The examples on the home page and under Recent checks are ones the project ran itself.",
         "A later check of exactly the same text can reuse a stored result instead of asking the models again. When a source revises its figures, a check can be computed again; the update gets its own link.",
@@ -442,6 +444,19 @@ export const pageStrings = {
             },
           ],
         },
+        {
+          title: "Messaging",
+          body: "Only if you use the HoldsUp bot on Telegram. Telegram carries your messages to the bot and its answers back to you, under its own privacy policy.",
+          services: [
+            {
+              name: "Telegram",
+              url: "https://telegram.org/privacy",
+              role: "Delivers messages to and from the HoldsUp bot",
+              where:
+                "Netherlands for people in the EU and UK; elsewhere, several countries",
+            },
+          ],
+        },
       ],
       sources:
         "The statistics come from Eurostat, the World Bank and Our World in Data. HoldsUp asks them only for a series and a place, never for your text, and the request comes from its server, not from your browser.",
@@ -450,7 +465,7 @@ export const pageStrings = {
     },
     address: {
       heading: "Your IP address",
-      body: "To stop one address from sending too many checks or reports, HoldsUp counts requests per address in memory for an hour. It does not store addresses. Its own logs record which pages and checks were asked for, and a check's length and verdicts, but never its text or your address. The hosts above keep their own request logs for a short time.",
+      body: "To stop one address from sending too many checks or reports, HoldsUp counts requests per address in memory for an hour. It does not store addresses. On Telegram it counts checks per Telegram account in the same way, and does not store or log the account number either. Its own logs record which pages and checks were asked for, and a check's length and verdicts, but never its text or your address. The hosts above keep their own request logs for a short time.",
     },
     browser: {
       heading: "In your browser",

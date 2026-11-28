@@ -36,6 +36,7 @@ HoldsUp does the opposite. It uses the official series, computes the figure in c
 - **A receipt** listing the source, the series code, the date the data was fetched and a fingerprint of the data. It also shows every calculation step, and the provider and model behind each model step.
 - **A Jupyter notebook** that repeats every calculation from the values it read. It needs only Python 3.10 or later: no HoldsUp code and no network.
 - **An embeddable verdict.** "Copy embed code" gives an iframe that shows the claim, its verdict and its figures on another site, with a link to the full receipt. HoldsUp draws it from the stored check each time it loads.
+- **A Telegram bot.** Send it a sentence with a figure, or a link to an article, in a private chat. It answers with each claim's verdict and explanation and a link to the full receipt, from the same pipeline as the site.
 - **A claim watch.** Every day, `make watch` (run by a GitHub Actions schedule) reruns each stored check's plan on the sources' current data, cut where the check read it, so later releases never count. When a source has revised a figure, HoldsUp publishes an updated check. The old receipt stays as it was and points to the update, and the embed shows the update. No model is asked.
 
 ## How it works

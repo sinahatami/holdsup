@@ -14,7 +14,7 @@ API_DIR := apps/api
 WEB_DIR := apps/web
 ML_DIR := ml
 
-.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e e2e-ui lighthouse lighthouse-ui analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports delete-check
+.PHONY: help setup dev dev-api dev-web lint lint-py lint-web test test-py test-web test-ui e2e e2e-ui lighthouse lighthouse-ui analyze types fonts seed-gallery watch format db-migrate docker-api api-bundle api-image deploy-api deploy-setup smoke-providers list-models pivot-test eval-smoke eval-baseline eval eval-chatbot ml-setup test-ml reranker-paraphrase reranker-train confidence-train record-extractions record-series embed-model catalog catalog-check missing-report reports delete-check telegram-poll telegram-webhook
 
 help: ## List available targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
@@ -209,6 +209,12 @@ reports: ## List the newest reports (wrong matches, removal requests), with a li
 delete-check: ## Delete a check on a removal request, with every stored check of its text, and drop its cached pages on the site at WEB_ORIGIN: ID=<check id> (needs DATABASE_URL; asks first, ARGS=--yes skips)
 	@test -n "$(ID)" || { echo "Usage: make delete-check ID=<check id>"; exit 1; }
 	cd $(API_DIR) && uv run python -m scripts.delete_check $(ID) $(ARGS)
+
+telegram-poll: ## Run the Telegram bot here by long polling, with a development bot's TELEGRAM_BOT_TOKEN (needs DATABASE_URL and keys; new claims spend quota)
+	cd $(API_DIR) && uv run python -m scripts.telegram_poll
+
+telegram-webhook: ## Set, show or remove the Telegram bot's webhook: ARGS="set https://<api address>" | info | delete (add --ask to type the token and secret)
+	cd $(API_DIR) && uv run python -m scripts.telegram_webhook $(ARGS)
 
 catalog: ## Validate packages/catalog, embed it, and load it into Postgres (needs DATABASE_URL)
 	cd $(API_DIR) && uv run python -m holdsup.catalog.load

@@ -16,6 +16,26 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HEADER = "x-request-id"
 _VALID = re.compile(r"[A-Za-z0-9._-]{1,64}")
+# A Telegram Bot API address holds the bot's token: https://api.telegram.org/bot<token>/<method>
+_BOT_TOKEN = re.compile(r"bot\d+:[A-Za-z0-9_-]+")
+REDACTED = "bot<redacted>"
+
+
+class RedactBotTokens(logging.Filter):
+    """Blanks Telegram bot tokens in every log line: httpx logs each request's address at
+    INFO, and a Bot API address holds the token. Never drops a line."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.msg, str):
+            message = record.getMessage()
+            redacted = _BOT_TOKEN.sub(REDACTED, message)
+            if redacted != message:
+                record.msg, record.args = redacted, None
+        elif isinstance(record.msg, dict):  # a structlog event
+            for key, value in record.msg.items():
+                if isinstance(value, str) and _BOT_TOKEN.search(value):
+                    record.msg[key] = _BOT_TOKEN.sub(REDACTED, value)
+        return True
 
 
 def configure_logging(level: str = "INFO") -> None:
@@ -32,6 +52,7 @@ def configure_logging(level: str = "INFO") -> None:
         cache_logger_on_first_use=True,
     )
     handler = logging.StreamHandler(sys.stdout)
+    handler.addFilter(RedactBotTokens())
     handler.setFormatter(
         structlog.stdlib.ProcessorFormatter(
             foreign_pre_chain=shared,

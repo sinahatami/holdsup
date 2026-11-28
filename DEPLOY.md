@@ -154,6 +154,32 @@ GitHub holds no Google key. Each run trades its own short-lived GitHub token for
   4. Delete the old service, then the old image repository (`gcloud artifacts repositories delete holdsup --location=<old region>`). Images kept in two regions would pass the 0.5 GB of free storage.
   5. After the first check through the new service, look at `client_address` in its logs again (section 2, step 6).
 
+## 6. Telegram bot (optional)
+
+The bot lives in the API (`apps/api/holdsup/telegram/`). Telegram posts each message to `/v1/telegram/webhook`, and the API answers in the chat. The webhook stays off (404) until both variables below are set. Every new claim sent to the bot spends the same daily model quota as the site; claims checked before cost nothing.
+
+1. In Telegram, open [@BotFather](https://t.me/BotFather) and send `/newbot`. Give it a name (`HoldsUp`) and a username ending in `bot`. BotFather replies with the bot's **token**. Then, for that bot:
+   - `/setdescription` and `/setabouttext`: one line on what it does, for example "Checks the numbers in a claim against official statistics."
+   - `/setcommands`: `start - What HoldsUp is` and `help - How to use it`.
+   - In the bot's settings, set its privacy policy to `https://holdsup.vercel.app/privacy` if BotFather offers it.
+2. Make a second bot the same way for development (for example `HoldsUpDevBot`). Put its token in `.env` as `TELEGRAM_BOT_TOKEN` and run `make telegram-poll`: the bot then answers from your machine, with no webhook. Never use the production bot's token here.
+3. Make the webhook secret: `openssl rand -hex 32`.
+4. In the Cloud Run console, open the service → **Edit & deploy new revision**:
+   - **Variables & secrets**: add `TELEGRAM_BOT_TOKEN` (the production bot's token) and `TELEGRAM_WEBHOOK_SECRET` (step 3). A malformed value (a stray space or line break) makes the API refuse to start, and the **Logs** tab says which one.
+   - **Settings → Request timeout**: keep it at 300 seconds. The API holds Telegram's request open until the answer is sent, because Cloud Run gives the container CPU only while a request is open; a slow check takes up to about two and a half minutes.
+
+   Deploys from `cd.yml` keep these variables.
+5. Point Telegram at the API, typing the production token and the secret when asked (they are hidden, and a pasted line break is removed):
+
+   ```bash
+   make telegram-webhook ARGS="set https://holdsup-api-<…>.run.app --ask"
+   ```
+
+   It prints the webhook's state. `url` should end in `/v1/telegram/webhook`.
+6. Send the bot `/start`, then a claim from the home page's gallery (checked before, so no quota). Then run `make telegram-webhook ARGS="info --ask"`: `pending_update_count` should be 0, with no `last_error_message`.
+
+To turn the bot off, run `make telegram-webhook ARGS="delete --ask"` and remove `TELEGRAM_BOT_TOKEN` from the service.
+
 ## What CI checks
 
 `.github/workflows/image.yml` runs on every pull request that touches the API or the catalog. It builds the image from `make api-bundle` the way a deploy does, then checks two things. With incomplete production settings, the image must refuse to start. With complete (dummy) settings, it must serve `/v1/health` and the catalog. `make docker-api` builds the same image locally and runs it as development. On a push to `main` the same workflow then deploys the commit (`cd.yml`, section 4), so an image that fails these checks is never deployed.
