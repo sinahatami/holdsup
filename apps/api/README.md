@@ -7,9 +7,10 @@ The FastAPI backend: it extracts claims, matches them to catalog indicators, fet
 From the repository root (the commands are the same for everyone):
 
 ```bash
-make dev-api      # uvicorn with reload on localhost:8000 (make dev also starts the site)
-make db-migrate   # Alembic upgrade head
-make catalog      # validate packages/catalog and load it into Postgres
+make dev-api        # uvicorn with reload on localhost:8000 (make dev also starts the site)
+make db-migrate     # Alembic upgrade head
+make catalog        # validate packages/catalog and load it into Postgres
+make telegram-poll  # the Telegram bot from this machine, with a test bot's token in .env
 ```
 
 Settings come from environment variables, read by `holdsup/config.py`. `.env.example` in the root lists every one with a comment. New checks need at least one live provider key (`GROQ_API_KEY` is tried first).
@@ -29,6 +30,7 @@ Everything is under `/v1`. Errors are [RFC 9457](https://www.rfc-editor.org/rfc/
 | `GET /gallery`                                  | Featured checks, for the home and recent-checks pages                |
 | `GET /catalog`, `GET /indicators`               | The indicator catalog, and a search over it                          |
 | `GET /tolerances`, `GET /health`                | The verdict tolerances in use, and a liveness probe                  |
+| `POST /telegram/webhook`                        | Messages from Telegram; 404 without the bot's secret, and not in `/docs` |
 
 ## Layout (`holdsup/`)
 
@@ -44,11 +46,12 @@ Everything is under `/v1`. Errors are [RFC 9457](https://www.rfc-editor.org/rfc/
 | `adapters/`     | Eurostat, World Bank and Our World in Data clients                                     |
 | `catalog/`      | Loading, indexing and vector search over the catalog                                   |
 | `page/`         | Reading an article link safely (address guard, fetch, text extraction)                 |
-| `service/`      | The runner, wiring, check store (memory or SQL) and rate limits                        |
+| `service/`      | The runner, wiring, the shared text-or-link submit, check store (memory or SQL) and rate limits |
+| `telegram/`     | The Telegram bot: update models, the Bot API client (the token never reaches the logs), message formatting and the handler |
 | `db/`           | SQLAlchemy models, session and Alembic migrations                                      |
 | `ml/`           | Inference for the reranker; training lives in the root `ml/` folder                    |
 
-`scripts/` holds one-off and scheduled jobs run through `make`: the claim watch, gallery seeding, fixture recording, provider smoke tests and the evaluation runner.
+`scripts/` holds one-off and scheduled jobs run through `make`: the claim watch, gallery seeding, fixture recording, provider smoke tests, the evaluation runner, and the Telegram webhook and local polling.
 
 ## Tests
 
