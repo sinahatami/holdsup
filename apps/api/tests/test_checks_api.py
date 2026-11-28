@@ -24,7 +24,7 @@ from holdsup.pipeline.claim import LATEST, AssertionType, Operator
 from holdsup.pipeline.result import ClaimResult, app_version
 from holdsup.pipeline.run import REUSED
 from holdsup.receipt.notebook import Notebook
-from holdsup.routes.checks import MAX_TEXT, GalleryClaim, _gallery_claim
+from holdsup.routes.checks import GalleryClaim, _gallery_claim
 from holdsup.routes.deps import (
     get_catalog,
     get_page_limiter,
@@ -35,6 +35,7 @@ from holdsup.routes.deps import (
 from holdsup.service.ratelimit import RateLimiter
 from holdsup.service.runner import CheckRunner
 from holdsup.service.store import CheckResult, InMemoryCheckStore, SqlCheckStore
+from holdsup.service.submit import MAX_TEXT
 from holdsup.verdict import Part
 from tests.receipt.run import execute_standalone
 from tests.router.fakes import FakeClient
